@@ -1,0 +1,6 @@
+int x = 10;
+double y = 3.14;
+string nome = "ZardLang";
+print(x);
+print(nome);
+print(y);

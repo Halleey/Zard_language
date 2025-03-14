@@ -3,10 +3,13 @@ main {
 int x = 10;
 double y = 3.14;
 double teste;
-teste = 0.3;
+bool aqui;
+aqui = true;
+
 string nome = "Zard language";
 x = 999;
 print(x);
 print(nome);
 print(y);
+print(aqui);
 }

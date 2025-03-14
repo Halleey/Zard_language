@@ -34,6 +34,7 @@ public class VariableDeclaration extends Statement {
             case "int" -> 0;
             case "double" -> 0.0;
             case "string" -> "";
+            case "bool" -> false;
             default -> null; // Outros tipos podem ser nulos
         };
     }

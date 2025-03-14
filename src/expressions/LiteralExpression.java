@@ -2,6 +2,8 @@ package expressions;
 
 import tokens.Token;
 import variables.VariableTable;
+
+
 public class LiteralExpression extends Expression {
     public final Token token;
 
@@ -21,13 +23,18 @@ public class LiteralExpression extends Expression {
             return new TypedValue(Integer.parseInt(value), "int");
         } else if (type == Token.TokenType.STRING) {
             return new TypedValue(value, "string");
+        } else if (type == Token.TokenType.BOOLEAN) {  // dando suuporte a booleanos
+            return new TypedValue(Boolean.parseBoolean(value), "bool");
         }
+
         throw new RuntimeException("Tipo de literal não suportado: " + type);
     }
+
     @Override
     public String toString() {
         return "LiteralExpression{value=" + token.getValue() + "}";
     }
 }
+
 
 

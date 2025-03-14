@@ -128,6 +128,9 @@ public class Parser {
         if (match(Token.TokenType.STRING)) {
             return new LiteralExpression(consume(Token.TokenType.STRING));
         }
+        if (match(Token.TokenType.BOOLEAN)) {  // Adicionando suporte a booleanos
+            return new LiteralExpression(consume(Token.TokenType.BOOLEAN));
+        }
         if (match(Token.TokenType.IDENTIFIER)) {
             return new VariableReference(consume(Token.TokenType.IDENTIFIER).getValue());
         }

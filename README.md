@@ -1,61 +1,53 @@
 # Zard
 
-Zard é uma linguagem de programação baseada em Java, criada para fins de estudo e aprimoramento de lógica de programação. Seu foco está em fornecer uma sintaxe simples e acessível, facilitando o aprendizado e a experimentação de conceitos fundamentais da programação.
+Zard é uma linguagem de programação baseada em Java, criada para fins de estudo e aprimoramento da lógica de programação. Seu objetivo é oferecer uma sintaxe simples e acessível, facilitando o aprendizado sobre a criação de linguagens e a estrutura de compiladores.
 
-## ✨ Características
+## ✨ Características Atuais
 
-- **Sintaxe Simples:** Inspirada no Java, mas reduzida para facilitar o aprendizado.
-- **Controle de Fluxo:** Suporte para estruturas como `if`, `else`, e `while`.
-- **Tipos de Dados:** Inteiros (`int`), números de ponto flutuante (`double`), texto (`string`), e booleanos (`boolean`).
-- **Manipulação de estruturas de dados, como `list` e `maps` :
-- **Entrada e Saída:** Funções integradas para interação com o usuário.
+- **Sintaxe Simples:** Baseada no Java, mas reduzida para facilitar a interpretação.
+- **Declaração de Variáveis:** Suporte a tipos como `int`, `double` e `string`.
+- **Atribuição de Valores:** Permite atribuir valores a variáveis no momento da declaração ou posteriormente.
+- **Sistema de Execução Baseado em AST:** Utiliza uma Árvore de Sintaxe Abstrata (AST) para interpretação.
+- **Saída de Dados:** Suporte ao comando `print` para exibição de valores no console.
+- **Bloco Main:** Todo programa deve começar com `main { }`.
 
 ## 📝 Exemplo de Código
 
 ```zard
-main(){
-    function teste(int a int b) {
-        int resultado = a + b;
-        return resultado;
-    }
-    
-    call teste(19 20);
-    ## gera resultado da soma.
+main {
+    int x = 10;
+    double y = 3.14;
+    string nome = "Zard Language";
+    print(x);
+    print(y);
+    print(nome);
 }
 ```
 
-## 🛠 Uso
-
-Para utilizar a Zard, basta seguir os seguintes passos:
-
-1. Escreva seu código fonte em um arquivo `.zd`.
-2. Utilize o interpretador/compilador da linguagem para rodar o código.
-3. Explore as funcionalidades da linguagem e desenvolva sua lógica de programação.
-
-📂 **Pacote `/language`**
-
-No pacote `/language`, você encontrará exemplos práticos de como utilizar a Zard, incluindo diferentes abordagens para manipulação de variáveis, controle de fluxo e estruturação de código.
-
-## 💎 Objetivo
-
-O principal objetivo da Zard é servir como uma linguagem de estudo, permitindo que programadores desenvolvam suas habilidades lógicas enquanto exploram a construção de uma linguagem de programação do zero.
-
 ## 🚀 Futuro da Zard
 
-A linguagem continuará recebendo atualizações e melhorias, incluindo novos recursos planejados, como:
+A linguagem continuará recebendo melhorias, incluindo novos recursos planejados, como:
 
-- 📌 **Suporte a Classes e Herança**
-- 🔧 **Tratamento de Erros**
-- 🔄 **Sistema de Módulos**
-- 📜 **Expansão da Biblioteca Padrão**
-- 🚀 **Melhoria no Desempenho do Interpretador**
+- 🔄 **Estruturas de Controle de Fluxo** (`if`, `else`, `while`).
+- 📚 **Suporte a Funções** (declaração e chamada de funções).
+- 📌 **Tipos de Dados Avançados** (listas e mapas).
+- 🔧 **Sistema de Módulos e Importação de Código**.
+- 🛠 **Compilação para LLVM IR** para execução independente.
+
+## 📂 Uso
+
+1. Escreva seu código em um arquivo `.zd`.
+2. Utilize o interpretador para executar o código.
+3. Experimente a sintaxe da linguagem e acompanhe as atualizações futuras!
 
 ---
 
 🔗 **Contribuição**
 
-Caso tenha sugestões ou queira contribuir para o projeto, sinta-se à vontade para colaborar!
+Caso tenha sugestões ou queira contribuir para o projeto, fique à vontade para compartilhar ideias e feedback!
 
 📧 **Contato**
 
-Se quiser saber mais sobre a Zard, entre em contato para compartilhar ideias e feedback!
+Se quiser saber mais sobre a Zard, entre em contato para discutir melhorias e novos recursos!
+
+

@@ -1,6 +1,8 @@
 int x = 10;
 double y = 3.14;
-string nome = "ZardLang";
+double teste;
+teste = 0.3;
+string nome = "Zard language";
 print(x);
 print(nome);
 print(y);

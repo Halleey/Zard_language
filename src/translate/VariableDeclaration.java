@@ -5,10 +5,11 @@ import expressions.LiteralExpression;
 import expressions.TypedValue;
 import tokens.Token;
 
+
 public class VariableDeclaration extends Statement {
-    public final Token type;
-    public final String name;
-    public final Expression value;
+    private final Token type;
+    private final String name;
+    private final Expression value;
 
     public VariableDeclaration(Token type, String name, Expression value) {
         this.type = type;
@@ -17,8 +18,8 @@ public class VariableDeclaration extends Statement {
     }
 
     public void execute(VariableTable table) {
-        Object evaluatedValue = evaluateExpression(value);
-        table.setVariable(name, new TypedValue(evaluatedValue, table.getVariable(name).getType()));
+        Object evaluatedValue = (value != null) ? evaluateExpression(value) : getDefaultValue();
+        table.setVariable(name, new TypedValue(evaluatedValue, type.getValue())); // Define o tipo corretamente
     }
 
     private Object evaluateExpression(Expression expr) {
@@ -26,5 +27,19 @@ public class VariableDeclaration extends Statement {
             return ((LiteralExpression) expr).token.getValue();
         }
         throw new RuntimeException("Erro ao avaliar expressão.");
+    }
+
+    private Object getDefaultValue() {
+        return switch (type.getValue()) {
+            case "int" -> 0;
+            case "double" -> 0.0;
+            case "string" -> "";
+            default -> null; // Outros tipos podem ser nulos
+        };
+    }
+
+    @Override
+    public String toString() {
+        return "VariableDeclaration{name='" + name + "', type='" + type.getValue() + "', value=" + value + "}";
     }
 }

@@ -22,10 +22,8 @@ public class LiteralExpression extends Expression {
         } else if (type == Token.TokenType.STRING) {
             return new TypedValue(value, "string");
         }
-
         throw new RuntimeException("Tipo de literal não suportado: " + type);
     }
-
     @Override
     public String toString() {
         return "LiteralExpression{value=" + token.getValue() + "}";

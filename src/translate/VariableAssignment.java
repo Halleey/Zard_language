@@ -1,6 +1,8 @@
 package translate;
 
 import expressions.Expression;
+import expressions.TypedValue;
+
 public class VariableAssignment extends Statement {
     public final String name;
     public final Expression value;
@@ -10,9 +12,12 @@ public class VariableAssignment extends Statement {
         this.value = value;
     }
 
-    @Override
     public void execute(VariableTable table) {
-        table.setVariable(name, value.evaluate(table)); // Armazena um TypedValue corretamente
+        if (!table.hasVariable(name)) {
+            throw new RuntimeException("Erro: Variável '" + name + "' não declarada.");
+        }
+        table.setVariable(name, new TypedValue(value.evaluate(table), table.getVariable(name).getType()));
+
     }
 
     @Override

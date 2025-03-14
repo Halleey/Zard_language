@@ -5,10 +5,13 @@ import tokens.Token;
 import expressions.Expression;
 import translate.Statement;
 import translate.VariableAssignment;
+import translate.VariableDeclaration;
 import translate.VariableReference;
 
 import java.util.ArrayList;
 import java.util.List;
+
+
 public class Parser {
     private final List<Token> tokens;
     private int pos = 0;
@@ -38,17 +41,52 @@ public class Parser {
             }
             return parseVariableDeclaration();
         }
+
+        // Se não for uma declaração de variável, pode ser uma atribuição!
+        if (match(Token.TokenType.IDENTIFIER)) {
+            return parseVariableAssignment();
+        }
+
         throw new RuntimeException("Erro de sintaxe: declaração inválida em '" + tokens.get(pos).getValue() + "'");
     }
 
-    private VariableAssignment parseVariableDeclaration() {
-        Token typeToken = consume(Token.TokenType.KEYWORD); // int, string, double, etc.
+    private Statement parseVariableAssignment() {
         Token nameToken = consume(Token.TokenType.IDENTIFIER); // Nome da variável
-        consume(Token.TokenType.OPERATOR); // Espera '='
-        Expression value = parseExpression(); // Pega o valor
-        consume(Token.TokenType.DELIMITER); // Espera ';'
+        System.out.println("Detectada atribuição para variável: " + nameToken.getValue());
+
+        consume(Token.TokenType.OPERATOR); // Deve ser '='
+        Expression value = parseExpression();
+        consume(Token.TokenType.DELIMITER); // Deve ser ';'
+
         return new VariableAssignment(nameToken.getValue(), value);
     }
+
+
+
+    private Statement parseVariableDeclaration() {
+        Token typeToken = consume(Token.TokenType.KEYWORD); // Captura tipo (ex: double)
+        Token nameToken = consume(Token.TokenType.IDENTIFIER); // Captura nome (ex: teste)
+
+        System.out.println("Declarando variável: " + nameToken.getValue());
+
+        // Se o próximo token for ';', significa que é apenas uma declaração sem valor
+        if (match(Token.TokenType.DELIMITER) && tokens.get(pos).getValue().equals(";")) {
+            System.out.println("Variável '" + nameToken.getValue() + "' declarada sem valor inicial.");
+            consume(Token.TokenType.DELIMITER); // Consome o ';'
+            return new VariableDeclaration(typeToken, nameToken.getValue(), null); // Retorna declaração sem valor inicial
+        }
+
+        // Espera '=' para atribuição
+        System.out.println("Esperando '=' para atribuição da variável '" + nameToken.getValue() + "'...");
+        consume(Token.TokenType.OPERATOR); // Deve ser '='
+        Expression value = parseExpression();
+        consume(Token.TokenType.DELIMITER); // Deve ser ';'
+
+        System.out.println("Variável '" + nameToken.getValue() + "' declarada com valor inicial.");
+        return new VariableDeclaration(typeToken, nameToken.getValue(), value);
+    }
+
+
 
     private PrintStatement parsePrintStatement() {
         consume(Token.TokenType.KEYWORD); // Consome 'print'

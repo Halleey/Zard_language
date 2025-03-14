@@ -1,13 +1,15 @@
 package interpreter;
 import tokens.Lexer;
 import tokens.Token;
-import translate.Statement;
-import translate.VariableTable;
+import variables.Statement;
+import variables.VariableTable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;public class ZardInterpreter {
+import java.util.List;
+
+public class ZardInterpreter {
     public static void main(String[] args) {
         try {
             // Ler o arquivo de código Zard
@@ -19,21 +21,17 @@ import java.util.List;public class ZardInterpreter {
 
             // Construir AST
             Parser parser = new Parser(tokens);
-            List<Statement> statements = parser.parse();  // Agora retorna múltiplas declarações
+            MainBlock mainBlock = parser.parseMainBlock(); // Agora analisamos um MainBlock
 
             // Debug: Exibir a AST gerada
             System.out.println("AST Gerada:");
-            for (Statement stmt : statements) {
-                System.out.println(stmt);
-            }
+            System.out.println(mainBlock);
 
             // Criar tabela de variáveis
             VariableTable variableTable = new VariableTable();
 
-            // Executar todas as instruções
-            for (Statement stmt : statements) {
-                stmt.execute(variableTable);
-            }
+            // Executar apenas o bloco `main`
+            mainBlock.execute(variableTable);
 
             // Exibir estado final da tabela de variáveis
             System.out.println("\nEstado final das variáveis:");

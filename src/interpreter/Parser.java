@@ -3,10 +3,10 @@ import expressions.LiteralExpression;
 import prints.PrintStatement;
 import tokens.Token;
 import expressions.Expression;
-import translate.Statement;
-import translate.VariableAssignment;
-import translate.VariableDeclaration;
-import translate.VariableReference;
+import variables.Statement;
+import variables.VariableAssignment;
+import variables.VariableDeclaration;
+import variables.VariableReference;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,6 +84,30 @@ public class Parser {
 
         System.out.println("Variável '" + nameToken.getValue() + "' declarada com valor inicial.");
         return new VariableDeclaration(typeToken, nameToken.getValue(), value);
+    }
+
+    public MainBlock parseMainBlock() {
+        List<Statement> statements = new ArrayList<>();
+
+        // Verifica se o primeiro token é a palavra-chave "main"
+        if (!match(Token.TokenType.KEYWORD)) {
+            throw new RuntimeException("Erro: O programa deve começar com 'main'!");
+        }
+
+        Token mainToken = consume(Token.TokenType.KEYWORD); // Consome 'main'
+        if (!mainToken.getValue().equals("main")) {
+            throw new RuntimeException("Erro: O programa deve começar com 'main'!");
+        }
+
+        consume(Token.TokenType.DELIMITER); // Consome '{'
+
+        while (!match(Token.TokenType.DELIMITER)) { // Enquanto não encontrar '}'
+            statements.add(parseStatement()); // Processa cada instrução
+        }
+
+        consume(Token.TokenType.DELIMITER); // Consome '}'
+
+        return new MainBlock(statements);
     }
 
 

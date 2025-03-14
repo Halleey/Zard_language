@@ -1,6 +1,6 @@
 package expressions;
 
-import translate.VariableTable;
+import variables.VariableTable;
 
 public class IdentifierExpression extends Expression {
     public final String name;

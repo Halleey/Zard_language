@@ -1,8 +1,8 @@
 package prints;
 import expressions.Expression;
 import expressions.TypedValue;
-import translate.Statement;
-import translate.VariableTable;
+import variables.Statement;
+import variables.VariableTable;
 public class PrintStatement extends Statement {
     public final Expression expression;
 

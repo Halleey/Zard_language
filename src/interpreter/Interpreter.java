@@ -3,7 +3,7 @@ package interpreter;
 import expressions.Expression;
 import expressions.LiteralExpression;
 import expressions.TypedValue;
-import translate.*;
+import variables.*;
 
 public class Interpreter {
     private final VariableTable table;

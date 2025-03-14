@@ -3,7 +3,7 @@ package ast;
 import expressions.Expression;
 import expressions.TypedValue;
 import tokens.Token;
-import translate.VariableTable;
+import variables.VariableTable;
 
 public class NumberNode extends Expression {
     private final Token token;

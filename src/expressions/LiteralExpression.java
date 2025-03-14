@@ -1,7 +1,7 @@
 package expressions;
 
 import tokens.Token;
-import translate.VariableTable;
+import variables.VariableTable;
 public class LiteralExpression extends Expression {
     public final Token token;
 

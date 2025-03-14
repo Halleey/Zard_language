@@ -1,4 +1,4 @@
-package translate;
+package variables;
 
 import ast.ASTNode;
 

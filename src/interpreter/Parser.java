@@ -1,5 +1,6 @@
 package interpreter;
 import expressions.LiteralExpression;
+import inputs.InputStatement;
 import prints.PrintStatement;
 import tokens.Token;
 import expressions.Expression;
@@ -38,6 +39,8 @@ public class Parser {
 
             if ("print".equals(keyword)) {
                 return parsePrintStatement();
+            } else if ("input".equals(keyword)) {  // Adiciona suporte a "input"
+                return parseInputStatement();
             }
             return parseVariableDeclaration();
         }
@@ -49,6 +52,7 @@ public class Parser {
 
         throw new RuntimeException("Erro de sintaxe: declaração inválida em '" + tokens.get(pos).getValue() + "'");
     }
+
 
     private Statement parseVariableAssignment() {
         Token nameToken = consume(Token.TokenType.IDENTIFIER); // Nome da variável
@@ -108,6 +112,17 @@ public class Parser {
         consume(Token.TokenType.DELIMITER); // Consome '}'
 
         return new MainBlock(statements);
+    }
+
+
+    private InputStatement parseInputStatement() {
+        consume(Token.TokenType.KEYWORD); // Consome 'input'
+        consume(Token.TokenType.DELIMITER); // Consome '('
+        Token variableToken = consume(Token.TokenType.IDENTIFIER); // Captura o nome da variável
+        consume(Token.TokenType.DELIMITER); // Consome ')'
+        consume(Token.TokenType.DELIMITER); // Consome ';'
+
+        return new InputStatement(variableToken.getValue());
     }
 
 

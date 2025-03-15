@@ -1,15 +1,6 @@
 
 main {
-int x = 10;
-double y = 3.14;
-double teste;
-bool aqui;
-aqui = true;
-
-string nome = "Zard language";
-x = 999;
-print(x);
+string nome;
+input(nome);
 print(nome);
-print(y);
-print(aqui);
 }

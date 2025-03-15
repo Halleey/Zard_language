@@ -1,13 +1,15 @@
 
 main {
     string nome;
-    int a =10;
-    double b = 10.5;
-    bool teste= true;
+
     print(a + " " + b +" " + teste);
+
     string saudacao;
+
     input(nome);
+
     input(saudacao);
+
     print(saudacao + " " + nome + "!");
 }
 

@@ -13,7 +13,7 @@ public class ZardInterpreter {
     public static void main(String[] args) {
         try {
             // Ler o arquivo de código Zard
-            String code = new String(Files.readAllBytes(Paths.get("src/interpreter/main.zd")));
+            String code = new String(Files.readAllBytes(Paths.get("src/language/main.zd")));
 
             // Tokenizar código
             Lexer lexer = new Lexer(code);

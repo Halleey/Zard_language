@@ -1,0 +1,9 @@
+main {
+
+int a = 15;
+double b = 3.14;
+bool isReal = true; ## Por padrão é inicializado falso, a menos que voce defina direto como true
+string texto =  "zard";
+
+
+}

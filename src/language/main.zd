@@ -1,15 +1,9 @@
 
 main {
-    string nome;
 
-    print(a + " " + b +" " + teste);
+    int a = 5;
+    int b = 6;
 
-    string saudacao;
-
-    input(nome);
-
-    input(saudacao);
-
-    print(saudacao + " " + nome + "!");
+    print (a > b);
 }
 

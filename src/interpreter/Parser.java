@@ -117,13 +117,26 @@ public class Parser {
     private Expression parseExpression() {
         Expression left = parsePrimaryExpression();
 
-        while (match(Token.TokenType.OPERATOR) && tokens.get(pos).getValue().equals("+")) {
-            Token operator = consume(Token.TokenType.OPERATOR);
-            Expression right = parsePrimaryExpression();
-            left = new BinaryExpression(left, operator, right);
+        while (match(Token.TokenType.OPERATOR)) {
+            Token operator = tokens.get(pos);
+            String op = operator.getValue();
+
+            // Verifica se é um operador de comparação
+            if (op.equals("+") || op.equals("-") || op.equals("*") || op.equals("/") ||
+                    op.equals("==") || op.equals("!=") || op.equals("<") || op.equals("<=") ||
+                    op.equals(">") || op.equals(">=")) {
+
+                consume(Token.TokenType.OPERATOR);  // Consome o operador
+                Expression right = parsePrimaryExpression();  // A próxima expressão para a direita
+                left = new BinaryExpression(left, operator, right);  // Cria a expressão binária
+            } else {
+                break;  // Sai do loop caso não seja um operador válido
+            }
         }
+
         return left;
     }
+
 
     private Expression parsePrimaryExpression() {
         if (match(Token.TokenType.NUMBER)) {

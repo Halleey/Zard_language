@@ -38,7 +38,41 @@ public class BinaryExpression extends Expression {
                 case "/":
                     if (rightNum == 0) throw new RuntimeException("Erro: Divisão por zero!");
                     return new TypedValue(leftNum / rightNum, leftValue.getType());
+                case "==": return new TypedValue(leftNum == rightNum, "bool");
+                case "!=": return new TypedValue(leftNum != rightNum, "bool");
+                case "<": return new TypedValue(leftNum < rightNum, "bool");
+                case "<=": return new TypedValue(leftNum <= rightNum, "bool");
+                case ">": return new TypedValue(leftNum > rightNum, "bool");
+                case ">=": return new TypedValue(leftNum >= rightNum, "bool");
                 default: throw new RuntimeException("Operador inválido: " + op);
+            }
+        }
+
+        // Comparações entre strings (==, !=, >, <, >=, <=)
+        if (leftValue.getValue() instanceof String && rightValue.getValue() instanceof String) {
+            String leftStr = (String) leftValue.getValue();
+            String rightStr = (String) rightValue.getValue();
+
+            switch (op) {
+                case "==": return new TypedValue(leftStr.equals(rightStr), "bool");
+                case "!=": return new TypedValue(!leftStr.equals(rightStr), "bool");
+                case "<": return new TypedValue(leftStr.compareTo(rightStr) < 0, "bool");
+                case "<=": return new TypedValue(leftStr.compareTo(rightStr) <= 0, "bool");
+                case ">": return new TypedValue(leftStr.compareTo(rightStr) > 0, "bool");
+                case ">=": return new TypedValue(leftStr.compareTo(rightStr) >= 0, "bool");
+                default: throw new RuntimeException("Operador inválido para strings: " + op);
+            }
+        }
+
+        // Comparações booleanas (==, !=)
+        if (leftValue.getType().equals("bool") && rightValue.getType().equals("bool")) {
+            boolean leftBool = (boolean) leftValue.getValue();
+            boolean rightBool = (boolean) rightValue.getValue();
+
+            switch (op) {
+                case "==": return new TypedValue(leftBool == rightBool, "bool");
+                case "!=": return new TypedValue(leftBool != rightBool, "bool");
+                default: throw new RuntimeException("Operador inválido para booleanos: " + op);
             }
         }
 

@@ -1,5 +1,6 @@
 package interpreter;
 
+import expressions.BinaryExpression;
 import expressions.Expression;
 import expressions.LiteralExpression;
 import expressions.TypedValue;
@@ -23,10 +24,13 @@ public class Interpreter {
 
     private Object evaluateExpression(Expression expr) {
         if (expr instanceof LiteralExpression) {
-            return ((LiteralExpression) expr).token.getValue();
+            return ((LiteralExpression) expr).evaluate(table).getValue();
         } else if (expr instanceof VariableReference) {
             return table.getVariable(((VariableReference) expr).name).getValue();
+        } else if (expr instanceof BinaryExpression) {
+            return ((BinaryExpression) expr).evaluate(table).getValue();
         }
         throw new RuntimeException("Erro ao avaliar expressão.");
     }
+
 }

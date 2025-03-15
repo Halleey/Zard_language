@@ -1,4 +1,5 @@
 package interpreter;
+import expressions.BinaryExpression;
 import expressions.LiteralExpression;
 import inputs.InputStatement;
 import prints.PrintStatement;
@@ -24,7 +25,7 @@ public class Parser {
     public List<Statement> parse() {
         List<Statement> statements = new ArrayList<>();
         while (pos < tokens.size()) {
-            if (tokens.get(pos).getValue().trim().isEmpty()) { // Ignorar tokens vazios
+            if (tokens.get(pos).getValue().trim().isEmpty()) {
                 pos++;
                 continue;
             }
@@ -39,117 +40,105 @@ public class Parser {
 
             if ("print".equals(keyword)) {
                 return parsePrintStatement();
-            } else if ("input".equals(keyword)) {  // Adiciona suporte a "input"
+            } else if ("input".equals(keyword)) {
                 return parseInputStatement();
             }
             return parseVariableDeclaration();
         }
-
-        // Se não for uma declaração de variável, pode ser uma atribuição!
         if (match(Token.TokenType.IDENTIFIER)) {
             return parseVariableAssignment();
         }
-
         throw new RuntimeException("Erro de sintaxe: declaração inválida em '" + tokens.get(pos).getValue() + "'");
     }
 
-
     private Statement parseVariableAssignment() {
-        Token nameToken = consume(Token.TokenType.IDENTIFIER); // Nome da variável
-        System.out.println("Detectada atribuição para variável: " + nameToken.getValue());
-
-        consume(Token.TokenType.OPERATOR); // Deve ser '='
+        Token nameToken = consume(Token.TokenType.IDENTIFIER);
+        consume(Token.TokenType.OPERATOR);
         Expression value = parseExpression();
-        consume(Token.TokenType.DELIMITER); // Deve ser ';'
-
+        consume(Token.TokenType.DELIMITER);
         return new VariableAssignment(nameToken.getValue(), value);
     }
 
-
-
     private Statement parseVariableDeclaration() {
-        Token typeToken = consume(Token.TokenType.KEYWORD); // Captura tipo (ex: double)
-        Token nameToken = consume(Token.TokenType.IDENTIFIER); // Captura nome (ex: teste)
+        Token typeToken = consume(Token.TokenType.KEYWORD);
+        Token nameToken = consume(Token.TokenType.IDENTIFIER);
 
-        System.out.println("Declarando variável: " + nameToken.getValue());
-
-        // Se o próximo token for ';', significa que é apenas uma declaração sem valor
         if (match(Token.TokenType.DELIMITER) && tokens.get(pos).getValue().equals(";")) {
-            System.out.println("Variável '" + nameToken.getValue() + "' declarada sem valor inicial.");
-            consume(Token.TokenType.DELIMITER); // Consome o ';'
-            return new VariableDeclaration(typeToken, nameToken.getValue(), null); // Retorna declaração sem valor inicial
+            consume(Token.TokenType.DELIMITER);
+            return new VariableDeclaration(typeToken, nameToken.getValue(), null);
         }
 
-        // Espera '=' para atribuição
-        System.out.println("Esperando '=' para atribuição da variável '" + nameToken.getValue() + "'...");
-        consume(Token.TokenType.OPERATOR); // Deve ser '='
+        consume(Token.TokenType.OPERATOR);
         Expression value = parseExpression();
-        consume(Token.TokenType.DELIMITER); // Deve ser ';'
+        consume(Token.TokenType.DELIMITER);
 
-        System.out.println("Variável '" + nameToken.getValue() + "' declarada com valor inicial.");
         return new VariableDeclaration(typeToken, nameToken.getValue(), value);
     }
 
     public MainBlock parseMainBlock() {
         List<Statement> statements = new ArrayList<>();
-
-        // Verifica se o primeiro token é a palavra-chave "main"
         if (!match(Token.TokenType.KEYWORD)) {
             throw new RuntimeException("Erro: O programa deve começar com 'main'!");
         }
 
-        Token mainToken = consume(Token.TokenType.KEYWORD); // Consome 'main'
+        Token mainToken = consume(Token.TokenType.KEYWORD);
         if (!mainToken.getValue().equals("main")) {
             throw new RuntimeException("Erro: O programa deve começar com 'main'!");
         }
 
-        consume(Token.TokenType.DELIMITER); // Consome '{'
-
-        while (!match(Token.TokenType.DELIMITER)) { // Enquanto não encontrar '}'
-            statements.add(parseStatement()); // Processa cada instrução
+        consume(Token.TokenType.DELIMITER);
+        while (!match(Token.TokenType.DELIMITER)) {
+            statements.add(parseStatement());
         }
-
-        consume(Token.TokenType.DELIMITER); // Consome '}'
+        consume(Token.TokenType.DELIMITER);
 
         return new MainBlock(statements);
     }
 
-
     private InputStatement parseInputStatement() {
-        consume(Token.TokenType.KEYWORD); // Consome 'input'
-        consume(Token.TokenType.DELIMITER); // Consome '('
-        Token variableToken = consume(Token.TokenType.IDENTIFIER); // Captura o nome da variável
-        consume(Token.TokenType.DELIMITER); // Consome ')'
-        consume(Token.TokenType.DELIMITER); // Consome ';'
+        consume(Token.TokenType.KEYWORD);
+        consume(Token.TokenType.DELIMITER);
+        Token variableToken = consume(Token.TokenType.IDENTIFIER);
+        consume(Token.TokenType.DELIMITER);
+        consume(Token.TokenType.DELIMITER);
 
         return new InputStatement(variableToken.getValue());
     }
 
-
-
     private PrintStatement parsePrintStatement() {
-        consume(Token.TokenType.KEYWORD); // Consome 'print'
-        consume(Token.TokenType.DELIMITER); // Consome '('
-        Expression expr = parseExpression(); // Captura a expressão dentro do print
-        consume(Token.TokenType.DELIMITER); // Consome ')'
-        consume(Token.TokenType.DELIMITER); // Consome ';'
-        return new PrintStatement(expr);
+        consume(Token.TokenType.KEYWORD);
+        consume(Token.TokenType.DELIMITER);
+        Expression expression = parseExpression();
+        consume(Token.TokenType.DELIMITER);
+        consume(Token.TokenType.DELIMITER);
+        return new PrintStatement(expression);
     }
 
     private Expression parseExpression() {
+        Expression left = parsePrimaryExpression();
+
+        while (match(Token.TokenType.OPERATOR) && tokens.get(pos).getValue().equals("+")) {
+            Token operator = consume(Token.TokenType.OPERATOR);
+            Expression right = parsePrimaryExpression();
+            left = new BinaryExpression(left, operator, right);
+        }
+        return left;
+    }
+
+    private Expression parsePrimaryExpression() {
         if (match(Token.TokenType.NUMBER)) {
             return new LiteralExpression(consume(Token.TokenType.NUMBER));
         }
         if (match(Token.TokenType.STRING)) {
             return new LiteralExpression(consume(Token.TokenType.STRING));
         }
-        if (match(Token.TokenType.BOOLEAN)) {  // Adicionando suporte a booleanos
+        if (match(Token.TokenType.BOOLEAN)) {
             return new LiteralExpression(consume(Token.TokenType.BOOLEAN));
         }
         if (match(Token.TokenType.IDENTIFIER)) {
             return new VariableReference(consume(Token.TokenType.IDENTIFIER).getValue());
         }
-        throw new RuntimeException("Erro de sintaxe: expressão inválida em '" + tokens.get(pos).getValue() + "'");
+        throw new RuntimeException("Erro de sintaxe: expressão inesperada em '" + tokens.get(pos).getValue() + "'");
     }
 
     private Token consume(Token.TokenType expectedType) {

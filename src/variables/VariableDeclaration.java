@@ -24,9 +24,21 @@ public class VariableDeclaration extends Statement {
 
     private Object evaluateExpression(Expression expr) {
         if (expr instanceof LiteralExpression) {
-            return ((LiteralExpression) expr).token.getValue();
+            String value = ((LiteralExpression) expr).token.getValue();
+            return convertToType(value, type.getValue()); // Converte para o tipo correto
         }
         throw new RuntimeException("Erro ao avaliar expressão.");
+    }
+
+
+    private Object convertToType(String value, String type) {
+        return switch (type) {
+            case "int" -> Integer.parseInt(value);
+            case "double" -> Double.parseDouble(value);
+            case "bool" -> Boolean.parseBoolean(value);
+            case "string" -> value; // Já está no formato correto
+            default -> throw new RuntimeException("Tipo desconhecido: " + type);
+        };
     }
 
     private Object getDefaultValue() {

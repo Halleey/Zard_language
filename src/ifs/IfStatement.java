@@ -1,6 +1,5 @@
 package ifs;
 
-import expressions.Expression;
 import variables.Statement;
 import variables.VariableTable;
 

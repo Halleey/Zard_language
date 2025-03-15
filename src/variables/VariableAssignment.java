@@ -16,9 +16,30 @@ public class VariableAssignment extends Statement {
         if (!table.hasVariable(name)) {
             throw new RuntimeException("Erro: Variável '" + name + "' não declarada.");
         }
-        table.setVariable(name, new TypedValue(value.evaluate(table), table.getVariable(name).getType()));
 
+        TypedValue evaluatedValue = value.evaluate(table);
+        TypedValue oldValue = table.getVariable(name);
+
+        // Converter o valor para o tipo da variável
+        Object convertedValue = convertToType(evaluatedValue.getValue(), oldValue.getType());
+
+        table.setVariable(name, new TypedValue(convertedValue, oldValue.getType()));
     }
+
+    private Object convertToType(Object value, String type) {
+        if (value instanceof TypedValue) {
+            value = ((TypedValue) value).getValue();
+        }
+
+        return switch (type) {
+            case "int" -> Integer.parseInt(value.toString());
+            case "double" -> Double.parseDouble(value.toString());
+            case "bool" -> Boolean.parseBoolean(value.toString());
+            case "string" -> value.toString();
+            default -> throw new RuntimeException("Tipo desconhecido: " + type);
+        };
+    }
+
 
     @Override
     public String toString() {

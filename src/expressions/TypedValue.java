@@ -2,7 +2,7 @@ package expressions;
 
 public class TypedValue {
     private final Object value;
-    private final String type; // "int", "double", "string", etc.
+    private final String type;
 
     public TypedValue(Object value, String type) {
         this.value = value;
@@ -19,7 +19,10 @@ public class TypedValue {
 
     @Override
     public String toString() {
-        return value.toString();
+        return
+                "value=" + value +
+                ", type='" + type + '\'' +
+                '}';
     }
 }
 

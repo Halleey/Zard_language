@@ -1,6 +1,9 @@
 package interpreter;
 import expressions.BinaryExpression;
 import expressions.LiteralExpression;
+import ifs.Block;
+import ifs.ConditionBlock;
+import ifs.IfStatement;
 import inputs.InputStatement;
 import prints.PrintStatement;
 import tokens.Token;
@@ -42,6 +45,8 @@ public class Parser {
                 return parsePrintStatement();
             } else if ("input".equals(keyword)) {
                 return parseInputStatement();
+            } else if ("if".equals(keyword)) {
+                return parseIfStatement();  // Novo método para o 'if'
             }
             return parseVariableDeclaration();
         }
@@ -50,6 +55,49 @@ public class Parser {
         }
         throw new RuntimeException("Erro de sintaxe: declaração inválida em '" + tokens.get(pos).getValue() + "'");
     }
+
+
+
+    private Statement parseIfStatement() {
+        consume(Token.TokenType.KEYWORD);  // Consome o "if"
+        consume(Token.TokenType.DELIMITER); // Consome o "("
+        Expression condition = parseExpression();  // Parse a condição do 'if'
+        consume(Token.TokenType.DELIMITER); // Consome o ")"
+        consume(Token.TokenType.DELIMITER); // Consome o "{"
+
+        // Parse o bloco de código do 'if'
+        List<Statement> ifStatements = parseBlock();
+
+        Block ifBlock = new Block(ifStatements);
+
+        Block elseBlock = null;
+        if (match(Token.TokenType.KEYWORD) && tokens.get(pos).getValue().equals("else")) {
+            consume(Token.TokenType.KEYWORD);  // Consome o "else"
+            consume(Token.TokenType.DELIMITER); // Consome o "{"
+
+            // Parse o bloco de código do 'else'
+            List<Statement> elseStatements = parseBlock();
+            elseBlock = new Block(elseStatements);
+        }
+
+        // Cria o IfStatement
+        ConditionBlock conditionBlock = new ConditionBlock(condition, ifBlock);
+        List<ConditionBlock> conditionBlocks = new ArrayList<>();
+        conditionBlocks.add(conditionBlock);
+
+        return new IfStatement(conditionBlocks, elseBlock);
+    }
+
+    private List<Statement> parseBlock() {
+        List<Statement> statements = new ArrayList<>();
+        while (!match(Token.TokenType.DELIMITER) || !tokens.get(pos).getValue().equals("}")) {
+            statements.add(parseStatement());
+        }
+        return statements;
+    }
+
+
+
 
     private Statement parseVariableAssignment() {
         Token nameToken = consume(Token.TokenType.IDENTIFIER);

@@ -4,7 +4,7 @@ Zard é uma linguagem de programação baseada em Java, criada para fins de estu
 
 ## ✨ Características Atuais
 
-- **Sintaxe Simples:** Baseada no Java, mas reduzida para facilitar a interpretação.
+- **Sintaxe Simples:** Inspirada no Java, mas reduzida para facilitar a interpretação.
 - **Declaração de Variáveis:** Suporte a tipos como `int`, `double` e `string`.
 - **Atribuição de Valores:** Permite atribuir valores a variáveis no momento da declaração ou posteriormente.
 - **Sistema de Execução Baseado em AST:** Utiliza uma Árvore de Sintaxe Abstrata (AST) para interpretação.
@@ -15,24 +15,41 @@ Zard é uma linguagem de programação baseada em Java, criada para fins de estu
 
 ```zard
 main {
-    int x = 10;
-    double y = 3.14;
-    string nome = "Zard Language";
-    print(x);
-    print(y);
-    print(nome);
+    int x = 6;
+
+    if (x >= 10 ) {
+        print("IF AQUI");
+    }
+    else if(x == 6) {
+        while(x < 10){
+            x++;
+            print(x);
+        }
+    }
+    else {
+        print("ELSE EXECUTADO");
+    }
 }
 ```
 
 ## 🚀 Futuro da Zard
 
-A linguagem continuará recebendo melhorias, incluindo novos recursos planejados, como:
+A linguagem continuará recebendo melhorias para tornar-se mais robusta e versátil. Algumas das metas incluem:
 
-- 🔄 **Estruturas de Controle de Fluxo** (`if`, `else`, `while`).
-- 📚 **Suporte a Funções** (declaração e chamada de funções).
-- 📌 **Tipos de Dados Avançados** (listas e mapas).
+- 📌 **Suporte a Funções** (declaração e chamada de funções).
+- 📚 **Tipos de Dados Avançados** (listas e mapas dinâmicos).
 - 🔧 **Sistema de Módulos e Importação de Código**.
 - 🛠 **Compilação para LLVM IR** para execução independente.
+- 🏗 **Criação de um compilador** para alcançar o sonhado Bootstrapping .
+
+## 🔄 Melhorias em Desenvolvimento
+
+Atualmente, a Zard está passando por implementações importantes:
+- [x]**Criação de IF'S** para permitir decições lógicas.
+- [x]**Criação do While** para permitir Loopings.   
+- []**Adição do return** para encerrar loopings.
+- []**Refatorando a AST** para permitir melhor análise e otimização do código.
+- []**Implementação de listas dinâmicas** para facilitar manipulação de coleções.
 
 ## 📂 Uso
 
@@ -49,5 +66,6 @@ Caso tenha sugestões ou queira contribuir para o projeto, fique à vontade para
 📧 **Contato**
 
 Se quiser saber mais sobre a Zard, entre em contato para discutir melhorias e novos recursos!
+
 
 

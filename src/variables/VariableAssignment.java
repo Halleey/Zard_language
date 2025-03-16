@@ -32,18 +32,34 @@ public class VariableAssignment extends Statement {
         }
 
         return switch (type) {
-            case "int" -> Integer.parseInt(value.toString());
-            case "double" -> Double.parseDouble(value.toString());
-            case "bool" -> Boolean.parseBoolean(value.toString());
+            case "int" -> {
+                if (value instanceof Number) {
+                    yield ((Number) value).intValue(); // Converte corretamente números para int
+                }
+                yield Integer.parseInt(value.toString()); // Caso seja string
+            }
+            case "double" -> {
+                if (value instanceof Number) {
+                    yield ((Number) value).doubleValue(); // Garante que double seja convertido corretamente
+                }
+                yield Double.parseDouble(value.toString());
+            }
+            case "bool" -> {
+                if (value instanceof Boolean) {
+                    yield value;
+                }
+                if (value instanceof Number) {
+                    yield ((Number) value).intValue() != 0; // Converte 0 para false e qualquer outro número para true
+                }
+                yield Boolean.parseBoolean(value.toString());
+            }
             case "string" -> value.toString();
             default -> throw new RuntimeException("Tipo desconhecido: " + type);
         };
     }
-
 
     @Override
     public String toString() {
         return "VariableAssignment{name='" + name + "', value=" + value + "}";
     }
 }
-

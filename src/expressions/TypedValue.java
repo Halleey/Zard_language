@@ -17,6 +17,17 @@ public class TypedValue {
         return type;
     }
 
+
+    public boolean isTruthy() {
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        } else if (value instanceof Number) {
+            return ((Number) value).doubleValue() != 0;
+        }
+        return false; // Strings e outros tipos são considerados "false"
+    }
+
+
     @Override
     public String toString() {
         return

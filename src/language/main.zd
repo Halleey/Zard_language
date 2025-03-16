@@ -1,13 +1,12 @@
 
 main {
-    string nome;
-    string saudacao;
 
+double x = 0.0;
+while (x < 5) {
+    x = x + 0.5;
+    print(x);
 
+}
 
-    input(nome);
-    input(saudacao);
-
-    print(saudacao + " " + nome + "!");
 }
 

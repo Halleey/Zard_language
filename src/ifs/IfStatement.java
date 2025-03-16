@@ -1,5 +1,6 @@
 package ifs;
 
+import expressions.TypedValue;
 import variables.Statement;
 import variables.VariableTable;
 
@@ -13,31 +14,19 @@ public class IfStatement extends Statement {
         this.conditionBlocks = conditionBlocks;
         this.elseBlock = elseBlock;
     }
-
     @Override
     public void execute(VariableTable table) {
         boolean algumIfExecutou = false;
 
         for (ConditionBlock block : conditionBlocks) {
-            Object value = block.getCondition().evaluate(table).getValue();
-            System.out.println("Condição avaliada: " + value + " (" + value.getClass().getSimpleName() + ")");
+            TypedValue evaluatedValue = block.getCondition().evaluate(table);
+            System.out.println("Condição avaliada: " + evaluatedValue);
 
-            if (value instanceof Boolean) {
-                if ((Boolean) value) {
-                    System.out.println("Executando bloco do if...");
-                    block.getBlock().execute(table);
-                    algumIfExecutou = true;
-                    break;
-                }
-            } else if (value instanceof Number) {
-                if (((Number) value).doubleValue() != 0) {
-                    System.out.println("Executando bloco do if (numérico)...");
-                    block.getBlock().execute(table);
-                    algumIfExecutou = true;
-                    break;
-                }
-            } else {
-                System.out.println("Erro: Tipo inesperado na condição do if -> " + value.getClass().getName());
+            if (evaluatedValue.isTruthy()) {
+                System.out.println("Executando bloco do if...");
+                block.getBlock().execute(table);
+                algumIfExecutou = true;
+                break;
             }
         }
 
@@ -48,4 +37,5 @@ public class IfStatement extends Statement {
             System.out.println("Nenhuma condição foi verdadeira e não há bloco else definido.");
         }
     }
+
 }

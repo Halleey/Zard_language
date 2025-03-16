@@ -13,6 +13,7 @@ import variables.Statement;
 import variables.VariableAssignment;
 import variables.VariableDeclaration;
 import variables.VariableReference;
+import whiles.WhileStatement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,12 +51,30 @@ public class Parser {
             } else if ("if".equals(keyword)) {
                 return ifParser.parseIfStatement();  // Novo método para o 'if'
             }
+            else if ("while".equals(keyword)) {  // Adiciona suporte ao while
+                return parseWhileStatement();
+            }
             return parseVariableDeclaration();
         }
         if (match(Token.TokenType.IDENTIFIER)) {
             return parseVariableAssignment();
         }
         throw new RuntimeException("Erro de sintaxe: declaração inválida em '" + tokens.get(pos).getValue() + "'");
+    }
+
+
+    private Statement parseWhileStatement() {
+        consume(Token.TokenType.KEYWORD);  // Consome "while"
+        consume(Token.TokenType.DELIMITER); // Consome "("
+        Expression condition = parseExpression();  // Obtém a condição
+        consume(Token.TokenType.DELIMITER); // Consome ")"
+        consume(Token.TokenType.DELIMITER); // Consome "{"
+
+        // Obtém os comandos dentro do bloco while
+        List<Statement> statements = parseBlock();
+        Block whileBlock = new Block(statements);
+
+        return new WhileStatement(condition, whileBlock);
     }
 
 

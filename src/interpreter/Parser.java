@@ -59,42 +59,70 @@ public class Parser {
 
 
     private Statement parseIfStatement() {
-        consume(Token.TokenType.KEYWORD);  // Consome o "if"
-        consume(Token.TokenType.DELIMITER); // Consome o "("
-        Expression condition = parseExpression();  // Parse a condição do 'if'
-        consume(Token.TokenType.DELIMITER); // Consome o ")"
-        consume(Token.TokenType.DELIMITER); // Consome o "{"
+        consume(Token.TokenType.KEYWORD);  // Consome "if"
+        consume(Token.TokenType.DELIMITER); // Consome "("
+        Expression condition = parseExpression();  // Parse da condição do if
+        consume(Token.TokenType.DELIMITER); // Consome ")"
+        consume(Token.TokenType.DELIMITER); // Consome "{"
 
-        // Parse o bloco de código do 'if'
+        // Parse do bloco do if
         List<Statement> ifStatements = parseBlock();
-
         Block ifBlock = new Block(ifStatements);
 
-        Block elseBlock = null;
-        if (match(Token.TokenType.KEYWORD) && tokens.get(pos).getValue().equals("else")) {
-            consume(Token.TokenType.KEYWORD);  // Consome o "else"
-            consume(Token.TokenType.DELIMITER); // Consome o "{"
-
-            // Parse o bloco de código do 'else'
-            List<Statement> elseStatements = parseBlock();
-            elseBlock = new Block(elseStatements);
-        }
-
-        // Cria o IfStatement
-        ConditionBlock conditionBlock = new ConditionBlock(condition, ifBlock);
         List<ConditionBlock> conditionBlocks = new ArrayList<>();
-        conditionBlocks.add(conditionBlock);
+        conditionBlocks.add(new ConditionBlock(condition, ifBlock));
+
+        Block elseBlock = null;
+
+        while (match(Token.TokenType.KEYWORD) && tokens.get(pos).getValue().equals("else")) {
+            consume(Token.TokenType.KEYWORD); // Consome "else"
+
+            // Verifica se é um else if
+            if (match(Token.TokenType.KEYWORD) && tokens.get(pos).getValue().equals("if")) {
+                consume(Token.TokenType.KEYWORD);  // Consome "if"
+                consume(Token.TokenType.DELIMITER); // Consome "("
+                Expression elseIfCondition = parseExpression();  // Condição do else if
+                consume(Token.TokenType.DELIMITER); // Consome ")"
+                consume(Token.TokenType.DELIMITER); // Consome "{"
+
+                // Parse do bloco do else if
+                List<Statement> elseIfStatements = parseBlock();
+                Block elseIfBlock = new Block(elseIfStatements);
+
+               // System.out.println("Else if detectado com condição: " + elseIfCondition);
+
+                // Adiciona um novo ConditionBlock à lista
+                conditionBlocks.add(new ConditionBlock(elseIfCondition, elseIfBlock));
+            } else {
+                consume(Token.TokenType.DELIMITER); // Consome "{"
+
+                // Parse do bloco do else
+                List<Statement> elseStatements = parseBlock();
+                elseBlock = new Block(elseStatements);
+
+               // System.out.println("Else detectado!");
+                break; // Sai do loop, pois o else finaliza a estrutura
+            }
+        }
 
         return new IfStatement(conditionBlocks, elseBlock);
     }
 
     private List<Statement> parseBlock() {
         List<Statement> statements = new ArrayList<>();
+
+        System.out.println("Iniciando parsing do bloco...");
+
         while (!match(Token.TokenType.DELIMITER) || !tokens.get(pos).getValue().equals("}")) {
             statements.add(parseStatement());
         }
+
+        System.out.println("Fim do bloco encontrado: " + tokens.get(pos).getValue());
+        consume(Token.TokenType.DELIMITER); // Consome o "}"
+
         return statements;
     }
+
 
 
 

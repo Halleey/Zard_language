@@ -1,17 +1,15 @@
 
 main {
+    int x = 11;
 
-    int a = 6;
-    int b = 6;
-    print (a == b);
-    int x = 6;
+    if (x >= 10 ) {
+        print("IF AQUI");
+    }
+    else if(x == 6) {print("else if aqui");
+    }
 
-
-
-    if (x > 2) {
-        print("Maior que 10");
-    } else {
-        print("Menor ou igual a 10");
+    else {
+        print("ELSE EXECUTADO");
     }
 
 }

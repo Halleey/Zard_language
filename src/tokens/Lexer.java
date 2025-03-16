@@ -58,42 +58,15 @@ public class Lexer {
             advance();
         }
         String identifier = result.toString();
-        switch (identifier) {
-            case "int":
-            case "string":
-            case "double":
-            case "print":
-            case "if":
-            case "else":
-            case "else if":
-            case "input":
-            case "function":
-            case "return":
-            case "main":
-            case "while":
-            case "call":
-            case "list":
-            case "map":
-            case "bool":
-                return new Token(Token.TokenType.KEYWORD, identifier);
-            case "new":
-                return  new Token(Token.TokenType.INSTANCE, identifier);
-            case "add":
-            case "addAll":
-            case "remove":
-            case "clear":
-            case "size":
-            case "set":
-            case "get":
-            case "getValues":
-            case "getKeys":
-                return  new Token(Token.TokenType.METHODS, identifier);
-            case "true":
-            case "false":
-                return new Token(Token.TokenType.BOOLEAN, identifier); // true e false como BOOLEAN
-            default:
-                return new Token(Token.TokenType.IDENTIFIER, identifier);
-        }
+        return switch (identifier) {
+            case "int", "string", "double", "print", "if", "else", "else if", "input", "function", "return", "main",
+                 "while", "call", "list", "map", "bool" -> new Token(Token.TokenType.KEYWORD, identifier);
+            case "new" -> new Token(Token.TokenType.INSTANCE, identifier);
+            case "add", "addAll", "remove", "clear", "size", "set", "get", "getValues", "getKeys" ->
+                    new Token(Token.TokenType.METHODS, identifier);
+            case "true", "false" -> new Token(Token.TokenType.BOOLEAN, identifier); // true e false como BOOLEAN
+            default -> new Token(Token.TokenType.IDENTIFIER, identifier);
+        };
     }
 
 

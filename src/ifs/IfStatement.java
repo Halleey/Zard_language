@@ -16,35 +16,36 @@ public class IfStatement extends Statement {
 
     @Override
     public void execute(VariableTable table) {
+        boolean algumIfExecutou = false;
+
         for (ConditionBlock block : conditionBlocks) {
             Object value = block.getCondition().evaluate(table).getValue();
+            System.out.println("Condição avaliada: " + value + " (" + value.getClass().getSimpleName() + ")");
 
             if (value instanceof Boolean) {
-                // Lida com o caso de um valor booleano
-                boolean condition = (Boolean) value;
-                if (condition) {
-                    // Código quando a condição for verdadeira
+                if ((Boolean) value) {
+                    System.out.println("Executando bloco do if...");
                     block.getBlock().execute(table);
-                    return;
+                    algumIfExecutou = true;
+                    break;
                 }
             } else if (value instanceof Number) {
-                // Lida com o caso de um valor numérico (ex: 10 < 11)
-                double condition = ((Number) value).doubleValue();
-                if (condition != 0) {  // Considera qualquer número diferente de 0 como "verdadeiro"
+                if (((Number) value).doubleValue() != 0) {
+                    System.out.println("Executando bloco do if (numérico)...");
                     block.getBlock().execute(table);
-                    return;
+                    algumIfExecutou = true;
+                    break;
                 }
             } else {
-                // Se o valor não for booleano nem numérico, você pode adicionar um tratamento de erro ou log
-                System.out.println("Tipo inesperado: " + value.getClass().getName());
+                System.out.println("Erro: Tipo inesperado na condição do if -> " + value.getClass().getName());
             }
         }
 
-        // Executa o bloco 'else' caso nenhum dos 'if' anteriores seja verdadeiro
-        if (elseBlock != null) {
+        if (!algumIfExecutou && elseBlock != null) {
+            System.out.println("Nenhuma condição foi verdadeira. Executando else...");
             elseBlock.execute(table);
+        } else if (!algumIfExecutou) {
+            System.out.println("Nenhuma condição foi verdadeira e não há bloco else definido.");
         }
     }
-
 }
-

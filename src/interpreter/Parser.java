@@ -63,7 +63,7 @@ public class Parser {
             else if ("while".equals(keyword)) {  // Adiciona suporte ao while
                 return whileParser.parseWhileStatement();
             }
-            return parseVariableDeclaration();
+            return parseVariable.parseVariableDeclaration();
         }
         if (match(Token.TokenType.IDENTIFIER)) {
             return parseVariable.parseVariableAssignment();
@@ -89,24 +89,6 @@ public class Parser {
     }
 
 
-
-
-    private Statement parseVariableDeclaration() {
-        Token typeToken = consume(Token.TokenType.KEYWORD);
-        Token nameToken = consume(Token.TokenType.IDENTIFIER);
-
-        if (match(Token.TokenType.DELIMITER) && tokens.get(pos).getValue().equals(";")) {
-            consume(Token.TokenType.DELIMITER);
-            return new VariableDeclaration(typeToken, nameToken.getValue(), null);
-        }
-
-        consume(Token.TokenType.OPERATOR);
-        Expression value = parseExpression();
-        consume(Token.TokenType.DELIMITER);
-
-        return new VariableDeclaration(typeToken, nameToken.getValue(), value);
-    }
-
     public MainBlock parseMainBlock() {
         List<Statement> statements = new ArrayList<>();
         if (!match(Token.TokenType.KEYWORD)) {
@@ -126,8 +108,6 @@ public class Parser {
 
         return new MainBlock(statements);
     }
-
-
 
     public Expression parseExpression() {
         Expression left = parsePrimaryExpression();

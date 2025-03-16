@@ -35,4 +35,19 @@ public class ParseVariable {
     }
 
 
+    public Statement parseVariableDeclaration() {
+        Token typeToken = parser.consume(Token.TokenType.KEYWORD);
+        Token nameToken = parser.consume(Token.TokenType.IDENTIFIER);
+
+        if (parser.match(Token.TokenType.DELIMITER) && parser.tokens.get(parser.pos).getValue().equals(";")) {
+            parser.consume(Token.TokenType.DELIMITER);
+            return new VariableDeclaration(typeToken, nameToken.getValue(), null);
+        }
+
+        parser.consume(Token.TokenType.OPERATOR);
+        Expression value = parser.parseExpression();
+        parser.consume(Token.TokenType.DELIMITER);
+
+        return new VariableDeclaration(typeToken, nameToken.getValue(), value);
+    }
 }

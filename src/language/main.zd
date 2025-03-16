@@ -1,6 +1,6 @@
 
 main {
-    int x = 6;
+    int x = 1;
 
     if (x >= 10 ) {
         print("IF AQUI");

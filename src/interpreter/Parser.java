@@ -6,6 +6,7 @@ import ifs.ConditionBlock;
 import ifs.IfParser;
 import ifs.IfStatement;
 import inputs.InputStatement;
+import prints.ParserPrintStatement;
 import prints.PrintStatement;
 import tokens.Token;
 import expressions.Expression;
@@ -16,16 +17,19 @@ import whiles.WhileStatement;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class Parser {
     public final List<Token> tokens;
     public int pos = 0;
     private final IfParser ifParser;
     private final WhileParser whileParser;
+    private final ParserPrintStatement printStatement;
+
+
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
         this.ifParser = new IfParser(this);
         this.whileParser = new WhileParser(this);
+        this.printStatement = new ParserPrintStatement(this);
     }
 
     public List<Statement> parse() {
@@ -45,7 +49,7 @@ public class Parser {
             String keyword = tokens.get(pos).getValue();
 
             if ("print".equals(keyword)) {
-                return parsePrintStatement();
+                return printStatement.parsePrintStatement();
             } else if ("input".equals(keyword)) {
                 return parseInputStatement();
             } else if ("if".equals(keyword)) {
@@ -149,15 +153,6 @@ public class Parser {
         return new InputStatement(variableToken.getValue());
     }
 
-    private PrintStatement parsePrintStatement() {
-        consume(Token.TokenType.KEYWORD);
-        consume(Token.TokenType.DELIMITER);
-        Expression expression = parseExpression();
-        consume(Token.TokenType.DELIMITER);
-        consume(Token.TokenType.DELIMITER);
-        return new PrintStatement(expression);
-    }
-
     public Expression parseExpression() {
         Expression left = parsePrimaryExpression();
 
@@ -180,7 +175,6 @@ public class Parser {
 
         return left;
     }
-
 
     private Expression parsePrimaryExpression() {
         if (match(Token.TokenType.NUMBER)) {

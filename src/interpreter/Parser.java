@@ -13,6 +13,7 @@ import variables.Statement;
 import variables.VariableAssignment;
 import variables.VariableDeclaration;
 import variables.VariableReference;
+import whiles.WhileParser;
 import whiles.WhileStatement;
 
 import java.util.ArrayList;
@@ -23,9 +24,11 @@ public class Parser {
     public final List<Token> tokens;
     public int pos = 0;
     private final IfParser ifParser;
+    private final WhileParser whileParser;
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
         this.ifParser = new IfParser(this);
+        this.whileParser = new WhileParser(this);
     }
 
     public List<Statement> parse() {
@@ -52,7 +55,7 @@ public class Parser {
                 return ifParser.parseIfStatement();  // Novo método para o 'if'
             }
             else if ("while".equals(keyword)) {  // Adiciona suporte ao while
-                return parseWhileStatement();
+                return whileParser.parseWhileStatement();
             }
             return parseVariableDeclaration();
         }
@@ -63,19 +66,7 @@ public class Parser {
     }
 
 
-    private Statement parseWhileStatement() {
-        consume(Token.TokenType.KEYWORD);  // Consome "while"
-        consume(Token.TokenType.DELIMITER); // Consome "("
-        Expression condition = parseExpression();  // Obtém a condição
-        consume(Token.TokenType.DELIMITER); // Consome ")"
-        consume(Token.TokenType.DELIMITER); // Consome "{"
 
-        // Obtém os comandos dentro do bloco while
-        List<Statement> statements = parseBlock();
-        Block whileBlock = new Block(statements);
-
-        return new WhileStatement(condition, whileBlock);
-    }
 
 
     public List<Statement> parseBlock() {

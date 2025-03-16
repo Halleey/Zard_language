@@ -1,16 +1,13 @@
 
 main {
-    int x = 11;
+    string nome;
+    string saudacao;
 
-    if (x >= 10 ) {
-        print("IF AQUI");
-    }
-    else if(x == 6) {print("else if aqui");
-    }
 
-    else {
-        print("ELSE EXECUTADO");
-    }
 
+    input(nome);
+    input(saudacao);
+
+    print(saudacao + " " + nome + "!");
 }
 

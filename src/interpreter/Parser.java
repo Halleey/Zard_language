@@ -3,6 +3,7 @@ import expressions.BinaryExpression;
 import expressions.LiteralExpression;
 import ifs.Block;
 import ifs.ConditionBlock;
+import ifs.IfParser;
 import ifs.IfStatement;
 import inputs.InputStatement;
 import prints.PrintStatement;
@@ -18,11 +19,12 @@ import java.util.List;
 
 
 public class Parser {
-    private final List<Token> tokens;
-    private int pos = 0;
-
+    public final List<Token> tokens;
+    public int pos = 0;
+    private final IfParser ifParser;
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
+        this.ifParser = new IfParser(this);
     }
 
     public List<Statement> parse() {
@@ -46,7 +48,7 @@ public class Parser {
             } else if ("input".equals(keyword)) {
                 return parseInputStatement();
             } else if ("if".equals(keyword)) {
-                return parseIfStatement();  // Novo método para o 'if'
+                return ifParser.parseIfStatement();  // Novo método para o 'if'
             }
             return parseVariableDeclaration();
         }
@@ -57,58 +59,7 @@ public class Parser {
     }
 
 
-
-    private Statement parseIfStatement() {
-        consume(Token.TokenType.KEYWORD);  // Consome "if"
-        consume(Token.TokenType.DELIMITER); // Consome "("
-        Expression condition = parseExpression();  // Parse da condição do if
-        consume(Token.TokenType.DELIMITER); // Consome ")"
-        consume(Token.TokenType.DELIMITER); // Consome "{"
-
-        // Parse do bloco do if
-        List<Statement> ifStatements = parseBlock();
-        Block ifBlock = new Block(ifStatements);
-
-        List<ConditionBlock> conditionBlocks = new ArrayList<>();
-        conditionBlocks.add(new ConditionBlock(condition, ifBlock));
-
-        Block elseBlock = null;
-
-        while (match(Token.TokenType.KEYWORD) && tokens.get(pos).getValue().equals("else")) {
-            consume(Token.TokenType.KEYWORD); // Consome "else"
-
-            // Verifica se é um else if
-            if (match(Token.TokenType.KEYWORD) && tokens.get(pos).getValue().equals("if")) {
-                consume(Token.TokenType.KEYWORD);  // Consome "if"
-                consume(Token.TokenType.DELIMITER); // Consome "("
-                Expression elseIfCondition = parseExpression();  // Condição do else if
-                consume(Token.TokenType.DELIMITER); // Consome ")"
-                consume(Token.TokenType.DELIMITER); // Consome "{"
-
-                // Parse do bloco do else if
-                List<Statement> elseIfStatements = parseBlock();
-                Block elseIfBlock = new Block(elseIfStatements);
-
-               // System.out.println("Else if detectado com condição: " + elseIfCondition);
-
-                // Adiciona um novo ConditionBlock à lista
-                conditionBlocks.add(new ConditionBlock(elseIfCondition, elseIfBlock));
-            } else {
-                consume(Token.TokenType.DELIMITER); // Consome "{"
-
-                // Parse do bloco do else
-                List<Statement> elseStatements = parseBlock();
-                elseBlock = new Block(elseStatements);
-
-               // System.out.println("Else detectado!");
-                break; // Sai do loop, pois o else finaliza a estrutura
-            }
-        }
-
-        return new IfStatement(conditionBlocks, elseBlock);
-    }
-
-    private List<Statement> parseBlock() {
+    public List<Statement> parseBlock() {
         List<Statement> statements = new ArrayList<>();
 
         System.out.println("Iniciando parsing do bloco...");
@@ -122,9 +73,6 @@ public class Parser {
 
         return statements;
     }
-
-
-
 
 
     private Statement parseVariableAssignment() {
@@ -190,7 +138,7 @@ public class Parser {
         return new PrintStatement(expression);
     }
 
-    private Expression parseExpression() {
+    public Expression parseExpression() {
         Expression left = parsePrimaryExpression();
 
         while (match(Token.TokenType.OPERATOR)) {
@@ -230,7 +178,7 @@ public class Parser {
         throw new RuntimeException("Erro de sintaxe: expressão inesperada em '" + tokens.get(pos).getValue() + "'");
     }
 
-    private Token consume(Token.TokenType expectedType) {
+    public Token consume(Token.TokenType expectedType) {
         if (pos < tokens.size() && tokens.get(pos).getType() == expectedType) {
             return tokens.get(pos++);
         }
@@ -238,7 +186,7 @@ public class Parser {
                 (pos < tokens.size() ? tokens.get(pos).getValue() : "EOF") + "'");
     }
 
-    private boolean match(Token.TokenType type) {
+    public boolean match(Token.TokenType type) {
         return pos < tokens.size() && tokens.get(pos).getType() == type;
     }
 }

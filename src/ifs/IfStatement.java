@@ -1,6 +1,7 @@
 package ifs;
 
 import expressions.TypedValue;
+import interpreter.ReturnException;
 import variables.Statement;
 import variables.VariableTable;
 
@@ -14,6 +15,7 @@ public class IfStatement extends Statement {
         this.conditionBlocks = conditionBlocks;
         this.elseBlock = elseBlock;
     }
+
     @Override
     public void execute(VariableTable table) {
         boolean algumIfExecutou = false;
@@ -24,7 +26,11 @@ public class IfStatement extends Statement {
 
             if (evaluatedValue.isTruthy()) {
                 System.out.println("Executando bloco do if...");
-                block.getBlock().execute(table);
+                try {
+                    block.getBlock().execute(table);
+                } catch (ReturnException e) {
+                    throw e; // Propaga para os blocos superiores
+                }
                 algumIfExecutou = true;
                 break;
             }
@@ -32,10 +38,14 @@ public class IfStatement extends Statement {
 
         if (!algumIfExecutou && elseBlock != null) {
             System.out.println("Nenhuma condição foi verdadeira. Executando else...");
-            elseBlock.execute(table);
+            try {
+                elseBlock.execute(table);
+            } catch (ReturnException e) {
+                throw e; // Propaga para os blocos superiores
+            }
         } else if (!algumIfExecutou) {
             System.out.println("Nenhuma condição foi verdadeira e não há bloco else definido.");
         }
     }
-
 }
+

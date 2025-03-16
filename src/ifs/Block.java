@@ -1,6 +1,7 @@
 package ifs;
 
 
+import interpreter.ReturnException;
 import variables.Statement;
 import variables.VariableTable;
 
@@ -15,7 +16,12 @@ public class Block {
 
     public void execute(VariableTable table) {
         for (Statement statement : statements) {
-            statement.execute(table);
+            try {
+                statement.execute(table);
+            } catch (ReturnException e) {
+                System.out.println("Retorno encontrado, encerrando execução do bloco atual.");
+                throw e; // Propaga o retorno para o escopo superior
+            }
         }
     }
 }

@@ -1,14 +1,17 @@
 
 main {
-    int x = 1;
+    int x = 2;
 
     if (x >= 10 ) {
         print("IF AQUI");
     }
-    else if(x == 6) {
-    while(x < 10){
+    else if(x == 2) {
 
+    while(x < 10){
        x++;
+        if(x == 7) {
+        return;
+        }
         print(x);
         }
     }

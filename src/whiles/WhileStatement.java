@@ -2,6 +2,7 @@ package whiles;
 
 import expressions.Expression;
 import ifs.Block;
+import interpreter.ReturnException;
 import variables.Statement;
 import variables.VariableTable;
 
@@ -16,8 +17,13 @@ public class WhileStatement extends Statement {
 
     @Override
     public void execute(VariableTable table) {
-        while (condition.evaluate(table).isTruthy()) {  // Avalia a condição
-            block.execute(table);  // Executa o bloco do while
+        while (condition.evaluate(table).isTruthy()) {
+            try {
+                block.execute(table);
+            } catch (ReturnException e) {
+                System.out.println("Retorno encontrado dentro do while, encerrando o loop.");
+                throw e; // Interrompe apenas o loop e propaga o return
+            }
         }
     }
 }

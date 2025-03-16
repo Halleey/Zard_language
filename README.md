@@ -47,7 +47,7 @@ A linguagem continuará recebendo melhorias para tornar-se mais robusta e versá
 Atualmente, a Zard está passando por implementações importantes:
 - [x]**Criação de IF'S** para permitir decições lógicas.
 - [x]**Criação do While** para permitir Loopings.   
-- []**Adição do return** para encerrar loopings.
+- [x]**Adição do return** para encerrar loopings.
 - []**Refatorando a AST** para permitir melhor análise e otimização do código.
 - []**Implementação de listas dinâmicas** para facilitar manipulação de coleções.
 

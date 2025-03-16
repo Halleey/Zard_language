@@ -55,7 +55,21 @@ public class Parser {
 
             if ("print".equals(keyword)) {
                 return printStatement.parsePrintStatement();
-            } else if ("input".equals(keyword)) {
+            }
+            else if (match(Token.TokenType.KEYWORD) && tokens.get(pos).getValue().equals("return")) {
+                pos++; // Avança após o "return"
+
+                // Verifica se há um valor de retorno ou se é um retorno vazio
+                Expression returnValue = null;
+                if (!match(Token.TokenType.DELIMITER) || !tokens.get(pos).getValue().equals(";")) {
+                    returnValue = parseExpression(); // Obtém a expressão de retorno
+                }
+
+                consume(Token.TokenType.DELIMITER); // Consome o ";"
+                return new ReturnStatement(returnValue);
+            }
+
+            else if ("input".equals(keyword)) {
                 return parserInput.parseInputStatement();
             } else if ("if".equals(keyword)) {
                 return ifParser.parseIfStatement();  // Novo método para o 'if'
@@ -75,18 +89,34 @@ public class Parser {
 
     public List<Statement> parseBlock() {
         List<Statement> statements = new ArrayList<>();
+        boolean foundReturn = false; // Flag para detectar um return
 
         System.out.println("Iniciando parsing do bloco...");
 
         while (!match(Token.TokenType.DELIMITER) || !tokens.get(pos).getValue().equals("}")) {
-            statements.add(parseStatement());
+            Statement stmt = parseStatement();
+            statements.add(stmt);
+
+            // Se for um return, interrompe apenas o loop atual
+            if (stmt instanceof ReturnStatement) {
+                foundReturn = true; // Marca que um return foi encontrado
+                break; // Sai do loop atual
+            }
         }
 
         System.out.println("Fim do bloco encontrado: " + tokens.get(pos).getValue());
         consume(Token.TokenType.DELIMITER); // Consome o "}"
 
+        // Permite que código fora do bloco de ifs/whiles continue
+        if (!foundReturn) {
+            return statements;
+        }
+
+        System.out.println("Retorno encontrado, encerrando execução do bloco atual.");
+
         return statements;
     }
+
 
 
     public MainBlock parseMainBlock() {

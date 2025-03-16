@@ -12,7 +12,6 @@ main {
         print(x);
         }
     }
-
     else {
         print("ELSE EXECUTADO");
     }

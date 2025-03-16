@@ -25,6 +25,8 @@ public class Parser {
     private final WhileParser whileParser;
     private final ParserPrintStatement printStatement;
     private final ParserInput parserInput;
+    private final ParseVariable parseVariable;
+
 
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
@@ -32,6 +34,7 @@ public class Parser {
         this.whileParser = new WhileParser(this);
         this.printStatement = new ParserPrintStatement(this);
         this.parserInput  = new ParserInput(this);
+        this.parseVariable = new ParseVariable(this);
     }
 
     public List<Statement> parse() {
@@ -63,7 +66,7 @@ public class Parser {
             return parseVariableDeclaration();
         }
         if (match(Token.TokenType.IDENTIFIER)) {
-            return parseVariableAssignment();
+            return parseVariable.parseVariableAssignment();
         }
         throw new RuntimeException("Erro de sintaxe: declaração inválida em '" + tokens.get(pos).getValue() + "'");
     }
@@ -86,27 +89,6 @@ public class Parser {
     }
 
 
-    private Statement parseVariableAssignment() {
-        Token nameToken = consume(Token.TokenType.IDENTIFIER);
-
-        if (match(Token.TokenType.OPERATOR)) {
-            Token operatorToken = tokens.get(pos);
-            String op = operatorToken.getValue();
-
-            if (op.equals("++") || op.equals("--")) {
-                consume(Token.TokenType.OPERATOR);
-                consume(Token.TokenType.DELIMITER);
-                return new IncrementDecrementStatement(nameToken.getValue(), op);
-            }
-
-            consume(Token.TokenType.OPERATOR);
-            Expression value = parseExpression();
-            consume(Token.TokenType.DELIMITER);
-            return new VariableAssignment(nameToken.getValue(), value);
-        }
-
-        throw new RuntimeException("Erro de sintaxe: esperado operador após '" + nameToken.getValue() + "'");
-    }
 
 
     private Statement parseVariableDeclaration() {

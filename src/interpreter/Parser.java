@@ -6,6 +6,7 @@ import ifs.ConditionBlock;
 import ifs.IfParser;
 import ifs.IfStatement;
 import inputs.InputStatement;
+import inputs.ParserInput;
 import prints.ParserPrintStatement;
 import prints.PrintStatement;
 import tokens.Token;
@@ -23,13 +24,14 @@ public class Parser {
     private final IfParser ifParser;
     private final WhileParser whileParser;
     private final ParserPrintStatement printStatement;
-
+    private final ParserInput parserInput;
 
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
         this.ifParser = new IfParser(this);
         this.whileParser = new WhileParser(this);
         this.printStatement = new ParserPrintStatement(this);
+        this.parserInput  = new ParserInput(this);
     }
 
     public List<Statement> parse() {
@@ -51,7 +53,7 @@ public class Parser {
             if ("print".equals(keyword)) {
                 return printStatement.parsePrintStatement();
             } else if ("input".equals(keyword)) {
-                return parseInputStatement();
+                return parserInput.parseInputStatement();
             } else if ("if".equals(keyword)) {
                 return ifParser.parseIfStatement();  // Novo método para o 'if'
             }
@@ -143,15 +145,7 @@ public class Parser {
         return new MainBlock(statements);
     }
 
-    private InputStatement parseInputStatement() {
-        consume(Token.TokenType.KEYWORD);
-        consume(Token.TokenType.DELIMITER);
-        Token variableToken = consume(Token.TokenType.IDENTIFIER);
-        consume(Token.TokenType.DELIMITER);
-        consume(Token.TokenType.DELIMITER);
 
-        return new InputStatement(variableToken.getValue());
-    }
 
     public Expression parseExpression() {
         Expression left = parsePrimaryExpression();

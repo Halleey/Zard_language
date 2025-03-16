@@ -9,10 +9,7 @@ import inputs.InputStatement;
 import prints.PrintStatement;
 import tokens.Token;
 import expressions.Expression;
-import variables.Statement;
-import variables.VariableAssignment;
-import variables.VariableDeclaration;
-import variables.VariableReference;
+import variables.*;
 import whiles.WhileParser;
 import whiles.WhileStatement;
 
@@ -67,8 +64,6 @@ public class Parser {
 
 
 
-
-
     public List<Statement> parseBlock() {
         List<Statement> statements = new ArrayList<>();
 
@@ -87,11 +82,26 @@ public class Parser {
 
     private Statement parseVariableAssignment() {
         Token nameToken = consume(Token.TokenType.IDENTIFIER);
-        consume(Token.TokenType.OPERATOR);
-        Expression value = parseExpression();
-        consume(Token.TokenType.DELIMITER);
-        return new VariableAssignment(nameToken.getValue(), value);
+
+        if (match(Token.TokenType.OPERATOR)) {
+            Token operatorToken = tokens.get(pos);
+            String op = operatorToken.getValue();
+
+            if (op.equals("++") || op.equals("--")) {
+                consume(Token.TokenType.OPERATOR);
+                consume(Token.TokenType.DELIMITER);
+                return new IncrementDecrementStatement(nameToken.getValue(), op);
+            }
+
+            consume(Token.TokenType.OPERATOR);
+            Expression value = parseExpression();
+            consume(Token.TokenType.DELIMITER);
+            return new VariableAssignment(nameToken.getValue(), value);
+        }
+
+        throw new RuntimeException("Erro de sintaxe: esperado operador após '" + nameToken.getValue() + "'");
     }
+
 
     private Statement parseVariableDeclaration() {
         Token typeToken = consume(Token.TokenType.KEYWORD);

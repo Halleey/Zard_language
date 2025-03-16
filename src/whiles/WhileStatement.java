@@ -14,14 +14,6 @@ public class WhileStatement extends Statement {
         this.block = block;
     }
 
-    public Expression getCondition() {
-        return condition;
-    }
-
-    public Block getBlock() {
-        return block;
-    }
-
     @Override
     public void execute(VariableTable table) {
         while (condition.evaluate(table).isTruthy()) {  // Avalia a condição

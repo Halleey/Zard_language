@@ -1,12 +1,20 @@
 
 main {
+    int x = 6;
 
-double x = 0.0;
-while (x < 5) {
-    x = x + 0.5;
-    print(x);
+    if (x >= 10 ) {
+        print("IF AQUI");
+    }
+    else if(x == 6) {
+    while(x < 10){
+       x--;
+        print(x);
+        }
+    }
 
-}
+    else {
+        print("ELSE EXECUTADO");
+    }
 
 }
 

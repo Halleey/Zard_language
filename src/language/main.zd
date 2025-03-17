@@ -1,16 +1,12 @@
 
 main {
     int x = 2;
-
-
-  int x = 15;
     print(x);
 
     if (x >= 10 ) {
         print("IF AQUI");
     }
     else if(x == 2) {
-
     while(x < 10){
        x++;
         if(x == 7) {
@@ -22,6 +18,11 @@ main {
     else {
         print("ELSE EXECUTADO");
     }
-
+print("teste");
+int h = 0;
+while(h < 10) {
+h++;
+print(h);}
+}
 }
 

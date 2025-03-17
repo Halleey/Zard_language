@@ -20,6 +20,7 @@ public class VariableAssignment extends Statement {
         TypedValue evaluatedValue = value.evaluate(table);
         TypedValue oldValue = table.getVariable(name);
 
+
         // Converter o valor para o tipo da variável
         Object convertedValue = convertToType(evaluatedValue.getValue(), oldValue.getType());
 

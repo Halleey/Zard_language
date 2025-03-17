@@ -2,7 +2,7 @@ package whiles;
 
 import expressions.Expression;
 import ifs.Block;
-import interpreter.ReturnException;
+import returns.ReturnException;
 import variables.Statement;
 import variables.VariableTable;
 

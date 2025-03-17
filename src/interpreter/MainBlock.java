@@ -1,6 +1,6 @@
 package interpreter;
 
-import ast.ASTNode;
+import returns.ReturnException;
 import variables.Statement;
 import variables.VariableTable;
 

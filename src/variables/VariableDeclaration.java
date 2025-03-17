@@ -4,6 +4,7 @@ import expressions.Expression;
 import expressions.LiteralExpression;
 import expressions.TypedValue;
 import tokens.Token;
+import variables.exceptions.ExceptionVar;
 
 
 public class VariableDeclaration extends Statement {
@@ -18,6 +19,9 @@ public class VariableDeclaration extends Statement {
     }
 
     public void execute(VariableTable table) {
+        if(table.hasVariable(name)) {
+             throw new ExceptionVar(name);
+        }
         Object evaluatedValue = (value != null) ? evaluateExpression(value) : getDefaultValue();
         table.setVariable(name, new TypedValue(evaluatedValue, type.getValue())); // Define o tipo corretamente
     }

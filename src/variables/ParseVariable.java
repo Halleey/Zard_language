@@ -39,6 +39,8 @@ public class ParseVariable {
         Token typeToken = parser.consume(Token.TokenType.KEYWORD);
         Token nameToken = parser.consume(Token.TokenType.IDENTIFIER);
 
+
+
         if (parser.match(Token.TokenType.DELIMITER) && parser.tokens.get(parser.pos).getValue().equals(";")) {
             parser.consume(Token.TokenType.DELIMITER);
             return new VariableDeclaration(typeToken, nameToken.getValue(), null);

@@ -1,7 +1,7 @@
 package ifs;
 
 
-import interpreter.ReturnException;
+import returns.ReturnException;
 import variables.Statement;
 import variables.VariableTable;
 

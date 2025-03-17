@@ -1,7 +1,7 @@
 package ifs;
 
 import expressions.TypedValue;
-import interpreter.ReturnException;
+import returns.ReturnException;
 import variables.Statement;
 import variables.VariableTable;
 

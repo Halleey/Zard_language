@@ -2,6 +2,10 @@
 main {
     int x = 2;
 
+
+  int x = 15;
+    print(x);
+
     if (x >= 10 ) {
         print("IF AQUI");
     }

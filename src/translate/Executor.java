@@ -1,6 +1,7 @@
 package translate;
 
 import ast.ASTNode;
+import ast.exceptions.ReturnValue;
 import expressions.TypedValue;
 import home.MainAST;
 import prints.ASTPrinter;
@@ -39,13 +40,13 @@ public class Executor {
             Map<String, TypedValue> env = new HashMap<>();
 
             for (ASTNode node : ast) {
-                if (node instanceof MainAST mainNode) {
-                    mainNode.evaluate(env); // executa o bloco main
-                } else {
-                    node.evaluate(env); // qualquer outro nó
+                try {
+                    node.evaluate(env);
+                } catch (ReturnValue rv) {
+                    System.out.println("Programa interrompido pelo return: " + rv.value.getValue());
+                    break;
                 }
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }

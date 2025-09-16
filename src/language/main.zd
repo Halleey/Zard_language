@@ -1,14 +1,11 @@
 main {
     int x = 0;
-    string nome;
-    nome = input("digite um nome");
-    while (x < 5) {
-        print("Valor de x: " + x);
-        if(x == 3){
-        print("Valor de X passou no if " + x);
-        }
+    while (x < 10) {
+        print(x);
         x++;
+        if(x == 5) {
+            return 0;
+        }
     }
-    print("meu nome é: " + nome);
-    print("Fim do loop, x = " + x);
+    print("Fim do loop");
 }

@@ -1,9 +1,10 @@
 package translate;
 import ast.ASTNode;
+import ast.exceptions.ReturnNode;
 import ast.inputs.InputParser;
 import expressions.TypedValue;
-import home.MainAST;
-import ifstatements.IfNode;
+import home.MainParser;
+import ifstatements.IfParser;
 import loops.WhileParser;
 import prints.PrintNode;
 import tokens.Token;
@@ -55,7 +56,7 @@ public class Parser {
         return nodes;
     }
 
-    private ASTNode parseStatement() {
+    public ASTNode parseStatement() {
         Token tok = current();
 
         if (tok.getType() == Token.TokenType.KEYWORD) {
@@ -72,10 +73,13 @@ public class Parser {
                     return new PrintNode(expr);
                 }
                 case "if" -> {
-                    return parseIf();
+                    IfParser ifParser = new IfParser(this);
+                    return ifParser.parseIf();
                 }
                 case "main"->{
-                    return parseMain();
+
+                    MainParser mainParser = new MainParser(this);
+                    return mainParser.parseMain();
                 }
                 case "while"->{
                     WhileParser whileParser = new WhileParser(this);
@@ -84,6 +88,12 @@ public class Parser {
                 case "input"->{
                     InputParser inputParser = new InputParser(this);
                     return inputParser.parse();
+                }
+                case "return" -> {
+                    advance();
+                    ASTNode expr = parseExpression();
+                    eat(Token.TokenType.DELIMITER, ";");
+                    return new ReturnNode(expr);
                 }
             }
         }
@@ -197,42 +207,6 @@ public class Parser {
         throw new RuntimeException("Fator inesperado: " + tok.getValue());
     }
 
-    private ASTNode parseIf() {
-        // Consome 'if'
-        if (!current().getType().equals(Token.TokenType.KEYWORD) || !current().getValue().equals("if")) {
-            throw new RuntimeException("Esperado 'if', mas encontrado " + current().getValue());
-        }
-        advance();
-
-        // Verifica '('
-        eat(Token.TokenType.DELIMITER, "(");
-
-        // Lê a condição
-        ASTNode condition = parseExpression();
-
-        // Verifica ')'
-        eat(Token.TokenType.DELIMITER, ")");
-
-        // Bloco then
-        List<ASTNode> thenBranch = parseBlock();
-
-        // Bloco else
-        List<ASTNode> elseBranch = null;
-        if (current().getType() == Token.TokenType.KEYWORD && current().getValue().equals("else")) {
-            advance();
-
-            if (current().getType() == Token.TokenType.KEYWORD && current().getValue().equals("if")) {
-                // else if → recursão
-                elseBranch = List.of(parseIf());
-            } else {
-                // else normal
-                elseBranch = parseBlock();
-            }
-        }
-
-        return new IfNode(condition, thenBranch, elseBranch);
-    }
-
     public List<ASTNode> parseBlock() {
         List<ASTNode> nodes = new ArrayList<>();
         eat(Token.TokenType.DELIMITER, "{");
@@ -242,26 +216,4 @@ public class Parser {
         eat(Token.TokenType.DELIMITER, "}");
         return nodes;
     }
-
-
-    private ASTNode parseMain() {
-        // Consome 'main'
-        eat(Token.TokenType.KEYWORD, "main");
-
-        // Espera '{'
-        eat(Token.TokenType.DELIMITER, "{");
-
-        // Lê o corpo
-        List<ASTNode> body = new ArrayList<>();
-        while (!current().getValue().equals("}")) {
-            body.add(parseStatement());
-        }
-
-        // Fecha '}'
-        eat(Token.TokenType.DELIMITER, "}");
-
-        return new MainAST(body);
-    }
-
-
 }

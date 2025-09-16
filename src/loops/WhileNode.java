@@ -1,6 +1,7 @@
 package loops;
 
 import ast.ASTNode;
+import ast.exceptions.BreakLoop;
 import expressions.TypedValue;
 
 import java.util.List;
@@ -16,21 +17,22 @@ public class WhileNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(Map<String, TypedValue> variables) {
-        // Avalia a condição
-        TypedValue condVal = condition.evaluate(variables);
-        if (!(condVal.getValue() instanceof Boolean)) {
-            throw new RuntimeException("Condição do while deve ser boolean");
-        }
-
-        // Enquanto a condição for verdadeira, executa o corpo
-        while ((Boolean) condVal.getValue()) {
-            for (ASTNode node : body) {
-                node.evaluate(variables);
+        while (true) {
+            TypedValue condVal = condition.evaluate(variables);
+            if (!(condVal.getValue() instanceof Boolean)) {
+                throw new RuntimeException("Condição do while deve ser boolean");
             }
-            // Atualiza a condição após executar o corpo
-            condVal = condition.evaluate(variables);
-        }
+            if (!((Boolean) condVal.getValue())) break;
 
+            try {
+                for (ASTNode node : body) {
+                    node.evaluate(variables);
+                }
+            } catch (BreakLoop ignored) {
+                break; // sai do while, mas continua o programa
+            }
+        }
         return null;
     }
+
 }

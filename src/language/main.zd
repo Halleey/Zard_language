@@ -4,8 +4,8 @@ main {
         print(x);
         x++;
         if(x == 5) {
-            return 0;
+            break;
         }
     }
-    print("Fim do loop");
+    print("Saiu do looping sem problemas ");
 }

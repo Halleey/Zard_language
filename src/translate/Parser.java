@@ -1,5 +1,6 @@
 package translate;
 import ast.ASTNode;
+import ast.exceptions.BreakNode;
 import ast.exceptions.ReturnNode;
 import ast.inputs.InputParser;
 import expressions.TypedValue;
@@ -94,6 +95,11 @@ public class Parser {
                     ASTNode expr = parseExpression();
                     eat(Token.TokenType.DELIMITER, ";");
                     return new ReturnNode(expr);
+                }
+                case "break"->{
+                    advance();
+                    eat(Token.TokenType.DELIMITER, ";");
+                    return new BreakNode();
                 }
             }
         }

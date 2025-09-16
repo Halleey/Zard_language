@@ -1,28 +1,14 @@
-
 main {
-    int x = 2;
-    print(x);
-
-    if (x >= 10 ) {
-        print("IF AQUI");
-    }
-    else if(x == 2) {
-    while(x < 10){
-       x++;
-        if(x == 7) {
-        return;
+    int x = 0;
+    string nome;
+    nome = input("digite um nome");
+    while (x < 5) {
+        print("Valor de x: " + x);
+        if(x == 3){
+        print("Valor de X passou no if " + x);
         }
-        print(x);
-        }
+        x++;
     }
-    else {
-        print("ELSE EXECUTADO");
-    }
-print("teste");
-int h = 0;
-while(h < 10) {
-h++;
-print(h);}
+    print("meu nome é: " + nome);
+    print("Fim do loop, x = " + x);
 }
-}
-

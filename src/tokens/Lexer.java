@@ -3,6 +3,7 @@ package tokens;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class Lexer {
     private final String input;
     private int pos = 0;
@@ -58,15 +59,42 @@ public class Lexer {
             advance();
         }
         String identifier = result.toString();
-        return switch (identifier) {
-            case "int", "string", "double", "print", "if", "else", "else if", "input", "function", "return", "main",
-                 "while", "call", "list", "map", "bool" -> new Token(Token.TokenType.KEYWORD, identifier);
-            case "new" -> new Token(Token.TokenType.INSTANCE, identifier);
-            case "add", "addAll", "remove", "clear", "size", "set", "get", "getValues", "getKeys" ->
-                    new Token(Token.TokenType.METHODS, identifier);
-            case "true", "false" -> new Token(Token.TokenType.BOOLEAN, identifier); // true e false como BOOLEAN
-            default -> new Token(Token.TokenType.IDENTIFIER, identifier);
-        };
+        switch (identifier) {
+            case "int":
+            case "string":
+            case "double":
+            case "print":
+            case "if":
+            case "else":
+            case "else if":
+            case "input":
+            case "function":
+            case "return":
+            case "main":
+            case "while":
+            case "call":
+            case "list":
+            case "map":
+            case "boolean":
+                return new Token(Token.TokenType.KEYWORD, identifier);
+            case "new":
+                return  new Token(Token.TokenType.INSTANCE, identifier);
+            case "add":
+            case "addAll":
+            case "remove":
+            case "clear":
+            case "size":
+            case "set":
+            case "get":
+            case "getValues":
+            case "getKeys":
+                return  new Token(Token.TokenType.METHODS, identifier);
+            case "true":
+            case "false":
+                return new Token(Token.TokenType.BOOLEAN, identifier); // true e false como BOOLEAN
+            default:
+                return new Token(Token.TokenType.IDENTIFIER, identifier);
+        }
     }
 
 
@@ -150,7 +178,7 @@ public class Lexer {
                 tokens.add(readNumber());
                 continue;
             }
-            if (currentChar == '+' || currentChar == '-' || currentChar == '*' || currentChar == '/') {
+            if (currentChar == '+' || currentChar == '-' || currentChar == '*' || currentChar == '/' || currentChar == '%') {
                 tokens.add(readOperator());
                 continue;
             }

@@ -15,21 +15,20 @@ Zard é uma linguagem de programação baseada em Java, criada para fins de estu
 
 ```zard
 main {
-    int x = 6;
-
-    if (x >= 10 ) {
-        print("IF AQUI");
-    }
-    else if(x == 6) {
-        while(x < 10){
-            x++;
-            print(x);
+    int x = 0;
+    while (x < 10) {
+        print(x);
+        x++;
+        if(x == 5) {
+            break;
         }
     }
-    else {
-        print("ELSE EXECUTADO");
-    }
+    print("Saiu do looping sem problemas ");
+    list nome = ("hallyson");
+    nome.add(1);
+    print(nome);
 }
+
 ```
 
 ## 🚀 Futuro da Zard
@@ -48,8 +47,10 @@ Atualmente, a Zard está passando por implementações importantes:
 - [x]**Criação de IF'S** para permitir decições lógicas.
 - [x]**Criação do While** para permitir Loopings.   
 - [x]**Adição do return** para encerrar loopings.
-- []**Refatorando a AST** para permitir melhor análise e otimização do código.
-- []**Implementação de listas dinâmicas** para facilitar manipulação de coleções.
+- [x]**Refatorando a AST** para permitir melhor análise e otimização do código.
+- [x]**Implementação de listas dinâmicas** para facilitar manipulação de coleções.
+- []**Implementação de mapas dinâmicos** para facilitar manipulação de coleções.
+- []**Implementação de funções** para modularização do código.
 
 ## 📂 Uso
 
@@ -66,6 +67,4 @@ Caso tenha sugestões ou queira contribuir para o projeto, fique à vontade para
 📧 **Contato**
 
 Se quiser saber mais sobre a Zard, entre em contato para discutir melhorias e novos recursos!
-
-
 

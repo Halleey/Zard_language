@@ -1,31 +1,44 @@
 main {
-    int x = 0;
-    int z = 10;
-    string nome = "hallyson";
-    while (x < 10) {
-        print(x);
-        x++;
-        if(x == 5) {
 
-            break;
+    int contador = 0;
+    string mensagem = "Início do programa";
+
+    print(mensagem);
+
+
+    list numeros = (1, 2, 3);
+
+
+    function dobrar(int valor) {
+        print("Dobro de " + valor + " é " + (valor * 2));
+    }
+
+
+    function adicionarLista(list lst, int valor) {
+        lst.add(valor);
+        print("Lista após adicionar: " + lst);
+    }
+
+    while (contador < 5) {
+        print("Contador: " + contador);
+
+        if (contador == 3) {
+            print("Chegou no 3, pulando para próximo");
         }
-    }
-    print("Saiu do looping sem problemas ");
-    list nomes = ("teste");
-    nomes.add(1);
-    print(nome);
-    nomes.remove(0);
-    print(nomes);
-    function teste(int x, int z){
-    print("ola mundo" + x + " " +  z);
-    }
-    int lol = 9;
-    int beta = 22;
-    call teste(beta, lol);
 
-    function sum(int z, int x){
-    int resultado = z+x;
-    print(resultado);
+        call dobrar(contador);
+
+        call adicionarLista(numeros, contador);
+
+        contador++;
     }
-    call sum(beta, lol);
+    function sum(int z, int x){
+      return z +x;
+    }
+    int i = 1;
+    int b = 1;
+    int resultado = sum(b, i);
+    print("resultado foi " + resultado );
+    print("Lista final: " + numeros);
+    print("Fim do programa");
 }

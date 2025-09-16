@@ -2,6 +2,7 @@ package translate;
 import ast.ASTNode;
 import ast.exceptions.BreakNode;
 import ast.exceptions.ReturnNode;
+import ast.functions.FunctionCallNode;
 import ast.functions.FunctionCallParser;
 import ast.functions.FunctionParser;
 import ast.inputs.InputParser;
@@ -261,41 +262,73 @@ public class Parser {
     }
     private ASTNode parseFactor() {
         Token tok = current();
+
         if (tok.getType() == Token.TokenType.NUMBER) {
             advance();
             String num = tok.getValue();
             if (num.contains(".")) {
-                // Número com ponto decimal => double
                 return new LiteralNode(new TypedValue("double", Double.parseDouble(num)));
             } else {
-                // Número inteiro => int
                 return new LiteralNode(new TypedValue("int", Integer.parseInt(num)));
             }
         }
+
         if (tok.getType() == Token.TokenType.STRING) {
             advance();
             return new LiteralNode(new TypedValue("string", tok.getValue()));
         }
+
         if (tok.getType() == Token.TokenType.BOOLEAN) {
             advance();
             return new LiteralNode(new TypedValue("boolean", Boolean.parseBoolean(tok.getValue())));
         }
-        else if (tok.getType() == Token.TokenType.KEYWORD && tok.getValue().equals("input")) {
-            // Agora input pode ser usado dentro de expressões
+
+        if (tok.getType() == Token.TokenType.KEYWORD && tok.getValue().equals("input")) {
             InputParser inputParser = new InputParser(this);
             return inputParser.parse();
         }
+
+        // IDENTIFIER agora pode ser variável ou função
         if (tok.getType() == Token.TokenType.IDENTIFIER) {
             advance();
-            return new VariableNode(tok.getValue());
+            String name = tok.getValue();
+
+            // Checa se é chamada de função: f(1,2)
+            if (current().getValue().equals("(")) {
+                List<ASTNode> args = parseArguments();
+                return new FunctionCallNode(name, args);
+            }
+
+            // Caso contrário, é uma variável ou função como valor
+            return new VariableNode(name);
         }
+
         if (tok.getValue().equals("(")) {
             advance();
             ASTNode expr = parseExpression();
             eat(Token.TokenType.DELIMITER, ")");
             return expr;
         }
+
         throw new RuntimeException("Fator inesperado: " + tok.getValue());
+    }
+
+    // Novo método para evitar duplicação de código
+    private List<ASTNode> parseArguments() {
+        eat(Token.TokenType.DELIMITER, "(");
+        List<ASTNode> args = new ArrayList<>();
+        if (!current().getValue().equals(")")) {
+            do {
+                args.add(parseExpression());
+                if (current().getValue().equals(",")) {
+                    advance();
+                } else {
+                    break;
+                }
+            } while (!current().getValue().equals(")"));
+        }
+        eat(Token.TokenType.DELIMITER, ")");
+        return args;
     }
 
     public List<ASTNode> parseBlock() {

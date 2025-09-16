@@ -28,4 +28,14 @@ public class DynamicList {
     public List<TypedValue> getElements() {
         return elements;
     }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < elements.size(); i++) {
+            sb.append(elements.get(i).getValue());
+            if (i < elements.size() - 1) sb.append(", ");
+        }
+        sb.append("]");
+        return sb.toString();
+    }
 }

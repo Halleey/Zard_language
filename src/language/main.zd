@@ -8,4 +8,7 @@ main {
         }
     }
     print("Saiu do looping sem problemas ");
+    list nome = ("hallyson");
+    nome.add(1);
+    print(nome);
 }

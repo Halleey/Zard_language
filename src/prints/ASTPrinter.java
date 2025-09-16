@@ -1,7 +1,12 @@
 package prints;
 
 import ast.ASTNode;
+import ast.exceptions.BreakNode;
 import ast.inputs.InputNode;
+import ast.lists.ListAddNode;
+import ast.lists.ListNode;
+import expressions.DynamicList;
+import expressions.TypedValue;
 import home.MainAST;
 import ifstatements.IfNode;
 import loops.WhileNode;
@@ -27,6 +32,7 @@ public class ASTPrinter {
                 System.out.println(prefix + "  Initializer:");
                 printNode(decl.initializer, indent + 2);
             }
+
         } else if (node instanceof AssignmentNode assign) {
             System.out.println(prefix + "Assign: " + assign.name);
             printNode(assign.valueNode, indent + 1);
@@ -54,11 +60,36 @@ public class ASTPrinter {
             }
 
         }
+        else if(node instanceof BreakNode){
+            System.out.println(prefix + " break");
+        }
         else if(node instanceof InputNode inputNode){
             if (inputNode.getPrompt() != null && !inputNode.getPrompt().isEmpty()) {
                 System.out.println(prefix + "  Prompt: \"" + inputNode.getPrompt() + "\"");
             }
         }
+
+        else if (node instanceof ListNode listNode) {
+            System.out.println(prefix + "List:");
+            DynamicList dynList = listNode.getList();
+            List<TypedValue> elements = dynList.getElements();
+            if (elements.isEmpty()) {
+                System.out.println(prefix + "  (vazia)");
+            } else {
+                for (int i = 0; i < elements.size(); i++) {
+                    TypedValue val = elements.get(i);
+                    System.out.println(prefix + "  [" + i + "]: " + val.getValue() + " (" + val.getType() + ")");
+                }
+            }
+        }
+        else if (node instanceof ListAddNode listAddNode) {
+            System.out.println(prefix + "ListAdd:");
+            System.out.println(prefix + "  List:");
+            printNode(listAddNode.getListNode(), indent + 2);
+            System.out.println(prefix + "  Value to Add:");
+            printNode(listAddNode.getValuesNode(), indent + 2);
+        }
+
         else if (node instanceof IfNode ifNode) {
             System.out.println(prefix + "If:");
             System.out.println(prefix + "  Condition:");

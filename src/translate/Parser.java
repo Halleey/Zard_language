@@ -3,6 +3,11 @@ import ast.ASTNode;
 import ast.exceptions.BreakNode;
 import ast.exceptions.ReturnNode;
 import ast.inputs.InputParser;
+import ast.lists.ListAddNode;
+import ast.lists.ListClearNode;
+import ast.lists.ListNode;
+import ast.lists.ListParser;
+import expressions.DynamicList;
 import expressions.TypedValue;
 import home.MainParser;
 import ifstatements.IfParser;
@@ -77,16 +82,16 @@ public class Parser {
                     IfParser ifParser = new IfParser(this);
                     return ifParser.parseIf();
                 }
-                case "main"->{
+                case "main" -> {
 
                     MainParser mainParser = new MainParser(this);
                     return mainParser.parseMain();
                 }
-                case "while"->{
+                case "while" -> {
                     WhileParser whileParser = new WhileParser(this);
-                    return  whileParser.parse();
+                    return whileParser.parse();
                 }
-                case "input"->{
+                case "input" -> {
                     InputParser inputParser = new InputParser(this);
                     return inputParser.parse();
                 }
@@ -96,10 +101,14 @@ public class Parser {
                     eat(Token.TokenType.DELIMITER, ";");
                     return new ReturnNode(expr);
                 }
-                case "break"->{
+                case "break" -> {
                     advance();
                     eat(Token.TokenType.DELIMITER, ";");
                     return new BreakNode();
+                }
+                case "list" -> {
+                    ListParser listParser = new ListParser(this);
+                    return listParser.parseListDeclaration();
                 }
             }
         }
@@ -107,12 +116,45 @@ public class Parser {
         if (tok.getType() == Token.TokenType.IDENTIFIER) {
             String name = tok.getValue();
             advance();
+
+            // Suporte para chamadas de métodos de lista
+            if (current().getValue().equals(".")) {
+                advance();
+                String method = current().getValue();
+                advance();
+                eat(Token.TokenType.DELIMITER, "(");
+
+                ASTNode arg = null;
+                if (!current().getValue().equals(")")) {
+                    arg = parseExpression();
+                }
+
+                eat(Token.TokenType.DELIMITER, ")");
+                eat(Token.TokenType.DELIMITER, ";");
+
+                ASTNode listVar = new VariableNode(name);
+
+                switch (method) {
+                    case "add" -> {
+                        return new ListAddNode(listVar, arg);
+                    }
+                    case "clear" -> {
+                        return new ListClearNode(listVar);
+                    }
+
+                }
+            }
+
+            // Atribuição normal
             if (current().getValue().equals("=")) {
                 advance();
                 ASTNode value = parseExpression();
                 eat(Token.TokenType.DELIMITER, ";");
                 return new AssignmentNode(name, value);
-            } else if (current().getValue().equals("++") || current().getValue().equals("--")) {
+            }
+
+            // Operadores unários
+            else if (current().getValue().equals("++") || current().getValue().equals("--")) {
                 String op = current().getValue();
                 advance();
                 eat(Token.TokenType.DELIMITER, ";");
@@ -130,14 +172,41 @@ public class Parser {
         advance();
 
         ASTNode initializer = null;
-        if (current().getValue().equals("=")) {
-            advance();
-            initializer = parseExpression();
-        }
 
-        eat(Token.TokenType.DELIMITER, ";");
-        return new VariableDeclarationNode(name, type, initializer);
+        if (type.equals("list")) {
+            // Declaração de lista
+            if (current().getValue().equals("=")) {
+                advance();
+                // Espera '(' para lista inicializada
+                eat(Token.TokenType.DELIMITER, "(");
+                List<TypedValue> elements = new ArrayList<>();
+                while (!current().getValue().equals(")")) {
+                    ASTNode expr = parseExpression();
+                    TypedValue val = expr.evaluate(new HashMap<>()); // Avalia para pegar o valor inicial
+                    elements.add(val);
+                    if (current().getValue().equals(",")) {
+                        advance();
+                    }
+                }
+                eat(Token.TokenType.DELIMITER, ")");
+                initializer = new ListNode(new DynamicList(elements));
+            } else {
+                // Lista vazia
+                initializer = new ListNode(new DynamicList(new ArrayList<>()));
+            }
+            eat(Token.TokenType.DELIMITER, ";");
+            return new VariableDeclarationNode(name, "list", initializer);
+        } else {
+            // Declarações normais (int, double, string, boolean)
+            if (current().getValue().equals("=")) {
+                advance();
+                initializer = parseExpression();
+            }
+            eat(Token.TokenType.DELIMITER, ";");
+            return new VariableDeclarationNode(name, type, initializer);
+        }
     }
+
 
     public ASTNode parseExpression() {
         ASTNode left = parseTerm();

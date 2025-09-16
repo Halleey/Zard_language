@@ -50,6 +50,7 @@ public class FunctionCallNode extends ASTNode {
     @Override
     public void print(String prefix) {
 
+
     }
 
     public String getName() {

@@ -10,6 +10,7 @@ import variables.VariableDeclarationNode;
 
 import java.util.ArrayList;
 import java.util.List;
+
 public class ListParser {
     private final Parser parser;
 
@@ -28,13 +29,11 @@ public class ListParser {
             parser.advance();
             parser.eat(Token.TokenType.DELIMITER, "(");
 
-            List<TypedValue> elements = new ArrayList<>();
-            RuntimeContext tempCtx = new RuntimeContext(); // runtime temporário para avaliar os elementos
+            List<ASTNode> elements = new ArrayList<>();
 
             while (!parser.current().getValue().equals(")")) {
                 ASTNode expr = parser.parseExpression();
-                TypedValue val = expr.evaluate(tempCtx);
-                elements.add(val);
+                elements.add(expr); // armazena ASTNode, não TypedValue
 
                 if (parser.current().getValue().equals(",")) {
                     parser.advance();
@@ -50,4 +49,5 @@ public class ListParser {
         parser.eat(Token.TokenType.DELIMITER, ";");
         return new VariableDeclarationNode(name, "list", initializer);
     }
+
 }

@@ -19,7 +19,6 @@ import variables.*;
 
 import java.util.*;
 
-
 public class Parser {
     private final List<Token> tokens;
     private int pos = 0;
@@ -37,24 +36,19 @@ public class Parser {
         if (pos < tokens.size()) pos++;
     }
 
-    private void eat(Token.TokenType type) {
-        if (current().getType() == type) {
-            advance();
-        } else {
-            throw new RuntimeException("Esperado token do tipo " + type +
-                    " mas encontrado " + current().getType() + " valor: " + current().getValue());
-        }
+    public void eat(Token.TokenType type) {
+        if (current().getType() == type) advance();
+        else throw new RuntimeException("Esperado token do tipo " + type +
+                " mas encontrado " + current().getType() + " valor: " + current().getValue());
     }
 
     public void eat(Token.TokenType type, String value) {
-        if (current().getType() == type && current().getValue().equals(value)) {
-            advance();
-        } else {
-            throw new RuntimeException("Esperado token " + value + " do tipo " + type +
-                    " mas encontrado " + current().getValue() + " tipo " + current().getType());
-        }
+        if (current().getType() == type && current().getValue().equals(value)) advance();
+        else throw new RuntimeException("Esperado token " + value + " do tipo " + type +
+                " mas encontrado " + current().getValue() + " tipo " + current().getType());
     }
 
+    // ------------------- MÉTODO CENTRAL -------------------
     public List<ASTNode> parse() {
         List<ASTNode> nodes = new ArrayList<>();
         while (current().getType() != Token.TokenType.EOF) {
@@ -63,13 +57,16 @@ public class Parser {
         return nodes;
     }
 
+    // ------------------- STATEMENTS -------------------
     public ASTNode parseStatement() {
         Token tok = current();
 
         if (tok.getType() == Token.TokenType.KEYWORD) {
-            switch (tok.getValue()) {
-                case "int", "double", "string", "boolean" -> {
-                    return parseVarDeclaration();
+            String val = tok.getValue();
+            switch (val) {
+                case "int", "double", "string", "boolean", "list" -> {
+                    VarDeclarationParser varParser = new VarDeclarationParser(this);
+                    return varParser.parseVarDeclaration();
                 }
                 case "print" -> {
                     advance();
@@ -83,14 +80,13 @@ public class Parser {
                     IfParser ifParser = new IfParser(this);
                     return ifParser.parseIf();
                 }
-                case "main" -> {
-
-                    MainParser mainParser = new MainParser(this);
-                    return mainParser.parseMain();
-                }
                 case "while" -> {
                     WhileParser whileParser = new WhileParser(this);
                     return whileParser.parse();
+                }
+                case "main" -> {
+                    MainParser mainParser = new MainParser(this);
+                    return mainParser.parseMain();
                 }
                 case "input" -> {
                     InputParser inputParser = new InputParser(this);
@@ -107,13 +103,9 @@ public class Parser {
                     eat(Token.TokenType.DELIMITER, ";");
                     return new BreakNode();
                 }
-                case "list" -> {
-                    ListParser listParser = new ListParser(this);
-                    return listParser.parseListDeclaration();
-                }
                 case "function" -> {
-                   FunctionParser functionParser = new FunctionParser(this);
-                   return functionParser.parseFunction();
+                    FunctionParser functionParser = new FunctionParser(this);
+                    return functionParser.parseFunction();
                 }
                 case "call" -> {
                     advance();
@@ -128,103 +120,14 @@ public class Parser {
         if (tok.getType() == Token.TokenType.IDENTIFIER) {
             String name = tok.getValue();
             advance();
-
-            // Suporte para chamadas de métodos de lista
-            if (current().getValue().equals(".")) {
-                advance();
-                String method = current().getValue();
-                advance();
-                eat(Token.TokenType.DELIMITER, "(");
-
-                ASTNode arg = null;
-                if (!current().getValue().equals(")")) {
-                    arg = parseExpression();
-                }
-
-                eat(Token.TokenType.DELIMITER, ")");
-                eat(Token.TokenType.DELIMITER, ";");
-
-                ASTNode listVar = new VariableNode(name);
-
-                switch (method) {
-                    case "add" -> {
-                        return new ListAddNode(listVar, arg);
-                    }
-                    case "clear" -> {
-                        return new ListClearNode(listVar);
-                    }
-                    case "remove" ->{
-                        return new ListRemoveNode(listVar, arg);
-                    }
-                }
-            }
-
-            // Atribuição normal
-            if (current().getValue().equals("=")) {
-                advance();
-                ASTNode value = parseExpression();
-                eat(Token.TokenType.DELIMITER, ";");
-                return new AssignmentNode(name, value);
-            }
-
-            // Operadores unários
-            else if (current().getValue().equals("++") || current().getValue().equals("--")) {
-                String op = current().getValue();
-                advance();
-                eat(Token.TokenType.DELIMITER, ";");
-                return new UnaryOpNode(name, op);
-            }
+            IdentifierParser idParser = new IdentifierParser(this);
+            return idParser.parseIdentifier(name);
         }
 
         throw new RuntimeException("Comando inesperado: " + tok.getValue());
     }
 
-    private ASTNode parseVarDeclaration() {
-        String type = current().getValue();
-        advance();
-        String name = current().getValue();
-        advance();
-
-        ASTNode initializer = null;
-
-        if (type.equals("list")) {
-            if (current().getValue().equals("=")) {
-                advance();
-                eat(Token.TokenType.DELIMITER, "(");
-                List<TypedValue> elements = new ArrayList<>();
-
-                // Avalia cada elemento usando um runtime temporário
-                RuntimeContext tempCtx = new RuntimeContext();
-                while (!current().getValue().equals(")")) {
-                    ASTNode expr = parseExpression();
-                    TypedValue val = expr.evaluate(tempCtx);
-                    elements.add(val);
-
-                    if (current().getValue().equals(",")) {
-                        advance();
-                    }
-                }
-
-                eat(Token.TokenType.DELIMITER, ")");
-                initializer = new ListNode(new DynamicList(elements));
-            } else {
-                initializer = new ListNode(new DynamicList(new ArrayList<>()));
-            }
-
-            eat(Token.TokenType.DELIMITER, ";");
-            return new VariableDeclarationNode(name, "list", initializer);
-        } else {
-            // Declarações normais (int, double, string, boolean)
-            if (current().getValue().equals("=")) {
-                advance();
-                initializer = parseExpression();
-            }
-            eat(Token.TokenType.DELIMITER, ";");
-            return new VariableDeclarationNode(name, type, initializer);
-        }
-    }
-
-
+    // ------------------- EXPRESSIONS -------------------
     public ASTNode parseExpression() {
         ASTNode left = parseTerm();
         while (current().getValue().equals("+") || current().getValue().equals("-")) {
@@ -238,9 +141,7 @@ public class Parser {
 
     private ASTNode parseComparison(ASTNode left) {
         if (current().getType() == Token.TokenType.OPERATOR &&
-                (current().getValue().equals("<") || current().getValue().equals(">") ||
-                        current().getValue().equals("<=") || current().getValue().equals(">=") ||
-                        current().getValue().equals("==") || current().getValue().equals("!="))) {
+                List.of("<", ">", "<=", ">=", "==", "!=").contains(current().getValue())) {
             String op = current().getValue();
             advance();
             ASTNode right = parseTerm();
@@ -248,7 +149,6 @@ public class Parser {
         }
         return left;
     }
-
 
     private ASTNode parseTerm() {
         ASTNode left = parseFactor();
@@ -260,47 +160,40 @@ public class Parser {
         }
         return left;
     }
+
     private ASTNode parseFactor() {
         Token tok = current();
 
-        if (tok.getType() == Token.TokenType.NUMBER) {
-            advance();
-            String num = tok.getValue();
-            if (num.contains(".")) {
-                return new LiteralNode(new TypedValue("double", Double.parseDouble(num)));
-            } else {
-                return new LiteralNode(new TypedValue("int", Integer.parseInt(num)));
+        switch (tok.getType()) {
+            case NUMBER -> {
+                advance();
+                String num = tok.getValue();
+                if (num.contains(".")) return new LiteralNode(new TypedValue("double", Double.parseDouble(num)));
+                else return new LiteralNode(new TypedValue("int", Integer.parseInt(num)));
             }
-        }
-
-        if (tok.getType() == Token.TokenType.STRING) {
-            advance();
-            return new LiteralNode(new TypedValue("string", tok.getValue()));
-        }
-
-        if (tok.getType() == Token.TokenType.BOOLEAN) {
-            advance();
-            return new LiteralNode(new TypedValue("boolean", Boolean.parseBoolean(tok.getValue())));
-        }
-
-        if (tok.getType() == Token.TokenType.KEYWORD && tok.getValue().equals("input")) {
-            InputParser inputParser = new InputParser(this);
-            return inputParser.parse();
-        }
-
-        // IDENTIFIER agora pode ser variável ou função
-        if (tok.getType() == Token.TokenType.IDENTIFIER) {
-            advance();
-            String name = tok.getValue();
-
-            // Checa se é chamada de função: f(1,2)
-            if (current().getValue().equals("(")) {
-                List<ASTNode> args = parseArguments();
-                return new FunctionCallNode(name, args);
+            case STRING -> {
+                advance();
+                return new LiteralNode(new TypedValue("string", tok.getValue()));
             }
-
-            // Caso contrário, é uma variável ou função como valor
-            return new VariableNode(name);
+            case BOOLEAN -> {
+                advance();
+                return new LiteralNode(new TypedValue("boolean", Boolean.parseBoolean(tok.getValue())));
+            }
+            case KEYWORD -> {
+                if (tok.getValue().equals("input")) {
+                    InputParser inputParser = new InputParser(this);
+                    return inputParser.parse();
+                }
+            }
+            case IDENTIFIER -> {
+                advance();
+                String name = tok.getValue();
+                if (current().getValue().equals("(")) {
+                    List<ASTNode> args = parseArguments();
+                    return new FunctionCallNode(name, args);
+                }
+                return new VariableNode(name);
+            }
         }
 
         if (tok.getValue().equals("(")) {
@@ -313,24 +206,21 @@ public class Parser {
         throw new RuntimeException("Fator inesperado: " + tok.getValue());
     }
 
-    // Novo método para evitar duplicação de código
     private List<ASTNode> parseArguments() {
         eat(Token.TokenType.DELIMITER, "(");
         List<ASTNode> args = new ArrayList<>();
         if (!current().getValue().equals(")")) {
             do {
                 args.add(parseExpression());
-                if (current().getValue().equals(",")) {
-                    advance();
-                } else {
-                    break;
-                }
+                if (current().getValue().equals(",")) advance();
+                else break;
             } while (!current().getValue().equals(")"));
         }
         eat(Token.TokenType.DELIMITER, ")");
         return args;
     }
 
+    // ------------------- BLOCKS -------------------
     public List<ASTNode> parseBlock() {
         List<ASTNode> nodes = new ArrayList<>();
         eat(Token.TokenType.DELIMITER, "{");

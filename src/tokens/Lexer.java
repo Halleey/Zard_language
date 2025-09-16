@@ -77,6 +77,7 @@ public class Lexer {
             case "map":
             case "boolean":
             case "break":
+            case "import":
                 return new Token(Token.TokenType.KEYWORD, identifier);
             case "new":
                 return  new Token(Token.TokenType.INSTANCE, identifier);

@@ -1,3 +1,4 @@
+
 main {
 
     int contador = 0;
@@ -37,8 +38,11 @@ main {
     }
     int i = 1;
     int b = 1;
-    int resultado = sum(b, i);
-    print("resultado foi " + resultado );
+    int f = sum;
+    int total =sum(b, i);
+    print("total foi de ? " + total);
+    print(f(2,3));
     print("Lista final: " + numeros);
     print("Fim do programa");
+
 }

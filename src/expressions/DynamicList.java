@@ -1,41 +1,56 @@
 package expressions;
 
+import ast.ASTNode;
+import ast.runtime.RuntimeContext;
+import variables.LiteralNode;
+
+import java.util.ArrayList;
 import java.util.List;
 
 public class DynamicList {
-    private final List<TypedValue> elements;
+    private final List<ASTNode> elements;
 
-    public DynamicList(List<TypedValue> elements) {
+    public DynamicList(List<ASTNode> elements) {
         this.elements = elements;
     }
 
+    // Avaliação no runtime
+    public List<TypedValue> evaluate(RuntimeContext ctx) {
+        List<TypedValue> result = new ArrayList<>();
+        for (ASTNode node : elements) {
+            result.add(node.evaluate(ctx));
+        }
+        return result;
+    }
+    public String toString() {
+        List<TypedValue> vals = evaluate(new RuntimeContext()); // opcional para debug
+        return vals.toString();
+    }
+
+    public List<ASTNode> getElements() {
+        return elements;
+    }
+    // Avalia e retorna elemento específico
+    public TypedValue get(int index, RuntimeContext ctx) {
+        return elements.get(index).evaluate(ctx);
+    }
+
+    // Remove elemento avaliado
+    public TypedValue remove(int index, RuntimeContext ctx) {
+        ASTNode removedNode = elements.remove(index);
+        return removedNode.evaluate(ctx);
+    }
+
     public void add(TypedValue value) {
-        elements.add(value);
+        elements.add(new LiteralNode(value));
     }
 
-    public TypedValue get(int index) {
-        return elements.get(index);
-    }
-
-    public void set(int index, TypedValue value) {
-        elements.set(index, value);
+    public void clear() {
+        elements.clear();
     }
 
     public int size() {
         return elements.size();
     }
 
-    public List<TypedValue> getElements() {
-        return elements;
-    }
-
-    public String toString() {
-        StringBuilder sb = new StringBuilder("[");
-        for (int i = 0; i < elements.size(); i++) {
-            sb.append(elements.get(i).getValue());
-            if (i < elements.size() - 1) sb.append(", ");
-        }
-        sb.append("]");
-        return sb.toString();
-    }
 }

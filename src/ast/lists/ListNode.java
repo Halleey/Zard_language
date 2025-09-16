@@ -7,6 +7,7 @@ import expressions.TypedValue;
 
 import java.util.List;
 import java.util.Map;
+
 public class ListNode extends ASTNode {
     private final DynamicList list;
 
@@ -26,14 +27,16 @@ public class ListNode extends ASTNode {
     @Override
     public void print(String prefix) {
         System.out.println(prefix + "List:");
-        List<TypedValue> elements = list.getElements();
+        List<ASTNode> elements = list.getElements(); // ASTNode mesmo
+
         if (elements.isEmpty()) {
             System.out.println(prefix + "  (vazia)");
         } else {
             for (int i = 0; i < elements.size(); i++) {
-                TypedValue val = elements.get(i);
+                TypedValue val = elements.get(i).evaluate(new RuntimeContext()); // avalia cada nó
                 System.out.println(prefix + "  [" + i + "]: " + val.getValue() + " (" + val.getType() + ")");
             }
         }
     }
+
 }

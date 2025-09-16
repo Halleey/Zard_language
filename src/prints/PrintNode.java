@@ -5,6 +5,7 @@ import ast.runtime.RuntimeContext;
 import expressions.DynamicList;
 import expressions.TypedValue;
 
+import java.util.List;
 import java.util.Map;
 public class PrintNode extends ASTNode {
     final ASTNode expr;
@@ -16,13 +17,15 @@ public class PrintNode extends ASTNode {
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
         TypedValue val = expr.evaluate(ctx);
+
         if (val.getType().equals("list")) {
             DynamicList list = (DynamicList) val.getValue();
-            System.out.println(list.getElements().stream()
-                    .map(TypedValue::getValue)
-                    .toList());
-        }
-        else {
+            // Avalia cada elemento do DynamicList
+            List<Object> values = list.getElements().stream()
+                    .map(node -> node.evaluate(ctx).getValue())
+                    .toList();
+            System.out.println(values);
+        } else {
             System.out.println(val.getValue());
         }
         return val;

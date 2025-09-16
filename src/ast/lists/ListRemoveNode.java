@@ -5,7 +5,6 @@ import ast.runtime.RuntimeContext;
 import expressions.DynamicList;
 import expressions.TypedValue;
 
-import java.util.Map;
 public class ListRemoveNode extends ASTNode {
 
     private final ASTNode listNode;
@@ -17,13 +16,14 @@ public class ListRemoveNode extends ASTNode {
     }
 
     @Override
+
     public TypedValue evaluate(RuntimeContext ctx) {
         DynamicList list = (DynamicList) listNode.evaluate(ctx).getValue();
         int index = ((Number) indexNode.evaluate(ctx).getValue()).intValue();
-        TypedValue removed = list.get(index);
-        list.getElements().remove(index);
-        return removed;
+        // usa o método remove do DynamicList
+        return list.remove(index, ctx);
     }
+
 
     @Override
     public void print(String prefix) {

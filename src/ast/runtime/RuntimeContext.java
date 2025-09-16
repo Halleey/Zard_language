@@ -8,6 +8,7 @@ import java.util.Map;
 public class RuntimeContext {
     private final Map<String, TypedValue> variables = new HashMap<>();
 
+
     public void declareVariable(String name, TypedValue value) {
         if (variables.containsKey(name)) {
             throw new RuntimeException("Variável já declarada: " + name);
@@ -30,6 +31,7 @@ public class RuntimeContext {
     }
 
     public boolean hasVariable(String name) {
-        return !variables.containsKey(name);
+        return variables.containsKey(name);
     }
+
 }

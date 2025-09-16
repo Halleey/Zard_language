@@ -36,7 +36,7 @@ public class FunctionParser {
                 parser.advance();
 
                 // Guarda "tipo nome" na lista de parâmetros
-                params.add(type + " " + name);
+                params.add(name);
 
                 if (parser.current().getValue().equals(",")) {
                     parser.advance();

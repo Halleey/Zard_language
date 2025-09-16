@@ -29,10 +29,11 @@ public class FunctionCallNode extends ASTNode {
 
         // Passa os argumentos
         for (int i = 0; i < func.params.size(); i++) {
-            String paramName = func.params.get(i);
+            String paramName = func.params.get(i);   // agora é apenas "x" ou "z"
             TypedValue argVal = args.get(i).evaluate(ctx); // avalia no contexto atual
             localCtx.declareVariable(paramName, argVal);
         }
+
 
         // Executa o corpo da função
         try {

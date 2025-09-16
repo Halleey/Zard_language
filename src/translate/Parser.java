@@ -2,6 +2,7 @@ package translate;
 import ast.ASTNode;
 import ast.exceptions.BreakNode;
 import ast.exceptions.ReturnNode;
+import ast.functions.FunctionCallParser;
 import ast.functions.FunctionParser;
 import ast.inputs.InputParser;
 import ast.lists.*;
@@ -112,6 +113,13 @@ public class Parser {
                 case "function" -> {
                    FunctionParser functionParser = new FunctionParser(this);
                    return functionParser.parseFunction();
+                }
+                case "call" -> {
+                    advance();
+                    String name = current().getValue();
+                    advance();
+                    FunctionCallParser functionCallParser = new FunctionCallParser(this);
+                    return functionCallParser.parseFunctionCall(name);
                 }
             }
         }

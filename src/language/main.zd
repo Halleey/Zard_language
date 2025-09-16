@@ -1,5 +1,6 @@
 main {
     int x = 0;
+    int z = 10;
     string nome = "hallyson";
     while (x < 10) {
         print(x);
@@ -16,6 +17,15 @@ main {
     nomes.remove(0);
     print(nomes);
     function teste(int x, int z){
-    print("ola mundo");
+    print("ola mundo" + x + " " +  z);
     }
+    int lol = 9;
+    int beta = 22;
+    call teste(beta, lol);
+
+    function sum(int z, int x){
+    int resultado = z+x;
+    print(resultado);
+    }
+    call sum(beta, lol);
 }

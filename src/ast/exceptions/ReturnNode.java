@@ -1,12 +1,11 @@
 package ast.exceptions;
 
 import ast.ASTNode;
+import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
 
-import java.util.Map;
 
 public class ReturnNode extends ASTNode {
-
     public final ASTNode expr;
 
     public ReturnNode(ASTNode expr) {
@@ -14,8 +13,8 @@ public class ReturnNode extends ASTNode {
     }
 
     @Override
-    public TypedValue evaluate(Map<String, TypedValue> variables) {
-        TypedValue value = expr.evaluate(variables);
-        throw new ReturnValue(value);
+    public TypedValue evaluate(RuntimeContext ctx) {
+        TypedValue value = expr.evaluate(ctx);
+        throw new ReturnValue(value); // exceção para controlar return
     }
 }

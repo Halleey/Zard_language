@@ -1,11 +1,11 @@
 package ast.lists;
 
 import ast.ASTNode;
+import ast.runtime.RuntimeContext;
 import expressions.DynamicList;
 import expressions.TypedValue;
 
 import java.util.Map;
-
 public class ListAddNode extends ASTNode {
 
     private final ASTNode listNode;
@@ -17,9 +17,9 @@ public class ListAddNode extends ASTNode {
     }
 
     @Override
-    public TypedValue evaluate(Map<String, TypedValue> variables) {
-        DynamicList list =(DynamicList) listNode.evaluate(variables).getValue();
-        TypedValue values = valuesNode.evaluate(variables);
+    public TypedValue evaluate(RuntimeContext ctx) {
+        DynamicList list = (DynamicList) listNode.evaluate(ctx).getValue();
+        TypedValue values = valuesNode.evaluate(ctx);
         list.add(values);
         return values;
     }

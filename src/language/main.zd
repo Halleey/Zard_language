@@ -1,16 +1,18 @@
 main {
     int x = 0;
+    string nome;
     while (x < 10) {
         print(x);
         x++;
         if(x == 5) {
+            nome = input("digite um nome");
             break;
         }
     }
     print("Saiu do looping sem problemas ");
-    list nome = ("hallyson");
-    nome.add(1);
+    list nomes = ("teste");
+    nomes.add(1);
     print(nome);
-    nome.remove(0);
-    print(nome);
+    nomes.remove(0);
+    print(nomes);
 }

@@ -1,9 +1,10 @@
 package ast;
 
+import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
 
-import java.util.Map;
+
 
 public abstract class ASTNode {
-    public abstract TypedValue evaluate(Map<String, TypedValue> variables);
+    public abstract TypedValue evaluate(RuntimeContext ctx);
 }

@@ -4,6 +4,7 @@ import ast.exceptions.BreakNode;
 import ast.exceptions.ReturnNode;
 import ast.inputs.InputParser;
 import ast.lists.*;
+import ast.runtime.RuntimeContext;
 import expressions.DynamicList;
 import expressions.TypedValue;
 import home.MainParser;
@@ -173,26 +174,29 @@ public class Parser {
         ASTNode initializer = null;
 
         if (type.equals("list")) {
-            // Declaração de lista
             if (current().getValue().equals("=")) {
                 advance();
-                // Espera '(' para lista inicializada
                 eat(Token.TokenType.DELIMITER, "(");
                 List<TypedValue> elements = new ArrayList<>();
+
+                // Avalia cada elemento usando um runtime temporário
+                RuntimeContext tempCtx = new RuntimeContext();
                 while (!current().getValue().equals(")")) {
                     ASTNode expr = parseExpression();
-                    TypedValue val = expr.evaluate(new HashMap<>()); // Avalia para pegar o valor inicial
+                    TypedValue val = expr.evaluate(tempCtx);
                     elements.add(val);
+
                     if (current().getValue().equals(",")) {
                         advance();
                     }
                 }
+
                 eat(Token.TokenType.DELIMITER, ")");
                 initializer = new ListNode(new DynamicList(elements));
             } else {
-                // Lista vazia
                 initializer = new ListNode(new DynamicList(new ArrayList<>()));
             }
+
             eat(Token.TokenType.DELIMITER, ";");
             return new VariableDeclarationNode(name, "list", initializer);
         } else {

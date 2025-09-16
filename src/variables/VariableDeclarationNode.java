@@ -1,9 +1,9 @@
 package variables;
 import ast.ASTNode;
+import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
 
 import java.util.Map;
-
 public class VariableDeclarationNode extends ASTNode {
     public final String name;
     public final String type;
@@ -16,9 +16,9 @@ public class VariableDeclarationNode extends ASTNode {
     }
 
     @Override
-    public TypedValue evaluate(Map<String, TypedValue> variables) {
-        TypedValue value = initializer != null ? initializer.evaluate(variables) : getDefaultValue();
-        variables.put(name, value);
+    public TypedValue evaluate(RuntimeContext ctx) {
+        TypedValue value = initializer != null ? initializer.evaluate(ctx) : getDefaultValue();
+        ctx.declareVariable(name, value);
         return value;
     }
 
@@ -32,4 +32,5 @@ public class VariableDeclarationNode extends ASTNode {
         };
     }
 }
+
 

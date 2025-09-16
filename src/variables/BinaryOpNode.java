@@ -1,10 +1,10 @@
 package variables;
 
 import ast.ASTNode;
+import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
 
 import java.util.Map;
-
 public class BinaryOpNode extends ASTNode {
     public final ASTNode left;
     public final String operator;
@@ -17,9 +17,9 @@ public class BinaryOpNode extends ASTNode {
     }
 
     @Override
-    public TypedValue evaluate(Map<String, TypedValue> variables) {
-        Object l = unwrap(left.evaluate(variables));
-        Object r = unwrap(right.evaluate(variables));
+    public TypedValue evaluate(RuntimeContext ctx) {
+        Object l = unwrap(left.evaluate(ctx));
+        Object r = unwrap(right.evaluate(ctx));
 
         // Operadores numéricos
         if (l instanceof Number ln && r instanceof Number rn) {
@@ -47,7 +47,6 @@ public class BinaryOpNode extends ASTNode {
             case "!=" -> new TypedValue("boolean", !l.equals(r));
             default -> throw new RuntimeException("Tipos incompatíveis para operador: " + operator);
         };
-
     }
 
     private Object unwrap(TypedValue tv) {

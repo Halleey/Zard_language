@@ -1,6 +1,7 @@
 package variables;
 
 import ast.ASTNode;
+import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
 
 import java.util.Map;
@@ -13,7 +14,8 @@ public class LiteralNode extends ASTNode {
     }
 
     @Override
-    public TypedValue evaluate(Map<String, TypedValue> variables) {
+    public TypedValue evaluate(RuntimeContext ctx) {
         return value;
     }
 }
+

@@ -1,10 +1,12 @@
 package ifstatements;
 
 import ast.ASTNode;
+import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
 
 import java.util.List;
 import java.util.Map;
+import java.util.List;
 
 public class IfNode extends ASTNode {
     public final ASTNode condition;
@@ -18,8 +20,8 @@ public class IfNode extends ASTNode {
     }
 
     @Override
-    public TypedValue evaluate(Map<String, TypedValue> variables) {
-        TypedValue condVal = condition.evaluate(variables);
+    public TypedValue evaluate(RuntimeContext ctx) {
+        TypedValue condVal = condition.evaluate(ctx);
 
         if (!(condVal.getValue() instanceof Boolean)) {
             throw new RuntimeException("Condição do if deve ser boolean");
@@ -27,11 +29,11 @@ public class IfNode extends ASTNode {
 
         if ((Boolean) condVal.getValue()) {
             for (ASTNode node : thenBranch) {
-                node.evaluate(variables);
+                node.evaluate(ctx);
             }
         } else if (elseBranch != null) {
             for (ASTNode node : elseBranch) {
-                node.evaluate(variables);
+                node.evaluate(ctx);
             }
         }
 

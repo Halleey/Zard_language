@@ -1,6 +1,7 @@
 package ast.lists;
 
 import ast.ASTNode;
+import ast.runtime.RuntimeContext;
 import expressions.DynamicList;
 import expressions.TypedValue;
 
@@ -16,8 +17,8 @@ public class ListClearNode extends ASTNode {
     }
 
     @Override
-    public TypedValue evaluate(Map<String, TypedValue> variables) {
-        DynamicList list = (DynamicList) listNode.evaluate(variables).getValue();
+    public TypedValue evaluate(RuntimeContext ctx) {
+        DynamicList list = (DynamicList) listNode.evaluate(ctx).getValue();
         list.getElements().clear();
         return new TypedValue("list", list);
     }

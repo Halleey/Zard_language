@@ -1,9 +1,12 @@
 package ast.inputs;
 
 import ast.ASTNode;
+import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
 
 import java.util.Map;
+import java.util.Scanner;
+
 import java.util.Scanner;
 
 public class InputNode extends ASTNode {
@@ -14,7 +17,7 @@ public class InputNode extends ASTNode {
     }
 
     @Override
-    public TypedValue evaluate(Map<String, TypedValue> variables) {
+    public TypedValue evaluate(RuntimeContext ctx) {
         Scanner scanner = new Scanner(System.in);
         if (prompt != null && !prompt.isEmpty()) {
             System.out.print(prompt + ": ");
@@ -40,7 +43,7 @@ public class InputNode extends ASTNode {
         return new TypedValue("string", input);
     }
 
-    public CharSequence getPrompt() {
+    public String getPrompt() {
         return prompt;
     }
 }

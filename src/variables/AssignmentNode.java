@@ -1,9 +1,8 @@
 package variables;
 
 import ast.ASTNode;
+import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
-
-import java.util.Map;
 
 public class AssignmentNode extends ASTNode {
     public final String name;
@@ -15,19 +14,21 @@ public class AssignmentNode extends ASTNode {
     }
 
     @Override
-    public TypedValue evaluate(Map<String, TypedValue> variables) {
-        if (!variables.containsKey(name)) {
+    public TypedValue evaluate(RuntimeContext ctx) {
+        if (!ctx.hasVariable(name)) {
             throw new RuntimeException("Variável não declarada: " + name);
         }
 
-        TypedValue value = valueNode.evaluate(variables);
-        String existingType = variables.get(name).getType();
+        TypedValue value = valueNode.evaluate(ctx);
+        String existingType = ctx.getVariable(name).getType();
 
         if (!existingType.equals(value.getType())) {
-            throw new RuntimeException("Erro de tipo: esperado " + existingType + " mas encontrado " + value.getType());
+            throw new RuntimeException(
+                    "Erro de tipo: esperado " + existingType + " mas encontrado " + value.getType()
+            );
         }
 
-        variables.put(name, value);
+        ctx.setVariable(name, value);
         return value;
     }
 }

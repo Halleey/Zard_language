@@ -11,4 +11,6 @@ main {
     list nome = ("hallyson");
     nome.add(1);
     print(nome);
+    nome.remove(0);
+    print(nome);
 }

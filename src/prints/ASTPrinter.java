@@ -5,6 +5,7 @@ import ast.exceptions.BreakNode;
 import ast.inputs.InputNode;
 import ast.lists.ListAddNode;
 import ast.lists.ListNode;
+import ast.lists.ListRemoveNode;
 import expressions.DynamicList;
 import expressions.TypedValue;
 import home.MainAST;
@@ -88,6 +89,13 @@ public class ASTPrinter {
             printNode(listAddNode.getListNode(), indent + 2);
             System.out.println(prefix + "  Value to Add:");
             printNode(listAddNode.getValuesNode(), indent + 2);
+        }
+
+        else if(node instanceof ListRemoveNode listRemoveNode){
+            System.out.println(prefix + " ListRemove");
+            System.out.println(prefix + " List:");
+            printNode(listRemoveNode.getListNode(), indent +2);
+            System.out.println(prefix + "  (Item removido)");
         }
 
         else if (node instanceof IfNode ifNode) {

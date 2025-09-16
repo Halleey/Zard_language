@@ -3,10 +3,7 @@ import ast.ASTNode;
 import ast.exceptions.BreakNode;
 import ast.exceptions.ReturnNode;
 import ast.inputs.InputParser;
-import ast.lists.ListAddNode;
-import ast.lists.ListClearNode;
-import ast.lists.ListNode;
-import ast.lists.ListParser;
+import ast.lists.*;
 import expressions.DynamicList;
 import expressions.TypedValue;
 import home.MainParser;
@@ -141,7 +138,9 @@ public class Parser {
                     case "clear" -> {
                         return new ListClearNode(listVar);
                     }
-
+                    case "remove" ->{
+                        return new ListRemoveNode(listVar, arg);
+                    }
                 }
             }
 

@@ -15,7 +15,7 @@ public class UnaryOpNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        if (!ctx.hasVariable(name)) {
+        if (ctx.hasVariable(name)) {
             throw new RuntimeException("Variável não declarada: " + name);
         }
 

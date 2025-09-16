@@ -21,7 +21,8 @@ public class PrintNode extends ASTNode {
             System.out.println(list.getElements().stream()
                     .map(TypedValue::getValue)
                     .toList());
-        } else {
+        }
+        else {
             System.out.println(val.getValue());
         }
         return val;

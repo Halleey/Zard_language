@@ -30,6 +30,6 @@ public class RuntimeContext {
     }
 
     public boolean hasVariable(String name) {
-        return variables.containsKey(name);
+        return !variables.containsKey(name);
     }
 }

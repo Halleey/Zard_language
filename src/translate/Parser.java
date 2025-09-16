@@ -2,6 +2,7 @@ package translate;
 import ast.ASTNode;
 import ast.exceptions.BreakNode;
 import ast.exceptions.ReturnNode;
+import ast.functions.FunctionParser;
 import ast.inputs.InputParser;
 import ast.lists.*;
 import ast.runtime.RuntimeContext;
@@ -107,6 +108,10 @@ public class Parser {
                 case "list" -> {
                     ListParser listParser = new ListParser(this);
                     return listParser.parseListDeclaration();
+                }
+                case "function" -> {
+                   FunctionParser functionParser = new FunctionParser(this);
+                   return functionParser.parseFunction();
                 }
             }
         }

@@ -2,6 +2,7 @@ package prints;
 
 import ast.ASTNode;
 import ast.exceptions.BreakNode;
+import ast.functions.FunctionNode;
 import ast.inputs.InputNode;
 import ast.lists.ListAddNode;
 import ast.lists.ListNode;
@@ -109,6 +110,24 @@ public class ASTPrinter {
                 for (ASTNode n : ifNode.elseBranch) printNode(n, indent + 2);
             }
         }
+        else if (node instanceof FunctionNode functionNode) {
+            System.out.println(prefix + "Function: " + functionNode.getName());
+            List<String> params = functionNode.getParams();
+            if (!params.isEmpty()) {
+                System.out.println(prefix + "  Parameters:");
+                for (String param : params) {
+                    System.out.println(prefix + "    " + param);
+                }
+            }
+            List<ASTNode> body = functionNode.getBody();
+            if (!body.isEmpty()) {
+                System.out.println(prefix + "  Body:");
+                for (ASTNode stmt : body) {
+                    printNode(stmt, indent + 2);
+                }
+            }
+        }
+
         else {
             System.out.println(prefix + "Unknown Node: " + node.getClass().getSimpleName());
         }

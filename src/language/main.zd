@@ -1,11 +1,11 @@
 main {
     int x = 0;
-    string nome;
+    string nome = "hallyson";
     while (x < 10) {
         print(x);
         x++;
         if(x == 5) {
-            nome = input("digite um nome");
+
             break;
         }
     }
@@ -15,4 +15,5 @@ main {
     print(nome);
     nomes.remove(0);
     print(nomes);
+    function teste(int x, int z){}
 }

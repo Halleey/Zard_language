@@ -4,7 +4,6 @@ import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
 
-import java.util.Map;
 public class VariableNode extends ASTNode {
     public final String name;
 

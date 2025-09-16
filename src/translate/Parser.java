@@ -14,6 +14,7 @@ import home.MainParser;
 import ifstatements.IfParser;
 import loops.WhileParser;
 import prints.PrintNode;
+import prints.PrintParser;
 import tokens.Token;
 import variables.*;
 
@@ -69,12 +70,9 @@ public class Parser {
                     return varParser.parseVarDeclaration();
                 }
                 case "print" -> {
-                    advance();
-                    eat(Token.TokenType.DELIMITER, "(");
-                    ASTNode expr = parseExpression();
-                    eat(Token.TokenType.DELIMITER, ")");
-                    eat(Token.TokenType.DELIMITER, ";");
-                    return new PrintNode(expr);
+
+                    PrintParser printParser = new PrintParser(this);
+                    return printParser.parsePrint();
                 }
                 case "if" -> {
                     IfParser ifParser = new IfParser(this);

@@ -4,9 +4,6 @@ import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.DynamicList;
 import expressions.TypedValue;
-
-import java.util.Map;
-
 public class ListClearNode extends ASTNode {
 
 
@@ -21,6 +18,14 @@ public class ListClearNode extends ASTNode {
         DynamicList list = (DynamicList) listNode.evaluate(ctx).getValue();
         list.getElements().clear();
         return new TypedValue("list", list);
+    }
+
+    @Override
+    public void print(String prefix) {
+        System.out.println(prefix + "ListRemove:");
+        System.out.println(prefix + "  List:");
+        listNode.print(prefix + "    ");
+        System.out.println(prefix + "  (Item removido)");
     }
 }
 

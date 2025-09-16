@@ -6,9 +6,6 @@ import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
 
 import java.util.List;
-import java.util.Map;
-import java.util.List;
-
 public class WhileNode extends ASTNode {
     public final ASTNode condition;
     public final List<ASTNode> body;
@@ -36,5 +33,14 @@ public class WhileNode extends ASTNode {
             }
         }
         return null;
+    }
+
+    @Override
+    public void print(String prefix) {
+        System.out.println(prefix + "While:");
+        System.out.println(prefix + "  Condition:");
+        condition.print(prefix + "    ");
+        System.out.println(prefix + "  Body:");
+        for (ASTNode n : body) n.print(prefix + "    ");
     }
 }

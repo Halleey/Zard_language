@@ -15,5 +15,7 @@ main {
     print(nome);
     nomes.remove(0);
     print(nomes);
-    function teste(int x, int z){}
+    function teste(int x, int z){
+    print("ola mundo");
+    }
 }

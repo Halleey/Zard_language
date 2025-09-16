@@ -46,6 +46,11 @@ public class FunctionCallNode extends ASTNode {
         return null; // se não houver return
     }
 
+    @Override
+    public void print(String prefix) {
+
+    }
+
     public String getName() {
         return name;
     }
@@ -53,4 +58,5 @@ public class FunctionCallNode extends ASTNode {
     public List<ASTNode> getArgs() {
         return args;
     }
+
 }

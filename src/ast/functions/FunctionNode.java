@@ -23,6 +23,23 @@ public class FunctionNode extends ASTNode {
         return null;
     }
 
+    @Override
+    public void print(String prefix) {
+        System.out.println(prefix + "Function: " + name);
+        if (!params.isEmpty()) {
+            System.out.println(prefix + "  Parameters:");
+            for (String p : params) {
+                System.out.println(prefix + "    " + p);
+            }
+        }
+        if (!body.isEmpty()) {
+            System.out.println(prefix + "  Body:");
+            for (ASTNode stmt : body) {
+                stmt.print(prefix + "    ");
+            }
+        }
+    }
+
     public String getName() {
         return name;
     }

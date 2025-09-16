@@ -15,4 +15,10 @@ public class VariableNode extends ASTNode {
     public TypedValue evaluate(RuntimeContext ctx) {
         return ctx.getVariable(name);
     }
+
+    @Override
+    public void print(String prefix) {
+        System.out.println(prefix + "Variable: " + name);
+    }
+
 }

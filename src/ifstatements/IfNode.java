@@ -39,4 +39,19 @@ public class IfNode extends ASTNode {
 
         return null;
     }
+
+    @Override
+    public void print(String prefix) {
+        System.out.println(prefix + "If:");
+        System.out.println(prefix + "  Condition:");
+        condition.print(prefix + "    ");
+
+        System.out.println(prefix + "  Then:");
+        for (ASTNode n : thenBranch) n.print(prefix + "    ");
+
+        if (elseBranch != null && !elseBranch.isEmpty()) {
+            System.out.println(prefix + "  Else:");
+            for (ASTNode n : elseBranch) n.print(prefix + "    ");
+        }
+    }
 }

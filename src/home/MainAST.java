@@ -5,9 +5,6 @@ import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
 
 import java.util.List;
-import java.util.Map;
-
-import java.util.List;
 
 public class MainAST extends ASTNode {
     public final List<ASTNode> body;
@@ -23,5 +20,13 @@ public class MainAST extends ASTNode {
             result = node.evaluate(ctx);
         }
         return result; // retorna o último valor ou null
+    }
+
+    @Override
+    public void print(String prefix) {
+        System.out.println(prefix + "Main:");
+        for (ASTNode node : body) {
+            node.print(prefix + "  ");
+        }
     }
 }

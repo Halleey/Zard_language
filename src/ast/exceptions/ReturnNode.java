@@ -17,4 +17,12 @@ public class ReturnNode extends ASTNode {
         TypedValue value = expr.evaluate(ctx);
         throw new ReturnValue(value); // exceção para controlar return
     }
+
+    @Override
+    public void print(String prefix) {
+        System.out.println(prefix + "Return:");
+        if (expr != null) {
+            expr.print(prefix + "  ");
+        }
+    }
 }

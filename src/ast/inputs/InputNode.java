@@ -3,11 +3,8 @@ package ast.inputs;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
-
-import java.util.Map;
 import java.util.Scanner;
 
-import java.util.Scanner;
 
 public class InputNode extends ASTNode {
     private final String prompt;
@@ -41,6 +38,11 @@ public class InputNode extends ASTNode {
             return new TypedValue("boolean", false);
         }
         return new TypedValue("string", input);
+    }
+
+    @Override
+    public void print(String prefix) {
+
     }
 
     public String getPrompt() {

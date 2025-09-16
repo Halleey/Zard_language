@@ -4,7 +4,6 @@ import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
 
-import java.util.Map;
 public class BinaryOpNode extends ASTNode {
     public final ASTNode left;
     public final String operator;
@@ -47,6 +46,13 @@ public class BinaryOpNode extends ASTNode {
             case "!=" -> new TypedValue("boolean", !l.equals(r));
             default -> throw new RuntimeException("Tipos incompatíveis para operador: " + operator);
         };
+    }
+
+    @Override
+    public void print(String prefix) {
+        System.out.println(prefix + "BinaryOp: " + operator);
+        left.print(prefix + "  ");
+        right.print(prefix + "  ");
     }
 
     private Object unwrap(TypedValue tv) {

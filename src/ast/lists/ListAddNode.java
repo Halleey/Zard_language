@@ -5,7 +5,6 @@ import ast.runtime.RuntimeContext;
 import expressions.DynamicList;
 import expressions.TypedValue;
 
-import java.util.Map;
 public class ListAddNode extends ASTNode {
 
     private final ASTNode listNode;
@@ -22,6 +21,15 @@ public class ListAddNode extends ASTNode {
         TypedValue values = valuesNode.evaluate(ctx);
         list.add(values);
         return values;
+    }
+
+    @Override
+    public void print(String prefix) {
+        System.out.println(prefix + "ListAdd:");
+        System.out.println(prefix + "  List:");
+        listNode.print(prefix + "    ");
+        System.out.println(prefix + "  Value to Add:");
+        valuesNode.print(prefix + "    ");
     }
 
     public ASTNode getListNode() {

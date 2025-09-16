@@ -25,6 +25,14 @@ public class ListRemoveNode extends ASTNode {
         return removed;
     }
 
+    @Override
+    public void print(String prefix) {
+        System.out.println(prefix + "ListRemove:");
+        System.out.println(prefix + "  List:");
+        listNode.print(prefix + "    ");
+        System.out.println(prefix + "  (Item removido)");
+    }
+
     public ASTNode getListNode() {
         return listNode;
     }

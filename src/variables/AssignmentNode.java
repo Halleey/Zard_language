@@ -31,4 +31,10 @@ public class AssignmentNode extends ASTNode {
         ctx.setVariable(name, value);
         return value;
     }
+
+    @Override
+    public void print(String prefix) {
+        System.out.println(prefix + "Assign: " + name);
+        valueNode.print(prefix + "  ");
+    }
 }

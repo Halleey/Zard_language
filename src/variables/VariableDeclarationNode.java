@@ -22,6 +22,15 @@ public class VariableDeclarationNode extends ASTNode {
         return value;
     }
 
+    @Override
+    public void print(String prefix) {
+        System.out.println(prefix + "VarDecl: " + type + " " + name);
+        if (initializer != null) {
+            System.out.println(prefix + "  Initializer:");
+            initializer.print(prefix + "    ");
+        }
+    }
+
     private TypedValue getDefaultValue() {
         return switch (type) {
             case "int" -> new TypedValue("int", 0);

@@ -27,4 +27,10 @@ public class PrintNode extends ASTNode {
         }
         return val;
     }
+
+    @Override
+    public void print(String prefix) {
+        System.out.println(prefix + "Print:");
+        expr.print(prefix + "  ");
+    }
 }

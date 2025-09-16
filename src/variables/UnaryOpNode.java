@@ -36,4 +36,9 @@ public class UnaryOpNode extends ASTNode {
             throw new RuntimeException("Incremento/decremento só é válido para int ou double");
         }
     }
+
+    @Override
+    public void print(String prefix) {
+        System.out.println(prefix + "UnaryOp: " + name + " " + operator);
+    }
 }

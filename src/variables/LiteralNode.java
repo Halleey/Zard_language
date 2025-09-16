@@ -17,5 +17,11 @@ public class LiteralNode extends ASTNode {
     public TypedValue evaluate(RuntimeContext ctx) {
         return value;
     }
+
+    @Override
+    public void print(String prefix) {
+        System.out.println(prefix + "Literal: (" + value.getType() + ") " + value.getValue());
+    }
+
 }
 

@@ -51,7 +51,9 @@ public class VarDeclarationParser {
             parser.declareVariableType(name, "list");
             return new VariableDeclarationNode(name, "list", initializer);
         }
-
+        if (!type.equals("var")) {
+            parser.declareVariableType(name, type);
+        }
         // variáveis de outros tipos
         if (parser.current().getValue().equals("=")) {
             parser.advance();

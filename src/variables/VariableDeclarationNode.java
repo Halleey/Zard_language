@@ -17,10 +17,27 @@ public class VariableDeclarationNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
+        if (type.equals("var")) {
+            if (initializer == null) {
+                throw new RuntimeException("Variável 'var " + name + "' precisa de inicialização para inferir tipo.");
+            }
+            TypedValue inferred = initializer.evaluate(ctx);
+            ctx.declareVariable(name, inferred);
+            return inferred;
+        }
+
         TypedValue value = initializer != null ? initializer.evaluate(ctx) : getDefaultValue();
+
+        if (!value.getType().equals(type)) {
+            throw new RuntimeException("Typing error: " + name +
+                    " declared as " + type +
+                    " but initialized as  " + value.getType());
+        }
+
         ctx.declareVariable(name, value);
         return value;
     }
+
 
     @Override
     public void print(String prefix) {

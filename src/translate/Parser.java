@@ -86,7 +86,7 @@ public class Parser {
         if (tok.getType() == Token.TokenType.KEYWORD) {
             String val = tok.getValue();
             switch (val) {
-                case "int", "double", "string", "boolean", "list" -> {
+                case "int", "double", "string", "boolean", "list", "var"-> {
                     VarDeclarationParser varParser = new VarDeclarationParser(this);
                     return varParser.parseVarDeclaration();
                 }

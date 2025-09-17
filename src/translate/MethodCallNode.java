@@ -58,6 +58,27 @@ public class MethodCallNode extends ASTNode {
                 list.add(val);
                 return new TypedValue("list", list);
             }
+            case "addAll" -> {
+                if (args.isEmpty()) throw new RuntimeException("addAll requer pelo menos 1 argumento");
+
+                for (ASTNode argNode : args) {
+                    TypedValue val = argNode.evaluate(ctx);
+
+                    if (val.getType().equals("list")) {
+                        // Se for uma lista, adiciona todos os elementos
+                        DynamicList other = (DynamicList) val.getValue();
+                        for (TypedValue item : other.evaluate(ctx)) { // <--- aqui
+                            list.add(item);
+                        }
+                    } else {
+                        // Se for um único elemento, adiciona diretamente
+                        list.add(val);
+                    }
+                }
+
+                return new TypedValue("list", list);
+            }
+
             case "remove" -> {
                 if (args.size() != 1) throw new RuntimeException("remove requer 1 argumento");
                 TypedValue val = args.get(0).evaluate(ctx);

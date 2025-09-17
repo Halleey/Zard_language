@@ -198,7 +198,6 @@ public class Parser {
     }
     private ASTNode parseFactor() {
         Token tok = current();
-        System.out.println("current token in processing " + current());
         switch (tok.getType()) {
             case NUMBER -> {
                 advance();
@@ -223,11 +222,8 @@ public class Parser {
             case IDENTIFIER -> {
                 String name = tok.getValue();
                 advance(); // consome IDENTIFIER
-                System.out.println(name + " testando o tok");
-
                 // verifica se a variável existe e se é do tipo list
                 String type = getVariableType(name);
-                System.out.println("tipo da variavel" + type);
                 if ("list".equals(type) && current().getValue().equals(".")) {
                     System.out.println("invocando metodo para lidar corretamente com lista");
                     ListMethodParser listParser = new ListMethodParser(this);

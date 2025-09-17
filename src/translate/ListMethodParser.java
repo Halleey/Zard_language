@@ -5,6 +5,9 @@ import ast.lists.*;
 import tokens.Token;
 import variables.VariableNode;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ListMethodParser {
     private final Parser parser;
 
@@ -13,7 +16,6 @@ public class ListMethodParser {
     }
 
     public ASTNode parseStatementListMethod(String name) {
-        System.out.println("Current token: " + parser.current());
         String type = parser.getVariableType(name);
         System.out.println("DEBUG: Variável '" + name + "' tem tipo: " + type);
 
@@ -44,11 +46,27 @@ public class ListMethodParser {
                 yield node;
             }
             case "addAll" -> {
-                if (arg == null) throw new RuntimeException("Método addAll requer argumento");
-                ASTNode node = new ListAddAllNode(listVar, arg);
+                List<ASTNode> argsList = new ArrayList<>();
+
+                // enquanto não fechar o parêntese, parseia os argumentos separados por ','
+                while (!parser.current().getValue().equals(")")) {
+                    ASTNode expr = parser.parseExpression();
+                    argsList.add(expr);
+
+                    if (parser.current().getValue().equals(",")) {
+                        parser.advance(); // consome a vírgula
+                    } else {
+                        break;
+                    }
+                }
+
+                parser.eat(Token.TokenType.DELIMITER, ")"); // fecha o parêntese
+
+                ASTNode node = new ListAddAllNode(listVar, argsList);
                 parser.eat(Token.TokenType.DELIMITER, ";");
                 yield node;
             }
+
             case "remove" -> {
                 if (arg == null) throw new RuntimeException("Método remove requer argumento");
                 ASTNode node = new ListRemoveNode(listVar, arg);
@@ -65,7 +83,6 @@ public class ListMethodParser {
     }
 
     public ASTNode parseExpressionListMethod(String name) {
-        System.out.println("current token in process" + parser.current());
         // consome o '.'
         parser.eat(Token.TokenType.DELIMITER, ".");
 

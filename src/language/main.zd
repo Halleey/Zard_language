@@ -57,8 +57,9 @@ main {
     double testing = 4.54;
     double beta = 0.32;
     numeros.add(5);
-
+    numeros.addAll(3,4,5);
     numeros.remove(0);
     print(numeros.size());
+    print(numeros);
     print(beta + testing);
 }

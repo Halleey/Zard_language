@@ -14,9 +14,12 @@ public class PrintParser {
     public ASTNode parsePrint() {
         parser.advance();
         parser.eat(Token.TokenType.DELIMITER, "(");
+
         ASTNode expr = parser.parseExpression();
+
         parser.eat(Token.TokenType.DELIMITER, ")");
         parser.eat(Token.TokenType.DELIMITER, ";");
+
         return new PrintNode(expr);
     }
 }

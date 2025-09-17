@@ -30,16 +30,29 @@ public class IdentifierParser {
                 arg = parser.parseExpression();
             }
 
-            parser.eat(Token.TokenType.DELIMITER, ")");
-            parser.eat(Token.TokenType.DELIMITER, ";");
+            parser.eat(Token.TokenType.DELIMITER, ")"); // apenas fecha o parêntese
 
             ASTNode listVar = new VariableNode(name);
 
             return switch (method) {
-                case "add" -> new ListAddNode(listVar, arg);
-                case "clear" -> new ListClearNode(listVar);
-                case "remove" -> new ListRemoveNode(listVar, arg);
-                case "size" -> new ListSizeNode(listVar);
+                case "add" -> {
+                    if (arg == null) throw new RuntimeException("Método add requer um argumento");
+                    ASTNode node = new ListAddNode(listVar, arg);
+                    parser.eat(Token.TokenType.DELIMITER, ";"); // statement
+                    yield node;
+                }
+                case "clear" -> {
+                    ASTNode node = new ListClearNode(listVar);
+                    parser.eat(Token.TokenType.DELIMITER, ";"); // statement
+                    yield node;
+                }
+                case "remove" -> {
+                    if (arg == null) throw new RuntimeException("Método remove requer um argumento");
+                    ASTNode node = new ListRemoveNode(listVar, arg);
+                    parser.eat(Token.TokenType.DELIMITER, ";"); // statement
+                    yield node;
+                }
+                case "size" -> new ListSizeNode(listVar); // expressão, ; será consumido pelo PrintParser
                 default -> throw new RuntimeException("Método de lista desconhecido: " + method);
             };
         }
@@ -60,7 +73,7 @@ public class IdentifierParser {
             return new UnaryOpNode(name, op);
         }
 
-        throw new RuntimeException("Comando inesperado: " + name);
+        // Apenas acessar a variável
+        return new VariableNode(name);
     }
 }
-

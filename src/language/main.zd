@@ -43,6 +43,6 @@ main {
     print("total foi de ? " + total);
     print(f(2,3));
     print("Lista final: " + numeros);
-    print("Fim do programa");
+    print(numeros.size());
 
 }

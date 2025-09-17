@@ -6,14 +6,11 @@ import ast.functions.FunctionCallNode;
 import ast.functions.FunctionCallParser;
 import ast.functions.FunctionParser;
 import ast.inputs.InputParser;
-import ast.lists.*;
-import ast.runtime.RuntimeContext;
-import expressions.DynamicList;
+import ast.lists.ListSizeNode;
 import expressions.TypedValue;
 import home.MainParser;
 import ifstatements.IfParser;
 import loops.WhileParser;
-import prints.PrintNode;
 import prints.PrintParser;
 import tokens.Token;
 import variables.*;
@@ -186,12 +183,39 @@ public class Parser {
             case IDENTIFIER -> {
                 advance();
                 String name = tok.getValue();
+
+                // chamada de função normal
                 if (current().getValue().equals("(")) {
                     List<ASTNode> args = parseArguments();
                     return new FunctionCallNode(name, args);
                 }
+
+                // métodos de lista dentro de expressões
+                if (current().getValue().equals(".")) {
+                    advance();
+                    String method = current().getValue();
+                    advance();
+                    eat(Token.TokenType.DELIMITER, "(");
+
+                    ASTNode arg = null;
+                    if (!current().getValue().equals(")")) {
+                        arg = parseExpression();
+                    }
+
+                    eat(Token.TokenType.DELIMITER, ")");
+
+                    ASTNode listVar = new VariableNode(name);
+                    return switch (method) {
+                        case "size" -> new ListSizeNode(listVar); // apenas expressão
+                        default -> throw new RuntimeException(
+                                "Método de lista não permitido em expressão: " + method
+                        );
+                    };
+                }
+
                 return new VariableNode(name);
             }
+
         }
 
         if (tok.getValue().equals("(")) {

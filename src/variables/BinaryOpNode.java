@@ -20,8 +20,27 @@ public class BinaryOpNode extends ASTNode {
         Object l = unwrap(left.evaluate(ctx));
         Object r = unwrap(right.evaluate(ctx));
 
-        // Operadores numéricos
         if (l instanceof Number ln && r instanceof Number rn) {
+            // int + int → int
+            if (ln instanceof Integer && rn instanceof Integer) {
+                int li = ln.intValue();
+                int ri = rn.intValue();
+                return switch (operator) {
+                    case "+" -> new TypedValue("int", li + ri);
+                    case "-" -> new TypedValue("int", li - ri);
+                    case "*" -> new TypedValue("int", li * ri);
+                    case "/" -> new TypedValue("int", li / ri); // cuidado: divisão inteira
+                    case ">" -> new TypedValue("boolean", li > ri);
+                    case "<" -> new TypedValue("boolean", li < ri);
+                    case ">=" -> new TypedValue("boolean", li >= ri);
+                    case "<=" -> new TypedValue("boolean", li <= ri);
+                    case "==" -> new TypedValue("boolean", li == ri);
+                    case "!=" -> new TypedValue("boolean", li != ri);
+                    default -> throw new RuntimeException("Operador inválido: " + operator);
+                };
+            }
+
+            // fallback → usa double
             double lv = ln.doubleValue();
             double rv = rn.doubleValue();
             return switch (operator) {
@@ -39,7 +58,7 @@ public class BinaryOpNode extends ASTNode {
             };
         }
 
-        // Comparações ou concatenação de strings
+        // concatenação e comparações de string/objetos
         return switch (operator) {
             case "+" -> new TypedValue("string", l.toString() + r.toString());
             case "==" -> new TypedValue("boolean", l.equals(r));
@@ -47,6 +66,7 @@ public class BinaryOpNode extends ASTNode {
             default -> throw new RuntimeException("Tipos incompatíveis para operador: " + operator);
         };
     }
+
 
     @Override
     public void print(String prefix) {

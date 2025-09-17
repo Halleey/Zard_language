@@ -45,4 +45,7 @@ main {
     print("Lista final: " + numeros);
     print(numeros.size());
 
+double testing = 4.54;
+double beta = 0.32;
+print(beta + testing);
 }

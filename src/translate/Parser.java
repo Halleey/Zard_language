@@ -116,8 +116,9 @@ public class Parser {
             String name = tok.getValue();
             advance();
             IdentifierParser idParser = new IdentifierParser(this);
-            return idParser.parseIdentifier(name);
+            return idParser.parseAsStatement(name);
         }
+
 
         throw new RuntimeException("Comando inesperado: " + tok.getValue());
     }
@@ -183,41 +184,10 @@ public class Parser {
             case IDENTIFIER -> {
                 advance();
                 String name = tok.getValue();
-
-                // chamada de função normal
-                if (current().getValue().equals("(")) {
-                    List<ASTNode> args = parseArguments();
-                    return new FunctionCallNode(name, args);
-                }
-
-                // métodos de lista dentro de expressões
-                if (current().getValue().equals(".")) {
-                    advance();
-                    String method = current().getValue();
-                    advance();
-                    eat(Token.TokenType.DELIMITER, "(");
-
-                    ASTNode arg = null;
-                    if (!current().getValue().equals(")")) {
-                        arg = parseExpression();
-                    }
-
-                    eat(Token.TokenType.DELIMITER, ")");
-
-                    ASTNode listVar = new VariableNode(name);
-                    return switch (method) {
-                        case "size" -> new ListSizeNode(listVar); // apenas expressão
-                        default -> throw new RuntimeException(
-                                "Método de lista não permitido em expressão: " + method
-                        );
-                    };
-                }
-
-                return new VariableNode(name);
+                IdentifierParser idParser = new IdentifierParser(this);
+                return idParser.parseAsExpression(name);
             }
-
         }
-
         if (tok.getValue().equals("(")) {
             advance();
             ASTNode expr = parseExpression();
@@ -228,7 +198,7 @@ public class Parser {
         throw new RuntimeException("Fator inesperado: " + tok.getValue());
     }
 
-    private List<ASTNode> parseArguments() {
+    List<ASTNode> parseArguments() {
         eat(Token.TokenType.DELIMITER, "(");
         List<ASTNode> args = new ArrayList<>();
         if (!current().getValue().equals(")")) {

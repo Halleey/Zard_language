@@ -28,7 +28,7 @@ public class WhileParser {
 
         // Corpo do while
         List<ASTNode> body = parser.parseBlock();
-
+        
         return new WhileNode(condition, body);
     }
 }

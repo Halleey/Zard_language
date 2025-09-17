@@ -40,6 +40,14 @@ public class VariableDeclarationNode extends ASTNode {
             default -> throw new RuntimeException("Tipo desconhecido: " + type);
         };
     }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getType() {
+        return type;
+    }
 }
 
 

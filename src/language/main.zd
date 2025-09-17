@@ -36,9 +36,16 @@ main {
     function sum(int z, int x){
       return z +x;
     }
+
+    function sub(int z, int x){
+      print(z -x);
+     }
+
+
     int i = 1;
     int b = 1;
     int f = sum;
+    call sub(b, i);
     int total =sum(b, i);
     print("total foi de ? " + total);
     print(f(2,3));

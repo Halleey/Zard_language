@@ -225,7 +225,6 @@ public class Parser {
                 // verifica se a variável existe e se é do tipo list
                 String type = getVariableType(name);
                 if ("list".equals(type) && current().getValue().equals(".")) {
-                    System.out.println("invocando metodo para lidar corretamente com lista");
                     ListMethodParser listParser = new ListMethodParser(this);
                     return listParser.parseExpressionListMethod(name);
                 }

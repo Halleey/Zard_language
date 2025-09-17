@@ -39,6 +39,7 @@ public class ListMethodParser {
         ASTNode listVar = new VariableNode(name);
 
         return switch (method) {
+
             case "add" -> {
                 if (arg == null) throw new RuntimeException("Método add requer argumento");
                 ASTNode node = new ListAddNode(listVar, arg);
@@ -104,6 +105,10 @@ public class ListMethodParser {
 
         return switch (method) {
             case "size" -> new ListSizeNode(listVar);
+            case "get" -> {
+                if (arg == null) throw new RuntimeException("get requer índice");
+                yield new ListGetNode(listVar, arg);
+            }
             default -> throw new RuntimeException("Método de lista não permitido em expressão: " + method);
         };
     }

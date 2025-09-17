@@ -62,4 +62,7 @@ main {
     print(numeros.size());
     print(numeros);
     print(beta + testing);
+    int testando = numeros.get(1);
+    print(testando);
+    print(numeros.get(1));
 }

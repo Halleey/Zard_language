@@ -6,7 +6,6 @@ import translate.Parser;
 
 import java.util.ArrayList;
 import java.util.List;
-
 public class FunctionParser {
 
     private final Parser parser;
@@ -16,7 +15,7 @@ public class FunctionParser {
     }
 
     public FunctionNode parseFunction() {
-        parser.advance(); // consome 'func'
+        parser.advance(); // consome 'function'
 
         // Nome da função
         String funcName = parser.current().getValue();
@@ -24,7 +23,8 @@ public class FunctionParser {
 
         // Parâmetros entre '(' e ')'
         parser.eat(Token.TokenType.DELIMITER, "(");
-        List<String> params = new ArrayList<>();
+        List<String> paramNames = new ArrayList<>();
+        List<String> paramTypes = new ArrayList<>();
         if (!parser.current().getValue().equals(")")) {
             do {
                 // Pega o tipo do parâmetro
@@ -35,8 +35,8 @@ public class FunctionParser {
                 String name = parser.current().getValue();
                 parser.advance();
 
-                // Guarda "tipo nome" na lista de parâmetros
-                params.add(name);
+                paramNames.add(name);
+                paramTypes.add(type);
 
                 if (parser.current().getValue().equals(",")) {
                     parser.advance();
@@ -47,10 +47,20 @@ public class FunctionParser {
         }
         parser.eat(Token.TokenType.DELIMITER, ")");
 
+        // Cria um contexto local para a função
+        parser.pushContext();
+
+        // Declara os parâmetros no contexto
+        for (int i = 0; i < paramNames.size(); i++) {
+            parser.declareVariable(paramNames.get(i), paramTypes.get(i));
+        }
+
         // Corpo da função
         List<ASTNode> body = parser.parseBlock();
 
-        return new FunctionNode(funcName, params, body);
-    }
+        // Remove o contexto local
+        parser.popContext();
 
+        return new FunctionNode(funcName, paramNames, body);
+    }
 }

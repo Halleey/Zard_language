@@ -6,7 +6,6 @@ import expressions.DynamicList;
 import expressions.TypedValue;
 
 import java.util.List;
-import java.util.Map;
 
 public class ListNode extends ASTNode {
     private final DynamicList list;

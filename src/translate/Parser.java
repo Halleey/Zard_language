@@ -18,9 +18,31 @@ import java.util.*;
 public class Parser {
     private final List<Token> tokens;
     private int pos = 0;
+    private final Map<String, String> variableTypes = new HashMap<>();
+    private final Deque<Map<String, String>> variableStack = new ArrayDeque<>();
 
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
+        variableStack.push(new HashMap<>()); // contexto global
+    }
+
+    public void pushContext() {
+        variableStack.push(new HashMap<>());
+    }
+
+    public void popContext() {
+        variableStack.pop();
+    }
+
+    public void declareVariable(String name, String type) {
+        variableStack.peek().put(name, type);
+    }
+
+    public String getVariableType(String name) {
+        for (Map<String, String> ctx : variableStack) {
+            if (ctx.containsKey(name)) return ctx.get(name);
+        }
+        return null; // variável não encontrada
     }
 
     public Token current() {
@@ -220,4 +242,10 @@ public class Parser {
         eat(Token.TokenType.DELIMITER, "}");
         return nodes;
     }
+
+
+    public void declareVariableType(String name, String type) {
+        variableTypes.put(name, type);
+    }
+
 }

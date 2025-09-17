@@ -8,7 +8,6 @@ import variables.VariableDeclarationNode;
 
 import java.util.ArrayList;
 import java.util.List;
-
 public class VarDeclarationParser {
     private final Parser parser;
 
@@ -17,6 +16,7 @@ public class VarDeclarationParser {
     }
 
     public ASTNode parseVarDeclaration() {
+        // captura tipo e nome
         String type = parser.current().getValue();
         parser.advance();
         String name = parser.current().getValue();
@@ -24,30 +24,39 @@ public class VarDeclarationParser {
 
         ASTNode initializer = null;
 
+        // variáveis do tipo lista
         if (type.equals("list")) {
             if (parser.current().getValue().equals("=")) {
                 parser.advance();
                 parser.eat(Token.TokenType.DELIMITER, "(");
+
                 List<ASTNode> elements = new ArrayList<>();
                 while (!parser.current().getValue().equals(")")) {
-                    elements.add(parser.parseExpression()); // ASTNode puro
+                    elements.add(parser.parseExpression());
                     if (parser.current().getValue().equals(",")) parser.advance();
                 }
+
                 parser.eat(Token.TokenType.DELIMITER, ")");
-                initializer = new ListNode(new DynamicList(elements)); // só ASTNodes
+                initializer = new ListNode(new DynamicList(elements));
             } else {
-                initializer = new ListNode(new DynamicList(new ArrayList<>())); // lista vazia
+                initializer = new ListNode(new DynamicList(new ArrayList<>()));
             }
 
             parser.eat(Token.TokenType.DELIMITER, ";");
+
+            // registra o tipo no parser para uso futuro
+            parser.declareVariableType(name, "list");
             return new VariableDeclarationNode(name, "list", initializer);
-        } else {
-            if (parser.current().getValue().equals("=")) {
-                parser.advance();
-                initializer = parser.parseExpression();
-            }
-            parser.eat(Token.TokenType.DELIMITER, ";");
-            return new VariableDeclarationNode(name, type, initializer);
         }
+
+        // variáveis de outros tipos
+        if (parser.current().getValue().equals("=")) {
+            parser.advance();
+            initializer = parser.parseExpression();
+        }
+        parser.eat(Token.TokenType.DELIMITER, ";");
+
+        parser.declareVariableType(name, type); // registra tipo
+        return new VariableDeclarationNode(name, type, initializer);
     }
 }

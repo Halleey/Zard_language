@@ -49,8 +49,13 @@ public class FunctionCallNode extends ASTNode {
 
     @Override
     public void print(String prefix) {
-
-
+        System.out.println(prefix + "FunctionCall: " + name);
+        if (!args.isEmpty()) {
+            System.out.println(prefix + "  Args:");
+            for (ASTNode arg : args) {
+                arg.print(prefix + "    ");
+            }
+        }
     }
 
     public String getName() {

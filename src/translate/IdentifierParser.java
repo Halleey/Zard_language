@@ -3,6 +3,7 @@ package translate;
 import ast.ASTNode;
 import ast.functions.FunctionCallNode;
 
+import expressions.TypedValue;
 import tokens.Token;
 import variables.AssignmentNode;
 import variables.UnaryOpNode;
@@ -19,27 +20,34 @@ public class IdentifierParser {
     }
 
     public ASTNode parseAsStatement(String name) {
-        if (parser.current().getValue().equals(".")) {
-            return listParser.parseStatementListMethod(name);
+        String type = parser.getVariableType(name);
+        String tokenVal = parser.current().getValue();
+
+        // prioridade: se for lista e o token atual é '.', parsear método de lista
+        if ("list".equals(type) && ".".equals(tokenVal)) {
+            return listParser.parseStatementListMethod(name); // já consome '.' + método + ';'
         }
 
-        if (parser.current().getValue().equals("=")) {
+        // atribuição
+        if ("=".equals(tokenVal)) {
             parser.advance();
             ASTNode value = parser.parseExpression();
             parser.eat(Token.TokenType.DELIMITER, ";");
             return new AssignmentNode(name, value);
         }
 
-        if (parser.current().getValue().equals("++") || parser.current().getValue().equals("--")) {
-            String op = parser.current().getValue();
+        // unário ++ / --
+        if ("++".equals(tokenVal) || "--".equals(tokenVal)) {
             parser.advance();
             parser.eat(Token.TokenType.DELIMITER, ";");
-            return new UnaryOpNode(name, op);
+            return new UnaryOpNode(name, tokenVal);
         }
 
+        // variável sozinha → statement inútil
         parser.eat(Token.TokenType.DELIMITER, ";");
         return new VariableNode(name);
     }
+
 
     public ASTNode parseAsExpression(String name) {
         if (parser.current().getValue().equals("(")) {

@@ -50,9 +50,15 @@ main {
     print("total foi de ? " + total);
     print(f(2,3));
     print("Lista final: " + numeros);
-    print(numeros.size());
 
-double testing = 4.54;
-double beta = 0.32;
-print(beta + testing);
+
+    print("apos inserção manual " + numeros);
+
+    double testing = 4.54;
+    double beta = 0.32;
+    numeros.add(5);
+
+    numeros.remove(0);
+    print(numeros.size());
+    print(beta + testing);
 }

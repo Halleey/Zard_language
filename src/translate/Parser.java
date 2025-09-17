@@ -39,11 +39,15 @@ public class Parser {
     }
 
     public String getVariableType(String name) {
+        // primeiro verifica a stack de escopo
         for (Map<String, String> ctx : variableStack) {
             if (ctx.containsKey(name)) return ctx.get(name);
         }
-        return null; // variável não encontrada
+
+        // depois verifica o mapa global
+        return variableTypes.get(name);
     }
+
 
     public Token current() {
         if (pos < tokens.size()) return tokens.get(pos);
@@ -134,11 +138,26 @@ public class Parser {
 
         if (tok.getType() == Token.TokenType.IDENTIFIER) {
             String name = tok.getValue();
-            advance();
+            advance(); // consome IDENTIFIER
+
+            // Se o próximo token for '.', cria MethodCallNode genérico
+            if (current().getValue().equals(".")) {
+                advance(); // consome '.'
+                String methodName = current().getValue();
+                advance(); // consome o nome do método
+                List<ASTNode> args = parseArguments(); // argumentos do método
+                MethodCallNode node = new MethodCallNode(name, methodName, args);
+
+                // consome o ';' final do statement
+                eat(Token.TokenType.DELIMITER, ";");
+
+                return node;
+            }
+
+            // Caso normal: variável/atribuição/unário
             IdentifierParser idParser = new IdentifierParser(this);
             return idParser.parseAsStatement(name);
         }
-
 
         throw new RuntimeException("Comando inesperado: " + tok.getValue());
     }
@@ -147,6 +166,7 @@ public class Parser {
     public ASTNode parseExpression() {
         ASTNode left = parseTerm();
         while (current().getValue().equals("+") || current().getValue().equals("-")) {
+
             String op = current().getValue();
             advance();
             ASTNode right = parseTerm();
@@ -176,10 +196,9 @@ public class Parser {
         }
         return left;
     }
-
     private ASTNode parseFactor() {
         Token tok = current();
-
+        System.out.println("current token in processing " + current());
         switch (tok.getType()) {
             case NUMBER -> {
                 advance();
@@ -202,12 +221,25 @@ public class Parser {
                 }
             }
             case IDENTIFIER -> {
-                advance();
                 String name = tok.getValue();
+                advance(); // consome IDENTIFIER
+                System.out.println(name + " testando o tok");
+
+                // verifica se a variável existe e se é do tipo list
+                String type = getVariableType(name);
+                System.out.println("tipo da variavel" + type);
+                if ("list".equals(type) && current().getValue().equals(".")) {
+                    System.out.println("invocando metodo para lidar corretamente com lista");
+                    ListMethodParser listParser = new ListMethodParser(this);
+                    return listParser.parseExpressionListMethod(name);
+                }
+
+                // se não for lista ou não houver '.', trata como variável normal
                 IdentifierParser idParser = new IdentifierParser(this);
                 return idParser.parseAsExpression(name);
             }
         }
+
         if (tok.getValue().equals("(")) {
             advance();
             ASTNode expr = parseExpression();
@@ -217,6 +249,13 @@ public class Parser {
 
         throw new RuntimeException("Fator inesperado: " + tok.getValue());
     }
+
+        public Token peek() {
+            if (pos + 1 < tokens.size()) {
+                return tokens.get(pos + 1);
+            }
+            return new Token(Token.TokenType.EOF, "");
+        }
 
     List<ASTNode> parseArguments() {
         eat(Token.TokenType.DELIMITER, "(");

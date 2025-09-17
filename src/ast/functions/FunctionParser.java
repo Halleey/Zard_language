@@ -6,6 +6,7 @@ import translate.Parser;
 
 import java.util.ArrayList;
 import java.util.List;
+
 public class FunctionParser {
 
     private final Parser parser;

@@ -59,6 +59,7 @@ public class Lexer {
             advance();
         }
         String identifier = result.toString();
+
         switch (identifier) {
             case "int":
             case "string":
@@ -80,21 +81,12 @@ public class Lexer {
             case "import":
                 return new Token(Token.TokenType.KEYWORD, identifier);
             case "new":
-                return  new Token(Token.TokenType.INSTANCE, identifier);
-            case "add":
-            case "addAll":
-            case "remove":
-            case "clear":
-            case "size":
-            case "set":
-            case "get":
-            case "getValues":
-            case "getKeys":
-                return  new Token(Token.TokenType.METHODS, identifier);
+                return new Token(Token.TokenType.INSTANCE, identifier);
             case "true":
             case "false":
                 return new Token(Token.TokenType.BOOLEAN, identifier); // true e false como BOOLEAN
             default:
+                // Todos os métodos de lista agora entram aqui como IDENTIFIER
                 return new Token(Token.TokenType.IDENTIFIER, identifier);
         }
     }

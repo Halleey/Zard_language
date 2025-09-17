@@ -35,11 +35,13 @@ public class DynamicList {
         return elements.get(index).evaluate(ctx);
     }
 
-    // Remove elemento avaliado
-    public TypedValue remove(int index, RuntimeContext ctx) {
+
+    public TypedValue removeByIndex(int index, RuntimeContext ctx) {
         ASTNode removedNode = elements.remove(index);
         return removedNode.evaluate(ctx);
     }
+
+
 
     public void add(TypedValue value) {
         elements.add(new LiteralNode(value));
@@ -52,5 +54,6 @@ public class DynamicList {
     public int size() {
         return elements.size();
     }
+
 
 }

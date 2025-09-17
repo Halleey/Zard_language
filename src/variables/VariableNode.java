@@ -21,4 +21,7 @@ public class VariableNode extends ASTNode {
         System.out.println(prefix + "Variable: " + name);
     }
 
+    public String getName() {
+        return name;
+    }
 }

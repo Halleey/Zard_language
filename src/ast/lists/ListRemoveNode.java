@@ -17,12 +17,13 @@ public class ListRemoveNode extends ASTNode {
 
     @Override
 
+
     public TypedValue evaluate(RuntimeContext ctx) {
         DynamicList list = (DynamicList) listNode.evaluate(ctx).getValue();
         int index = ((Number) indexNode.evaluate(ctx).getValue()).intValue();
-        // usa o método remove do DynamicList
-        return list.remove(index, ctx);
+        return list.removeByIndex(index, ctx); // usa método novo
     }
+
 
 
     @Override

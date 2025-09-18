@@ -5,7 +5,7 @@ import ast.lists.ListNode;
 import ast.maps.DynamicMap;
 import ast.maps.MapNode;
 import ast.maps.MapParser;
-import expressions.DynamicList;
+import ast.lists.DynamicList;
 import tokens.Token;
 import variables.VariableDeclarationNode;
 

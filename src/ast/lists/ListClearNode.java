@@ -2,7 +2,6 @@ package ast.lists;
 
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
-import expressions.DynamicList;
 import expressions.TypedValue;
 public class ListClearNode extends ASTNode {
 

@@ -1,77 +1,16 @@
-
-main {
-
-    int contador = 0;
-    string mensagem = "Início do programa";
-
-    print(mensagem);
+main{
 
 
-    list numeros = (1, 2, 3);
-
-
-    function dobrar(int valor) {
-        print("Dobro de " + valor + " é " + (valor * 2));
+function fatorial(int n) {
+    if (n == 0) {
+        return 1;
+    } else {
+        return n * fatorial(n - 1);
     }
+}
+
+var resultado = fatorial(5);
+print(resultado);
 
 
-    function adicionarLista(list lst, int valor) {
-        lst.add(valor);
-        print("Lista após adicionar: " + lst);
-    }
-
-    while (contador < 5) {
-        print("Contador: " + contador);
-
-        if (contador == 3) {
-            print("Chegou no 3, pulando para próximo");
-        }
-
-        call dobrar(contador);
-
-        call adicionarLista(numeros, contador);
-
-        contador++;
-    }
-    function sum(int z, int x){
-      return z +x;
-    }
-
-    function sub(int z, int x){
-      print(z -x);
-     }
-
-
-    map mapa = {
-        0 : "texto",
-        1 : "outro valor",
-        2 : 42,
-        3 : true
-    };
-
-
-    int i = 1;
-    int b = 1;
-    var f = sum;
-    call sub(b, i);
-    int total =sum(b, i);
-    print("total foi de ? " + total);
-    print(f(2,3));
-    print("Lista final: " + numeros);
-
-
-    print("apos inserção manual " + numeros);
-
-    double testing = 4.54;
-    double beta = 0.32;
-    numeros.add(5);
-    numeros.addAll(3,4,5);
-    numeros.remove(0);
-    print(numeros.size());
-    print(numeros);
-    print(beta + testing);
-    int testando = numeros.get(1) + numeros.get(4);
-    print(testando + " its value ");
-    print(numeros.get(1));
-    print(mapa);
 }

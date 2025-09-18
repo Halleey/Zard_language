@@ -1,7 +1,8 @@
-package expressions;
+package ast.lists;
 
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
+import expressions.TypedValue;
 import variables.LiteralNode;
 
 import java.util.ArrayList;

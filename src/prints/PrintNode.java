@@ -3,7 +3,7 @@ package prints;
 import ast.ASTNode;
 import ast.maps.DynamicMap;
 import ast.runtime.RuntimeContext;
-import expressions.DynamicList;
+import ast.lists.DynamicList;
 import expressions.TypedValue;
 
 import java.util.List;

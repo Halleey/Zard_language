@@ -42,9 +42,17 @@ main {
      }
 
 
+    map mapa = {
+        0 : "texto",
+        1 : "outro valor",
+        2 : 42,
+        3 : true
+    };
+
+
     int i = 1;
     int b = 1;
-    int f = sum;
+    var f = sum;
     call sub(b, i);
     int total =sum(b, i);
     print("total foi de ? " + total);
@@ -57,9 +65,13 @@ main {
     double testing = 4.54;
     double beta = 0.32;
     numeros.add(5);
-
+    numeros.addAll(3,4,5);
     numeros.remove(0);
-
-
+    print(numeros.size());
+    print(numeros);
     print(beta + testing);
+    int testando = numeros.get(1) + numeros.get(4);
+    print(testando + " its value ");
+    print(numeros.get(1));
+    print(mapa);
 }

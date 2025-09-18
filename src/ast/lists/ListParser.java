@@ -1,7 +1,6 @@
 package ast.lists;
 
 import ast.ASTNode;
-import expressions.DynamicList;
 import tokens.Token;
 import translate.Parser;
 import variables.VariableDeclarationNode;

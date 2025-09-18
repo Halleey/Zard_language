@@ -3,11 +3,10 @@ package translate;
 import ast.ASTNode;
 import ast.maps.DynamicMap;
 import ast.runtime.RuntimeContext;
-import expressions.DynamicList;
+import ast.lists.DynamicList;
 import expressions.TypedValue;
 
 import java.util.List;
-import java.util.Map;
 
 public class MethodCallNode extends ASTNode {
     private final String objName;

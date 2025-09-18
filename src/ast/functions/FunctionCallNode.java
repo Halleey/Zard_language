@@ -6,6 +6,7 @@ import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
 
 import java.util.List;
+
 public class FunctionCallNode extends ASTNode {
     private final String name;
     private final List<ASTNode> args;
@@ -17,6 +18,7 @@ public class FunctionCallNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
+        // Pega a função do contexto atual
         TypedValue funcVal = ctx.getVariable(name);
         if (!funcVal.getType().equals("function")) {
             throw new RuntimeException(name + " não é uma função");
@@ -24,16 +26,15 @@ public class FunctionCallNode extends ASTNode {
 
         FunctionNode func = (FunctionNode) funcVal.getValue();
 
-        // Cria um novo contexto para a função (escopo local)
-        RuntimeContext localCtx = new RuntimeContext();
+        // Cria um contexto filho baseado no contexto atual
+        RuntimeContext localCtx = new RuntimeContext(ctx); // <- aqui o construtor precisa aceitar contexto pai
 
-        // Passa os argumentos
+        // Mapeia os argumentos para os parâmetros
         for (int i = 0; i < func.params.size(); i++) {
-            String paramName = func.params.get(i);   // agora é apenas "x" ou "z"
-            TypedValue argVal = args.get(i).evaluate(ctx); // avalia no contexto atual
+            String paramName = func.params.get(i);
+            TypedValue argVal = args.get(i).evaluate(ctx); // avalia no contexto chamador
             localCtx.declareVariable(paramName, argVal);
         }
-
 
         // Executa o corpo da função
         try {
@@ -65,5 +66,4 @@ public class FunctionCallNode extends ASTNode {
     public List<ASTNode> getArgs() {
         return args;
     }
-
 }

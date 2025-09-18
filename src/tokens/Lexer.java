@@ -80,6 +80,7 @@ public class Lexer {
             case "break":
             case "import":
             case "var":
+            case "as":
                 return new Token(Token.TokenType.KEYWORD, identifier);
             case "new":
                 return new Token(Token.TokenType.INSTANCE, identifier);

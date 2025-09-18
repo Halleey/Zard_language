@@ -4,6 +4,9 @@ import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
 
 import java.util.Map;
+import java.util.List;
+
+import java.util.List;
 public class VariableDeclarationNode extends ASTNode {
     public final String name;
     public final String type;
@@ -17,27 +20,30 @@ public class VariableDeclarationNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
+        TypedValue value;
+
         if (type.equals("var")) {
             if (initializer == null) {
                 throw new RuntimeException("Variável 'var " + name + "' precisa de inicialização para inferir tipo.");
             }
-            TypedValue inferred = initializer.evaluate(ctx);
-            ctx.declareVariable(name, inferred);
-            return inferred;
+            value = initializer.evaluate(ctx); // pode ser função, número, lista, string, etc.
+            ctx.declareVariable(name, value);
+            return value;
         }
 
-        TypedValue value = initializer != null ? initializer.evaluate(ctx) : getDefaultValue();
+        // Declaração com tipo explícito
+        value = initializer != null ? initializer.evaluate(ctx) : getDefaultValue();
 
+        // Checagem de tipo
         if (!value.getType().equals(type)) {
             throw new RuntimeException("Typing error: " + name +
-                    " declared as " + type +
-                    " but initialized as  " + value.getType());
+                    " declarado como " + type +
+                    " mas inicializado como " + value.getType());
         }
 
         ctx.declareVariable(name, value);
         return value;
     }
-
 
     @Override
     public void print(String prefix) {
@@ -58,13 +64,6 @@ public class VariableDeclarationNode extends ASTNode {
         };
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public String getType() {
-        return type;
-    }
+    public String getName() { return name; }
+    public String getType() { return type; }
 }
-
-

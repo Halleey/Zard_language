@@ -6,15 +6,11 @@ import ast.functions.FunctionCallParser;
 import ast.functions.FunctionParser;
 import ast.imports.ImportNode;
 import ast.inputs.InputParser;
-import ast.lists.DynamicList;
-import ast.lists.ListNode;
-import expressions.TypedValue;
 import home.MainParser;
 import ifstatements.IfParser;
 import loops.WhileParser;
 import prints.PrintParser;
 import tokens.Token;
-import variables.*;
 
 import java.util.*;
 
@@ -149,26 +145,16 @@ public class Parser {
 
                 case "import" -> {
                     advance();
-
                     Token pathToken = current();
                     String path = pathToken.getValue();
                     advance();
-                    if (!current().getValue().equals("as")) {
-                        throw new RuntimeException("Alias obrigatório: use 'as <alias>'");
-                    }
+                    eat(Token.TokenType.KEYWORD, "as");
+                    String alias = current().getValue();
                     advance();
-
-                    Token aliasToken = current();
-                    if (aliasToken.getType() != Token.TokenType.IDENTIFIER) {
-                        throw new RuntimeException("Alias inválido: esperado um identificador após 'as'");
-                    }
-                    String alias = aliasToken.getValue();
-                    advance(); // consome alias
-
                     eat(Token.TokenType.DELIMITER, ";");
-
                     return new ImportNode(path, alias);
                 }
+
             }
         }
 

@@ -37,29 +37,25 @@ public class ImportNode extends ASTNode {
             Parser parser = new Parser(tokens);
             List<ASTNode> ast = parser.parse();
 
-            // Cria um sub-contexto isolado para o alias
             RuntimeContext importCtx = new RuntimeContext();
 
-            // Executa apenas declarações de função e variáveis
             for (ASTNode node : ast) {
-                if (node instanceof FunctionNode || node instanceof VariableDeclarationNode) {
-                    try {
-                        node.evaluate(importCtx);
-                    } catch (ReturnValue rv) {
-                        continue;
-                    }
+                if (node instanceof FunctionNode funcNode) {
+                    // Aqui armazenamos o FunctionNode no namespace
+                    importCtx.declareVariable(funcNode.name, new TypedValue("function", funcNode));
+                } else if (node instanceof VariableDeclarationNode varNode) {
+                    varNode.evaluate(importCtx);
                 }
             }
 
-            // Registra o namespace no contexto principal
             ctx.declareVariable(alias, new TypedValue("namespace", importCtx));
-
         } catch (IOException e) {
             throw new RuntimeException("Erro ao importar arquivo: " + path, e);
         }
 
         return new TypedValue("null", null);
     }
+
 
 
     @Override

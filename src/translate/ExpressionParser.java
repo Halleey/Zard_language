@@ -11,7 +11,6 @@ import variables.LiteralNode;
 
 import java.util.ArrayList;
 import java.util.List;
-
 public class ExpressionParser {
     private final Parser parent;
 
@@ -65,8 +64,9 @@ public class ExpressionParser {
             case NUMBER -> {
                 parent.advance();
                 String num = tok.getValue();
-                if (num.contains(".")) return new LiteralNode(new TypedValue("double", Double.parseDouble(num)));
-                else return new LiteralNode(new TypedValue("int", Integer.parseInt(num)));
+                return num.contains(".")
+                        ? new LiteralNode(new TypedValue("double", Double.parseDouble(num)))
+                        : new LiteralNode(new TypedValue("int", Integer.parseInt(num)));
             }
             case STRING -> {
                 parent.advance();
@@ -85,19 +85,11 @@ public class ExpressionParser {
             case IDENTIFIER -> {
                 String name = tok.getValue();
                 parent.advance();
-
-                String type = parent.getVariableType(name);
-                if ("list".equals(type) && parent.current().getValue().equals(".")) {
-                    ListMethodParser listParser = new ListMethodParser(parent);
-                    return listParser.parseExpressionListMethod(name);
-                }
-
                 IdentifierParser idParser = new IdentifierParser(parent);
                 return idParser.parseAsExpression(name);
             }
         }
 
-        // Expressão entre parênteses
         if (tok.getValue().equals("(")) {
             parent.advance();
             ASTNode expr = parseExpression();
@@ -108,7 +100,6 @@ public class ExpressionParser {
         throw new RuntimeException("Fator inesperado: " + tok.getValue());
     }
 
-    // Parse de argumentos de função
     public List<ASTNode> parseArguments() {
         parent.eat(Token.TokenType.DELIMITER, "(");
         List<ASTNode> args = new ArrayList<>();
@@ -123,3 +114,4 @@ public class ExpressionParser {
         return args;
     }
 }
+

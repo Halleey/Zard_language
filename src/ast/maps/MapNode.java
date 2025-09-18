@@ -23,25 +23,18 @@ public class MapNode extends ASTNode {
     @Override
     public void print(String prefix) {
         System.out.println(prefix + "Map:");
-
         if (dynamicMap.size() == 0) {
             System.out.println(prefix + "  (vazio)");
             return;
         }
-
         ASTNode[] valueNodes = dynamicMap.valueNodes().toArray(new ASTNode[0]);
         int i = 0;
-
         for (ASTNode keyNode : dynamicMap.keyNodes()) {
             ASTNode valueNode = valueNodes[i];
-
-            // Avalia cada nó em um RuntimeContext temporário só para mostrar
             TypedValue keyVal = keyNode.evaluate(new RuntimeContext());
             TypedValue valueVal = valueNode.evaluate(new RuntimeContext());
-
             System.out.println(prefix + "  [" + keyVal.getValue() + " (" + keyVal.getType() + ")]: "
                     + valueVal.getValue() + " (" + valueVal.getType() + ")");
-
             i++;
         }
     }

@@ -6,8 +6,6 @@ import expressions.TypedValue;
 
 
 import java.util.*;
-
-
 public class DynamicMap {
     private final Map<ASTNode, ASTNode> entries;
 
@@ -19,13 +17,16 @@ public class DynamicMap {
         this.entries = entries;
     }
 
+    // Armazena diretamente os nós da AST
     public void put(ASTNode key, ASTNode value) {
         entries.put(key, value);
     }
 
+    // Avalia somente quando necessário
     public TypedValue get(TypedValue key, RuntimeContext ctx) {
         for (Map.Entry<ASTNode, ASTNode> e : entries.entrySet()) {
-            if (e.getKey().evaluate(ctx).equals(key)) {
+            TypedValue k = e.getKey().evaluate(ctx);
+            if (k.getType().equals(key.getType()) && k.getValue().equals(key.getValue())) {
                 return e.getValue().evaluate(ctx);
             }
         }
@@ -36,7 +37,8 @@ public class DynamicMap {
         Iterator<Map.Entry<ASTNode, ASTNode>> it = entries.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<ASTNode, ASTNode> e = it.next();
-            if (e.getKey().evaluate(ctx).equals(key)) {
+            TypedValue k = e.getKey().evaluate(ctx);
+            if (k.getType().equals(key.getType()) && k.getValue().equals(key.getValue())) {
                 it.remove();
                 return e.getValue().evaluate(ctx);
             }

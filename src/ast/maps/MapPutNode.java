@@ -3,11 +3,8 @@ package ast.maps;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
-import variables.LiteralNode;
-
 
 public class MapPutNode extends ASTNode {
-
     private final ASTNode mapNode;
     private final ASTNode keyNode;
     private final ASTNode valueNode;
@@ -21,18 +18,18 @@ public class MapPutNode extends ASTNode {
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
         TypedValue mapValue = mapNode.evaluate(ctx);
-        if(!mapValue.getType().equals("map")) throw new RuntimeException("this value is not map");
+        if (!mapValue.getType().equals("map"))
+            throw new RuntimeException("This value is not a map");
 
-        DynamicMap dynamicMap =(DynamicMap) mapValue.getValue();
-        TypedValue keyValue = keyNode.evaluate(ctx);
-        TypedValue val = valueNode.evaluate(ctx);
-        dynamicMap.put(new LiteralNode(keyValue), new LiteralNode(val));
+        DynamicMap dynamicMap = (DynamicMap) mapValue.getValue();
+        // Armazena AST puro, sem avaliação
+        dynamicMap.put(keyNode, valueNode);
         return new TypedValue(null, "null");
     }
 
     @Override
     public void print(String prefix) {
-        System.out.println(prefix + "MapPut:");
+        System.out.println(prefix + "MapPutNode:");
         System.out.println(prefix + "  Map:");
         mapNode.print(prefix + "    ");
         System.out.println(prefix + "  Key:");

@@ -3,7 +3,6 @@ package ast.maps;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
-
 public class MapRemoveNode extends ASTNode {
     private final ASTNode mapVar;
     private final ASTNode keyNode;
@@ -17,7 +16,7 @@ public class MapRemoveNode extends ASTNode {
     public TypedValue evaluate(RuntimeContext ctx) {
         DynamicMap map = (DynamicMap) mapVar.evaluate(ctx).getValue();
         TypedValue keyVal = keyNode.evaluate(ctx);
-        return map.remove(keyVal, ctx);
+        return map.remove(keyVal, ctx); // Avalia somente quando remove
     }
 
     @Override

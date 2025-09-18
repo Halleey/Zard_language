@@ -6,6 +6,7 @@ import translate.Parser;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 public class MapParser {
 
     private final Parser parser;

@@ -3,6 +3,7 @@ package translate;
 import ast.ASTNode;
 import ast.functions.FunctionCallNode;
 import ast.functions.FunctionReferenceNode;
+import ast.maps.MapMethodParser;
 import expressions.TypedValue;
 import tokens.Token;
 import variables.AssignmentNode;
@@ -36,32 +37,42 @@ public class IdentifierParser {
 
         return new VariableNode(name);
     }
-
     public ASTNode parseAsExpression(String name) {
         // Se houver chamada de função ou namespace
         if (parser.current().getValue().equals("(")) {
             List<ASTNode> args = parser.parseArguments();
-            return new FunctionCallNode(name, args); // suporta namespaces dentro do name
+            return new FunctionCallNode(name, args); // chamada normal de função
         }
 
-        // Suporte a namespace: Math.fatorial (referência, sem chamada)
+
         if (parser.current().getValue().equals(".")) {
-            parser.advance();
-            String memberName = parser.current().getValue();
-            parser.advance();
+            String varType = parser.getVariableType(name);
 
-            String fullName = name + "." + memberName;
+            if ("list".equals(varType)) {
+                ListMethodParser listParser = new ListMethodParser(parser);
+                return listParser.parseExpressionListMethod(name);
+            } else if ("map".equals(varType)) {
+                MapMethodParser mapParser = new MapMethodParser(parser);
+                return mapParser.parseExpressionMapMethod(name);
+            } else {
+                // Continua suporte a namespace/função
+                parser.advance();
+                String memberName = parser.current().getValue();
+                parser.advance();
 
-            if (parser.current().getValue().equals("(")) {
-                List<ASTNode> args = parser.parseArguments();
-                return new FunctionCallNode(fullName, args); // chama a função no namespace
+                String fullName = name + "." + memberName;
+
+                if (parser.current().getValue().equals("(")) {
+                    List<ASTNode> args = parser.parseArguments();
+                    return new FunctionCallNode(fullName, args);
+                }
+
+                return new FunctionReferenceNode(fullName);
             }
-
-            // apenas referência à função no namespace
-            return new FunctionReferenceNode(fullName); // <--- aqui!
         }
 
         return new VariableNode(name);
     }
+
 
 }

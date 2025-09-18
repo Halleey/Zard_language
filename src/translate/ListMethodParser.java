@@ -19,9 +19,7 @@ public class ListMethodParser {
         String type = parser.getVariableType(name);
         System.out.println("DEBUG: Variável '" + name + "' tem tipo: " + type);
 
-        // o '.' já foi consumido antes de chamar este método
-        parser.eat(Token.TokenType.DELIMITER, "."); // consome o ponto
-        String method = parser.current().getValue(); // pega o método
+        String method = parser.current().getValue();
 
         Token.TokenType methodType = parser.current().getType();
         System.out.println("DEBUG: Método detectado: " + method + ", tipo do token: " + methodType);

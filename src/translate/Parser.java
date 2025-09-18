@@ -196,120 +196,20 @@ public class Parser {
         throw new RuntimeException("Comando inesperado: " + tok.getValue());
     }
 
+
     // ------------------- EXPRESSIONS -------------------
     public ASTNode parseExpression() {
-        ASTNode left = parseTerm();
-        while (current().getValue().equals("+") || current().getValue().equals("-")) {
-
-            String op = current().getValue();
-            advance();
-            ASTNode right = parseTerm();
-            left = new BinaryOpNode(left, op, right);
-        }
-        return parseComparison(left);
+        return new ExpressionParser(this).parseExpression();
     }
 
-    private ASTNode parseComparison(ASTNode left) {
-        if (current().getType() == Token.TokenType.OPERATOR &&
-                List.of("<", ">", "<=", ">=", "==", "!=").contains(current().getValue())) {
-            String op = current().getValue();
-            advance();
-            ASTNode right = parseTerm();
-            left = new BinaryOpNode(left, op, right);
-        }
-        return left;
-    }
-
-    private ASTNode parseTerm() {
-        ASTNode left = parseFactor();
-        while (current().getValue().equals("*") || current().getValue().equals("/")) {
-            String op = current().getValue();
-            advance();
-            ASTNode right = parseFactor();
-            left = new BinaryOpNode(left, op, right);
-        }
-        return left;
-    }
-    private ASTNode parseFactor() {
-        Token tok = current();
-
-        // Caso lista vazia: ()
-        if (tok.getValue().equals("(") && peek().getValue().equals(")")) {
-            advance(); // consome '('
-            advance(); // consome ')'
-            return new ListNode(new DynamicList(new ArrayList<>())); // lista vazia
-        }
-
-        switch (tok.getType()) {
-            case NUMBER -> {
-                advance();
-                String num = tok.getValue();
-                if (num.contains(".")) return new LiteralNode(new TypedValue("double", Double.parseDouble(num)));
-                else return new LiteralNode(new TypedValue("int", Integer.parseInt(num)));
-            }
-            case STRING -> {
-                advance();
-                return new LiteralNode(new TypedValue("string", tok.getValue()));
-            }
-            case BOOLEAN -> {
-                advance();
-                return new LiteralNode(new TypedValue("boolean", Boolean.parseBoolean(tok.getValue())));
-            }
-            case KEYWORD -> {
-                if (tok.getValue().equals("input")) {
-                    InputParser inputParser = new InputParser(this);
-                    return inputParser.parse();
-                }
-            }
-            case IDENTIFIER -> {
-                String name = tok.getValue();
-                advance(); // consome IDENTIFIER
-
-                // verifica se a variável existe e se é do tipo list
-                String type = getVariableType(name);
-                if ("list".equals(type) && current().getValue().equals(".")) {
-                    ListMethodParser listParser = new ListMethodParser(this);
-                    return listParser.parseExpressionListMethod(name);
-                }
-
-                // se não for lista ou não houver '.', trata como variável normal
-                IdentifierParser idParser = new IdentifierParser(this);
-                return idParser.parseAsExpression(name);
-            }
-        }
-
-        // Expressão entre parênteses: (expr)
-        if (tok.getValue().equals("(")) {
-            advance(); // consome '('
-            ASTNode expr = parseExpression();
-            eat(Token.TokenType.DELIMITER, ")");
-            return expr;
-        }
-
-        throw new RuntimeException("Fator inesperado: " + tok.getValue());
-    }
-
-    // Função auxiliar para olhar o próximo token sem avançar
     public Token peek() {
         if (pos + 1 < tokens.size()) {
             return tokens.get(pos + 1);
         }
         return new Token(Token.TokenType.EOF, "");
     }
-
-
-    List<ASTNode> parseArguments() {
-        eat(Token.TokenType.DELIMITER, "(");
-        List<ASTNode> args = new ArrayList<>();
-        if (!current().getValue().equals(")")) {
-            do {
-                args.add(parseExpression());
-                if (current().getValue().equals(",")) advance();
-                else break;
-            } while (!current().getValue().equals(")"));
-        }
-        eat(Token.TokenType.DELIMITER, ")");
-        return args;
+    public List<ASTNode> parseArguments() {
+        return new ExpressionParser(this).parseArguments();
     }
 
     // ------------------- BLOCKS -------------------

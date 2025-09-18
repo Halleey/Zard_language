@@ -2,11 +2,13 @@ package ast.imports;
 
 import ast.ASTNode;
 import ast.exceptions.ReturnValue;
+import ast.functions.FunctionNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
 import tokens.Lexer;
 import tokens.Token;
 import translate.Parser;
+import variables.VariableDeclarationNode;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -35,18 +37,21 @@ public class ImportNode extends ASTNode {
             Parser parser = new Parser(tokens);
             List<ASTNode> ast = parser.parse();
 
-            // Sempre cria um sub-contexto para o alias
+            // Cria um sub-contexto isolado para o alias
             RuntimeContext importCtx = new RuntimeContext();
 
+            // Executa apenas declarações de função e variáveis
             for (ASTNode node : ast) {
-                try {
-                    node.evaluate(importCtx);
-                } catch (ReturnValue rv) {
-                    continue;
+                if (node instanceof FunctionNode || node instanceof VariableDeclarationNode) {
+                    try {
+                        node.evaluate(importCtx);
+                    } catch (ReturnValue rv) {
+                        continue;
+                    }
                 }
             }
 
-            // Registra o contexto importado no contexto principal usando o alias
+            // Registra o namespace no contexto principal
             ctx.declareVariable(alias, new TypedValue("namespace", importCtx));
 
         } catch (IOException e) {
@@ -55,6 +60,7 @@ public class ImportNode extends ASTNode {
 
         return new TypedValue("null", null);
     }
+
 
     @Override
     public void print(String prefix) {

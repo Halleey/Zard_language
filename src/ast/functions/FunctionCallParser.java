@@ -16,6 +16,8 @@ public class FunctionCallParser {
     }
 
     public FunctionCallNode parseFunctionCall(String funcName) {
+        // funcName já vem como "math.Max" do parser principal
+
         parser.eat(Token.TokenType.DELIMITER, "("); // consome '('
 
         List<ASTNode> args = new ArrayList<>();
@@ -37,5 +39,6 @@ public class FunctionCallParser {
 
         return new FunctionCallNode(funcName, args);
     }
+
 
 }

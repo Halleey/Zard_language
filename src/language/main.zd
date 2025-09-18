@@ -1,3 +1,5 @@
+
+import "src/language/stdlib/Math.zd";
 main {
 
     function sumList(list lst) {
@@ -40,4 +42,10 @@ main {
 
     var resultado = fatorial(5);
     print("Fatorial de 5: " + resultado);
+    if(nums.size() < 6){
+       print("era menor que 6");
+    }
+
+    int x = 1;
+    call dobrar(x);
 }

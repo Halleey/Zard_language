@@ -2,7 +2,7 @@ package tokens;
 
 public class Token {
     public enum TokenType {
-        KEYWORD, IDENTIFIER, OPERATOR, NUMBER, STRING, DELIMITER, EOF, BOOLEAN, INSTANCE, METHODS
+        KEYWORD, IDENTIFIER, OPERATOR, NUMBER, STRING, DELIMITER, EOF, BOOLEAN, INSTANCE
     }
 
     private final TokenType type;

@@ -4,6 +4,7 @@ import ast.exceptions.BreakNode;
 import ast.exceptions.ReturnNode;
 import ast.functions.FunctionCallParser;
 import ast.functions.FunctionParser;
+import ast.imports.ImportNode;
 import ast.inputs.InputParser;
 import ast.lists.DynamicList;
 import ast.lists.ListNode;
@@ -135,6 +136,16 @@ public class Parser {
                     FunctionCallParser functionCallParser = new FunctionCallParser(this);
                     return functionCallParser.parseFunctionCall(name);
                 }
+                case "import" -> {
+                    advance();
+                    Token pathToken = current();
+                    String path = pathToken.getValue();
+                    advance(); // consome o string literal
+                    eat(Token.TokenType.DELIMITER, ";"); // consome o ';'
+                    return new ImportNode(path);
+                }
+
+
             }
         }
 

@@ -4,6 +4,8 @@ import expressions.TypedValue;
 
 import java.util.HashMap;
 import java.util.Map;
+
+
 public class RuntimeContext {
     private final Map<String, TypedValue> variables = new HashMap<>();
     private final RuntimeContext parent; // contexto pai opcional

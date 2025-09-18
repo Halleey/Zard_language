@@ -131,21 +131,44 @@ public class Parser {
                 }
                 case "call" -> {
                     advance();
-                    String name = current().getValue();
+                    // Começa a ler o identificador da função
+                    String funcName = current().getValue();
                     advance();
+
+                    // Aceitar alias: se tiver '.', concatenar
+                    while (current().getValue().equals(".")) {
+                        advance(); // consome '.'
+                        String nextPart = current().getValue();
+                        advance();
+                        funcName += "." + nextPart; // concatena o alias
+                    }
+
                     FunctionCallParser functionCallParser = new FunctionCallParser(this);
-                    return functionCallParser.parseFunctionCall(name);
+                    return functionCallParser.parseFunctionCall(funcName);
                 }
+
                 case "import" -> {
                     advance();
+
                     Token pathToken = current();
                     String path = pathToken.getValue();
-                    advance(); // consome o string literal
-                    eat(Token.TokenType.DELIMITER, ";"); // consome o ';'
-                    return new ImportNode(path);
+                    advance();
+                    if (!current().getValue().equals("as")) {
+                        throw new RuntimeException("Alias obrigatório: use 'as <alias>'");
+                    }
+                    advance();
+
+                    Token aliasToken = current();
+                    if (aliasToken.getType() != Token.TokenType.IDENTIFIER) {
+                        throw new RuntimeException("Alias inválido: esperado um identificador após 'as'");
+                    }
+                    String alias = aliasToken.getValue();
+                    advance(); // consome alias
+
+                    eat(Token.TokenType.DELIMITER, ";");
+
+                    return new ImportNode(path, alias);
                 }
-
-
             }
         }
 

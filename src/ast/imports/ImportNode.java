@@ -13,43 +13,51 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+
 public class ImportNode extends ASTNode {
-
     private final String path;
+    private final String alias;
 
-    public ImportNode(String path) {
+    public ImportNode(String path, String alias) {
+        if (alias == null || alias.isEmpty()) {
+            throw new RuntimeException("Alias obrigatório para import de " + path);
+        }
         this.path = path;
+        this.alias = alias;
     }
-
-
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-      try {
-          String code = Files.readString(Path.of(path));
+        try {
+            String code = Files.readString(Path.of(path));
+            Lexer lexer = new Lexer(code);
+            List<Token> tokens = lexer.tokenize();
+            Parser parser = new Parser(tokens);
+            List<ASTNode> ast = parser.parse();
 
-          Lexer lexer = new Lexer(code);
-          List<Token> tokens = lexer.tokenize();
-          Parser parser = new Parser(tokens);
-          List<ASTNode> ast = parser.parse();
+            // Sempre cria um sub-contexto para o alias
+            RuntimeContext importCtx = new RuntimeContext();
 
-          for (ASTNode node : ast) {
-              try {
-                  node.evaluate(ctx);
-              } catch (ReturnValue rv) {
-                  continue;
-              }
-          }
+            for (ASTNode node : ast) {
+                try {
+                    node.evaluate(importCtx);
+                } catch (ReturnValue rv) {
+                    continue;
+                }
+            }
 
-      } catch (IOException e) {
-          throw new RuntimeException(e);
-      }
+            // Registra o contexto importado no contexto principal usando o alias
+            ctx.declareVariable(alias, new TypedValue("namespace", importCtx));
 
-        return null;
+        } catch (IOException e) {
+            throw new RuntimeException("Erro ao importar arquivo: " + path, e);
+        }
+
+        return new TypedValue("null", null);
     }
 
     @Override
     public void print(String prefix) {
-        System.out.println(prefix + "Import: \"" + path + "\"");
+        System.out.println(prefix + "Import: \"" + path + "\" as " + alias);
     }
 }

@@ -3,6 +3,7 @@ package ast.maps;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
+
 public class MapNode extends ASTNode {
     private final DynamicMap dynamicMap;
 

@@ -6,6 +6,7 @@ import ast.functions.FunctionCallParser;
 import ast.functions.FunctionParser;
 import ast.imports.ImportNode;
 import ast.inputs.InputParser;
+import ast.maps.MapMethodParser;
 import home.MainParser;
 import ifstatements.IfParser;
 import loops.WhileParser;
@@ -166,15 +167,24 @@ public class Parser {
             if (current().getValue().equals(".")) {
                 advance(); // consome '.'
                 String methodName = current().getValue();
-                advance(); // consome o nome do método
-                List<ASTNode> args = parseArguments(); // argumentos do método
-                MethodCallNode node = new MethodCallNode(name, methodName, args);
 
-                // consome o ';' final do statement
-                eat(Token.TokenType.DELIMITER, ";");
+                // verifica o tipo da variável para redirecionar
+                String varType = getVariableType(name);
 
-                return node;
+                ASTNode node;
+                if ("list".equals(varType)) {
+                    ListMethodParser listParser = new ListMethodParser(this);
+                    node = listParser.parseStatementListMethod(name);
+                } else if ("map".equals(varType)) {
+                    MapMethodParser mapParser = new MapMethodParser(this);
+                    node = mapParser.parseStatementMapMethod(name);
+                } else {
+                    throw new RuntimeException("Tipo " + varType + " não suporta métodos: " + methodName);
+                }
+
+                return node; // retorna AST correta, sem executar nada aqui
             }
+
             // Caso normal: variável/atribuição/unário
             IdentifierParser idParser = new IdentifierParser(this);
             return idParser.parseAsStatement(name);

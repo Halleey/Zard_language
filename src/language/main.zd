@@ -11,6 +11,10 @@ else{
 
 }
 
+ map mapa = {0: "index"};
+ mapa.put(1,"teste");
+ print(mapa);
+
     var fac =Math.fatorial;
     print(fac(5));
 }

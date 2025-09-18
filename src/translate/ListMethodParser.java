@@ -109,6 +109,14 @@ public class ListMethodParser {
                 if (arg == null) throw new RuntimeException("get requer índice");
                 yield new ListGetNode(listVar, arg);
             }
+            case "remove" -> {
+                yield new ListRemoveNode(listVar, arg);
+            }
+            case "slice" -> {
+                if (arg == null) throw new RuntimeException("slice requer índice");
+                yield new ListSliceNode(listVar, arg);
+            }
+
             default -> throw new RuntimeException("Método de lista não permitido em expressão: " + method);
         };
     }

@@ -1,16 +1,43 @@
-main{
+main {
 
-
-function fatorial(int n) {
-    if (n == 0) {
-        return 1;
-    } else {
-        return n * fatorial(n - 1);
+    function sumList(list lst) {
+        if (lst.size() == 0) {
+            return 0;
+        } else {
+            return lst.get(0) + sumList(lst.slice(1));
+        }
     }
-}
 
-var resultado = fatorial(5);
-print(resultado);
+    function mapDouble(list lst) {
+        if (lst.size() == 0) {
+            return lst;
+        } else {
+            var first = lst.get(0);
+            var rest = lst.slice(1);
+            var mappedFirst = first * 2;
+            var mappedRest = mapDouble(rest);
+            mappedRest.add(mappedFirst);
+            return mappedRest;
+        }
+    }
 
+    function fatorial(int n) {
+        if (n == 0) {
+            return 1;
+        } else {
+            return n * fatorial(n - 1);
+        }
+    }
 
+    list nums = (1, 2, 3, 4, 5);
+    print("Lista original: " + nums);
+
+    var doubled = mapDouble(nums);
+    print("Lista dobrada: " + doubled);
+
+    var total = sumList(nums);
+    print("Soma da lista: " + total);
+
+    var resultado = fatorial(5);
+    print("Fatorial de 5: " + resultado);
 }

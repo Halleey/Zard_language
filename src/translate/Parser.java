@@ -5,6 +5,8 @@ import ast.exceptions.ReturnNode;
 import ast.functions.FunctionCallParser;
 import ast.functions.FunctionParser;
 import ast.inputs.InputParser;
+import ast.lists.DynamicList;
+import ast.lists.ListNode;
 import expressions.TypedValue;
 import home.MainParser;
 import ifstatements.IfParser;
@@ -196,6 +198,14 @@ public class Parser {
     }
     private ASTNode parseFactor() {
         Token tok = current();
+
+        // Caso lista vazia: ()
+        if (tok.getValue().equals("(") && peek().getValue().equals(")")) {
+            advance(); // consome '('
+            advance(); // consome ')'
+            return new ListNode(new DynamicList(new ArrayList<>())); // lista vazia
+        }
+
         switch (tok.getType()) {
             case NUMBER -> {
                 advance();
@@ -220,6 +230,7 @@ public class Parser {
             case IDENTIFIER -> {
                 String name = tok.getValue();
                 advance(); // consome IDENTIFIER
+
                 // verifica se a variável existe e se é do tipo list
                 String type = getVariableType(name);
                 if ("list".equals(type) && current().getValue().equals(".")) {
@@ -233,8 +244,9 @@ public class Parser {
             }
         }
 
+        // Expressão entre parênteses: (expr)
         if (tok.getValue().equals("(")) {
-            advance();
+            advance(); // consome '('
             ASTNode expr = parseExpression();
             eat(Token.TokenType.DELIMITER, ")");
             return expr;
@@ -243,12 +255,14 @@ public class Parser {
         throw new RuntimeException("Fator inesperado: " + tok.getValue());
     }
 
-        public Token peek() {
-            if (pos + 1 < tokens.size()) {
-                return tokens.get(pos + 1);
-            }
-            return new Token(Token.TokenType.EOF, "");
+    // Função auxiliar para olhar o próximo token sem avançar
+    public Token peek() {
+        if (pos + 1 < tokens.size()) {
+            return tokens.get(pos + 1);
         }
+        return new Token(Token.TokenType.EOF, "");
+    }
+
 
     List<ASTNode> parseArguments() {
         eat(Token.TokenType.DELIMITER, "(");

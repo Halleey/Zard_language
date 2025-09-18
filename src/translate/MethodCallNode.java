@@ -1,6 +1,7 @@
 package translate;
 
 import ast.ASTNode;
+import ast.maps.DynamicMap;
 import ast.runtime.RuntimeContext;
 import expressions.DynamicList;
 import expressions.TypedValue;
@@ -38,10 +39,10 @@ public class MethodCallNode extends ASTNode {
 //                String str = (String) obj.getValue();
 //                return evaluateString(str, ctx);
 //            }
-//            case "map" -> {
-//                Map<String, TypedValue> map = obj.asMap();
-//                return evaluateMap(map, ctx);
-//            }
+            case "map" -> {
+                DynamicMap map = (DynamicMap) obj.getValue();
+                return evaluateMap(map, ctx);
+            }
             default -> throw new RuntimeException(
                     "Tipo " + obj.getType() + " não suporta métodos: " + objName
             );
@@ -109,23 +110,42 @@ public class MethodCallNode extends ASTNode {
 //        }
 //    }
 //
-//    private TypedValue evaluateMap(Map<String, TypedValue> map, RuntimeContext ctx) {
-//        switch (method) {
-//            case "put" -> {
-//                if (args.size() != 2) throw new RuntimeException("put requer 2 argumentos");
-//                String key = args.get(0).evaluate(ctx).getValue().toString();
-//                TypedValue val = args.get(1).evaluate(ctx);
-//                map.put(key, val);
+
+
+    private TypedValue evaluateMap(DynamicMap map, RuntimeContext ctx) {
+        switch (method) {
+            case "put" -> {
+                if (args.size() != 2) throw new RuntimeException("put requer 2 argumentos");
+                ASTNode keyNode = args.get(0);
+                ASTNode valNode = args.get(1);
+                map.put(keyNode, valNode);
+                return new TypedValue("map", map);
+            }
+            case "get" -> {
+                if (args.size() != 1) throw new RuntimeException("get requer 1 argumento");
+                ASTNode keyNode = args.get(0);
+                TypedValue keyVal = keyNode.evaluate(ctx);
+                return map.get(keyVal, ctx);
+            }
+            case "remove" -> {
+                if (args.size() != 1) throw new RuntimeException("remove requer 1 argumento");
+                ASTNode keyNode = args.get(0);
+                TypedValue keyVal = keyNode.evaluate(ctx);
+                return map.remove(keyVal, ctx);
+            }
+//            case "clear" -> {
+//                map.clear();
 //                return new TypedValue("map", map);
 //            }
-//            case "get" -> {
-//                if (args.size() != 1) throw new RuntimeException("get requer 1 argumento");
-//                String key = args.get(0).evaluate(ctx).getValue().toString();
-//                return map.getOrDefault(key, new TypedValue("null", null));
-//            }
-//            default -> throw new RuntimeException("Método de map inválido: " + method);
-//        }
-//    }
+            case "size" -> {
+                return new TypedValue("int", map.size());
+            }
+            default -> throw new RuntimeException("Método de map inválido: " + method);
+        }
+    }
+
+
+
 
     @Override
     public void print(String prefix) {

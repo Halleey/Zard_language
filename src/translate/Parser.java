@@ -86,7 +86,7 @@ public class Parser {
         if (tok.getType() == Token.TokenType.KEYWORD) {
             String val = tok.getValue();
             switch (val) {
-                case "int", "double", "string", "boolean", "list", "var"-> {
+                case "int", "double", "string", "boolean", "map", "list", "var"-> {
                     VarDeclarationParser varParser = new VarDeclarationParser(this);
                     return varParser.parseVarDeclaration();
                 }
@@ -153,12 +153,10 @@ public class Parser {
 
                 return node;
             }
-
             // Caso normal: variável/atribuição/unário
             IdentifierParser idParser = new IdentifierParser(this);
             return idParser.parseAsStatement(name);
         }
-
         throw new RuntimeException("Comando inesperado: " + tok.getValue());
     }
 

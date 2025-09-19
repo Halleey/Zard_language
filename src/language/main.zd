@@ -1,55 +1,48 @@
 import "src/language/stdlib/Math.zd" as math;
+
+
 main {
+int contador = 0;
+string mensagem = "Início do programa";
 
-    int contador = 0;
-    string mensagem = "Início do programa";
 
-    print(mensagem);
+print(mensagem);
 
-    map numeros = {"0": 1, "1": 2, "2": 3};
 
-    function dobrar(int valor) {
-        print("Dobro de " + valor + " é " + (valor * 2));
-    }
+map numeros = {"0": 1, "1": 2, "2": 3};
 
-    while (contador < 5) {
-        print("Contador: " + contador);
 
-        if (contador == 3) {
-            print("Chegou no 3, pulando para próximo");
-        }
+function dobrar(int valor) {
+print("Dobro de " + valor + " é " + (valor * 2));
+}
 
-        call dobrar(contador);
 
-        call math.adicionarMapa(numeros, contador, contador);
+while (contador < 5) {
+print("Contador: " + contador);
 
-        contador++;
-    }
 
-    function sum(int z, int x){
-        return z + x;
-    }
+if (contador == 3) {
+print("Chegou no 3, pulando para próximo");
+}
 
-    function sub(int z, int x){
-        print(z - x);
-    }
 
-    int i = 1;
-    int b = 1;
-    var f = sum;
-    call sub(b, i);
-    int total = sum(b, i);
-    print("total foi de ? " + total);
-    print(f(2,3));
-    print("Mapa final: " + numeros);
+call dobrar(contador);
+call math.adicionarMapa(numeros, contador, contador);
 
-    print("apos inserção manual " + numeros);
 
-    double testing = 4.54;
-    double beta = 0.32;
-    numeros.put(5, 5);
-    print("testando aqui " +numeros);
-    numeros.remove(0);
+contador++;
+}
 
-    print(beta + testing);
+
+function fatorial(int n) {
+if (n == 0) {
+return 1;
+} else {
+return n * fatorial(n - 1);
+}
+}
+
+
+int resultado = fatorial(5);
+print("Fatorial de 5: " + resultado);
 }

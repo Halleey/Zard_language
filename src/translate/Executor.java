@@ -34,16 +34,16 @@ public class Executor {
 
             // Execute AST com RuntimeContext
             System.out.println("=== Execution ===");
-//            RuntimeContext ctx = new RuntimeContext();
-//
-//            for (ASTNode node : ast) {
-//                try {
-//                    node.evaluate(ctx);
-//                } catch (ReturnValue rv) {
-//                    System.out.println("Programa interrompido pelo return: " + rv.value.getValue());
-//                    break;
-//                }
-//            }
+            RuntimeContext ctx = new RuntimeContext();
+
+            for (ASTNode node : ast) {
+                try {
+                    node.evaluate(ctx);
+                } catch (ReturnValue rv) {
+                    System.out.println("Programa interrompido pelo return: " + rv.value.getValue());
+                    break;
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

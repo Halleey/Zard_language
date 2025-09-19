@@ -1,56 +1,92 @@
 # Zard
 
-Zard é uma linguagem de programação baseada em Java, criada para fins de estudo e aprimoramento da lógica de programação. Seu objetivo é oferecer uma sintaxe simples e acessível, facilitando o aprendizado sobre a criação de linguagens e a estrutura de compiladores.
+Zard é uma linguagem de programação tipada, baseada em Java, criada para fins de estudo e aprimoramento da lógica de programação. Seu objetivo é oferecer uma **sintaxe simples, clara e didática**, permitindo experimentar conceitos de compiladores, AST e execução interpretada.
+
+---
 
 ## ✨ Características Atuais
 
-- **Sintaxe Simples:** Inspirada no Java, mas reduzida para facilitar a interpretação.
-- **Declaração de Variáveis:** Suporte a tipos como `int`, `double` e `string`.
-- **Atribuição de Valores:** Permite atribuir valores a variáveis no momento da declaração ou posteriormente.
-- **Sistema de Execução Baseado em AST:** Utiliza uma Árvore de Sintaxe Abstrata (AST) para interpretação.
-- **Saída de Dados:** Suporte ao comando `print` para exibição de valores no console.
-- **Bloco Main:** Todo programa deve começar com `main { }`.
+* **Tipagem Explícita:** Suporte a tipos `int`, `double`, `string`, `list` e `map`.
+* **Declaração e Atribuição:** Variáveis podem ser declaradas com tipo explícito e receber valores imediatamente ou posteriormente.
+* **Funções:** Declaração de funções com parâmetros tipados, suporte a **funções recursivas** e retorno de valores.
+* **Execução via AST:** A linguagem utiliza uma Árvore de Sintaxe Abstrata para interpretar e executar o código.
+* **Controle de Fluxo:** Suporte a `if`, `else` e `while`.
+* **Listas Dinâmicas:** Métodos `add()`, `remove()`, `clear()` e `size()`.
+* **Mapas Dinâmicos:** Criação e manipulação de mapas com funções auxiliares.
+* **Importação de Código:** Suporte a importação de arquivos externos com alias, ex.: `import "src/language/stdlib/Math.zd" as math;`.
+* **Funções como Valores:** Variáveis podem armazenar funções e chamá-las dinamicamente.
+* **Bloco Main Obrigatório:** Todo programa deve começar com `main { }`.
+* **Print de Saída:** Suporte ao comando `print()` para exibir resultados no console.
+
+---
 
 ## 📝 Exemplo de Código
 
 ```zard
+import "src/language/stdlib/Math.zd" as math;
+
 main {
-    int x = 0;
-    while (x < 10) {
-        print(x);
-        x++;
-        if(x == 5) {
-            break;
+    int contador = 0;
+    string mensagem = "Início do programa";
+
+    print(mensagem);
+
+    map numeros = {"0": 1, "1": 2, "2": 3};
+
+    function dobrar(int valor) {
+        print("Dobro de " + valor + " é " + (valor * 2));
+    }
+
+    while (contador < 5) {
+        print("Contador: " + contador);
+
+        if (contador == 3) {
+            print("Chegou no 3, pulando para próximo");
+        }
+
+        call dobrar(contador);
+        call math.adicionarMapa(numeros, contador, contador);
+
+        contador++;
+    }
+
+    function fatorial(int n) {
+        if (n == 0) {
+            return 1;
+        } else {
+            return n * fatorial(n - 1);
         }
     }
-    print("Saiu do looping sem problemas ");
-    list nome = ("hallyson");
-    nome.add(1);
-    print(nome);
-}
 
+    int resultado = fatorial(5);
+    print("Fatorial de 5: " + resultado);
+}
 ```
+
+---
 
 ## 🚀 Futuro da Zard
 
-A linguagem continuará recebendo melhorias para tornar-se mais robusta e versátil. Algumas das metas incluem:
+A linguagem continuará evoluindo para se tornar mais robusta e versátil. Algumas das metas incluem:
+* 🛠 **Compilação para LLVM IR** para execução independente.
+* 🏗 **Criação de um compilador completo** visando bootstrapping.
 
-- 📌 **Suporte a Funções** (declaração e chamada de funções).
-- 📚 **Tipos de Dados Avançados** (listas e mapas dinâmicos).
-- 🔧 **Sistema de Módulos e Importação de Código**.
-- 🛠 **Compilação para LLVM IR** para execução independente.
-- 🏗 **Criação de um compilador** para alcançar o sonhado Bootstrapping .
+---
 
 ## 🔄 Melhorias em Desenvolvimento
 
-Atualmente, a Zard está passando por implementações importantes:
-- [x]**Criação de IF'S** para permitir decições lógicas.
-- [x]**Criação do While** para permitir Loopings.   
-- [x]**Adição do return** para encerrar loopings.
-- [x]**Refatorando a AST** para permitir melhor análise e otimização do código.
-- [x]**Implementação de listas dinâmicas** para facilitar manipulação de coleções.
-- []**Implementação de mapas dinâmicos** para facilitar manipulação de coleções.
-- []**Implementação de funções** para modularização do código.
+* [x] Criação de `if` e `else` para decisões lógicas.
+* [x] Implementação de `while` para loops.
+* [x] Adição de `return` para funções.
+* [x] Refatoração da AST para melhor análise e execução.
+* [x] Implementação de listas dinâmicas (`add`, `remove`, `clear`, `size`).
+* [x] Suporte a funções como valores.
+* [x] Suporte a funções recursivas.
+* [x] Implementação de mapas dinâmicos e funções auxiliares.
+* [x] Suporte a importação de módulos externos.
+* [x] Suporte a operadores compostos (`==`, `!=`, `<=`, `>=`).
+* [x] Funções recursivas já são suportadas.
+---
 
 ## 📂 Uso
 
@@ -62,9 +98,8 @@ Atualmente, a Zard está passando por implementações importantes:
 
 🔗 **Contribuição**
 
-Caso tenha sugestões ou queira contribuir para o projeto, fique à vontade para compartilhar ideias e feedback!
+Caso queira sugerir melhorias ou contribuir, fique à vontade para enviar feedback e pull requests.
 
 📧 **Contato**
 
-Se quiser saber mais sobre a Zard, entre em contato para discutir melhorias e novos recursos!
-
+Entre em contato para discutir melhorias e novos recursos para a Zard.

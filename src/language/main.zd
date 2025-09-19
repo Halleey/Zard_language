@@ -1,22 +1,55 @@
-import "src/language/stdlib/Math.zd" as Math;
+import "src/language/stdlib/Math.zd" as math;
 main {
 
-function fatorial(int n){
-    if(n == 0){
-       return 1;
-   }
-else{
-    return n * fatorial(n -1);
-}
+    int contador = 0;
+    string mensagem = "Início do programa";
 
-}
+    print(mensagem);
 
- map mapa = {0: "index"};
- mapa.put(1, "teste");
- print(mapa.get(1));
+    map numeros = {"0": 1, "1": 2, "2": 3};
 
- print(mapa);
+    function dobrar(int valor) {
+        print("Dobro de " + valor + " é " + (valor * 2));
+    }
 
-    var fac =Math.fatorial;
-    print(fac(5));
+    while (contador < 5) {
+        print("Contador: " + contador);
+
+        if (contador == 3) {
+            print("Chegou no 3, pulando para próximo");
+        }
+
+        call dobrar(contador);
+
+        call math.adicionarMapa(numeros, contador, contador);
+
+        contador++;
+    }
+
+    function sum(int z, int x){
+        return z + x;
+    }
+
+    function sub(int z, int x){
+        print(z - x);
+    }
+
+    int i = 1;
+    int b = 1;
+    var f = sum;
+    call sub(b, i);
+    int total = sum(b, i);
+    print("total foi de ? " + total);
+    print(f(2,3));
+    print("Mapa final: " + numeros);
+
+    print("apos inserção manual " + numeros);
+
+    double testing = 4.54;
+    double beta = 0.32;
+    numeros.put(5, 5);
+    print("testando aqui " +numeros);
+    numeros.remove(0);
+
+    print(beta + testing);
 }

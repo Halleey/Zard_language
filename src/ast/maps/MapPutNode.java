@@ -4,6 +4,7 @@ import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
 
+
 public class MapPutNode extends ASTNode {
     private final ASTNode mapNode;
     private final ASTNode keyNode;
@@ -22,8 +23,9 @@ public class MapPutNode extends ASTNode {
             throw new RuntimeException("This value is not a map");
 
         DynamicMap dynamicMap = (DynamicMap) mapValue.getValue();
-        // Armazena AST puro, sem avaliação
-        dynamicMap.put(keyNode, valueNode);
+        TypedValue keyVal = keyNode.evaluate(ctx);
+        TypedValue valueVal = valueNode.evaluate(ctx);
+        dynamicMap.put(keyVal, valueVal);
         return new TypedValue(null, "null");
     }
 

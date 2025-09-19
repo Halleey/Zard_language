@@ -1,4 +1,8 @@
 
+   function adicionarMapa(map m, int chave, int valor) {
+        m.put(chave, valor);
+        print("Mapa após adicionar: " + m);
+    }
 
 function dobrar(int n) {
     print("dobro de : " + n + " é " + (n *2));

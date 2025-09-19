@@ -17,12 +17,10 @@ public class ListMethodParser {
 
     public ASTNode parseStatementListMethod(String name) {
         String type = parser.getVariableType(name);
-        System.out.println("DEBUG: Variável '" + name + "' tem tipo: " + type);
 
         String method = parser.current().getValue();
 
         Token.TokenType methodType = parser.current().getType();
-        System.out.println("DEBUG: Método detectado: " + method + ", tipo do token: " + methodType);
 
         // avançar para '('
         parser.advance();

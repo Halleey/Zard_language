@@ -3,7 +3,6 @@ package ast.maps;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
-
 public class MapNode extends ASTNode {
     private final DynamicMap dynamicMap;
 
@@ -27,15 +26,11 @@ public class MapNode extends ASTNode {
             System.out.println(prefix + "  (vazio)");
             return;
         }
-        ASTNode[] valueNodes = dynamicMap.valueNodes().toArray(new ASTNode[0]);
-        int i = 0;
-        for (ASTNode keyNode : dynamicMap.keyNodes()) {
-            ASTNode valueNode = valueNodes[i];
-            TypedValue keyVal = keyNode.evaluate(new RuntimeContext());
-            TypedValue valueVal = valueNode.evaluate(new RuntimeContext());
+
+        for (TypedValue keyVal : dynamicMap.keys()) {
+            TypedValue valueVal = dynamicMap.get(keyVal);
             System.out.println(prefix + "  [" + keyVal.getValue() + " (" + keyVal.getType() + ")]: "
                     + valueVal.getValue() + " (" + valueVal.getType() + ")");
-            i++;
         }
     }
 }

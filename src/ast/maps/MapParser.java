@@ -1,12 +1,13 @@
 package ast.maps;
 
 import ast.ASTNode;
+import ast.runtime.RuntimeContext;
+import expressions.TypedValue;
 import tokens.Token;
 import translate.Parser;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-
 public class MapParser {
 
     private final Parser parser;
@@ -17,19 +18,18 @@ public class MapParser {
 
     public MapNode parseMapInitializer() {
         parser.eat(Token.TokenType.DELIMITER, "{");
-        Map<ASTNode, ASTNode> entries = new LinkedHashMap<>();
+        DynamicMap dynamicMap = new DynamicMap();
 
         while (!parser.current().getValue().equals("}")) {
-            ASTNode keyExpr = parser.parseExpression();
+            TypedValue keyVal = parser.parseExpression().evaluate(new RuntimeContext());
             parser.eat(Token.TokenType.DELIMITER, ":");
-            ASTNode valueExpr = parser.parseExpression();
-            entries.put(keyExpr, valueExpr);
+            TypedValue valueVal = parser.parseExpression().evaluate(new RuntimeContext());
+            dynamicMap.put(keyVal, valueVal);
 
             if (parser.current().getValue().equals(",")) parser.advance();
         }
 
         parser.eat(Token.TokenType.DELIMITER, "}");
-        return new MapNode(new DynamicMap(entries));
+        return new MapNode(dynamicMap);
     }
-
 }

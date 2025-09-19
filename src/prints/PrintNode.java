@@ -5,8 +5,9 @@ import ast.maps.DynamicMap;
 import ast.runtime.RuntimeContext;
 import ast.lists.DynamicList;
 import expressions.TypedValue;
-
 import java.util.List;
+
+
 public class PrintNode extends ASTNode {
     final ASTNode expr;
 
@@ -34,18 +35,16 @@ public class PrintNode extends ASTNode {
                 } else {
                     System.out.print("{");
                     int i = 0;
-                    ASTNode[] valueNodes = map.valueNodes().toArray(new ASTNode[0]);
-                    for (ASTNode keyNode : map.keyNodes()) {
-                        ASTNode valueNode = valueNodes[i];
-                        Object keyVal = keyNode.evaluate(ctx).getValue();
-                        Object valueVal = valueNode.evaluate(ctx).getValue();
-                        System.out.print(keyVal + ": " + valueVal);
+                    for (TypedValue keyVal : map.keys()) {
+                        TypedValue valueVal = map.get(keyVal);
+                        System.out.print(keyVal.getValue() + ": " + valueVal.getValue());
                         if (i < map.size() - 1) System.out.print(", ");
                         i++;
                     }
                     System.out.println("}");
                 }
             }
+
             default -> System.out.println(val.getValue());
         }
 

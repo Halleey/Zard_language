@@ -3,6 +3,8 @@ package ast.maps;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
+
+
 public class MapGetNode extends ASTNode {
     private final ASTNode mapVar;
     private final ASTNode keyNode;
@@ -16,7 +18,7 @@ public class MapGetNode extends ASTNode {
     public TypedValue evaluate(RuntimeContext ctx) {
         DynamicMap map = (DynamicMap) mapVar.evaluate(ctx).getValue();
         TypedValue keyVal = keyNode.evaluate(ctx);
-        return map.get(keyVal, ctx); // Avalia apenas na hora de buscar
+        return map.get(keyVal);
     }
 
     @Override

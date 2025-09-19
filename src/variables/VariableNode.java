@@ -3,13 +3,20 @@ package variables;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
+import low.LLVMEmitVisitor;
 
 public class VariableNode extends ASTNode {
     public final String name;
-
+    
     public VariableNode(String name) {
         this.name = name;
     }
+
+    @Override
+    public String accept(LLVMEmitVisitor visitor) {
+        return visitor.visit(this);
+    }
+
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
@@ -24,4 +31,6 @@ public class VariableNode extends ASTNode {
     public String getName() {
         return name;
     }
+
+
 }

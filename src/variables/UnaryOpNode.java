@@ -3,6 +3,8 @@ package variables;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
+import low.LLVMEmitVisitor;
+
 public class UnaryOpNode extends ASTNode {
     private final String operator;
     private final ASTNode expr; // pode ser VariableNode ou qualquer expressão
@@ -10,6 +12,11 @@ public class UnaryOpNode extends ASTNode {
     public UnaryOpNode(String operator, ASTNode expr) {
         this.operator = operator;
         this.expr = expr;
+    }
+
+    @Override
+    public String accept(LLVMEmitVisitor visitor) {
+        return "";
     }
 
     @Override

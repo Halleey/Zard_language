@@ -3,20 +3,5 @@ import "src/language/stdlib/Math.zd" as math;
 main {
     double a = 5;
     double b = 3;
-
-    print(math.sum(a, b));
-    print(math.sub(a, b));
-    print(math.mul(a, b));
-    print(math.div(a, b));
-    print(math.pow(a, 3));
-    print(math.factorial(5));
-    print(math.sqrt(16));
-    print(math.sin(3.1415 / 2));
-    print("cos foi : " +math.cos(0));
-    print(math.tan(3.1415 / 4));
-
-
-    double x = -5;
-    double y = -2;
-    print("Soma: " + math.sum(x, y));
+    print("testando umas paradas aqui");
 }

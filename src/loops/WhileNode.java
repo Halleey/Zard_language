@@ -4,6 +4,7 @@ import ast.ASTNode;
 import ast.exceptions.BreakLoop;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
+import low.LLVMEmitVisitor;
 
 import java.util.List;
 public class WhileNode extends ASTNode {
@@ -13,6 +14,11 @@ public class WhileNode extends ASTNode {
     public WhileNode(ASTNode condition, List<ASTNode> body) {
         this.condition = condition;
         this.body = body;
+    }
+
+    @Override
+    public String accept(LLVMEmitVisitor visitor) {
+        return "";
     }
 
     @Override

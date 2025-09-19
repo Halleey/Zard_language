@@ -4,6 +4,7 @@ import ast.ASTNode;
 import ast.exceptions.ReturnValue;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
+import low.LLVMEmitVisitor;
 
 import java.util.List;
 
@@ -14,6 +15,11 @@ public class FunctionCallNode extends ASTNode {
     public FunctionCallNode(String name, List<ASTNode> args) {
         this.name = name;
         this.args = args;
+    }
+
+    @Override
+    public String accept(LLVMEmitVisitor visitor) {
+        return "";
     }
 
     @Override

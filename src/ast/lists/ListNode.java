@@ -3,10 +3,12 @@ package ast.lists;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
+import low.LLVMEmitVisitor;
 
 import java.util.List;
 
 public class ListNode extends ASTNode {
+
     private final DynamicList list;
 
     public ListNode(DynamicList list) {
@@ -15,6 +17,11 @@ public class ListNode extends ASTNode {
 
     public DynamicList getList() {
         return list;
+    }
+
+    @Override
+    public String accept(LLVMEmitVisitor visitor) {
+        return "";
     }
 
     @Override

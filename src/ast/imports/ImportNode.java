@@ -5,6 +5,7 @@ import ast.exceptions.ReturnValue;
 import ast.functions.FunctionNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
+import low.LLVMEmitVisitor;
 import tokens.Lexer;
 import tokens.Token;
 import translate.Parser;
@@ -26,6 +27,11 @@ public class ImportNode extends ASTNode {
         }
         this.path = path;
         this.alias = alias;
+    }
+
+    @Override
+    public String accept(LLVMEmitVisitor visitor) {
+        return "";
     }
 
     @Override

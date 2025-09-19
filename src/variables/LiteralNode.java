@@ -3,6 +3,7 @@ package variables;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
+import low.LLVMEmitVisitor;
 
 import java.util.Map;
 
@@ -11,6 +12,11 @@ public class LiteralNode extends ASTNode {
 
     public LiteralNode(TypedValue value) {
         this.value = value;
+    }
+
+    @Override
+    public String accept(LLVMEmitVisitor visitor) {
+        return visitor.visit(this);
     }
 
     @Override

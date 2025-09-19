@@ -2,6 +2,7 @@ package variables;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
+import low.LLVMEmitVisitor;
 
 import java.util.Map;
 import java.util.List;
@@ -16,6 +17,11 @@ public class VariableDeclarationNode extends ASTNode {
         this.name = name;
         this.type = type;
         this.initializer = initializer;
+    }
+
+    @Override
+    public String accept(LLVMEmitVisitor visitor) {
+        return visitor.visit(this);
     }
 
     @Override

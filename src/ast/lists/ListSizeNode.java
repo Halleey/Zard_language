@@ -3,12 +3,19 @@ package ast.lists;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
+import low.LLVMEmitVisitor;
+
 public class ListSizeNode extends ASTNode {
 
     private final ASTNode nome; // pode ser variável ou expressão que retorne lista
 
     public ListSizeNode(ASTNode nome) {
         this.nome = nome;
+    }
+
+    @Override
+    public String accept(LLVMEmitVisitor visitor) {
+        return "";
     }
 
     @Override

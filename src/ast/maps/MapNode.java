@@ -3,6 +3,8 @@ package ast.maps;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
+import low.LLVMEmitVisitor;
+
 public class MapNode extends ASTNode {
     private final DynamicMap dynamicMap;
 
@@ -12,6 +14,11 @@ public class MapNode extends ASTNode {
 
     public DynamicMap getMap() {
         return dynamicMap;
+    }
+
+    @Override
+    public String accept(LLVMEmitVisitor visitor) {
+        return "";
     }
 
     @Override

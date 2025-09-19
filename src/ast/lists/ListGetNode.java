@@ -3,6 +3,7 @@ package ast.lists;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
+import low.LLVMEmitVisitor;
 
 public class ListGetNode extends ASTNode {
 
@@ -12,6 +13,11 @@ public class ListGetNode extends ASTNode {
     public ListGetNode(ASTNode listName, ASTNode indexNode) {
         this.listName = listName;
         this.indexNode = indexNode;
+    }
+
+    @Override
+    public String accept(LLVMEmitVisitor visitor) {
+        return "";
     }
 
     @Override

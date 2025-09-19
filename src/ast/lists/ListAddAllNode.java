@@ -3,6 +3,7 @@ package ast.lists;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
+import low.LLVMEmitVisitor;
 
 import java.util.List;
 
@@ -14,6 +15,11 @@ public class ListAddAllNode extends ASTNode {
     public ListAddAllNode(ASTNode targetListNode, List<ASTNode> args) {
         this.targetListNode = targetListNode;
         this.args = args;
+    }
+
+    @Override
+    public String accept(LLVMEmitVisitor visitor) {
+        return "";
     }
 
     @Override

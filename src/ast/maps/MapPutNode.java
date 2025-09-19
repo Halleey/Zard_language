@@ -3,6 +3,7 @@ package ast.maps;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
+import low.LLVMEmitVisitor;
 
 
 public class MapPutNode extends ASTNode {
@@ -14,6 +15,11 @@ public class MapPutNode extends ASTNode {
         this.mapNode = mapNode;
         this.keyNode = keyNode;
         this.valueNode = valueNode;
+    }
+
+    @Override
+    public String accept(LLVMEmitVisitor visitor) {
+        return "";
     }
 
     @Override

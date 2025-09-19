@@ -3,6 +3,7 @@ package ast.functions;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
+import low.LLVMEmitVisitor;
 
 import java.util.List;
 
@@ -15,6 +16,11 @@ public class FunctionNode extends ASTNode {
         this.name = name;
         this.params = params;
         this.body = body;
+    }
+
+    @Override
+    public String accept(LLVMEmitVisitor visitor) {
+        return "";
     }
 
     @Override

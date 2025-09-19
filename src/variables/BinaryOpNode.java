@@ -3,6 +3,7 @@ package variables;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
+import low.LLVMEmitVisitor;
 
 public class BinaryOpNode extends ASTNode {
     public final ASTNode left;
@@ -13,6 +14,11 @@ public class BinaryOpNode extends ASTNode {
         this.left = left;
         this.operator = operator;
         this.right = right;
+    }
+
+    @Override
+    public String accept(LLVMEmitVisitor visitor) {
+        return "";
     }
 
     @Override

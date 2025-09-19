@@ -3,6 +3,8 @@ package ast.inputs;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
+import low.LLVMEmitVisitor;
+
 import java.util.Scanner;
 
 
@@ -11,6 +13,11 @@ public class InputNode extends ASTNode {
 
     public InputNode(String prompt) {
         this.prompt = prompt;
+    }
+
+    @Override
+    public String accept(LLVMEmitVisitor visitor) {
+        return "";
     }
 
     @Override

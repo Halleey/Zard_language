@@ -5,14 +5,21 @@ import ast.maps.DynamicMap;
 import ast.runtime.RuntimeContext;
 import ast.lists.DynamicList;
 import expressions.TypedValue;
+import low.LLVMEmitVisitor;
+
 import java.util.List;
 
 
 public class PrintNode extends ASTNode {
-    final ASTNode expr;
+    public final ASTNode expr;
 
     public PrintNode(ASTNode expr) {
         this.expr = expr;
+    }
+
+    @Override
+    public String accept(LLVMEmitVisitor visitor) {
+        return visitor.visit(this);
     }
 
     @Override

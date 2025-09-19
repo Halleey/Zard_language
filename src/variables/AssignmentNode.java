@@ -3,6 +3,7 @@ package variables;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
+import low.LLVMEmitVisitor;
 
 public class AssignmentNode extends ASTNode {
     public final String name;
@@ -11,6 +12,11 @@ public class AssignmentNode extends ASTNode {
     public AssignmentNode(String name, ASTNode valueNode) {
         this.name = name;
         this.valueNode = valueNode;
+    }
+
+    @Override
+    public String accept(LLVMEmitVisitor visitor) {
+        return "";
     }
 
     @Override

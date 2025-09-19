@@ -3,6 +3,8 @@ package ast.lists;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
+import low.LLVMEmitVisitor;
+
 public class ListClearNode extends ASTNode {
 
 
@@ -10,6 +12,11 @@ public class ListClearNode extends ASTNode {
 
     public ListClearNode(ASTNode listNode) {
         this.listNode = listNode;
+    }
+
+    @Override
+    public String accept(LLVMEmitVisitor visitor) {
+        return "";
     }
 
     @Override

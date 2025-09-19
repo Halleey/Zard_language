@@ -1,18 +1,91 @@
+function sum(double a, double b) {
+    return a + b;
+}
 
-   function adicionarMapa(map m, int chave, int valor) {
-        m.put(chave, valor);
-        print("Mapa após adicionar: " + m);
+function sub(double a, double b) {
+    return a - b;
+}
+
+function mul(double a, double b) {
+    return a * b;
+}
+
+function div(double a, double b) {
+    if (b == 0) {
+        print("Erro: divisão por zero!");
+        return 0;
     }
-
-function dobrar(int n) {
-    print("dobro de : " + n + " é " + (n *2));
-}
-function fatorial(int n){
-    if(n == 0){
-       return 1;
-   }
-else{
-    return n * fatorial(n -1);
+    return a / b;
 }
 
+function pow(double base, int exp) {
+    if (exp < 0) {
+        print("Aviso: expoente negativo não suportado, retornando 0");
+        return 0;
+    }
+    double result = 1;
+    int i = 0;
+    while (i < exp) {
+        result = result * base;
+        i++;
+    }
+    return result;
+}
+
+function factorial(int n) {
+    if (n < 0) {
+        print("Erro: factorial de número negativo!");
+        return 0;
+    }
+    if (n == 0) {
+     return 1;
+    }
+    return n * factorial(n - 1);
+}
+
+function sqrt(double x) {
+    if (x < 0) {
+        print("Erro: sqrt de número negativo!");
+        return 0;
+    }
+    double guess = x / 2;
+    int i = 0;
+    while (i < 20) {
+        guess = (guess + x / guess) / 2;
+        i++;
+    }
+    return guess;
+}
+
+function sin(double x) {
+    double term = x;
+    double sum = term;
+    int n = 1;
+    while (n < 10) {
+        term = -term * x * x / ((2 * n) * (2 * n + 1));
+        sum = sum + term;
+        n++;
+    }
+    return sum;
+}
+
+function cos(double x) {
+    double term = 1;
+    double sum = term;
+    int n = 1;
+    while (n < 10) {
+        term = -term * x * x / ((2 * n - 1) * (2 * n));
+        sum = sum + term;
+        n++;
+    }
+    return sum;
+}
+
+function tan(double x) {
+    double c = cos(x);
+    if (c == 0) {
+        print("Erro: tangente indefinida!");
+        return 0;
+    }
+    return sin(x) / c;
 }

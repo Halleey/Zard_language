@@ -34,6 +34,11 @@ public class VariableDeclarationNode extends ASTNode {
         // Declaração com tipo explícito
         value = initializer != null ? initializer.evaluate(ctx) : getDefaultValue();
 
+        // Coerção automática int -> double
+        if (type.equals("double") && value.getType().equals("int")) {
+            value = new TypedValue("double", ((Integer)value.getValue()).doubleValue());
+        }
+
         // Checagem de tipo
         if (!value.getType().equals(type)) {
             throw new RuntimeException("Typing error: " + name +
@@ -44,6 +49,7 @@ public class VariableDeclarationNode extends ASTNode {
         ctx.declareVariable(name, value);
         return value;
     }
+
 
     @Override
     public void print(String prefix) {

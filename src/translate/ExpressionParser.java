@@ -8,9 +8,12 @@ import expressions.TypedValue;
 import tokens.Token;
 import variables.BinaryOpNode;
 import variables.LiteralNode;
+import variables.UnaryOpNode;
 
 import java.util.ArrayList;
 import java.util.List;
+
+
 public class ExpressionParser {
     private final Parser parent;
 
@@ -53,6 +56,14 @@ public class ExpressionParser {
 
     private ASTNode parseFactor() {
         Token tok = parent.current();
+
+        // Unary + ou -
+        if (tok.getValue().equals("+") || tok.getValue().equals("-")) {
+            String op = tok.getValue();
+            parent.advance();
+            ASTNode factor = parseFactor(); // recursivo
+            return new UnaryOpNode(op, factor);
+        }
 
         // Lista vazia: ()
         if (tok.getValue().equals("(") && parent.peek().getValue().equals(")")) {

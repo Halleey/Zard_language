@@ -1,48 +1,22 @@
 import "src/language/stdlib/Math.zd" as math;
 
-
 main {
-int contador = 0;
-string mensagem = "Início do programa";
+    double a = 5;
+    double b = 3;
+
+    print(math.sum(a, b));
+    print(math.sub(a, b));
+    print(math.mul(a, b));
+    print(math.div(a, b));
+    print(math.pow(a, 3));
+    print(math.factorial(5));
+    print(math.sqrt(16));
+    print(math.sin(3.1415 / 2));
+    print("cos foi : " +math.cos(0));
+    print(math.tan(3.1415 / 4));
 
 
-print(mensagem);
-
-
-map numeros = {"0": 1, "1": 2, "2": 3};
-
-
-function dobrar(int valor) {
-print("Dobro de " + valor + " é " + (valor * 2));
-}
-
-
-while (contador < 5) {
-print("Contador: " + contador);
-
-
-if (contador == 3) {
-print("Chegou no 3, pulando para próximo");
-}
-
-
-call dobrar(contador);
-call math.adicionarMapa(numeros, contador, contador);
-
-
-contador++;
-}
-
-
-function fatorial(int n) {
-if (n == 0) {
-return 1;
-} else {
-return n * fatorial(n - 1);
-}
-}
-
-
-int resultado = fatorial(5);
-print("Fatorial de 5: " + resultado);
+    double x = -5;
+    double y = -2;
+    print("Soma: " + math.sum(x, y));
 }

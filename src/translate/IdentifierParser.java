@@ -32,9 +32,8 @@ public class IdentifierParser {
         if ("++".equals(tokenVal) || "--".equals(tokenVal)) {
             parser.advance();
             parser.eat(Token.TokenType.DELIMITER, ";");
-            return new UnaryOpNode(name, tokenVal);
+            return new UnaryOpNode(tokenVal, new VariableNode(name));
         }
-
         return new VariableNode(name);
     }
     public ASTNode parseAsExpression(String name) {

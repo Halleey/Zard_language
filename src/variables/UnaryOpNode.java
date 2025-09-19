@@ -4,44 +4,56 @@ import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
 public class UnaryOpNode extends ASTNode {
-    private final String name;
     private final String operator;
+    private final ASTNode expr; // pode ser VariableNode ou qualquer expressão
 
-    public UnaryOpNode(String name, String operator) {
-        this.name = name;
+    public UnaryOpNode(String operator, ASTNode expr) {
         this.operator = operator;
+        this.expr = expr;
     }
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        if (!ctx.hasVariable(name)) {
-            throw new RuntimeException("Variável não declarada: " + name);
+        TypedValue val = expr.evaluate(ctx);
+        Object value = val.getValue();
+
+        // Suporte a incremento/decremento
+        if (operator.equals("++") || operator.equals("--")) {
+            if (!(expr instanceof VariableNode varNode)) {
+                throw new RuntimeException("Incremento/decremento só pode ser aplicado a variáveis");
+            }
+
+            if (value instanceof Integer i) {
+                int result = operator.equals("++") ? i + 1 : i - 1;
+                TypedValue newVal = new TypedValue("int", result);
+                ctx.setVariable(varNode.getName(), newVal);
+                return newVal;
+            }
+
+            if (value instanceof Double d) {
+                double result = operator.equals("++") ? d + 1.0 : d - 1.0;
+                TypedValue newVal = new TypedValue("double", result);
+                ctx.setVariable(varNode.getName(), newVal);
+                return newVal;
+            }
+
+            throw new RuntimeException("Incremento/decremento só é válido para int ou double");
         }
 
-        TypedValue current = ctx.getVariable(name);
-        Object val = current.getValue();
-
-        // Incremento/Decremento em int
-        if (val instanceof Integer i) {
-            int result = operator.equals("++") ? i + 1 : i - 1;
-            TypedValue newVal = new TypedValue("int", result);
-            ctx.setVariable(name, newVal);
-            return newVal;
+        // Suporte a operador unário + ou -
+        if (value instanceof Integer i) {
+            return new TypedValue("int", operator.equals("-") ? -i : i);
+        }
+        if (value instanceof Double d) {
+            return new TypedValue("double", operator.equals("-") ? -d : d);
         }
 
-        // Incremento/Decremento em double
-        if (val instanceof Double d) {
-            double result = operator.equals("++") ? d + 1.0 : d - 1.0;
-            TypedValue newVal = new TypedValue("double", result);
-            ctx.setVariable(name, newVal);
-            return newVal;
-        }
-
-        throw new RuntimeException("Incremento/decremento só é válido para int ou double");
+        throw new RuntimeException("Operador unário '" + operator + "' só é válido para int ou double");
     }
 
     @Override
     public void print(String prefix) {
-        System.out.println(prefix + "UnaryOp: " + name + " " + operator);
+        System.out.println(prefix + "UnaryOp: " + operator);
+        expr.print(prefix + "  ");
     }
 }

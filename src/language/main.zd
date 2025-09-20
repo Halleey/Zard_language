@@ -6,10 +6,13 @@ main {
     boolean isReal= true;
     boolean isFalse= false;
     double c;
+    string teste = "hallyson";
+    print(teste);
     c = 4.4;
     print(a);
     print(isReal);
     print(isFalse);
     print("testando aqui");
+
     print(c);
 }

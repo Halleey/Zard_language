@@ -9,10 +9,10 @@ main {
     string teste = "hallyson";
     print(teste);
     c = 4.4;
-    print(a);
-    print(isReal);
-    print(isFalse);
-    print("testando aqui");
+    int z = 0;
+    z++;
+    print(z);
+    z--;
+    print(z);
 
-    print(c);
 }

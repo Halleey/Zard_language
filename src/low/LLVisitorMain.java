@@ -4,10 +4,7 @@ import ast.ASTNode;
 import expressions.TypedValue;
 import home.MainAST;
 import prints.PrintNode;
-import variables.AssignmentNode;
-import variables.LiteralNode;
-import variables.VariableDeclarationNode;
-import variables.VariableNode;
+import variables.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +18,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final PrintEmitter printEmitter = new PrintEmitter(globalStrings);
     private final AssignmentEmitter assignmentEmitter = new AssignmentEmitter(varTypes, temps);
     private final StringBuilder llvmHeader = new StringBuilder();
-
+    private final UnaryOpEmitter unaryOpEmitter = new UnaryOpEmitter(varTypes, temps);
     public LLVisitorMain() {
         llvmHeader.append("declare i32 @printf(i8*, ...)\n");
         llvmHeader.append("declare i32 @getchar()\n"); // <- adicione esta linha
@@ -114,6 +111,12 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
         return printEmitter.emitNumber(code, value, type);
     }
+
+    @Override
+    public String visit(UnaryOpNode node) {
+        return unaryOpEmitter.emit(node.getOperator(), node.getExpr());
+    }
+
 
     @Override
     public String visit(AssignmentNode node) {

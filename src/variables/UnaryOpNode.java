@@ -16,7 +16,7 @@ public class UnaryOpNode extends ASTNode {
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
-        return "";
+        return visitor.visit(this);
     }
 
     @Override
@@ -62,5 +62,13 @@ public class UnaryOpNode extends ASTNode {
     public void print(String prefix) {
         System.out.println(prefix + "UnaryOp: " + operator);
         expr.print(prefix + "  ");
+    }
+
+    public String getOperator() {
+        return operator;
+    }
+
+    public ASTNode getExpr() {
+        return expr;
     }
 }

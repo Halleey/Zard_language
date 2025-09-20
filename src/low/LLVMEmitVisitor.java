@@ -2,10 +2,7 @@ package low;
 
 import home.MainAST;
 import prints.PrintNode;
-import variables.AssignmentNode;
-import variables.LiteralNode;
-import variables.VariableDeclarationNode;
-import variables.VariableNode;
+import variables.*;
 
 public interface LLVMEmitVisitor {
     String visit(MainAST node);
@@ -13,7 +10,7 @@ public interface LLVMEmitVisitor {
     String visit(VariableDeclarationNode node);
     String visit(LiteralNode node);
     String visit (PrintNode node);
-
+    String visit (UnaryOpNode node);
     String visit(AssignmentNode node);
 }
 

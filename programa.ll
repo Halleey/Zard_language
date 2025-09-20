@@ -6,7 +6,6 @@ declare i32 @getchar()
 @.strStr = private constant [4 x i8] c"%s\0A\00"
 
 @.str0 = private constant [10 x i8] c"hallyson\0A\00"
-@.str1 = private constant [15 x i8] c"testando aqui\0A\00"
 
 define i32 @main() {
   ; VariableDeclarationNode
@@ -27,26 +26,27 @@ define i32 @main() {
   %teste = alloca i8*
   store i8* getelementptr ([10 x i8], [10 x i8]* @.str0, i32 0, i32 0), i8** %teste
   ; PrintNode
-  %tStr159938786288300 = load i8*, i8** %teste
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %tStr159938786288300)
+  %tStr162163897587000 = load i8*, i8** %teste
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %tStr162163897587000)
   ; AssignmentNode
   store double 4.4, double* %c
+  ; VariableDeclarationNode
+  %z = alloca i32
+  store i32 0, i32* %z
+  ; UnaryOpNode
+  %t0 = load i32, i32* %z
+  %t1 = add i32 %t0, 1
+  store i32 %t1, i32* %z
   ; PrintNode
-  %t0 = load double, double* %a
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double %t0)
+  %t2 = load i32, i32* %z
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t2)
+  ; UnaryOpNode
+  %t3 = load i32, i32* %z
+  %t4 = sub i32 %t3, 1
+  store i32 %t4, i32* %z
   ; PrintNode
-  %t1 = load i1, i1* %isReal
-  %tBool159938794195700 = zext i1 %t1 to i32
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %tBool159938794195700)
-  ; PrintNode
-  %t2 = load i1, i1* %isFalse
-  %tBool159938794383800 = zext i1 %t2 to i32
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %tBool159938794383800)
-  ; PrintNode
-  call i32 (i8*, ...) @printf(i8* getelementptr ([15 x i8], [15 x i8]* @.str1, i32 0, i32 0))
-  ; PrintNode
-  %t3 = load double, double* %c
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double %t3)
+  %t5 = load i32, i32* %z
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t5)
   call i32 @getchar()
   ret i32 0
 }

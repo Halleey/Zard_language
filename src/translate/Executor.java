@@ -20,46 +20,45 @@ import java.util.List;
 public class Executor {
     public static void main(String[] args) {
         try {
-            // Caminho do arquivo teste.zd
-            String filePath = "src/language/main.zd";
-
-            // Lê todo o conteúdo do arquivo como String
+            String filePath = args.length > 0 ? args[0] : "src/language/main.zd";
             String code = Files.readString(Path.of(filePath));
 
-            // Lexer
+            // Lexer + Parser
             Lexer lexer = new Lexer(code);
             List<Token> tokens = lexer.tokenize();
-
-            // Parser
             Parser parser = new Parser(tokens);
             List<ASTNode> ast = parser.parse();
 
-            // Print AST
             System.out.println("=== AST ===");
             ASTPrinter.printAST(ast);
 
-            // Execute AST com RuntimeContext
             System.out.println("=== Execution ===");
             RuntimeContext ctx = new RuntimeContext();
 
-
+            // LLVM
             LLVMGenerator llvmGen = new LLVMGenerator();
-            List<String> ir = Collections.singletonList(llvmGen.generate(ast)); // o generator filtra o main internamente
+            String llvmCode = llvmGen.generate(ast);
 
-            System.out.println("=== LLVM IR ===");
-            ir.forEach(System.out::println);
+            // Salvar arquivo LLVM
+            Path llPath = Path.of("programa.ll");
+            Files.writeString(llPath, llvmCode);
+            System.out.println("LLVM IR salvo em programa.ll");
 
-            for (ASTNode node : ast) {
-                try {
-                    node.evaluate(ctx);
-                } catch (ReturnValue rv) {
-                    System.out.println("Programa interrompido pelo return: " + rv.value.getValue());
-                    break;
-                }
-            }
+            // Gerar executável
+            ProcessBuilder pb = new ProcessBuilder("clang", "programa.ll", "-o", "programa.exe");
+            pb.inheritIO();
+            Process process = pb.start();
+            int exitCode = process.waitFor();
+            if (exitCode == 0) System.out.println("Executável gerado: programa.exe");
+
+            // Executar no interpretador também
+//            for (ASTNode node : ast) {
+//                try { node.evaluate(ctx); }
+//                catch (ReturnValue rv) { break; }
+//            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 }
-

@@ -24,6 +24,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     public LLVisitorMain() {
         llvmHeader.append("declare i32 @printf(i8*, ...)\n");
+        llvmHeader.append("declare i32 @getchar()\n"); // <- adicione esta linha
         llvmHeader.append("@.strInt = private constant [4 x i8] c\"%d\\0A\\00\"\n");
         llvmHeader.append("@.strDouble = private constant [4 x i8] c\"%f\\0A\\00\"\n");
         llvmHeader.append("@.strStr = private constant [4 x i8] c\"%s\\0A\\00\"\n"); // necessário para variáveis string
@@ -61,6 +62,8 @@ public class LLVisitorMain implements LLVMEmitVisitor {
             llvm.append(stmt.accept(this));
         }
 
+
+        llvm.append("  call i32 @getchar()\n"); // espera uma tecla
         llvm.append("  ret i32 0\n}\n");
 
         return llvm.toString();

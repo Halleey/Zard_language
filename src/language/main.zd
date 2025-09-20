@@ -3,5 +3,5 @@ import "src/language/stdlib/Math.zd" as math;
 main {
     double a = 5;
     double b = 3;
-    print("testando umas paradas aqui");
+    print(b);
 }

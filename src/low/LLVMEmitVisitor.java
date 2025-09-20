@@ -12,5 +12,6 @@ public interface LLVMEmitVisitor {
     String visit (PrintNode node);
     String visit (UnaryOpNode node);
     String visit(AssignmentNode node);
+    String visit (BinaryOpNode node);
 }
 

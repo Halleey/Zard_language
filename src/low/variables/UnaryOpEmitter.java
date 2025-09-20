@@ -1,6 +1,7 @@
-package low;
+package low.variables;
 
 import ast.ASTNode;
+import low.TempManager;
 import variables.VariableNode;
 
 import java.util.Map;

@@ -1,6 +1,8 @@
-package low;
+package low.variables;
 
 import expressions.TypedValue;
+import low.TempManager;
+
 import java.util.Map;
 
 public class AssignmentEmitter {

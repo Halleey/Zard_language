@@ -1,18 +1,11 @@
 import "src/language/stdlib/Math.zd" as math;
 
 main {
-    double a = 5.43;
-    double b = 3;
-    boolean isReal= true;
-    boolean isFalse= false;
-    double c;
-    string teste = "hallyson";
-    print(teste);
-    c = 4.4;
-    int z = 0;
-    z++;
-    print(z);
-    z--;
-    print(z);
 
+    int z;
+    int x;
+    x = 11;
+    z = 4;
+    int resultado = x + z;
+    print(resultado);
 }

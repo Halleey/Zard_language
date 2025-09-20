@@ -1,7 +1,12 @@
 import "src/language/stdlib/Math.zd" as math;
 
 main {
-    double a = 5;
+    double a = 5.43;
     double b = 3;
-    print(b);
+    boolean isReal= true;
+    boolean isFalse= false;
+    print(a);
+    print(isReal);
+    print(isFalse);
+    print("testando aqui");
 }

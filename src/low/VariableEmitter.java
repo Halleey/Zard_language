@@ -1,6 +1,9 @@
 package low;
 
+import expressions.TypedValue;
+
 import java.util.Map;
+
 
 public class VariableEmitter {
     private final Map<String, String> varTypes;
@@ -11,23 +14,28 @@ public class VariableEmitter {
         this.temps = temps;
     }
 
-    public String emitDeclaration(String name, String type, String initializerCode) {
-        String llvmType = switch (type) {
+    public String emitDeclaration(String name, TypedValue value) {
+        String llvmType = switch (value.getType()) {
             case "int" -> "i32";
             case "double" -> "double";
+            case "boolean" -> "i1";
+            case "string" -> "i8*";
             default -> "i32";
         };
-
         varTypes.put(name, llvmType);
 
         StringBuilder llvm = new StringBuilder();
         llvm.append("  %").append(name).append(" = alloca ").append(llvmType).append("\n");
 
-        if (initializerCode != null) {
-            String value = initializerCode;
-            if (llvmType.equals("double") && !value.contains(".")) value += ".0";
-            llvm.append("  store ").append(llvmType).append(" ").append(value)
-                    .append(", ").append(llvmType).append("* %").append(name).append("\n");
+        if (value != null) {
+            switch (value.getType()) {
+                case "int" -> llvm.append("  store i32 ").append(value.getValue()).append(", i32* %").append(name).append("\n");
+                case "double" -> llvm.append("  store double ").append(value.getValue()).append(", double* %").append(name).append("\n");
+                case "boolean" -> llvm.append("  store i1 ").append(((Boolean)value.getValue() ? "1" : "0")).append(", i1* %").append(name).append("\n");
+                case "string" -> {
+                    // tratar via GlobalStringManager
+                }
+            }
         }
 
         return llvm.toString();

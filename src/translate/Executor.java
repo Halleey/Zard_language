@@ -49,14 +49,14 @@ public class Executor {
             System.out.println("=== LLVM IR ===");
             ir.forEach(System.out::println);
 
-//            for (ASTNode node : ast) {
-//                try {
-//                    node.evaluate(ctx);
-//                } catch (ReturnValue rv) {
-//                    System.out.println("Programa interrompido pelo return: " + rv.value.getValue());
-//                    break;
-//                }
-//            }
+            for (ASTNode node : ast) {
+                try {
+                    node.evaluate(ctx);
+                } catch (ReturnValue rv) {
+                    System.out.println("Programa interrompido pelo return: " + rv.value.getValue());
+                    break;
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

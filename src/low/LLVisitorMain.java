@@ -1,6 +1,7 @@
 package low;
 
 import ast.ASTNode;
+import expressions.TypedValue;
 import home.MainAST;
 import prints.PrintNode;
 import variables.LiteralNode;
@@ -9,6 +10,7 @@ import variables.VariableNode;
 
 import java.util.HashMap;
 import java.util.Map;
+
 public class LLVisitorMain implements LLVMEmitVisitor {
     private final Map<String, String> varTypes = new HashMap<>();
     private final TempManager temps = new TempManager();
@@ -47,10 +49,14 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     // Aqui só delega:
     @Override
+
     public String visit(VariableDeclarationNode node) {
-        String init = node.initializer != null ? node.initializer.accept(this) : null;
-        return varEmitter.emitDeclaration(node.getName(), node.getType(), init);
+        TypedValue initValue = node.initializer != null ? node.initializer.evaluate(null) : null;
+        // Aqui você precisa do RuntimeContext adequado, ou null se só gerar LLVM
+        assert initValue != null;
+        return varEmitter.emitDeclaration(node.getName(), initValue);
     }
+
 
     @Override
     public String visit(VariableNode node) {

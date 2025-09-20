@@ -86,6 +86,7 @@ A linguagem continuará evoluindo para se tornar mais robusta e versátil. Algum
 * [x] Suporte a importação de módulos externos.
 * [x] Suporte a operadores compostos (`==`, `!=`, `<=`, `>=`).
 * [x] Funções recursivas já são suportadas.
+* [ ] Construção de um back-end para conversão AST -> IR para geração de programas nativos
 ---
 
 ## 📂 Uso

@@ -27,8 +27,8 @@ define i32 @main() {
   %teste = alloca i8*
   store i8* getelementptr ([10 x i8], [10 x i8]* @.str0, i32 0, i32 0), i8** %teste
   ; PrintNode
-  %tStr159529680119900 = load i8*, i8** %teste
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %tStr159529680119900)
+  %tStr159938786288300 = load i8*, i8** %teste
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %tStr159938786288300)
   ; AssignmentNode
   store double 4.4, double* %c
   ; PrintNode
@@ -36,12 +36,12 @@ define i32 @main() {
   call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double %t0)
   ; PrintNode
   %t1 = load i1, i1* %isReal
-  %tBool159529688010300 = zext i1 %t1 to i32
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %tBool159529688010300)
+  %tBool159938794195700 = zext i1 %t1 to i32
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %tBool159938794195700)
   ; PrintNode
   %t2 = load i1, i1* %isFalse
-  %tBool159529688161500 = zext i1 %t2 to i32
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %tBool159529688161500)
+  %tBool159938794383800 = zext i1 %t2 to i32
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %tBool159938794383800)
   ; PrintNode
   call i32 (i8*, ...) @printf(i8* getelementptr ([15 x i8], [15 x i8]* @.str1, i32 0, i32 0))
   ; PrintNode

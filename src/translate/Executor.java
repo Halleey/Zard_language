@@ -32,13 +32,11 @@ public class Executor {
             System.out.println("=== AST ===");
             ASTPrinter.printAST(ast);
 
-            System.out.println("=== Execution ===");
-            RuntimeContext ctx = new RuntimeContext();
-
             // LLVM
             LLVMGenerator llvmGen = new LLVMGenerator();
             String llvmCode = llvmGen.generate(ast);
-
+            System.out.println("=== LLVM IR ===");
+            System.out.println(llvmCode);
             // Salvar arquivo LLVM
             Path llPath = Path.of("programa.ll");
             Files.writeString(llPath, llvmCode);
@@ -51,11 +49,13 @@ public class Executor {
             int exitCode = process.waitFor();
             if (exitCode == 0) System.out.println("Executável gerado: programa.exe");
 
+            System.out.println("=== Execution ===");
+            RuntimeContext ctx = new RuntimeContext();
             // Executar no interpretador também
-//            for (ASTNode node : ast) {
-//                try { node.evaluate(ctx); }
-//                catch (ReturnValue rv) { break; }
-//            }
+            for (ASTNode node : ast) {
+                try { node.evaluate(ctx); }
+                catch (ReturnValue rv) { break; }
+            }
 
         } catch (Exception e) {
             e.printStackTrace();

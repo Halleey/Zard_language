@@ -4,6 +4,7 @@ import ast.ASTNode;
 import expressions.TypedValue;
 import home.MainAST;
 import prints.PrintNode;
+import variables.AssignmentNode;
 import variables.LiteralNode;
 import variables.VariableDeclarationNode;
 import variables.VariableNode;
@@ -17,7 +18,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final GlobalStringManager globalStrings = new GlobalStringManager(temps);
     private final VariableEmitter varEmitter = new VariableEmitter(varTypes, temps);
     private final PrintEmitter printEmitter = new PrintEmitter(globalStrings);
-
+    private final AssignmentEmitter assignmentEmitter = new AssignmentEmitter(varTypes, temps);
     private final StringBuilder llvmHeader = new StringBuilder();
 
     public LLVisitorMain() {
@@ -47,14 +48,11 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return llvm.toString();
     }
 
-    // Aqui só delega:
-    @Override
 
+    @Override
     public String visit(VariableDeclarationNode node) {
         TypedValue initValue = node.initializer != null ? node.initializer.evaluate(null) : null;
-        // Aqui você precisa do RuntimeContext adequado, ou null se só gerar LLVM
-        assert initValue != null;
-        return varEmitter.emitDeclaration(node.getName(), initValue);
+        return varEmitter.emitDeclaration(node.getName(), initValue, node.getType());
     }
 
 
@@ -88,4 +86,32 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
         return printEmitter.emitNumber(code, value, type);
     }
+
+    @Override
+    public String visit(AssignmentNode node) {
+        // Avalia o valor da expressão
+        TypedValue value;
+        if (node.valueNode instanceof LiteralNode lit) {
+            value = lit.value;
+        } else if (node.valueNode instanceof VariableNode varNode) {
+            // Pega o tipo da variável já declarada
+            String llvmType = varTypes.get(varNode.getName());
+            // Como estamos apenas gerando LLVM, podemos criar TypedValue temporário só para o emit
+            value = new TypedValue(
+                    switch (llvmType) {
+                        case "i32" -> "int";
+                        case "double" -> "double";
+                        case "i1" -> "boolean";
+                        default -> "string";
+                    },
+                    varNode.getName() // aqui usamos o nome da variável como placeholder
+            );
+        } else {
+            throw new RuntimeException("Expressão de atribuição não suportada ainda");
+        }
+
+        // Delegamos para AssignmentEmitter, que usa o mesmo varTypes do visitor
+        return assignmentEmitter.emitAssignment(node.name, value);
+    }
+
 }

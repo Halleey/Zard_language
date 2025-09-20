@@ -5,8 +5,11 @@ main {
     double b = 3;
     boolean isReal= true;
     boolean isFalse= false;
+    double c;
+    c = 4.4;
     print(a);
     print(isReal);
     print(isFalse);
     print("testando aqui");
+    print(c);
 }

@@ -3,8 +3,6 @@ package low;
 import expressions.TypedValue;
 
 import java.util.Map;
-
-
 public class VariableEmitter {
     private final Map<String, String> varTypes;
     private final TempManager temps;
@@ -13,29 +11,45 @@ public class VariableEmitter {
         this.varTypes = varTypes;
         this.temps = temps;
     }
+    public String emitDeclaration(String name, TypedValue value, String astType) {
+        String type;
+        Object val = null;
 
-    public String emitDeclaration(String name, TypedValue value) {
-        String llvmType = switch (value.getType()) {
+        if (value != null) {
+            type = value.getType();
+            val = value.getValue();
+        } else {
+            // valor nulo → usar o tipo da AST
+            type = astType;
+        }
+
+        String llvmType = switch (type) {
             case "int" -> "i32";
             case "double" -> "double";
             case "boolean" -> "i1";
             case "string" -> "i8*";
             default -> "i32";
         };
+
         varTypes.put(name, llvmType);
 
         StringBuilder llvm = new StringBuilder();
         llvm.append("  %").append(name).append(" = alloca ").append(llvmType).append("\n");
 
-        if (value != null) {
-            switch (value.getType()) {
-                case "int" -> llvm.append("  store i32 ").append(value.getValue()).append(", i32* %").append(name).append("\n");
-                case "double" -> llvm.append("  store double ").append(value.getValue()).append(", double* %").append(name).append("\n");
-                case "boolean" -> llvm.append("  store i1 ").append(((Boolean)value.getValue() ? "1" : "0")).append(", i1* %").append(name).append("\n");
-                case "string" -> {
-                    // tratar via GlobalStringManager
-                }
+        if (val != null) {
+            if (llvmType.equals("double") && val instanceof Integer) {
+                val = ((Integer) val).doubleValue();
             }
+
+            if (llvmType.equals("i1") && val instanceof Boolean) {
+                boolean b = (Boolean) val;
+                llvm.append("  store i1 ").append(b ? "1" : "0").append(", i1* %").append(name).append("\n");
+            } else if (llvmType.equals("i32") && val instanceof Integer) {
+                llvm.append("  store i32 ").append(val).append(", i32* %").append(name).append("\n");
+            } else if (llvmType.equals("double") && val instanceof Double) {
+                llvm.append("  store double ").append(val).append(", double* %").append(name).append("\n");
+            }
+            // strings tratadas via GlobalStringManager
         }
 
         return llvm.toString();
@@ -47,4 +61,5 @@ public class VariableEmitter {
         return "  " + tmp + " = load " + type + ", " + type + "* %" + name + "\n"
                 + ";;VAL:" + tmp + ";;TYPE:" + type;
     }
+
 }

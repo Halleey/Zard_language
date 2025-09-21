@@ -5,10 +5,12 @@ import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
 import ast.loops.WhileNode;
+import ast.variables.AssignmentNode;
 import low.module.LLVisitorMain;
 import ast.prints.PrintNode;
 import ast.variables.LiteralNode;
 import ast.variables.VariableDeclarationNode;
+
 public class MainEmitter {
     private final GlobalStringManager globalStrings;
 
@@ -38,14 +40,27 @@ public class MainEmitter {
     }
 
     private void coletarStringsRecursivo(ASTNode node) {
+        // PrintNode com literal string
         if (node instanceof PrintNode printNode && printNode.expr instanceof LiteralNode lit &&
                 lit.value.getType().equals("string")) {
             globalStrings.getOrCreateString((String) lit.value.getValue());
         }
 
+        // VariableDeclarationNode com inicializador string
         if (node instanceof VariableDeclarationNode varDecl && varDecl.initializer instanceof LiteralNode litInit &&
                 litInit.value.getType().equals("string")) {
             globalStrings.getOrCreateString((String) litInit.value.getValue());
+        }
+
+        // AssignmentNode: usar valueNode (nome da sua classe)
+        if (node instanceof AssignmentNode assignNode) {
+            if (assignNode.valueNode instanceof LiteralNode litAssign &&
+                    litAssign.value.getType().equals("string")) {
+                globalStrings.getOrCreateString((String) litAssign.value.getValue());
+            } else {
+                // se for expressão complexa, ainda percorre recursivamente
+                coletarStringsRecursivo(assignNode.valueNode);
+            }
         }
 
         // IfNode
@@ -56,18 +71,16 @@ public class MainEmitter {
                 for (ASTNode stmt : ifNode.elseBranch) coletarStringsRecursivo(stmt);
         }
 
-        // WhileNode no futuro
+        // WhileNode
         if (node instanceof WhileNode whileNode) {
             coletarStringsRecursivo(whileNode.condition);
             for (ASTNode stmt : whileNode.body) coletarStringsRecursivo(stmt);
         }
 
-        // FunctionNode no futuro
+        // FunctionNode
         if (node instanceof FunctionNode funcNode) {
             for (ASTNode stmt : funcNode.body) coletarStringsRecursivo(stmt);
         }
-
-        // nodes com herença ou generics, dropar td aqui
     }
 
     private String emitHeader() {

@@ -1,37 +1,13 @@
 import "src/language/stdlib/Math.zd" as math;
-
 main {
-    double a = 10;
-    double b = 3;
-    int n = 5;
 
-
-    print("Soma: " + math.sum(a, b));
-    print("Subtração: " + math.sub(a, b));
-    print("Multiplicação: " + math.mul(a, b));
-    print("Divisão: " + math.div(a, b));
-
-
-    print("Potência: " + math.pow(a, 3));
-
-
-    print("Fatorial de " + n + ": " + math.factorial(n));
-
-    print("Raiz quadrada de " + a + ": " + math.sqrt(a));
-
-
-    print("Seno de " + a + ": " + math.sin(a));
-    print("Cosseno de " + a + ": " + math.cos(a));
-    print("Tangente de " + a + ": " + math.tan(a));
-
-    print("Tentando dividir por zero:");
-    print(math.div(a, 0));
-
-    print("Tentando fatorial de número negativo:");
-    print(math.factorial(-3));
-
-    print("Tentando raiz quadrada de número negativo:");
-    print(math.sqrt(-9));
-
-    print("Fim dos testes.");
+int a;
+double b;
+string nome;
+nome = "hallyson";
+a = 4;
+b = 3.14;
+print(a);
+print(b);
+print(nome);
 }

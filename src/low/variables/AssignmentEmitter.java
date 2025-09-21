@@ -1,71 +1,76 @@
 package low.variables;
 
-import ast.expressions.TypedValue;
+import ast.variables.AssignmentNode;
+import ast.variables.LiteralNode;
 import low.TempManager;
+import low.main.GlobalStringManager;
+import low.module.LLVisitorMain;
 
 import java.util.Map;
-
 public class AssignmentEmitter {
-    private final Map<String, String> varTypes; // Reaproveitando o map do LLVisitorMain
+    private final Map<String, String> varTypes;
     private final TempManager temps;
+    private final GlobalStringManager globalStrings;
+    private final LLVisitorMain visitor;
 
-    public AssignmentEmitter(Map<String, String> varTypes, TempManager temps) {
+    public AssignmentEmitter(Map<String, String> varTypes, TempManager temps,
+                             GlobalStringManager globalStrings, LLVisitorMain visitor) {
         this.varTypes = varTypes;
         this.temps = temps;
+        this.globalStrings = globalStrings;
+        this.visitor = visitor;
     }
 
-    public String emitAssignment(String varName, TypedValue value) {
-        if (!varTypes.containsKey(varName)) {
-            throw new RuntimeException("Variável não declarada: " + varName);
+    public String emit(AssignmentNode assignNode) {
+        if (!varTypes.containsKey(assignNode.name)) {
+            throw new RuntimeException("Variável não declarada: " + assignNode.name);
         }
 
-        String llvmType = varTypes.get(varName);
+        String llvmType = varTypes.get(assignNode.name);
         StringBuilder llvm = new StringBuilder();
 
-        // Converte valor para string adequada
-        String valStr;
-        switch (llvmType) {
-            case "i32":
-                if (value.getType().equals("int")) {
-                    valStr = value.getValue().toString();
-                } else {
-                    throw new RuntimeException("Atribuição inválida: tipo " + value.getType() + " para i32");
+        // Caso 1: Literal direto
+        if (assignNode.valueNode instanceof LiteralNode lit) {
+            Object val = lit.value.getValue();
+            switch (lit.value.getType()) {
+                case "int" -> llvm.append("  store i32 ").append(val)
+                        .append(", i32* %").append(assignNode.name).append("\n");
+                case "double" -> {
+                    if (val instanceof Integer i) val = i.doubleValue();
+                    llvm.append("  store double ").append(val)
+                            .append(", double* %").append(assignNode.name).append("\n");
                 }
-                break;
-            case "double":
-                if (value.getType().equals("double")) {
-                    valStr = value.getValue().toString();
-                } else if (value.getType().equals("int")) {
-                    valStr = ((Integer) value.getValue()).doubleValue() + "";
-                } else {
-                    throw new RuntimeException("Atribuição inválida: tipo " + value.getType() + " para double");
+                case "boolean" -> llvm.append("  store i1 ")
+                        .append(((Boolean) val) ? "1" : "0")
+                        .append(", i1* %").append(assignNode.name).append("\n");
+                case "string" -> {
+                    String strName = globalStrings.getOrCreateString((String) val);
+                    int len = ((String) val).length() + 2;
+                    llvm.append("  store i8* getelementptr ([")
+                            .append(len).append(" x i8], [").append(len).append(" x i8]* ")
+                            .append(strName).append(", i32 0, i32 0), i8** %")
+                            .append(assignNode.name).append("\n");
                 }
-                break;
-            case "i1": // boolean
-                if (value.getType().equals("boolean")) {
-                    boolean b = (Boolean) value.getValue();
-                    valStr = b ? "1" : "0";
-                } else {
-                    throw new RuntimeException("Atribuição inválida: tipo " + value.getType() + " para boolean");
-                }
-                break;
-            case "i8*": // string
-                if (value.getType().equals("string")) {
-                    valStr = ""; // strings tratadas via GlobalStringManager
-                } else {
-                    throw new RuntimeException("Atribuição inválida: tipo " + value.getType() + " para string");
-                }
-                break;
-            default:
-                throw new RuntimeException("Tipo LLVM desconhecido: " + llvmType);
+                default -> throw new RuntimeException("Literal não suportado: " + lit.value.getType());
+            }
+            return llvm.toString();
         }
 
-        // Gera store
-        if (!llvmType.equals("i8*")) { // strings são especiais
-            llvm.append("  store ").append(llvmType).append(" ").append(valStr)
-                    .append(", ").append(llvmType).append("* %").append(varName).append("\n");
-        }
+        // Caso 2: Expressão complexa (não literal)
+        String exprLLVM = assignNode.valueNode.accept(visitor);
+        String temp = extractTemp(exprLLVM);
+
+        llvm.append(exprLLVM).append("\n")
+                .append("  store ").append(llvmType).append(" ").append(temp)
+                .append(", ").append(llvmType).append("* %").append(assignNode.name).append("\n");
 
         return llvm.toString();
+    }
+
+    private String extractTemp(String code) {
+        int lastValIdx = code.lastIndexOf(";;VAL:");
+        if (lastValIdx == -1) throw new RuntimeException("Não encontrou ;;VAL: em: " + code);
+        int typeIdx = code.indexOf(";;TYPE:", lastValIdx);
+        return code.substring(lastValIdx + 6, typeIdx).trim();
     }
 }

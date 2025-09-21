@@ -5,6 +5,7 @@ declare i32 @getchar()
 @.strDouble = private constant [4 x i8] c"%f\0A\00"
 @.strStr = private constant [4 x i8] c"%s\0A\00"
 
+@.str0 = private constant [10 x i8] c"hallyson\0A\00"
 
 define i32 @main() {
   ; VariableDeclarationNode
@@ -14,6 +15,7 @@ define i32 @main() {
   ; VariableDeclarationNode
   %nome = alloca i8*
   ; AssignmentNode
+  store i8* getelementptr ([10 x i8], [10 x i8]* @.str0, i32 0, i32 0), i8** %nome
   ; AssignmentNode
   store i32 4, i32* %a
   ; AssignmentNode
@@ -25,8 +27,8 @@ define i32 @main() {
   %t1 = load double, double* %b
   call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double %t1)
   ; PrintNode
-  %tStr5466538354200 = load i8*, i8** %nome
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %tStr5466538354200)
+  %tStr11983217021900 = load i8*, i8** %nome
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %tStr11983217021900)
   call i32 @getchar()
   ret i32 0
 }

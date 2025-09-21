@@ -1,6 +1,5 @@
 package low.module;
 
-import ast.ASTNode;
 import ast.exceptions.BreakNode;
 import ast.expressions.TypedValue;
 import ast.home.MainAST;
@@ -8,7 +7,7 @@ import ast.ifstatements.IfNode;
 import ast.lists.ListNode;
 import ast.loops.WhileNode;
 import low.ifs.IfEmitter;
-import low.lists.LLVisitorListEmitter;
+import low.lists.ListEmitter;
 import low.main.GlobalStringManager;
 import low.TempManager;
 import low.main.MainEmitter;
@@ -26,13 +25,13 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final GlobalStringManager globalStrings = new GlobalStringManager();
     private final VariableEmitter varEmitter = new VariableEmitter(varTypes, temps, globalStrings, this);
     private final PrintEmitter printEmitter = new PrintEmitter(globalStrings);
-    private final AssignmentEmitter assignmentEmitter = new AssignmentEmitter(varTypes, temps);
+    private final AssignmentEmitter assignmentEmitter = new AssignmentEmitter(varTypes, temps, globalStrings, this);
     private final UnaryOpEmitter unaryOpEmitter = new UnaryOpEmitter(varTypes, temps);
     private final LiteralEmitter literalEmitter = new LiteralEmitter(temps,globalStrings);
     private final BinaryOpEmitter binaryEmitter = new BinaryOpEmitter(temps, this);
     private final IfEmitter ifEmitter = new IfEmitter(temps, this);
     private final WhileEmitter whileEmitter = new WhileEmitter(temps, this);
-    private final LLVisitorListEmitter listEmitter = new LLVisitorListEmitter(temps, globalStrings);
+    private final ListEmitter listEmitter = new ListEmitter(temps, globalStrings);
     private final Deque<String> loopEndLabels = new ArrayDeque<>();
 
     public void pushLoopEnd(String label) {
@@ -88,7 +87,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public String visit(ListNode node) {
-      return "";
+      return listEmitter.emit(node, this);
 
     }
 
@@ -110,25 +109,9 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public String visit(AssignmentNode node) {
-        TypedValue value;
-        if (node.valueNode instanceof LiteralNode lit) {
-            value = lit.value;
-        } else if (node.valueNode instanceof VariableNode varNode) {
-            String llvmType = varTypes.get(varNode.getName());
-            value = new TypedValue(
-                    switch (llvmType) {
-                        case "i32" -> "int";
-                        case "double" -> "double";
-                        case "i1" -> "boolean";
-                        default -> "string";
-                    },
-                    varNode.getName()
-            );
-        } else {
-            throw new RuntimeException("Expressão de atribuição não suportada ainda");
-        }
-        return assignmentEmitter.emitAssignment(node.name, value);
+        return assignmentEmitter.emit(node);
     }
+
 
     public String getVarType(String name) {
         return varTypes.get(name);

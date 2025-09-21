@@ -1,8 +1,10 @@
 package low.variables;
 
+import ast.lists.ListNode;
 import ast.variables.AssignmentNode;
 import ast.variables.LiteralNode;
 import low.TempManager;
+import low.lists.ListEmitter;
 import low.main.GlobalStringManager;
 import low.module.LLVisitorMain;
 
@@ -56,10 +58,20 @@ public class AssignmentEmitter {
             return llvm.toString();
         }
 
-        // Caso 2: Expressão complexa (não literal)
+        // Caso 2: Lista
+        if (assignNode.valueNode instanceof ListNode listNode) {
+            ListEmitter listEmitter = new ListEmitter(temps, globalStrings);
+            String llvmList = listEmitter.emit(listNode, visitor);
+            String temp = extractTemp(llvmList);
+            llvm.append(llvmList)
+                    .append("  store i8* ").append(temp)
+                    .append(", i8** %").append(assignNode.name).append("\n");
+            return llvm.toString();
+        }
+
+        // Caso 3: Expressão complexa ou variável
         String exprLLVM = assignNode.valueNode.accept(visitor);
         String temp = extractTemp(exprLLVM);
-
         llvm.append(exprLLVM).append("\n")
                 .append("  store ").append(llvmType).append(" ").append(temp)
                 .append(", ").append(llvmType).append("* %").append(assignNode.name).append("\n");

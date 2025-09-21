@@ -4,6 +4,7 @@ main {
 int a;
 double b;
 string nome;
+list nomes =("teste");
 nome = "hallyson";
 a = 4;
 b = 3.14;

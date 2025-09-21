@@ -1,5 +1,7 @@
 package low.variables;
 
+import ast.lists.ListNode;
+import low.lists.ListEmitter;
 import low.main.GlobalStringManager;
 import low.module.LLVisitorMain;
 import low.TempManager;
@@ -27,16 +29,29 @@ public class VariableEmitter {
             case "double" -> "double";
             case "boolean" -> "i1";
             case "string" -> "i8*";
+            case "list" -> "i8*";
             default -> throw new RuntimeException("Tipo desconhecido: " + node.getType());
         };
         varTypes.put(node.getName(), llvmType);
         return "  %" + node.getName() + " = alloca " + llvmType + "\n";
     }
 
+    // Inicializa a variável (literal ou expressão)
     public String emitInit(VariableDeclarationNode node) {
-        if (node.initializer == null) return "";
         String llvmType = varTypes.get(node.getName());
 
+        // Caso sem inicializador
+        if (node.initializer == null) {
+            if ("list".equals(node.getType())) {
+                // lista vazia
+                String tmp = temps.newTemp();
+                return "  " + tmp + " = call i8* @arraylist_create(i64 4)\n" +
+                        "  store i8* " + tmp + ", i8** %" + node.getName() + "\n";
+            }
+            return "";
+        }
+
+        // LiteralNode
         if (node.initializer instanceof LiteralNode lit) {
             Object val = lit.value.getValue();
             if (llvmType.equals("double") && val instanceof Integer) val = ((Integer) val).doubleValue();
@@ -61,7 +76,15 @@ public class VariableEmitter {
             return llvm.toString();
         }
 
-        // Expressões complexas → gerar LLVM e fazer store no resultado
+        // ListNode
+        if (node.initializer instanceof ListNode listNode) {
+            ListEmitter listEmitter = new ListEmitter(temps, globalStrings);
+            String llvmList = listEmitter.emit(listNode, visitor);
+            String temp = extractTemp(llvmList);
+            return llvmList + "  store i8* " + temp + ", i8** %" + node.getName() + "\n";
+        }
+
+        // Expressão complexa (ou outra variável)
         String exprLLVM = node.initializer.accept(visitor);
         String temp = extractTemp(exprLLVM);
         return exprLLVM + "\n  store " + llvmType + " " + temp + ", " + llvmType + "* %" + node.getName() + "\n";

@@ -2,10 +2,10 @@ package low.lists;
 
 import ast.ASTNode;
 import ast.lists.ListNode;
+import ast.variables.LiteralNode;
 import low.TempManager;
 import low.main.GlobalStringManager;
 import low.module.LLVisitorMain;
-
 public class ListEmitter {
     private final TempManager temps;
     private final GlobalStringManager globalStrings;
@@ -18,20 +18,43 @@ public class ListEmitter {
     public String emit(ListNode node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
 
-        // cria a lista inicial
+        // 1️⃣ Registra todas as strings da lista antes de gerar qualquer código LLVM
+        for (ASTNode element : node.getList().getElements()) {
+            if (element instanceof LiteralNode lit && lit.value.getType().equals("string")) {
+                globalStrings.getOrCreateString((String) lit.value.getValue());
+            }
+        }
+
+        // 2️⃣ Cria a lista inicial
         String listPtr = temps.newTemp();
         llvm.append("  ").append(listPtr).append(" = call i8* @arraylist_create(i64 4)\n");
 
-        // adiciona elementos
+        // 3️⃣ Adiciona elementos
         for (ASTNode element : node.getList().getElements()) {
-            String exprLLVM = element.accept(visitor);
-            String temp = extractTemp(exprLLVM);
-            String type = extractType(exprLLVM);
-            llvm.append(exprLLVM);
-            llvm.append("  call void @setItems(i8* ").append(listPtr).append(", ")
-                    .append(type).append(" ").append(temp).append(")\n");
+            String temp;
+            String type;
+
+            if (element instanceof LiteralNode lit && lit.value.getType().equals("string")) {
+                String strName = globalStrings.getOrCreateString((String) lit.value.getValue());
+                int len = ((String) lit.value.getValue()).length() + 2;
+                temp = temps.newTemp();
+                llvm.append("  ").append(temp)
+                        .append(" = bitcast [").append(len).append(" x i8]* ")
+                        .append(strName).append(" to i8*\n");
+                type = "i8*";
+            } else {
+                // Outros tipos (int, double, boolean, etc.)
+                String exprLLVM = element.accept(visitor);
+                llvm.append(exprLLVM);
+                temp = extractTemp(exprLLVM);
+                type = extractType(exprLLVM);
+            }
+
+            llvm.append("  call void @setItems(i8* ").append(listPtr)
+                    .append(", ").append(type).append(" ").append(temp).append(")\n");
         }
 
+        // 4️⃣ Retorna a lista
         llvm.append(";;VAL:").append(listPtr).append(";;TYPE:i8*\n");
         return llvm.toString();
     }

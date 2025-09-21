@@ -40,10 +40,11 @@ public class LiteralEmitter {
         if (type.equals("i8*")) {
             String strName = globalStrings.getOrCreateString((String) val);
             int len = ((String) val).length() + 2;
-            String llvm = "  " + tmp + " = getelementptr ([" + len + " x i8], [" + len + " x i8]* " + strName + ", i32 0, i32 0)\n";
+            String llvm = "  " + tmp + " = bitcast [" + len + " x i8]* " + strName + " to i8*\n";
             llvm += ";;VAL:" + tmp + ";;TYPE:" + type + "\n";
             return llvm;
         }
+
 
         throw new RuntimeException("LiteralNode não suportado: " + type);
     }

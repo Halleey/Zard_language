@@ -4,7 +4,7 @@ main {
 int a;
 double b;
 string nome;
-list nomes =("teste");
+list nomes = (1, "hallyson", true);
 nome = "hallyson";
 a = 4;
 b = 3.14;

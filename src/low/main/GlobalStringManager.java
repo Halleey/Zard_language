@@ -2,6 +2,7 @@ package low.main;
 
 import java.util.HashMap;
 import java.util.Map;
+
 public class GlobalStringManager {
     private final Map<String, String> stringMap = new HashMap<>();
     private final StringBuilder globalStrings = new StringBuilder();

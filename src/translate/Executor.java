@@ -28,21 +28,21 @@ public class Executor {
             ASTPrinter.printAST(ast);
 
             // LLVM
-            LLVMGenerator llvmGen = new LLVMGenerator();
-            String llvmCode = llvmGen.generate(ast);
-            System.out.println("=== LLVM IR ===");
-            System.out.println(llvmCode);
-            // Salvar arquivo LLVM
-            Path llPath = Path.of("programa.ll");
-            Files.writeString(llPath, llvmCode);
-            System.out.println("LLVM IR salvo em programa.ll");
-
-            // Gerar executável
-            ProcessBuilder pb = new ProcessBuilder("clang", "programa.ll", "-o", "programa.exe");
-            pb.inheritIO();
-            Process process = pb.start();
-            int exitCode = process.waitFor();
-            if (exitCode == 0) System.out.println("Executável gerado: programa.exe");
+//            LLVMGenerator llvmGen = new LLVMGenerator();
+//            String llvmCode = llvmGen.generate(ast);
+//            System.out.println("=== LLVM IR ===");
+//            System.out.println(llvmCode);
+//            // Salvar arquivo LLVM
+//            Path llPath = Path.of("programa.ll");
+//            Files.writeString(llPath, llvmCode);
+//            System.out.println("LLVM IR salvo em programa.ll");
+//
+//            // Gerar executável
+//            ProcessBuilder pb = new ProcessBuilder("clang", "programa.ll", "-o", "programa.exe");
+//            pb.inheritIO();
+//            Process process = pb.start();
+//            int exitCode = process.waitFor();
+//            if (exitCode == 0) System.out.println("Executável gerado: programa.exe");
 
             System.out.println("=== Execution ===");
             RuntimeContext ctx = new RuntimeContext();

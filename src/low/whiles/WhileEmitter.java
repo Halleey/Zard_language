@@ -37,9 +37,14 @@ public class WhileEmitter {
 
         // body
         llvm.append(bodyLabel).append(":\n");
+
+        visitor.pushLoopEnd(endLabel);
+
         for (ASTNode stmt : node.body) {
             llvm.append(stmt.accept(visitor));
         }
+        visitor.popLoopEnd();
+
         llvm.append("  br label %").append(condLabel).append("\n");
 
         // end

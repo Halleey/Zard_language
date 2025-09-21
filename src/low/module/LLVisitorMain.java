@@ -1,11 +1,14 @@
 package low.module;
 
+import ast.ASTNode;
 import ast.exceptions.BreakNode;
 import ast.expressions.TypedValue;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
+import ast.lists.ListNode;
 import ast.loops.WhileNode;
 import low.ifs.IfEmitter;
+import low.lists.LLVisitorListEmitter;
 import low.main.GlobalStringManager;
 import low.TempManager;
 import low.main.MainEmitter;
@@ -14,8 +17,8 @@ import low.variables.*;
 import low.whiles.WhileEmitter;
 import ast.prints.PrintNode;
 import ast.variables.*;
-import java.util.HashMap;
-import java.util.Map;
+
+import java.util.*;
 
 public class LLVisitorMain implements LLVMEmitVisitor {
     private final Map<String, String> varTypes = new HashMap<>();
@@ -29,16 +32,34 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final BinaryOpEmitter binaryEmitter = new BinaryOpEmitter(temps, this);
     private final IfEmitter ifEmitter = new IfEmitter(temps, this);
     private final WhileEmitter whileEmitter = new WhileEmitter(temps, this);
+    private final LLVisitorListEmitter listEmitter = new LLVisitorListEmitter(temps, globalStrings);
+    private final Deque<String> loopEndLabels = new ArrayDeque<>();
+
+    public void pushLoopEnd(String label) {
+        loopEndLabels.push(label);
+    }
+
+    public void popLoopEnd() {
+        loopEndLabels.pop();
+    }
+
+    public String currentLoopEnd() {
+        if (loopEndLabels.isEmpty()) {
+            throw new RuntimeException("Break fora de loop!");
+        }
+        return loopEndLabels.peek();
+    }
+
     @Override
     public String visit(MainAST node) {
         MainEmitter mainEmitter = new MainEmitter(globalStrings);
         return mainEmitter.emit(node, this);
     }
 
-
     public String visit(VariableDeclarationNode node) {
         return varEmitter.emitAlloca(node) + varEmitter.emitInit(node);
     }
+
     @Override
     public String visit(LiteralNode node) {
         return literalEmitter.emit(node);
@@ -54,16 +75,23 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return binaryEmitter.emit(node);
     }
 
-
     @Override
     public String visit(WhileNode node) {
-      return whileEmitter.emit(node);
+        return whileEmitter.emit(node);
     }
 
     @Override
     public String visit(BreakNode node) {
-        return "";
+        String endLabel = currentLoopEnd();
+        return "  br label %" + endLabel + "\n";
     }
+
+    @Override
+    public String visit(ListNode node) {
+      return "";
+
+    }
+
 
     @Override
     public String visit(IfNode node) {
@@ -71,11 +99,9 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     }
 
     @Override
-
     public String visit(PrintNode node) {
         return printEmitter.emit(node, this);
     }
-
 
     @Override
     public String visit(UnaryOpNode node) {
@@ -103,8 +129,8 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         }
         return assignmentEmitter.emitAssignment(node.name, value);
     }
+
     public String getVarType(String name) {
         return varTypes.get(name);
     }
-
 }

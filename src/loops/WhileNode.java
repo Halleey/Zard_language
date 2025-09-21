@@ -7,6 +7,7 @@ import expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;
+
 public class WhileNode extends ASTNode {
     public final ASTNode condition;
     public final List<ASTNode> body;
@@ -18,7 +19,7 @@ public class WhileNode extends ASTNode {
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
-        return "";
+        return visitor.visit(this);
     }
 
     @Override

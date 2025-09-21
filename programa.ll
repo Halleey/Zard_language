@@ -5,51 +5,46 @@ declare i32 @getchar()
 @.strDouble = private constant [4 x i8] c"%f\0A\00"
 @.strStr = private constant [4 x i8] c"%s\0A\00"
 
-@.str0 = private constant [7 x i8] c"maior\0A\00"
-@.str1 = private constant [7 x i8] c"menor\0A\00"
-@.str2 = private constant [7 x i8] c"igual\0A\00"
 
 define i32 @main() {
   ; VariableDeclarationNode
-  %a = alloca double
-  store double 2.5, double* %a
+  %i = alloca i32
+  store i32 0, i32* %i
   ; VariableDeclarationNode
-  %b = alloca double
-  store double 3.1, double* %b
-  ; IfNode
-  %t0 = load double, double* %a
-;;VAL:%t0;;TYPE:double
+  %resultado = alloca i32
+  %t0 = load i32, i32* %i
+;;VAL:%t0;;TYPE:i32
 
-  %t1 = load double, double* %b
-;;VAL:%t1;;TYPE:double
+  %t1 = add i32 0, 1
+;;VAL:%t1;;TYPE:i32
 
-  %t2 = fcmp ogt double %t0, %t1
-;;VAL:%t2;;TYPE:i1
+  %t2 = add i32 %t0, %t1
+;;VAL:%t2;;TYPE:i32
 
-  br i1 %t2, label %then_0, label %else_0
-then_0:
-  call i32 (i8*, ...) @printf(i8* getelementptr ([7 x i8], [7 x i8]* @.str0, i32 0, i32 0))
-  br label %endif_0
-else_0:
-  %t3 = load double, double* %a
-;;VAL:%t3;;TYPE:double
+  store i32 %t2, i32* %resultado
+  ; PrintNode
+  %t3 = load i32, i32* %resultado
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t3)
+  ; WhileNode
+  br label %while_cond_0
+while_cond_0:
+  %t4 = load i32, i32* %i
+;;VAL:%t4;;TYPE:i32
 
-  %t4 = load double, double* %b
-;;VAL:%t4;;TYPE:double
+  %t5 = add i32 0, 5
+;;VAL:%t5;;TYPE:i32
 
-  %t5 = fcmp olt double %t3, %t4
-;;VAL:%t5;;TYPE:i1
-
-  br i1 %t5, label %then_1, label %else_1
-then_1:
-  call i32 (i8*, ...) @printf(i8* getelementptr ([7 x i8], [7 x i8]* @.str1, i32 0, i32 0))
-  br label %endif_1
-else_1:
-  call i32 (i8*, ...) @printf(i8* getelementptr ([7 x i8], [7 x i8]* @.str2, i32 0, i32 0))
-  br label %endif_1
-endif_1:
-  br label %endif_0
-endif_0:
+  %t6 = icmp slt i32 %t4, %t5
+;;VAL:%t6;;TYPE:i1
+  br i1 %t6, label %while_body_1, label %while_end_2
+while_body_1:
+  %t7 = load i32, i32* %i
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t7)
+  %t8 = load i32, i32* %i
+  %t9 = add i32 %t8, 1
+  store i32 %t9, i32* %i
+  br label %while_cond_0
+while_end_2:
   call i32 @getchar()
   ret i32 0
 }

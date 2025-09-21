@@ -1,18 +1,23 @@
 package low.module;
 
+import ast.ASTNode;
+import ast.exceptions.BreakNode;
 import expressions.TypedValue;
 import home.MainAST;
 import ifstatements.IfNode;
+import loops.WhileNode;
 import low.ifs.IfEmitter;
 import low.main.GlobalStringManager;
 import low.TempManager;
 import low.main.MainEmitter;
 import low.prints.PrintEmitter;
 import low.variables.*;
+import low.whiles.WhileEmitter;
 import prints.PrintNode;
 import variables.*;
 import java.util.HashMap;
 import java.util.Map;
+
 public class LLVisitorMain implements LLVMEmitVisitor {
     private final Map<String, String> varTypes = new HashMap<>();
     private final TempManager temps = new TempManager();
@@ -24,7 +29,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final LiteralEmitter literalEmitter = new LiteralEmitter(temps,globalStrings);
     private final BinaryOpEmitter binaryEmitter = new BinaryOpEmitter(temps, this);
     private final IfEmitter ifEmitter = new IfEmitter(temps, this);
-
+    private final WhileEmitter whileEmitter = new WhileEmitter(temps, this);
     @Override
     public String visit(MainAST node) {
         MainEmitter mainEmitter = new MainEmitter(globalStrings);
@@ -48,6 +53,17 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     @Override
     public String visit(BinaryOpNode node) {
         return binaryEmitter.emit(node);
+    }
+
+
+    @Override
+    public String visit(WhileNode node) {
+      return whileEmitter.emit(node);
+    }
+
+    @Override
+    public String visit(BreakNode node) {
+        return "";
     }
 
     @Override

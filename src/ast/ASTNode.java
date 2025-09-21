@@ -2,7 +2,7 @@ package ast;
 
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
-import low.LLVMEmitVisitor;
+import low.module.LLVMEmitVisitor;
 
 
 public abstract class ASTNode {

@@ -4,7 +4,7 @@ import ast.ASTNode;
 import ast.exceptions.ReturnValue;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
-import low.LLVMEmitVisitor;
+import low.module.LLVMEmitVisitor;
 
 import java.util.List;
 

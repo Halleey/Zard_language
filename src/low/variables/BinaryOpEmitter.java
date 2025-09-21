@@ -1,7 +1,8 @@
 package low.variables;
-import low.LLVisitorMain;
+import low.module.LLVisitorMain;
 import low.TempManager;
 import variables.BinaryOpNode;
+
 public class BinaryOpEmitter {
     private final TempManager temps;
     private final LLVisitorMain visitor;
@@ -24,7 +25,7 @@ public class BinaryOpEmitter {
         String resultTemp = temps.newTemp();
         StringBuilder llvm = new StringBuilder();
 
-        // 🔹 Quebra de linha entre instruções
+
         llvm.append(leftLLVM).append("\n").append(rightLLVM).append("\n");
 
         // INT

@@ -5,7 +5,7 @@ import ast.maps.DynamicMap;
 import ast.runtime.RuntimeContext;
 import ast.lists.DynamicList;
 import expressions.TypedValue;
-import low.LLVMEmitVisitor;
+import low.module.LLVMEmitVisitor;
 
 import java.util.List;
 

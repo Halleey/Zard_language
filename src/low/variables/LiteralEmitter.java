@@ -1,8 +1,9 @@
 package low.variables;
 
-import low.GlobalStringManager;
+import low.main.GlobalStringManager;
 import low.TempManager;
 import variables.LiteralNode;
+
 public class LiteralEmitter {
     private final TempManager temps;
     private final GlobalStringManager globalStrings;

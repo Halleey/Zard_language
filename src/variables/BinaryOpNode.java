@@ -3,7 +3,7 @@ package variables;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
-import low.LLVMEmitVisitor;
+import low.module.LLVMEmitVisitor;
 
 public class BinaryOpNode extends ASTNode {
     public final ASTNode left;

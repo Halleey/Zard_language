@@ -1,12 +1,13 @@
 package low.variables;
 
-import low.GlobalStringManager;
-import low.LLVisitorMain;
+import low.main.GlobalStringManager;
+import low.module.LLVisitorMain;
 import low.TempManager;
 import variables.LiteralNode;
 import variables.VariableDeclarationNode;
 
 import java.util.Map;
+
 public class VariableEmitter {
     private final Map<String, String> varTypes;
     private final TempManager temps;

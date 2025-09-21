@@ -1,4 +1,4 @@
-package low;
+package low.module;
 
 import ast.ASTNode;
 

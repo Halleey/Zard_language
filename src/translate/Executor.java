@@ -3,18 +3,13 @@ package translate;
 import ast.ASTNode;
 import ast.exceptions.ReturnValue;
 import ast.runtime.RuntimeContext;
-import low.LLVMGenerator;
+import low.module.LLVMGenerator;
 import prints.ASTPrinter;
 import tokens.Lexer;
 import tokens.Token;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import java.util.Collections;
-import java.util.List;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 
 public class Executor {

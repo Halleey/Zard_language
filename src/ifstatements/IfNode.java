@@ -3,10 +3,8 @@ package ifstatements;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
-import low.LLVMEmitVisitor;
+import low.module.LLVMEmitVisitor;
 
-import java.util.List;
-import java.util.Map;
 import java.util.List;
 
 public class IfNode extends ASTNode {
@@ -22,7 +20,7 @@ public class IfNode extends ASTNode {
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
-        return "";
+        return visitor.visit(this);
     }
 
     @Override

@@ -2,12 +2,8 @@ package variables;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import expressions.TypedValue;
-import low.LLVMEmitVisitor;
+import low.module.LLVMEmitVisitor;
 
-import java.util.Map;
-import java.util.List;
-
-import java.util.List;
 public class VariableDeclarationNode extends ASTNode {
     public final String name;
     public final String type;

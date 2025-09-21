@@ -1,11 +1,14 @@
 import "src/language/stdlib/Math.zd" as math;
-
 main {
-
-    int z;
-    int x;
-    x = 11;
-    z = 4;
-    int resultado = x + z;
-    print(resultado);
+    double a = 2.5;
+    double b = 3.1;
+    if(a > b){
+        print("maior");
+    }
+    else if(a < b){
+        print("menor");
+    }
+    else{
+        print("igual");
+    }
 }

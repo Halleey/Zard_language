@@ -18,89 +18,88 @@ public class ListEmitter {
     public String emit(ListNode node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
 
-        //  registra todas as strings da lista antes de gerar qualquer código LLVM
+        // registra strings literais para o header
         for (ASTNode element : node.getList().getElements()) {
             if (element instanceof LiteralNode lit && lit.value.getType().equals("string")) {
                 globalStrings.getOrCreateString((String) lit.value.getValue());
             }
         }
 
-        //  aria a lista inicial
+        // cria a lista
         String listPtr = temps.newTemp();
         llvm.append("  ").append(listPtr).append(" = call i8* @arraylist_create(i64 4)\n");
 
-        //  adiciona elementos
+        // adiciona cada elemento (sempre como i8* que aponta para DynValue)
         for (ASTNode element : node.getList().getElements()) {
-            String temp;
-            String type;
-
+            String dvTemp; // será i8* (DynValue*)
             if (element instanceof LiteralNode lit) {
                 Object val = lit.value.getValue();
                 String valType = lit.value.getType();
 
                 switch (valType) {
+                    case "int" -> {
+                        dvTemp = temps.newTemp();
+                        llvm.append("  ").append(dvTemp).append(" = call i8* @createInt(i32 ")
+                                .append(val.toString()).append(")\n");
+                    }
+                    case "double" -> {
+                        dvTemp = temps.newTemp();
+                        llvm.append("  ").append(dvTemp).append(" = call i8* @createDouble(double ")
+                                .append(val.toString()).append(")\n");
+                    }
+                    case "boolean" -> {
+                        String b = ((Boolean) val) ? "1" : "0";
+                        dvTemp = temps.newTemp();
+                        llvm.append("  ").append(dvTemp).append(" = call i8* @createBool(i1 ")
+                                .append(b).append(")\n");
+                    }
                     case "string" -> {
-                        // String: mantém ponteiro
                         String strName = globalStrings.getOrCreateString((String) val);
-                        int len = ((String) val).length() + 2;
-                        temp = temps.newTemp();
-                        llvm.append("  ").append(temp)
-                                .append(" = bitcast [").append(len).append(" x i8]* ")
-                                .append(strName).append(" to i8*\n");
-                        type = "i8*";
+                        // passar ponteiro para a string literal
+                        dvTemp = temps.newTemp();
+                        llvm.append("  ").append(dvTemp)
+                                .append(" = call i8* @createString(i8* getelementptr (")
+                                .append("[").append(((String) val).length() + 2).append(" x i8], ")
+                                .append("[").append(((String) val).length() + 2).append(" x i8]* ")
+                                .append(strName).append(", i32 0, i32 0))\n");
                     }
-                    case "int", "double", "boolean" -> {
-                        // Boxar primitivos
-                        type = switch (valType) {
-                            case "int" -> "i32";
-                            case "double" -> "double";
-                            case "boolean" -> "i1";
-                            default -> throw new RuntimeException("Tipo inesperado: " + valType);
-                        };
-                        String tmpAlloc = temps.newTemp();
-                        llvm.append("  ").append(tmpAlloc).append(" = alloca ").append(type).append("\n");
-                        String literalValue = switch (valType) {
-                            case "int" -> val.toString();
-                            case "double" -> val.toString();
-                            case "boolean" -> ((Boolean) val) ? "1" : "0";
-                            default -> throw new RuntimeException("Tipo inesperado: " + valType);
-                        };
-                        llvm.append("  store ").append(type).append(" ").append(literalValue)
-                                .append(", ").append(type).append("* ").append(tmpAlloc).append("\n");
-                        temp = temps.newTemp();
-                        llvm.append("  ").append(temp).append(" = bitcast ").append(type).append("* ")
-                                .append(tmpAlloc).append(" to i8*\n");
-                        type = "i8*";
-                    }
-                    default -> throw new RuntimeException("Tipo não suportado na lista: " + valType);
+                    default -> throw new RuntimeException("Tipo não suportado na lista (literal): " + valType);
                 }
             } else {
-                // expressões complexas ou outras variáveis
+                // expressão - gera o código da expressão e depois "boxa" em DynValue via chamadas create*
                 String exprLLVM = element.accept(visitor);
-                llvm.append(exprLLVM);
-                temp = extractTemp(exprLLVM);
-
-                // boxar valores primitivos para i8* também
+                llvm.append(exprLLVM); // inclui o código que produz ;;VAL:tmp;;TYPE:tipo
+                String tmp = extractTemp(exprLLVM);
                 String elemType = extractType(exprLLVM);
-                if (!elemType.equals("i8*")) {
-                    String tmpAlloc = temps.newTemp();
-                    llvm.append("  ").append(tmpAlloc).append(" = alloca ").append(elemType).append("\n");
-                    llvm.append("  store ").append(elemType).append(" ").append(temp)
-                            .append(", ").append(elemType).append("* ").append(tmpAlloc).append("\n");
-                    temp = temps.newTemp();
-                    llvm.append("  ").append(temp).append(" = bitcast ").append(elemType).append("* ")
-                            .append(tmpAlloc).append(" to i8*\n");
-                    type = "i8*";
+
+                // Se já for i8* (ex: variável string ou outra lista), assumimos que é DynValue* ou string ptr.
+                if ("i8*".equals(elemType)) {
+                    // Pode ser ponteiro para string (não DynValue) — mas se for variável string,
+                    // criamos createString? Na prática, o caso de expressão que produz i8* normalmente
+                    // será string literal/var; então criamos DynValue com createString.
+                    String dv = temps.newTemp();
+                    llvm.append("  ").append(dv).append(" = call i8* @createString(i8* ").append(tmp).append(")\n");
+                    dvTemp = dv;
+                } else if ("i32".equals(elemType)) {
+                    dvTemp = temps.newTemp();
+                    llvm.append("  ").append(dvTemp).append(" = call i8* @createInt(i32 ").append(tmp).append(")\n");
+                } else if ("double".equals(elemType)) {
+                    dvTemp = temps.newTemp();
+                    llvm.append("  ").append(dvTemp).append(" = call i8* @createDouble(double ").append(tmp).append(")\n");
+                } else if ("i1".equals(elemType)) {
+                    // tmp é i1, createBool espera i1
+                    dvTemp = temps.newTemp();
+                    llvm.append("  ").append(dvTemp).append(" = call i8* @createBool(i1 ").append(tmp).append(")\n");
                 } else {
-                    type = "i8*";
+                    throw new RuntimeException("Tipo de expressão não suportado na lista: " + elemType);
                 }
             }
 
-            llvm.append("  call void @setItems(i8* ").append(listPtr)
-                    .append(", i8* ").append(temp).append(")\n");
+            // setItems(listPtr, dvTemp)
+            llvm.append("  call void @setItems(i8* ").append(listPtr).append(", i8* ").append(dvTemp).append(")\n");
         }
 
-        //  retorna a lista
+        // retorno
         llvm.append(";;VAL:").append(listPtr).append(";;TYPE:i8*\n");
         return llvm.toString();
     }

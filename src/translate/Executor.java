@@ -5,6 +5,7 @@ import ast.exceptions.ReturnValue;
 import ast.runtime.RuntimeContext;
 import low.module.LLVMGenerator;
 import ast.prints.ASTPrinter;
+import low.module.LLVisitorMain;
 import tokens.Lexer;
 import tokens.Token;
 import java.nio.file.Files;
@@ -30,6 +31,10 @@ public class Executor {
             // LLVM
             LLVMGenerator llvmGen = new LLVMGenerator();
             String llvmCode = llvmGen.generate(ast);
+
+            LLVisitorMain llVisitorMain = llvmGen.getVisitor();
+            llVisitorMain.printAllVars();
+
             System.out.println("=== LLVM IR ===");
             System.out.println(llvmCode);
             // Salvar arquivo LLVM
@@ -43,6 +48,7 @@ public class Executor {
             Process process = pb.start();
             int exitCode = process.waitFor();
             if (exitCode == 0) System.out.println("Executável gerado: programa.exe");
+
 
             System.out.println("=== Execution ===");
             RuntimeContext ctx = new RuntimeContext();

@@ -33,6 +33,9 @@ public class VariableEmitter {
             default -> throw new RuntimeException("Tipo desconhecido: " + node.getType());
         };
         varTypes.put(node.getName(), llvmType);
+        if (node.getType().equals("list")) {
+            visitor.registerListVar(node.getName());
+        }
         return "  %" + node.getName() + " = alloca " + llvmType + "\n";
     }
 
@@ -87,6 +90,7 @@ public class VariableEmitter {
         // Expressão complexa (ou outra variável)
         String exprLLVM = node.initializer.accept(visitor);
         String temp = extractTemp(exprLLVM);
+
         return exprLLVM + "\n  store " + llvmType + " " + temp + ", " + llvmType + "* %" + node.getName() + "\n";
     }
 

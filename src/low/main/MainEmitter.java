@@ -11,6 +11,7 @@ import low.module.LLVisitorMain;
 import ast.prints.PrintNode;
 import ast.variables.LiteralNode;
 import ast.variables.VariableDeclarationNode;
+
 public class MainEmitter {
     private final GlobalStringManager globalStrings;
 
@@ -104,21 +105,30 @@ public class MainEmitter {
         return false;
     }
 
+    // dentro do MainEmitter
+    // dentro do MainEmitter
     private String emitHeader(MainAST node) {
         StringBuilder header = new StringBuilder();
         header.append("""
-            declare i32 @printf(i8*, ...)
-            declare i32 @getchar()
-            @.strInt = private constant [4 x i8] c"%d\\0A\\00"
-            @.strDouble = private constant [4 x i8] c"%f\\0A\\00"
-            @.strStr = private constant [4 x i8] c"%s\\0A\\00"
-            """);
+    declare i32 @printf(i8*, ...)
+    declare i32 @getchar()
+    @.strInt = private constant [4 x i8] c"%d\\0A\\00"
+    @.strDouble = private constant [4 x i8] c"%f\\0A\\00"
+    @.strStr = private constant [4 x i8] c"%s\\0A\\00"
 
-        // adiciona runtime de listas se houver alguma lista
+    ; === Funções do runtime DynValue ===
+    declare i8* @createInt(i32)
+    declare i8* @createDouble(double)
+    declare i8* @createBool(i1)
+    declare i8* @createString(i8*)
+    """);
+
+        // adiciona runtime de listas se houver alguma
         if (containsList(node)) {
             header.append("\n; === Runtime de listas ===\n")
                     .append("declare i8* @arraylist_create(i64)\n")
-                    .append("declare void @setItems(i8*, i8*)\n");
+                    .append("declare void @setItems(i8*, i8*)\n")
+                    .append("declare void @printList(i8*)\n");
         }
 
         return header.toString();

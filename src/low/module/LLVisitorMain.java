@@ -34,6 +34,17 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final ListEmitter listEmitter = new ListEmitter(temps, globalStrings);
     private final Deque<String> loopEndLabels = new ArrayDeque<>();
 
+    private final Set<String> listVars = new HashSet<>();
+
+    public void registerListVar(String name) {
+        listVars.add(name);
+    }
+
+
+    public boolean isList(String name) {
+        return listVars.contains(name);
+    }
+
     public void pushLoopEnd(String label) {
         loopEndLabels.push(label);
     }
@@ -90,8 +101,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
       return listEmitter.emit(node, this);
 
     }
-
-
     @Override
     public String visit(IfNode node) {
         return ifEmitter.emit(node);
@@ -111,9 +120,22 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public String visit(AssignmentNode node) {
         return assignmentEmitter.emit(node);
     }
-
-
     public String getVarType(String name) {
         return varTypes.get(name);
+    }
+    public void printAllVars() {
+        System.out.println("=== Variáveis registradas ===");
+        for (String name : varTypes.keySet()) {
+            String type = varTypes.get(name);
+            // Pega o valor em LLVM usando emitLoad
+            String llvmLoad = varEmitter.emitLoad(name);
+            System.out.println("Variável: " + name + " | Tipo: " + type + " | LLVM: " + llvmLoad);
+        }
+        System.out.println("============================");
+    }
+
+
+    public TempManager getTemps() {
+        return temps;
     }
 }

@@ -1,6 +1,6 @@
 # Zard
 
-Zard é uma linguagem de programação tipada, baseada em Java, criada para fins de estudo e aprimoramento da lógica de programação. Seu objetivo é oferecer uma **sintaxe simples, clara e didática**, permitindo experimentar conceitos de compiladores, AST e execução interpretada.
+**Zard** é uma linguagem de programação tipada, inspirada em Java, criada para fins de estudo e aprimoramento da lógica de programação, compiladores e ASTs. Seu objetivo é oferecer uma **sintaxe simples, clara e didática**, permitindo explorar conceitos de interpretação e compilação.
 
 ---
 
@@ -13,7 +13,11 @@ Zard é uma linguagem de programação tipada, baseada em Java, criada para fins
 * **Controle de Fluxo:** Suporte a `if`, `else` e `while`.
 * **Listas Dinâmicas:** Métodos `add()`, `remove()`, `clear()` e `size()`.
 * **Mapas Dinâmicos:** Criação e manipulação de mapas com funções auxiliares.
-* **Importação de Código:** Suporte a importação de arquivos externos com alias, ex.: `import "src/language/stdlib/Math.zd" as math;`.
+* **Importação de Código:** Suporte a importação de arquivos externos com alias, ex.:
+
+  ```zard
+  import "src/language/stdlib/Math.zd" as math;
+  ```
 * **Funções como Valores:** Variáveis podem armazenar funções e chamá-las dinamicamente.
 * **Bloco Main Obrigatório:** Todo programa deve começar com `main { }`.
 * **Print de Saída:** Suporte ao comando `print()` para exibir resultados no console.
@@ -67,40 +71,34 @@ main {
 
 ## 🚀 Futuro da Zard
 
-A linguagem continuará evoluindo para se tornar mais robusta e versátil. Algumas das metas incluem:
+A linguagem continuará evoluindo para se tornar mais robusta e versátil. Algumas metas incluem:
+
 * 🛠 **Compilação para LLVM IR** para execução independente.
-* 🏗 **Criação de um compilador completo** visando bootstrapping.
+* 🏗 **Criação de um compilador completo**, visando bootstrapping e geração de binários nativos.
+* 🔄 **Expansão da biblioteca padrão** com funções matemáticas, manipulação de strings, listas e mapas.
 
 ---
 
-## 🔄 Melhorias em Desenvolvimento
+## 🔄 Melhorias Implementadas
 
-* [x] Criação de `if` e `else` para decisões lógicas.
-* [x] Implementação de `while` para ast.loops.
-* [x] Adição de `return` para funções.
-* [x] Refatoração da AST para melhor análise e execução.
-* [x] Implementação de listas dinâmicas (`add`, `remove`, `clear`, `size`).
-* [x] Suporte a funções como valores.
-* [x] Suporte a funções recursivas.
-* [x] Implementação de mapas dinâmicos e funções auxiliares.
-* [x] Suporte a importação de módulos externos.
-* [x] Suporte a operadores compostos (`==`, `!=`, `<=`, `>=`).
-* [x] Funções recursivas já são suportadas.
-* [ ] Construção de um back-end para conversão AST -> IR para geração de programas nativos
+*
+
 ---
 
 ## 📂 Uso
 
 1. Escreva seu código em um arquivo `.zd`.
 2. Utilize o interpretador para executar o código.
-3. Experimente a sintaxe da linguagem e acompanhe as atualizações futuras!
+3. Experimente a sintaxe da linguagem e acompanhe as atualizações futuras.
 
 ---
 
-🔗 **Contribuição**
+## 🔗 Contribuição
 
-Caso queira sugerir melhorias ou contribuir, fique à vontade para enviar feedback e pull requests.
+Se você quiser sugerir melhorias ou contribuir com o projeto, sinta-se à vontade para enviar pull requests ou abrir issues.
 
-📧 **Contato**
+---
 
-Entre em contato para discutir melhorias e novos recursos para a Zard.
+## 📧 Contato
+
+Para discutir melhorias e novos recursos da linguagem Zard, entre em contato via email ou GitHub.

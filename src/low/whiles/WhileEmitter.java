@@ -1,7 +1,7 @@
 package low.whiles;
 
 import ast.ASTNode;
-import loops.WhileNode;
+import ast.loops.WhileNode;
 import low.TempManager;
 import low.module.LLVisitorMain;
 

@@ -1,10 +1,10 @@
-package prints;
+package ast.prints;
 
 import ast.ASTNode;
 import ast.maps.DynamicMap;
 import ast.runtime.RuntimeContext;
 import ast.lists.DynamicList;
-import expressions.TypedValue;
+import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;

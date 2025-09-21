@@ -4,7 +4,7 @@ import ast.ASTNode;
 import ast.exceptions.ReturnValue;
 import ast.runtime.RuntimeContext;
 import low.module.LLVMGenerator;
-import prints.ASTPrinter;
+import ast.prints.ASTPrinter;
 import tokens.Lexer;
 import tokens.Token;
 import java.nio.file.Files;

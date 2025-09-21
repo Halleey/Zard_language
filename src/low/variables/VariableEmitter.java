@@ -3,8 +3,8 @@ package low.variables;
 import low.main.GlobalStringManager;
 import low.module.LLVisitorMain;
 import low.TempManager;
-import variables.LiteralNode;
-import variables.VariableDeclarationNode;
+import ast.variables.LiteralNode;
+import ast.variables.VariableDeclarationNode;
 
 import java.util.Map;
 

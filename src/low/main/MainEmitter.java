@@ -2,13 +2,13 @@ package low.main;
 
 import ast.ASTNode;
 import ast.functions.FunctionNode;
-import home.MainAST;
-import ifstatements.IfNode;
-import loops.WhileNode;
+import ast.home.MainAST;
+import ast.ifstatements.IfNode;
+import ast.loops.WhileNode;
 import low.module.LLVisitorMain;
-import prints.PrintNode;
-import variables.LiteralNode;
-import variables.VariableDeclarationNode;
+import ast.prints.PrintNode;
+import ast.variables.LiteralNode;
+import ast.variables.VariableDeclarationNode;
 public class MainEmitter {
     private final GlobalStringManager globalStrings;
 

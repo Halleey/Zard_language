@@ -1,4 +1,4 @@
-package expressions;
+package ast.expressions;
 
 import ast.functions.FunctionNode;
 import ast.runtime.RuntimeContext;

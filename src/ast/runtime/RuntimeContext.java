@@ -1,6 +1,6 @@
 package ast.runtime;
 
-import expressions.TypedValue;
+import ast.expressions.TypedValue;
 
 import java.util.HashMap;
 import java.util.Map;

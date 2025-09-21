@@ -1,4 +1,4 @@
-package prints;
+package ast.prints;
 
 import ast.ASTNode;
 

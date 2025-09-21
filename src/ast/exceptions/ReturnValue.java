@@ -1,6 +1,6 @@
 package ast.exceptions;
 
-import expressions.TypedValue;
+import ast.expressions.TypedValue;
 
 public class ReturnValue extends RuntimeException {
     public final TypedValue value;

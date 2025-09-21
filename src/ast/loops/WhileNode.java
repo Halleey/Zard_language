@@ -1,9 +1,9 @@
-package loops;
+package ast.loops;
 
 import ast.ASTNode;
 import ast.exceptions.BreakLoop;
 import ast.runtime.RuntimeContext;
-import expressions.TypedValue;
+import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;

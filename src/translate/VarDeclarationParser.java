@@ -7,7 +7,7 @@ import ast.maps.MapNode;
 import ast.maps.MapParser;
 import ast.lists.DynamicList;
 import tokens.Token;
-import variables.VariableDeclarationNode;
+import ast.variables.VariableDeclarationNode;
 
 import java.util.ArrayList;
 import java.util.List;

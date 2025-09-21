@@ -3,7 +3,7 @@ package ast.lists;
 import ast.ASTNode;
 import tokens.Token;
 import translate.Parser;
-import variables.VariableDeclarationNode;
+import ast.variables.VariableDeclarationNode;
 
 import java.util.ArrayList;
 import java.util.List;

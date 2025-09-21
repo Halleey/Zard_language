@@ -76,7 +76,7 @@ A linguagem continuará evoluindo para se tornar mais robusta e versátil. Algum
 ## 🔄 Melhorias em Desenvolvimento
 
 * [x] Criação de `if` e `else` para decisões lógicas.
-* [x] Implementação de `while` para loops.
+* [x] Implementação de `while` para ast.loops.
 * [x] Adição de `return` para funções.
 * [x] Refatoração da AST para melhor análise e execução.
 * [x] Implementação de listas dinâmicas (`add`, `remove`, `clear`, `size`).

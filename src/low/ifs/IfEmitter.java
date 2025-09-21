@@ -1,9 +1,10 @@
 package low.ifs;
 
 import ast.ASTNode;
-import ifstatements.IfNode;
+import ast.ifstatements.IfNode;
 import low.TempManager;
 import low.module.LLVisitorMain;
+
 public class IfEmitter {
     private final TempManager temps;
     private final LLVisitorMain visitor;

@@ -1,6 +1,6 @@
 package low.variables;
 
-import expressions.TypedValue;
+import ast.expressions.TypedValue;
 import low.TempManager;
 
 import java.util.Map;

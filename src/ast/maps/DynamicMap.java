@@ -1,5 +1,5 @@
 package ast.maps;
-import expressions.TypedValue;
+import ast.expressions.TypedValue;
 import java.util.*;
 
 public class DynamicMap {

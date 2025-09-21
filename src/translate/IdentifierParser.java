@@ -4,11 +4,10 @@ import ast.ASTNode;
 import ast.functions.FunctionCallNode;
 import ast.functions.FunctionReferenceNode;
 import ast.maps.MapMethodParser;
-import expressions.TypedValue;
 import tokens.Token;
-import variables.AssignmentNode;
-import variables.UnaryOpNode;
-import variables.VariableNode;
+import ast.variables.AssignmentNode;
+import ast.variables.UnaryOpNode;
+import ast.variables.VariableNode;
 
 import java.util.List;
 

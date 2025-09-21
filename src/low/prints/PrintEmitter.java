@@ -3,9 +3,9 @@ package low.prints;
 import ast.ASTNode;
 import low.main.GlobalStringManager;
 import low.module.LLVisitorMain;
-import prints.PrintNode;
-import variables.LiteralNode;
-import variables.VariableNode;
+import ast.prints.PrintNode;
+import ast.variables.LiteralNode;
+import ast.variables.VariableNode;
 public class PrintEmitter {
     private final GlobalStringManager globalStrings;
 

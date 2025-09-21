@@ -1,11 +1,11 @@
 package low.module;
 
 import ast.exceptions.BreakNode;
-import home.MainAST;
-import ifstatements.IfNode;
-import loops.WhileNode;
-import prints.PrintNode;
-import variables.*;
+import ast.home.MainAST;
+import ast.ifstatements.IfNode;
+import ast.loops.WhileNode;
+import ast.prints.PrintNode;
+import ast.variables.*;
 
 public interface LLVMEmitVisitor {
     String visit(MainAST node);

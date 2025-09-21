@@ -1,4 +1,4 @@
-package loops;
+package ast.loops;
 
 import ast.ASTNode;
 import tokens.Token;

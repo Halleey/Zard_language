@@ -4,11 +4,11 @@ import ast.ASTNode;
 import ast.inputs.InputParser;
 import ast.lists.DynamicList;
 import ast.lists.ListNode;
-import expressions.TypedValue;
+import ast.expressions.TypedValue;
 import tokens.Token;
-import variables.BinaryOpNode;
-import variables.LiteralNode;
-import variables.UnaryOpNode;
+import ast.variables.BinaryOpNode;
+import ast.variables.LiteralNode;
+import ast.variables.UnaryOpNode;
 
 import java.util.ArrayList;
 import java.util.List;

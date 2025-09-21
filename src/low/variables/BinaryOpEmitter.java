@@ -1,7 +1,7 @@
 package low.variables;
 import low.module.LLVisitorMain;
 import low.TempManager;
-import variables.BinaryOpNode;
+import ast.variables.BinaryOpNode;
 
 public class BinaryOpEmitter {
     private final TempManager temps;

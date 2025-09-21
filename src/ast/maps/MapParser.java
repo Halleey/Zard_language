@@ -1,13 +1,10 @@
 package ast.maps;
 
-import ast.ASTNode;
 import ast.runtime.RuntimeContext;
-import expressions.TypedValue;
+import ast.expressions.TypedValue;
 import tokens.Token;
 import translate.Parser;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
 public class MapParser {
 
     private final Parser parser;

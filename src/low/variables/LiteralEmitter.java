@@ -2,7 +2,7 @@ package low.variables;
 
 import low.main.GlobalStringManager;
 import low.TempManager;
-import variables.LiteralNode;
+import ast.variables.LiteralNode;
 
 public class LiteralEmitter {
     private final TempManager temps;

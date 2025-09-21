@@ -1,4 +1,4 @@
-package home;
+package ast.home;
 
 import ast.ASTNode;
 import tokens.Token;

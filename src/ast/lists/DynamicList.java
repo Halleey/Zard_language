@@ -2,8 +2,8 @@ package ast.lists;
 
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
-import expressions.TypedValue;
-import variables.LiteralNode;
+import ast.expressions.TypedValue;
+import ast.variables.LiteralNode;
 
 import java.util.ArrayList;
 import java.util.List;

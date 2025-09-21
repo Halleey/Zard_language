@@ -1,11 +1,10 @@
 package low.module;
 
-import ast.ASTNode;
 import ast.exceptions.BreakNode;
-import expressions.TypedValue;
-import home.MainAST;
-import ifstatements.IfNode;
-import loops.WhileNode;
+import ast.expressions.TypedValue;
+import ast.home.MainAST;
+import ast.ifstatements.IfNode;
+import ast.loops.WhileNode;
 import low.ifs.IfEmitter;
 import low.main.GlobalStringManager;
 import low.TempManager;
@@ -13,8 +12,8 @@ import low.main.MainEmitter;
 import low.prints.PrintEmitter;
 import low.variables.*;
 import low.whiles.WhileEmitter;
-import prints.PrintNode;
-import variables.*;
+import ast.prints.PrintNode;
+import ast.variables.*;
 import java.util.HashMap;
 import java.util.Map;
 

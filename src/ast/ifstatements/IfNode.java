@@ -1,8 +1,8 @@
-package ifstatements;
+package ast.ifstatements;
 
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
-import expressions.TypedValue;
+import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;

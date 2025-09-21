@@ -3,7 +3,7 @@ package ast.functions;
 import ast.ASTNode;
 import ast.exceptions.ReturnValue;
 import ast.runtime.RuntimeContext;
-import expressions.TypedValue;
+import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;

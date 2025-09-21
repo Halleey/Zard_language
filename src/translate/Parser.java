@@ -7,10 +7,10 @@ import ast.functions.FunctionParser;
 import ast.imports.ImportNode;
 import ast.inputs.InputParser;
 import ast.maps.MapMethodParser;
-import home.MainParser;
-import ifstatements.IfParser;
-import loops.WhileParser;
-import prints.PrintParser;
+import ast.home.MainParser;
+import ast.ifstatements.IfParser;
+import ast.loops.WhileParser;
+import ast.prints.PrintParser;
 import tokens.Token;
 
 import java.util.*;

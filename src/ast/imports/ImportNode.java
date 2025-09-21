@@ -3,12 +3,12 @@ package ast.imports;
 import ast.ASTNode;
 import ast.functions.FunctionNode;
 import ast.runtime.RuntimeContext;
-import expressions.TypedValue;
+import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 import tokens.Lexer;
 import tokens.Token;
 import translate.Parser;
-import variables.VariableDeclarationNode;
+import ast.variables.VariableDeclarationNode;
 
 import java.io.IOException;
 import java.nio.file.Files;

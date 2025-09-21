@@ -1,4 +1,4 @@
-package ifstatements;
+package ast.ifstatements;
 
 import ast.ASTNode;
 import tokens.Token;

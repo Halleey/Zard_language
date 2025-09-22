@@ -37,5 +37,8 @@ while (isReal) {
     print("voltando para o loop externo");
     isReal = false;
 }
+nomes.add("zardelas");
+nomes.add(3);
+print(nomes);
 
 }

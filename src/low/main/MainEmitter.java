@@ -8,20 +8,29 @@ import ast.lists.ListAddNode;
 import ast.lists.ListNode;
 import ast.loops.WhileNode;
 import ast.variables.AssignmentNode;
+import low.TempManager;
 import low.lists.ListAddEmitter;
 import low.module.LLVisitorMain;
 import ast.prints.PrintNode;
 import ast.variables.LiteralNode;
 import ast.variables.VariableDeclarationNode;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public class MainEmitter {
     private final GlobalStringManager globalStrings;
-
-    public MainEmitter(GlobalStringManager globalStrings) {
+    private final Set<String> listasAlocadas = new HashSet<>();
+    private final TempManager tempManager;
+    public MainEmitter(GlobalStringManager globalStrings, TempManager tempManager) {
         this.globalStrings = globalStrings;
+        this.tempManager = tempManager;
     }
 
     public String emit(MainAST node, LLVisitorMain visitor) {
+        StringBuilder main = new StringBuilder();
         // coleta todas as strings do AST (Prints, Assigns, VarDecls)
         for (ASTNode stmt : node.body) {
             coletarStringsRecursivo(stmt);
@@ -34,6 +43,7 @@ public class MainEmitter {
                     if (element instanceof LiteralNode lit && lit.value.getType().equals("string")) {
                         globalStrings.getOrCreateString((String) lit.value.getValue());
                     }
+                    listasAlocadas.add(varDecl.name);
                 }
             }
         }
@@ -54,6 +64,19 @@ public class MainEmitter {
             llvm.append(stmt.accept(visitor));
         }
 
+
+        if (!listasAlocadas.isEmpty()) {
+            main.append("  ; === Free das listas alocadas ===\n");
+            for (String varName : listasAlocadas) {
+                String tmp = tempManager.newTemp();
+                String bc  = tempManager.newTemp();
+                main.append("  ").append(tmp).append(" = load i8*, i8** %")
+                        .append(varName).append("\n");
+                main.append("  ").append(bc).append(" = bitcast i8* ")
+                        .append(tmp).append(" to %ArrayList*\n");
+                main.append("  call void @freeList(%ArrayList* ").append(bc).append(")\n");
+            }
+        }
         // fim do main
         llvm.append(emitMainEnd());
 
@@ -143,7 +166,8 @@ public class MainEmitter {
                     .append("declare void @setItems(i8*, i8*)\n")
                     .append("declare void @printList(i8*)\n")
                     .append("declare void @removeItem(%ArrayList*, i64)\n")
-                    .append("declare void @clearList(%ArrayList*)\n");
+                    .append("declare void @clearList(%ArrayList*)\n")
+                    .append("declare void @freeList(%ArrayList*)\n");
         }
 
         return header.toString();

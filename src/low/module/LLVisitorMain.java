@@ -70,7 +70,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public String visit(MainAST node) {
-        MainEmitter mainEmitter = new MainEmitter(globalStrings);
+        MainEmitter mainEmitter = new MainEmitter(globalStrings, temps);
         return mainEmitter.emit(node, this);
     }
 

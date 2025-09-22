@@ -17,6 +17,7 @@ declare void @setItems(i8*, i8*)
 declare void @printList(i8*)
 declare void @removeItem(%ArrayList*, i64)
 declare void @clearList(%ArrayList*)
+declare void @freeList(%ArrayList*)
 
 @.str0 = private constant [10 x i8] c"zardelas\0A\00"
 @.str1 = private constant [10 x i8] c"hallyson\0A\00"
@@ -148,6 +149,25 @@ while_end_5:
   store i1 0, i1* %isReal
   br label %while_cond_0
 while_end_2:
+  ; ListAddNode
+  %t33 = load i8*, i8** %nomes
+;;VAL:%t33;;TYPE:i8*
+  %t34 = bitcast [10 x i8]* @.str0 to i8*
+;;VAL:%t34;;TYPE:i8*
+  %t36 = call i8* @createString(i8* getelementptr ([10 x i8], [10 x i8]* @.str0, i32 0, i32 0))
+  call void @setItems(i8* %t33, i8* %t36)
+;;VAL:%t36;;TYPE:i8*
+  ; ListAddNode
+  %t37 = load i8*, i8** %nomes
+;;VAL:%t37;;TYPE:i8*
+  %t38 = add i32 0, 3
+;;VAL:%t38;;TYPE:i32
+  %t39 = call i8* @createInt(i32 %t38)
+  call void @setItems(i8* %t37, i8* %t39)
+;;VAL:%t39;;TYPE:i8*
+  ; PrintNode
+  %t40 = load i8*, i8** %nomes
+  call void @printList(i8* %t40)
   call i32 @getchar()
   ret i32 0
 }

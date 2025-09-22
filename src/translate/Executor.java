@@ -11,8 +11,8 @@ import tokens.Token;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import java.util.ArrayList;
 import java.util.List;
-
 public class Executor {
     public static void main(String[] args) {
         try {
@@ -32,30 +32,43 @@ public class Executor {
             LLVMGenerator llvmGen = new LLVMGenerator();
             String llvmCode = llvmGen.generate(ast);
 
-            LLVisitorMain llVisitorMain = llvmGen.getVisitor();
-
             System.out.println("=== LLVM IR ===");
             System.out.println(llvmCode);
+
             // Salvar arquivo LLVM
             Path llPath = Path.of("programa.ll");
             Files.writeString(llPath, llvmCode);
             System.out.println("LLVM IR salvo em programa.ll");
 
-            // Gerar executável
-            ProcessBuilder pb = new ProcessBuilder("clang", "programa.ll", "-o", "programa.exe");
+            //  arquivos C do runtime
+            List<String> runtimeFiles = List.of(
+                    "src/low/runtime/ArrayList.c",
+                    "src/low/runtime/DynValue.c",
+                    "src/low/runtime/PrintList.c"
+            );
+
+            // Comando completo do clang
+            List<String> cmd = new ArrayList<>();
+            cmd.add("clang");
+            cmd.add("programa.ll");
+            cmd.addAll(runtimeFiles);
+            cmd.add("-o");
+            cmd.add("programa.exe");
+
+            // Executar clang
+            ProcessBuilder pb = new ProcessBuilder(cmd);
             pb.inheritIO();
             Process process = pb.start();
             int exitCode = process.waitFor();
             if (exitCode == 0) System.out.println("Executável gerado: programa.exe");
 
-
             System.out.println("=== Execution ===");
-            RuntimeContext ctx = new RuntimeContext();
-            // Executar no interpretador também
-            for (ASTNode node : ast) {
-                try { node.evaluate(ctx); }
-                catch (ReturnValue rv) { break; }
-            }
+            // Opcional: executar no interpretador também
+            // RuntimeContext ctx = new RuntimeContext();
+            // for (ASTNode node : ast) {
+            //     try { node.evaluate(ctx); }
+            //     catch (ReturnValue rv) { break; }
+            // }
 
         } catch (Exception e) {
             e.printStackTrace();

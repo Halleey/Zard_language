@@ -118,22 +118,21 @@ public class MainEmitter {
     }
 
     // dentro do MainEmitter
-    // dentro do MainEmitter
     private String emitHeader(MainAST node) {
         StringBuilder header = new StringBuilder();
         header.append("""
-declare i32 @printf(i8*, ...)
-declare i32 @getchar()
-@.strInt = private constant [4 x i8] c"%d\\0A\\00"
-@.strDouble = private constant [4 x i8] c"%f\\0A\\00"
-@.strStr = private constant [4 x i8] c"%s\\0A\\00"
-
-; === Funções do runtime DynValue ===
-declare i8* @createInt(i32)
-declare i8* @createDouble(double)
-declare i8* @createBool(i1)
-declare i8* @createString(i8*)
-""");
+        declare i32 @printf(i8*, ...)
+        declare i32 @getchar()
+        @.strInt = private constant [4 x i8] c"%d\\0A\\00"
+        @.strDouble = private constant [4 x i8] c"%f\\0A\\00"
+        @.strStr = private constant [4 x i8] c"%s\\0A\\00"
+        
+        ; === Funções do runtime DynValue ===
+        declare i8* @createInt(i32)
+        declare i8* @createDouble(double)
+        declare i8* @createBool(i1)
+        declare i8* @createString(i8*)
+        """);
 
         // adiciona runtime de listas se houver alguma
         if (containsList(node)) {

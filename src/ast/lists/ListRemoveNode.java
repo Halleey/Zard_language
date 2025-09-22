@@ -7,8 +7,6 @@ import low.module.LLVMEmitVisitor;
 
 public class ListRemoveNode extends ASTNode {
 
-
-
     private final ASTNode listNode;
     private final ASTNode indexNode;
 
@@ -19,19 +17,19 @@ public class ListRemoveNode extends ASTNode {
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
-        return "";
+        return visitor.visit(this);
     }
 
     @Override
-
-
     public TypedValue evaluate(RuntimeContext ctx) {
         DynamicList list = (DynamicList) listNode.evaluate(ctx).getValue();
         int index = ((Number) indexNode.evaluate(ctx).getValue()).intValue();
         return list.removeByIndex(index, ctx); // usa método novo
     }
 
-
+    public ASTNode getIndexNode() {
+        return indexNode;
+    }
 
     @Override
     public void print(String prefix) {

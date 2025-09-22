@@ -5,6 +5,7 @@ import ast.home.MainAST;
 import ast.ifstatements.IfNode;
 import ast.lists.ListAddNode;
 import ast.lists.ListNode;
+import ast.lists.ListRemoveNode;
 import ast.loops.WhileNode;
 import ast.prints.PrintNode;
 import ast.variables.*;
@@ -23,5 +24,6 @@ public interface LLVMEmitVisitor {
     String visit (BreakNode node);
     String visit (ListNode node);
     String visit (ListAddNode node);
+    String visit (ListRemoveNode node);
 }
 

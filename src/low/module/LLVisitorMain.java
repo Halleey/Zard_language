@@ -6,10 +6,12 @@ import ast.home.MainAST;
 import ast.ifstatements.IfNode;
 import ast.lists.ListAddNode;
 import ast.lists.ListNode;
+import ast.lists.ListRemoveNode;
 import ast.loops.WhileNode;
 import low.ifs.IfEmitter;
 import low.lists.ListAddEmitter;
 import low.lists.ListEmitter;
+import low.lists.ListRemoveEmitter;
 import low.main.GlobalStringManager;
 import low.TempManager;
 import low.main.MainEmitter;
@@ -36,6 +38,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final ListEmitter listEmitter = new ListEmitter(temps, globalStrings);
     private final Deque<String> loopEndLabels = new ArrayDeque<>();
     private final ListAddEmitter listAddEmitter = new ListAddEmitter(temps, globalStrings);
+    private final ListRemoveEmitter listRemoveEmitter = new ListRemoveEmitter(temps);
     private final Set<String> listVars = new HashSet<>();
 
     public void registerListVar(String name) {
@@ -108,6 +111,12 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public String visit(ListAddNode node) {
         return listAddEmitter.emit(node, this);
     }
+
+    @Override
+    public String visit(ListRemoveNode node) {
+        return listRemoveEmitter.emit(node, this);
+    }
+
     @Override
     public String visit(IfNode node) {
         return ifEmitter.emit(node);

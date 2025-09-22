@@ -33,7 +33,6 @@ public class Executor {
             String llvmCode = llvmGen.generate(ast);
 
             LLVisitorMain llVisitorMain = llvmGen.getVisitor();
-            llVisitorMain.printAllVars();
 
             System.out.println("=== LLVM IR ===");
             System.out.println(llvmCode);

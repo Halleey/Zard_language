@@ -17,10 +17,13 @@ b = 3.14;
 
 print(a);
 print(b);
-print(nome);
 print(nomes);
 print(isReal);
 print(isFake);
+nomes.remove(0);
+nomes.remove(1);
+print(nomes);
+
 
 while (isReal) {
     while (a < 10) {

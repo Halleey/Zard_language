@@ -20,7 +20,6 @@ public class ListAddEmitter {
         String listCode = node.getListNode().accept(visitor);
         llvm.append(listCode);
         String listTmp = extractTemp(listCode);
-        String listType = extractType(listCode); // esperado i8*
 
         // avalia o valor a ser adicionado
         String valCode = node.getValuesNode().accept(visitor);

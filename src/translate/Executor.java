@@ -63,12 +63,11 @@ public class Executor {
             if (exitCode == 0) System.out.println("Executável gerado: programa.exe");
 
             System.out.println("=== Execution ===");
-            // Opcional: executar no interpretador também
-            // RuntimeContext ctx = new RuntimeContext();
-            // for (ASTNode node : ast) {
-            //     try { node.evaluate(ctx); }
-            //     catch (ReturnValue rv) { break; }
-            // }
+             RuntimeContext ctx = new RuntimeContext();
+             for (ASTNode node : ast) {
+                 try { node.evaluate(ctx); }
+                 catch (ReturnValue rv) { break; }
+             }
 
         } catch (Exception e) {
             e.printStackTrace();

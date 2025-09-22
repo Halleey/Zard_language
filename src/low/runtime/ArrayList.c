@@ -49,6 +49,18 @@ void removeItem(ArrayList* list, size_t position) {
     list->length--;
 }
 
+void clearList(ArrayList* list) {
+    if (!list) return;
+    for (size_t i = 0; i < list->length; i++) {
+        DynValue* dv = (DynValue*) list->data[i];
+        if (dv) {
+            free(dv->value);
+            free(dv);
+        }
+    }
+    list->length = 0;
+}
+
 void freeList(ArrayList* list) {
     if (!list) return;
     for (size_t i = 0; i < list->length; i++) {

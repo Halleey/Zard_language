@@ -16,7 +16,8 @@ public class ListClearNode extends ASTNode {
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
-        return "";
+
+        return visitor.visit(this);
     }
 
     @Override
@@ -24,6 +25,11 @@ public class ListClearNode extends ASTNode {
         DynamicList list = (DynamicList) listNode.evaluate(ctx).getValue();
         list.getElements().clear();
         return new TypedValue("list", list);
+    }
+
+
+    public ASTNode getListNode() {
+        return listNode;
     }
 
     @Override

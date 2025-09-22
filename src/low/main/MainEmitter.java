@@ -142,7 +142,8 @@ public class MainEmitter {
             header.append("declare i8* @arraylist_create(i64)\n")
                     .append("declare void @setItems(i8*, i8*)\n")
                     .append("declare void @printList(i8*)\n")
-                    .append("declare void @removeItem(%ArrayList*, i64)\n");
+                    .append("declare void @removeItem(%ArrayList*, i64)\n")
+                    .append("declare void @clearList(%ArrayList*)\n");
         }
 
         return header.toString();

@@ -15,5 +15,5 @@ void setItems(ArrayList* list, DynValue* data);
 DynValue* getItem(ArrayList* list, size_t index);
 void removeItem(ArrayList* list, size_t position);
 void freeList(ArrayList* list);
-
+void clearList(ArrayList* list);
 #endif

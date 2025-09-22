@@ -7,9 +7,10 @@ string nome;
 boolean isReal = true;
 boolean isFake = false;
 
-list nomes = (1, "hallyson", true);
-
+list nomes = (1, true);
+nomes.add("zardelas");
 nome = "hallyson";
+nomes.add(nome);
 print(nomes);
 a = 4;
 b = 3.14;

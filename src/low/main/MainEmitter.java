@@ -4,9 +4,11 @@ import ast.ASTNode;
 import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
+import ast.lists.ListAddNode;
 import ast.lists.ListNode;
 import ast.loops.WhileNode;
 import ast.variables.AssignmentNode;
+import low.lists.ListAddEmitter;
 import low.module.LLVisitorMain;
 import ast.prints.PrintNode;
 import ast.variables.LiteralNode;
@@ -93,6 +95,16 @@ public class MainEmitter {
         if (node instanceof FunctionNode funcNode) {
             for (ASTNode stmt : funcNode.body) coletarStringsRecursivo(stmt);
         }
+
+        if (node instanceof ListAddNode listAdd) {
+            ASTNode valueNode = listAdd.getValuesNode();
+            if (valueNode instanceof LiteralNode lit && lit.value.getType().equals("string")) {
+                globalStrings.getOrCreateString((String) lit.value.getValue());
+            } else {
+                coletarStringsRecursivo(valueNode);
+            }
+        }
+
     }
 
     // detecta se ha pelo menos uma lista no MainAST

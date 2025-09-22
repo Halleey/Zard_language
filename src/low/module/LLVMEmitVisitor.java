@@ -3,6 +3,7 @@ package low.module;
 import ast.exceptions.BreakNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
+import ast.lists.ListAddNode;
 import ast.lists.ListNode;
 import ast.loops.WhileNode;
 import ast.prints.PrintNode;
@@ -21,5 +22,6 @@ public interface LLVMEmitVisitor {
     String visit (WhileNode node);
     String visit (BreakNode node);
     String visit (ListNode node);
+    String visit (ListAddNode node);
 }
 

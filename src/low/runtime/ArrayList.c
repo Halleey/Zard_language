@@ -61,6 +61,15 @@ void clearList(ArrayList* list) {
     list->length = 0;
 }
 
+size_t size(ArrayList *list)
+{
+    if(list == NULL) return 0;
+    return (int)list->length;
+
+
+}
+
+
 void freeList(ArrayList* list) {
     if (!list) return;
     for (size_t i = 0; i < list->length; i++) {

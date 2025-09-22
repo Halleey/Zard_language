@@ -15,7 +15,7 @@ public class ListSizeNode extends ASTNode {
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
-        return "";
+        return visitor.visit(this);
     }
 
     @Override
@@ -31,6 +31,10 @@ public class ListSizeNode extends ASTNode {
         int size = dynamicList.size();
 
         return new TypedValue("int", size);
+    }
+
+    public ASTNode getNome() {
+        return nome;
     }
 
     @Override

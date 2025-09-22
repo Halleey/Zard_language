@@ -167,7 +167,8 @@ public class MainEmitter {
                     .append("declare void @printList(i8*)\n")
                     .append("declare void @removeItem(%ArrayList*, i64)\n")
                     .append("declare void @clearList(%ArrayList*)\n")
-                    .append("declare void @freeList(%ArrayList*)\n");
+                    .append("declare void @freeList(%ArrayList*)\n")
+                    .append("declare i32 @size(%ArrayList*)\n");
         }
 
         return header.toString();

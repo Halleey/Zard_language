@@ -4,16 +4,10 @@ import ast.exceptions.BreakNode;
 import ast.expressions.TypedValue;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
-import ast.lists.ListAddNode;
-import ast.lists.ListClearNode;
-import ast.lists.ListNode;
-import ast.lists.ListRemoveNode;
+import ast.lists.*;
 import ast.loops.WhileNode;
 import low.ifs.IfEmitter;
-import low.lists.ListAddEmitter;
-import low.lists.ListClearEmitter;
-import low.lists.ListEmitter;
-import low.lists.ListRemoveEmitter;
+import low.lists.*;
 import low.main.GlobalStringManager;
 import low.TempManager;
 import low.main.MainEmitter;
@@ -27,6 +21,7 @@ import java.util.*;
 
 public class LLVisitorMain implements LLVMEmitVisitor {
     private final Map<String, String> varTypes = new HashMap<>();
+
     private final TempManager temps = new TempManager();
     private final GlobalStringManager globalStrings = new GlobalStringManager();
     private final VariableEmitter varEmitter = new VariableEmitter(varTypes, temps, globalStrings, this);
@@ -42,8 +37,8 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final ListAddEmitter listAddEmitter = new ListAddEmitter(temps, globalStrings);
     private final ListRemoveEmitter listRemoveEmitter = new ListRemoveEmitter(temps);
     private final ListClearEmitter clearEmitter = new ListClearEmitter(temps);
+    private final ListSizeEmitter sizeEmitter = new ListSizeEmitter(temps);
     private final Set<String> listVars = new HashSet<>();
-
     public void registerListVar(String name) {
         listVars.add(name);
     }
@@ -144,9 +139,16 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public String visit(AssignmentNode node) {
         return assignmentEmitter.emit(node);
     }
+
     public String getVarType(String name) {
         return varTypes.get(name);
     }
+
+    @Override
+    public String visit(ListSizeNode node) {
+        return sizeEmitter.emit(node, this);
+    }
+
     public void printAllVars() {
         System.out.println("=== Variáveis registradas ===");
         for (String name : varTypes.keySet()) {
@@ -157,7 +159,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         }
         System.out.println("============================");
     }
-
 
     public TempManager getTemps() {
         return temps;

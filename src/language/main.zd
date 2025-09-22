@@ -39,6 +39,7 @@ while (isReal) {
 }
 nomes.add("zardelas");
 nomes.add(3);
+print(nomes.size());
 print(nomes);
 
 }

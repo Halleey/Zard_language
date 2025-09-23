@@ -13,5 +13,5 @@ DynValue* createInt(int val);
 DynValue* createDouble(double val);
 DynValue* createBool(int val);
 DynValue* createString(const char* val);
-
+void printDynValue(DynValue* val);
 #endif

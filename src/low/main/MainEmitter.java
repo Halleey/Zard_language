@@ -161,14 +161,17 @@ public class MainEmitter {
         if (containsList(node)) {
             header.append("\n; === Runtime de listas ===\n");
             // declaração de funções do  ArrayList
-            header.append("%ArrayList = type opaque\n");
+            header.append("%ArrayList = type opaque\n")
+            .append("%DynValue = type opaque\n");
             header.append("declare i8* @arraylist_create(i64)\n")
                     .append("declare void @setItems(i8*, i8*)\n")
                     .append("declare void @printList(i8*)\n")
                     .append("declare void @removeItem(%ArrayList*, i64)\n")
                     .append("declare void @clearList(%ArrayList*)\n")
                     .append("declare void @freeList(%ArrayList*)\n")
-                    .append("declare i32 @size(%ArrayList*)\n");
+                    .append("declare i32 @size(%ArrayList*)\n")
+                    .append("declare %DynValue* @getItem(%ArrayList*, i32)\n")
+                    .append("declare void @printDynValue(%DynValue*)\n");
         }
 
         return header.toString();

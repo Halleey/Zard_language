@@ -18,6 +18,7 @@ public class DynamicList {
     // Avaliação no runtime
     public List<TypedValue> evaluate(RuntimeContext ctx) {
         List<TypedValue> result = new ArrayList<>();
+        
         for (ASTNode node : elements) {
             result.add(node.evaluate(ctx));
         }
@@ -42,14 +43,8 @@ public class DynamicList {
         return removedNode.evaluate(ctx);
     }
 
-
-
     public void add(TypedValue value) {
         elements.add(new LiteralNode(value));
-    }
-
-    public void clear() {
-        elements.clear();
     }
 
     public int size() {

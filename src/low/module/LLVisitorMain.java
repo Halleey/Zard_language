@@ -1,7 +1,6 @@
 package low.module;
 
 import ast.exceptions.BreakNode;
-import ast.expressions.TypedValue;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
 import ast.lists.*;
@@ -38,6 +37,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final ListRemoveEmitter listRemoveEmitter = new ListRemoveEmitter(temps);
     private final ListClearEmitter clearEmitter = new ListClearEmitter(temps);
     private final ListSizeEmitter sizeEmitter = new ListSizeEmitter(temps);
+    private final ListGetEmitter getEmitter = new ListGetEmitter(temps);
     private final Set<String> listVars = new HashSet<>();
     public void registerListVar(String name) {
         listVars.add(name);
@@ -149,17 +149,10 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return sizeEmitter.emit(node, this);
     }
 
-    public void printAllVars() {
-        System.out.println("=== Variáveis registradas ===");
-        for (String name : varTypes.keySet()) {
-            String type = varTypes.get(name);
-            // Pega o valor em LLVM usando emitLoad
-            String llvmLoad = varEmitter.emitLoad(name);
-            System.out.println("Variável: " + name + " | Tipo: " + type + " | LLVM: " + llvmLoad);
-        }
-        System.out.println("============================");
+    @Override
+    public String visit(ListGetNode node) {
+        return getEmitter.emit(node, this);
     }
-
     public TempManager getTemps() {
         return temps;
     }

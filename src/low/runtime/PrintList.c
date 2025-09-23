@@ -1,9 +1,8 @@
-#include "ArrayList.h"
+#include "PrintList.h"
 #include "DynValue.h"
 #include <stdio.h>
 
-void printList(void* ptr) {
-    ArrayList* list = (ArrayList*) ptr;
+void printList(ArrayList* list) {
     if (!list) {
         printf("[]\n");
         return;
@@ -12,22 +11,7 @@ void printList(void* ptr) {
     printf("[");
     for (size_t i = 0; i < list->length; i++) {
         DynValue* dv = (DynValue*) list->data[i];
-        if (!dv) continue;
-
-        switch(dv->type) {
-            case TYPE_INT:
-                printf("%d", *(int*)dv->value);
-                break;
-            case TYPE_DOUBLE:
-                printf("%f", *(double*)dv->value);
-                break;
-            case TYPE_BOOL:
-                printf("%s", (*(int*)dv->value) ? "true" : "false");
-                break;
-            case TYPE_STRING:
-                printf("%s", (char*)dv->value);
-                break;
-        }
+        if (dv) printDynValue(dv);
 
         if (i < list->length - 1)
             printf(", ");

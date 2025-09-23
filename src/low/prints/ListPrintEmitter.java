@@ -8,10 +8,7 @@ public class ListPrintEmitter {
         this.temps = temps;
     }
 
-    /**
-     * Emite código LLVM para: tmp = load i8*, i8** %varName
-     *                          call void @printList(i8* tmp)
-     */
+
     public String emit(String varName) {
         String tmp = temps.newTemp(); // %tX único
         StringBuilder llvm = new StringBuilder();

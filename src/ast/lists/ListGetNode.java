@@ -17,7 +17,7 @@ public class ListGetNode extends ASTNode {
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
-        return "";
+        return visitor.visit(this);
     }
 
     @Override
@@ -29,6 +29,16 @@ public class ListGetNode extends ASTNode {
 
     @Override
     public void print(String prefix) {
+        System.out.println(prefix + "ListGet:");
+        listName.print(prefix + "  ");
+        indexNode.print(prefix + "  ");
+    }
 
+    public ASTNode getListName() {
+        return listName;
+    }
+
+    public ASTNode getIndexNode() {
+        return indexNode;
     }
 }

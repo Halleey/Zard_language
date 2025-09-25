@@ -102,6 +102,7 @@ A linguagem continuará evoluindo para se tornar mais robusta e versátil. Algum
 - 🟡 **Suporte a mapas em LLVM:** Gerar LLVM para criação, acesso e modificação de mapas dinâmicos.
 - 🟡 **Suporte a funções como valores em LLVM:** Permitir armazenar funções em variáveis e chamá-las dinamicamente no LLVM IR.
 - 🟡 **Expansão do backend LLVM:** Melhorar a geração de IR para expressões complexas, operadores e controle de fluxo.
+- 🟡 **Inputs** Permitir a entrada de dados via teclado, para melhores interações.
 
 ## 📂 Uso
 
@@ -114,9 +115,3 @@ A linguagem continuará evoluindo para se tornar mais robusta e versátil. Algum
 ## 🔗 Contribuição
 
 Se você quiser sugerir melhorias ou contribuir com o projeto, sinta-se à vontade para enviar pull requests ou abrir issues.
-
----
-
-## 📧 Contato
-
-Para discutir melhorias e novos recursos da linguagem Zard, entre em contato via email ou GitHub.

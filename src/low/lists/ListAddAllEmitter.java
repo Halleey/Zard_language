@@ -6,7 +6,6 @@ import ast.variables.LiteralNode;
 import low.TempManager;
 import low.main.GlobalStringManager;
 import low.module.LLVMEmitVisitor;
-
 public class ListAddAllEmitter {
     private final TempManager temps;
     private final GlobalStringManager globalStringManager;
@@ -24,7 +23,15 @@ public class ListAddAllEmitter {
         llvm.append(listCode);
         String listTmp = extractTemp(listCode);
 
-        // Avalia todos os valores a adicionar
+        int argCount = node.getArgs().size();
+        if (argCount == 0) return llvm.toString(); // nada que possamos fazer
+
+        // Cria array de DynValue* na stack
+        String arrayTmp = temps.newTemp();
+        llvm.append("  ").append(arrayTmp).append(" = alloca %DynValue*, i64 ").append(argCount).append("\n");
+
+        // Avalia todos os valores e armazena no array
+        int index = 0;
         for (ASTNode valueNode : node.getArgs()) {
             String valCode = valueNode.accept(visitor);
             llvm.append(valCode);
@@ -32,33 +39,23 @@ public class ListAddAllEmitter {
             String valTmp = extractTemp(valCode);
             String valType = extractType(valCode);
 
-            String dvTmp;
-
+            // Cria um DynValue temporário
+            String dvTmp = temps.newTemp();
             switch (valType) {
-                case "i32" -> {
-                    dvTmp = temps.newTemp();
-                    llvm.append("  ").append(dvTmp)
-                            .append(" = call i8* @createInt(i32 ").append(valTmp).append(")\n");
-                }
-                case "double" -> {
-                    dvTmp = temps.newTemp();
-                    llvm.append("  ").append(dvTmp)
-                            .append(" = call i8* @createDouble(double ").append(valTmp).append(")\n");
-                }
-                case "i1" -> {
-                    dvTmp = temps.newTemp();
-                    llvm.append("  ").append(dvTmp)
-                            .append(" = call i8* @createBool(i1 ").append(valTmp).append(")\n");
-                }
+                case "i32" -> llvm.append("  ").append(dvTmp)
+                        .append(" = call i8* @createInt(i32 ").append(valTmp).append(")\n");
+                case "double" -> llvm.append("  ").append(dvTmp)
+                        .append(" = call i8* @createDouble(double ").append(valTmp).append(")\n");
+                case "i1" -> llvm.append("  ").append(dvTmp)
+                        .append(" = call i8* @createBool(i1 ").append(valTmp).append(")\n");
                 case "i8*" -> {
-                    dvTmp = temps.newTemp();
                     if (valueNode instanceof LiteralNode lit && lit.value.getType().equals("string")) {
                         String literal = (String) lit.value.getValue();
                         String strName = globalStringManager.getOrCreateString(literal);
                         llvm.append("  ").append(dvTmp)
                                 .append(" = call i8* @createString(i8* getelementptr ([")
-                                .append(literal.length() + 2).append(" x i8], [")
-                                .append(literal.length() + 2).append(" x i8]* ")
+                                .append(literal.length() + 1).append(" x i8], [")
+                                .append(literal.length() + 1).append(" x i8]* ")
                                 .append(strName).append(", i32 0, i32 0))\n");
                     } else {
                         llvm.append("  ").append(dvTmp)
@@ -68,11 +65,29 @@ public class ListAddAllEmitter {
                 default -> throw new RuntimeException("Tipo não suportado em ListAddAll: " + valType);
             }
 
-            llvm.append("  call void @setItems(i8* ").append(listTmp)
-                    .append(", i8* ").append(dvTmp).append(")\n");
+            // Bitcast de i8* para %DynValue*
+            String dvCastTmp = temps.newTemp();
+            llvm.append("  ").append(dvCastTmp).append(" = bitcast i8* ").append(dvTmp).append(" to %DynValue*\n");
 
-            llvm.append(";;VAL:").append(dvTmp).append(";;TYPE:i8*\n");
+            // GEP para a posição do array
+            String gepTmp = temps.newTemp();
+            llvm.append("  ").append(gepTmp).append(" = getelementptr inbounds %DynValue*, %DynValue** ")
+                    .append(arrayTmp).append(", i64 ").append(index).append("\n");
+
+            // Store no array
+            llvm.append("  store %DynValue* ").append(dvCastTmp).append(", %DynValue** ").append(gepTmp).append("\n");
+
+            index++;
         }
+
+        // Bitcast da lista de i8* para %ArrayList*
+        String listCastTmp = temps.newTemp();
+        llvm.append("  ").append(listCastTmp).append(" = bitcast i8* ").append(listTmp).append(" to %ArrayList*\n");
+
+        llvm.append("  call void @addAll(%ArrayList* ").append(listCastTmp)
+                .append(", %DynValue** ").append(arrayTmp)
+                .append(", i64 ").append(argCount).append(")\n");
+
 
         return llvm.toString();
     }

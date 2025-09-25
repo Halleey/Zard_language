@@ -5,7 +5,6 @@ import ast.exceptions.ReturnValue;
 import ast.runtime.RuntimeContext;
 import low.module.LLVMGenerator;
 import ast.prints.ASTPrinter;
-import low.module.LLVisitorMain;
 import tokens.Lexer;
 import tokens.Token;
 import java.nio.file.Files;
@@ -46,19 +45,19 @@ public class Executor {
                     "src/low/runtime/DynValue.c",
                     "src/low/runtime/PrintList.c"
             );
-//            // Comando para gerar executável
-//            List<String> cmdExe = new ArrayList<>();
-//            cmdExe.add("clang");
-//            cmdExe.add("programa.ll");
-//            cmdExe.addAll(runtimeFiles);
-//            cmdExe.add("-o");
-//            cmdExe.add("programa.exe");
-//
-//            ProcessBuilder pbExe = new ProcessBuilder(cmdExe);
-//            pbExe.inheritIO();
-//            Process processExe = pbExe.start();
-//            int exitCodeExe = processExe.waitFor();
-//            if (exitCodeExe == 0) System.out.println("Executável gerado: programa.exe");
+            // Comando para gerar executável
+            List<String> cmdExe = new ArrayList<>();
+            cmdExe.add("clang");
+            cmdExe.add("programa.ll");
+            cmdExe.addAll(runtimeFiles);
+            cmdExe.add("-o");
+            cmdExe.add("programa.exe");
+
+            ProcessBuilder pbExe = new ProcessBuilder(cmdExe);
+            pbExe.inheritIO();
+            Process processExe = pbExe.start();
+            int exitCodeExe = processExe.waitFor();
+            if (exitCodeExe == 0) System.out.println("Executável gerado: programa.exe");
 //
 //// Comando para gerar assembly só do LLVM IR
 //            List<String> cmdAsmPure = new ArrayList<>();

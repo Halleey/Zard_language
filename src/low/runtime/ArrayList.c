@@ -82,3 +82,21 @@ void freeList(ArrayList* list) {
     free(list->data);
     free(list);
 }
+void addAll(ArrayList* list, DynValue** data, size_t dataLength) {
+    if (!list || !data) return;
+    for (size_t i = 0; i < dataLength; i++) {
+        if (list->length == list->capacity) {
+            size_t newCapacity = (list->capacity == 0) ? 4 : list->capacity * 2;
+            void** newData = realloc(list->data, sizeof(void*) * newCapacity);
+            if (!newData) {
+                fprintf(stderr, "Falha ao redimensionar array\n");
+                return;
+            }
+            list->data = newData;
+            list->capacity = newCapacity;
+        }
+        DynValue* clone = cloneDynValue(data[i]);
+        if (!clone) continue;
+        list->data[list->length++] = clone;
+    }
+}

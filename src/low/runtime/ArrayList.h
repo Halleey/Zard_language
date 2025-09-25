@@ -17,4 +17,6 @@ void removeItem(ArrayList* list, size_t position);
 void freeList(ArrayList* list);
 void clearList(ArrayList* list);
 size_t size(ArrayList *list);
+void addAll(ArrayList* list, DynValue** data, size_t dataLength);
+
 #endif

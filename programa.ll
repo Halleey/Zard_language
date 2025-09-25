@@ -9,11 +9,6 @@ declare i8* @createInt(i32)
 declare i8* @createDouble(double)
 declare i8* @createBool(i1)
 declare i8* @createString(i8*)
-declare i32 @readInt(i8*)
-declare double @readDouble(i8*)
-declare i32 @readBool(i8*)
-declare i8* @readString(i8*)
-
 
 
 ; === Runtime de listas ===
@@ -28,6 +23,7 @@ declare void @freeList(%ArrayList*)
 declare i32 @size(%ArrayList*)
 declare %DynValue* @getItem(%ArrayList*, i32)
 declare void @printDynValue(%DynValue*)
+declare void @addAll(%ArrayList*, %DynValue**, i64)
 
 
 define i32 @main() {
@@ -77,24 +73,30 @@ define i32 @main() {
   ; ListAddAllNode
   %t13 = load i8*, i8** %numeros
 ;;VAL:%t13;;TYPE:i8*
-  %t14 = add i32 0, 3
-;;VAL:%t14;;TYPE:i32
-  %t15 = call i8* @createInt(i32 %t14)
-  call void @setItems(i8* %t13, i8* %t15)
-;;VAL:%t15;;TYPE:i8*
-  %t16 = add i32 0, 4
-;;VAL:%t16;;TYPE:i32
-  %t17 = call i8* @createInt(i32 %t16)
-  call void @setItems(i8* %t13, i8* %t17)
-;;VAL:%t17;;TYPE:i8*
-  %t18 = add i32 0, 5
-;;VAL:%t18;;TYPE:i32
-  %t19 = call i8* @createInt(i32 %t18)
-  call void @setItems(i8* %t13, i8* %t19)
-;;VAL:%t19;;TYPE:i8*
+  %t14 = alloca %DynValue*, i64 3
+  %t15 = add i32 0, 3
+;;VAL:%t15;;TYPE:i32
+  %t16 = call i8* @createInt(i32 %t15)
+  %t17 = bitcast i8* %t16 to %DynValue*
+  %t18 = getelementptr inbounds %DynValue*, %DynValue** %t14, i64 0
+  store %DynValue* %t17, %DynValue** %t18
+  %t19 = add i32 0, 4
+;;VAL:%t19;;TYPE:i32
+  %t20 = call i8* @createInt(i32 %t19)
+  %t21 = bitcast i8* %t20 to %DynValue*
+  %t22 = getelementptr inbounds %DynValue*, %DynValue** %t14, i64 1
+  store %DynValue* %t21, %DynValue** %t22
+  %t23 = add i32 0, 5
+;;VAL:%t23;;TYPE:i32
+  %t24 = call i8* @createInt(i32 %t23)
+  %t25 = bitcast i8* %t24 to %DynValue*
+  %t26 = getelementptr inbounds %DynValue*, %DynValue** %t14, i64 2
+  store %DynValue* %t25, %DynValue** %t26
+  %t27 = bitcast i8* %t13 to %ArrayList*
+  call void @addAll(%ArrayList* %t27, %DynValue** %t14, i64 3)
   ; PrintNode
-  %t20 = load i8*, i8** %numeros
-  call void @printList(i8* %t20)
+  %t28 = load i8*, i8** %numeros
+  call void @printList(i8* %t28)
   call i32 @getchar()
   ret i32 0
 }

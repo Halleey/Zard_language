@@ -155,6 +155,12 @@ public class MainEmitter {
         declare i8* @createDouble(double)
         declare i8* @createBool(i1)
         declare i8* @createString(i8*)
+        declare i32 @readInt(i8*)
+        declare double @readDouble(i8*)
+        declare i32 @readBool(i8*)
+        declare i8* @readString(i8*)
+                
+                
         """);
 
         // adiciona runtime de listas se houver alguma

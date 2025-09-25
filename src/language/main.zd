@@ -1,33 +1,14 @@
 import "src/language/stdlib/Math.zd" as math;
 main {
-int a;
-a = 4;
-double b = 3.14 ;
-string nome = "hallyson";
-boolean isReal = true;
-print(a);
-print(b);
-print(nome);
-print(isReal);
-
-list teste;
-teste.add(a);
-teste.add(13);
-print(teste.size());
-print(teste.get(1));
-while (isReal) {
-    while (a < 10) {
-        if (a == 8) {
-            print("saindo do loop interno");
-            break;
-        }
-        print(a);
-        a = a + 1;
-    }
-    print(a);
-    print("voltando para o loop externo");
-    isReal = false;
-}
-
-
+int a = 4;
+int b = 3;
+int c = 10;
+list numeros;
+numeros.add(a);
+print(numeros);
+print(numeros.size());
+numeros.remove(0);
+print(numeros);
+numeros.addAll(3,4,5);
+print(numeros);
 }

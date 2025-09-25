@@ -8,6 +8,8 @@ import low.module.LLVMEmitVisitor;
 import java.util.Scanner;
 
 
+import java.util.Scanner;
+
 public class InputNode extends ASTNode {
     private final String prompt;
 
@@ -23,11 +25,14 @@ public class InputNode extends ASTNode {
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
         Scanner scanner = new Scanner(System.in);
+
         if (prompt != null && !prompt.isEmpty()) {
             System.out.print(prompt + ": ");
         }
+
         String input = scanner.nextLine().trim();
 
+        // tenta converter para os tipos suportados
         try {
             int intValue = Integer.parseInt(input);
             return new TypedValue("int", intValue);
@@ -44,12 +49,15 @@ public class InputNode extends ASTNode {
         if (input.equalsIgnoreCase("false")) {
             return new TypedValue("boolean", false);
         }
+
+        // se não for nenhum dos acima, é string
         return new TypedValue("string", input);
     }
 
     @Override
     public void print(String prefix) {
-
+        System.out.println(prefix + "Input" +
+                (prompt != null && !prompt.isEmpty() ? " (\"" + prompt + "\")" : ""));
     }
 
     public String getPrompt() {

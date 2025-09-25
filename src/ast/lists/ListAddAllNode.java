@@ -12,6 +12,14 @@ public class ListAddAllNode extends ASTNode {
     private final ASTNode targetListNode;
     private final List<ASTNode> args;
 
+    public ASTNode getTargetListNode() {
+        return targetListNode;
+    }
+
+    public List<ASTNode> getArgs() {
+        return args;
+    }
+
     public ListAddAllNode(ASTNode targetListNode, List<ASTNode> args) {
         this.targetListNode = targetListNode;
         this.args = args;
@@ -19,7 +27,7 @@ public class ListAddAllNode extends ASTNode {
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
-        return "";
+        return visitor.visit(this);
     }
 
     @Override

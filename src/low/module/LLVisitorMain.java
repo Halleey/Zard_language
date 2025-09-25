@@ -38,6 +38,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final ListClearEmitter clearEmitter = new ListClearEmitter(temps);
     private final ListSizeEmitter sizeEmitter = new ListSizeEmitter(temps);
     private final ListGetEmitter getEmitter = new ListGetEmitter(temps);
+    private final ListAddAllEmitter allEmitter = new ListAddAllEmitter(temps, globalStrings);
     private final Set<String> listVars = new HashSet<>();
     public void registerListVar(String name) {
         listVars.add(name);
@@ -153,6 +154,12 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public String visit(ListGetNode node) {
         return getEmitter.emit(node, this);
     }
+
+    @Override
+    public String visit(ListAddAllNode node) {
+        return allEmitter.emit(node, this);
+    }
+
     public TempManager getTemps() {
         return temps;
     }

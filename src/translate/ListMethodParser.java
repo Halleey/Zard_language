@@ -15,49 +15,37 @@ public class ListMethodParser {
         this.parser = parser;
     }
 
-    public ASTNode parseStatementListMethod(String name) {
-        String type = parser.getVariableType(name);
-
-        String method = parser.current().getValue();
-
-        Token.TokenType methodType = parser.current().getType();
-
-        // avançar para '('
-        parser.advance();
+    public ASTNode consumer() {
+        parser.advance(); // consome o nome do método
         parser.eat(Token.TokenType.DELIMITER, "(");
 
         ASTNode arg = null;
         if (!parser.current().getValue().equals(")")) {
             arg = parser.parseExpression();
         }
-        parser.eat(Token.TokenType.DELIMITER, ")");
 
+        parser.eat(Token.TokenType.DELIMITER, ")");
+        return arg;
+    }
+
+
+    public ASTNode parseStatementListMethod(String name) {
+        String method = parser.current().getValue();
         ASTNode listVar = new VariableNode(name);
+        ASTNode arg;
 
         return switch (method) {
-
             case "add" -> {
+                arg = consumer();
                 if (arg == null) throw new RuntimeException("Método add requer argumento");
                 ASTNode node = new ListAddNode(listVar, arg);
                 parser.eat(Token.TokenType.DELIMITER, ";");
                 yield node;
             }
             case "addAll" -> {
-                List<ASTNode> argsList = new ArrayList<>();
-
-                // enquanto não fechar o parêntese, parseia os argumentos separados por ','
-                while (!parser.current().getValue().equals(")")) {
-                    ASTNode expr = parser.parseExpression();
-                    argsList.add(expr);
-
-                    if (parser.current().getValue().equals(",")) {
-                        parser.advance(); // consome a vírgula
-                    } else {
-                        break;
-                    }
-                }
-
-                parser.eat(Token.TokenType.DELIMITER, ")"); // fecha o parêntese
+                parser.advance();
+                ExpressionParser exprParser = new ExpressionParser(parser);
+                List<ASTNode> argsList = exprParser.parseArguments();
 
                 ASTNode node = new ListAddAllNode(listVar, argsList);
                 parser.eat(Token.TokenType.DELIMITER, ";");
@@ -65,12 +53,15 @@ public class ListMethodParser {
             }
 
             case "remove" -> {
+                arg = consumer();
                 if (arg == null) throw new RuntimeException("Método remove requer argumento");
                 ASTNode node = new ListRemoveNode(listVar, arg);
                 parser.eat(Token.TokenType.DELIMITER, ";");
                 yield node;
             }
             case "clear" -> {
+                parser.advance(); // consome '('
+                parser.eat(Token.TokenType.DELIMITER, ")");
                 ASTNode node = new ListClearNode(listVar);
                 parser.eat(Token.TokenType.DELIMITER, ";");
                 yield node;
@@ -78,6 +69,7 @@ public class ListMethodParser {
             default -> throw new RuntimeException("Método de lista inválido em statement: " + method);
         };
     }
+
 
     public ASTNode parseExpressionListMethod(String name) {
         // consome o '.'
@@ -105,9 +97,7 @@ public class ListMethodParser {
                 if (arg == null) throw new RuntimeException("get requer índice");
                 yield new ListGetNode(listVar, arg);
             }
-            case "remove" -> {
-                yield new ListRemoveNode(listVar, arg);
-            }
+            case "remove" -> new ListRemoveNode(listVar, arg);
             case "slice" -> {
                 if (arg == null) throw new RuntimeException("slice requer índice");
                 yield new ListSliceNode(listVar, arg);

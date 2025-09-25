@@ -11,4 +11,5 @@ numeros.remove(0);
 print(numeros);
 numeros.addAll(3,4,5);
 print(numeros);
+print(teste);
 }

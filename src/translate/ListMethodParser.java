@@ -5,7 +5,7 @@ import ast.lists.*;
 import tokens.Token;
 import ast.variables.VariableNode;
 
-import java.util.ArrayList;
+
 import java.util.List;
 
 public class ListMethodParser {
@@ -46,12 +46,10 @@ public class ListMethodParser {
                 parser.advance();
                 ExpressionParser exprParser = new ExpressionParser(parser);
                 List<ASTNode> argsList = exprParser.parseArguments();
-
                 ASTNode node = new ListAddAllNode(listVar, argsList);
                 parser.eat(Token.TokenType.DELIMITER, ";");
                 yield node;
             }
-
             case "remove" -> {
                 arg = consumer();
                 if (arg == null) throw new RuntimeException("Método remove requer argumento");
@@ -97,12 +95,6 @@ public class ListMethodParser {
                 if (arg == null) throw new RuntimeException("get requer índice");
                 yield new ListGetNode(listVar, arg);
             }
-            case "remove" -> new ListRemoveNode(listVar, arg);
-            case "slice" -> {
-                if (arg == null) throw new RuntimeException("slice requer índice");
-                yield new ListSliceNode(listVar, arg);
-            }
-
             default -> throw new RuntimeException("Método de lista não permitido em expressão: " + method);
         };
     }

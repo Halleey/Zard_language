@@ -36,18 +36,16 @@ public class AssignmentEmitter {
         // LiteralNode
         if (assignNode.valueNode instanceof LiteralNode lit) {
             Object val = lit.value.getValue();
-            switch (lit.value.getType()) {
-                case "int" -> llvm.append("  store i32 ").append(val)
+            if ("double".equals(llvmType) && val instanceof Integer i) val = i.doubleValue();
+
+            switch (llvmType) {
+                case "i32" -> llvm.append("  store i32 ").append(val)
                         .append(", i32* %").append(assignNode.name).append("\n");
-                case "double" -> {
-                    if (val instanceof Integer i) val = i.doubleValue();
-                    llvm.append("  store double ").append(val)
-                            .append(", double* %").append(assignNode.name).append("\n");
-                }
-                case "boolean" -> llvm.append("  store i1 ")
-                        .append(((Boolean) val) ? "1" : "0")
+                case "double" -> llvm.append("  store double ").append(val)
+                        .append(", double* %").append(assignNode.name).append("\n");
+                case "i1" -> llvm.append("  store i1 ").append((Boolean) val ? "1" : "0")
                         .append(", i1* %").append(assignNode.name).append("\n");
-                case "string" -> {
+                case "i8*" -> {
                     String strName = globalStrings.getOrCreateString((String) val);
                     int len = ((String) val).length() + 2;
                     llvm.append("  store i8* getelementptr ([")
@@ -55,7 +53,6 @@ public class AssignmentEmitter {
                             .append(strName).append(", i32 0, i32 0), i8** %")
                             .append(assignNode.name).append("\n");
                 }
-                default -> throw new RuntimeException("Literal não suportado: " + lit.value.getType());
             }
             return llvm.toString();
         }
@@ -74,33 +71,24 @@ public class AssignmentEmitter {
         // InputNode
         if (assignNode.valueNode instanceof InputNode inputNode) {
             InputEmitter inputEmitter = new InputEmitter(temps, globalStrings);
-            String tmpDyn = temps.newTemp();
-            String llvmInput = "  " + tmpDyn + " = call %DynValue* @input(i8* " +
-                    (inputNode.getPrompt() != null && !inputNode.getPrompt().isEmpty()
-                            ? "getelementptr ([" + (inputNode.getPrompt().length() + 2) + " x i8], [" +
-                            (inputNode.getPrompt().length() + 2) + " x i8]* " +
-                            globalStrings.getOrCreateString(inputNode.getPrompt()) + ", i32 0, i32 0)"
-                            : "null") + ")\n";
+            String llvmInput = inputEmitter.emit(inputNode, llvmType);
+            String tmp = extractTemp(llvmInput);
 
-            String tmp = temps.newTemp();
-            String extract;
-            switch (llvmType) {
-                case "i32" -> extract = "  " + tmp + " = call i32 @dynValueToInt(%DynValue* " + tmpDyn + ")\n";
-                case "double" -> extract = "  " + tmp + " = call double @dynValueToDouble(%DynValue* " + tmpDyn + ")\n";
-                case "i1" -> extract = "  " + tmp + " = call i1 @dynValueToBool(%DynValue* " + tmpDyn + ")\n";
-                case "i8*" -> extract = "  " + tmp + " = call i8* @dynValueToString(%DynValue* " + tmpDyn + ")\n";
-                default -> throw new RuntimeException("Tipo desconhecido para input: " + llvmType);
-            }
+            llvm.append(llvmInput)
+                    .append("  store ").append(llvmType).append(" ").append(tmp)
+                    .append(", ").append(llvmType).append("* %").append(assignNode.name)
+                    .append("\n");
 
-            return llvmInput + extract + "  store " + llvmType + " " + tmp + ", " + llvmType + "* %" + assignNode.name + "\n;;VAL:" + tmp + ";;TYPE:" + llvmType + "\n";
+            return llvm.toString();
         }
 
         // Expressão complexa ou variável
         String exprLLVM = assignNode.valueNode.accept(visitor);
         String temp = extractTemp(exprLLVM);
-        llvm.append(exprLLVM).append("\n")
+        llvm.append(exprLLVM)
                 .append("  store ").append(llvmType).append(" ").append(temp)
-                .append(", ").append(llvmType).append("* %").append(assignNode.name).append("\n");
+                .append(", ").append(llvmType).append("* %").append(assignNode.name)
+                .append("\n");
 
         return llvm.toString();
     }

@@ -19,6 +19,7 @@ public class FunctionCallNode extends ASTNode {
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
+
         return "";
     }
 

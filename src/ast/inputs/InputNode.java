@@ -19,7 +19,7 @@ public class InputNode extends ASTNode {
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
-        return visitor.visit(this);
+        return "";
     }
 
     @Override

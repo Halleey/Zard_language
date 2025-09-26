@@ -1,6 +1,8 @@
 package low.module;
 
 import ast.exceptions.BreakNode;
+import ast.functions.FunctionCallNode;
+import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
 import ast.inputs.InputNode;
@@ -28,7 +30,7 @@ public interface LLVMEmitVisitor {
     String visit (ListSizeNode node);
     String visit (ListGetNode node);
     String visit (ListAddAllNode node);
-    String visit (InputNode node);
+
 
 }
 

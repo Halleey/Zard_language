@@ -10,16 +10,15 @@ import ast.lists.ListNode;
 import ast.loops.WhileNode;
 import ast.variables.AssignmentNode;
 import low.TempManager;
-import low.lists.ListAddEmitter;
+
 import low.module.LLVisitorMain;
 import ast.prints.PrintNode;
 import ast.variables.LiteralNode;
 import ast.variables.VariableDeclarationNode;
-
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
+
+
 public class MainEmitter {
     private final GlobalStringManager globalStrings;
     private final Set<String> listasAlocadas = new HashSet<>();
@@ -33,24 +32,21 @@ public class MainEmitter {
     public String emit(MainAST node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
 
-        // Header com declarações e tipos opacos
         llvm.append(emitHeader(node)).append("\n");
 
-        // Coleta strings literais para colocar como constantes globais
-        for (ASTNode stmt : node.body) coletarStringsRecursivo(stmt);
-
+        for (ASTNode stmt : node.body) {
+            coletarStringsRecursivo(stmt);
+        }
         llvm.append(globalStrings.getGlobalStrings()).append("\n");
 
-        // Início do main
         llvm.append(emitMainStart());
 
-        // Corpo do main
         for (ASTNode stmt : node.body) {
+            if (stmt instanceof FunctionNode) continue; // função já foi emitida
             llvm.append("  ; ").append(stmt.getClass().getSimpleName()).append("\n");
-            llvm.append(stmt.accept(visitor)); // executa visitor de cada statement
+            llvm.append(stmt.accept(visitor)); // executa visitor
         }
 
-        // Free das listas alocadas
         if (!listasAlocadas.isEmpty()) {
             llvm.append("  ; === Free das listas alocadas ===\n");
             for (String varName : listasAlocadas) {
@@ -62,8 +58,8 @@ public class MainEmitter {
             }
         }
 
-        // Fim do main
         llvm.append(emitMainEnd());
+
         return llvm.toString();
     }
 
@@ -152,7 +148,10 @@ public class MainEmitter {
             declare i8* @dynToString(%DynValue*)
 
             ; === Função de input ===
-            declare %DynValue* @input(i8*)
+            declare i32 @inputInt(i8*)
+            declare double @inputDouble(i8*)
+            declare i1 @inputBool(i8*)
+            declare i8*@inputString(i8*)
         """);
 
         if (containsList(node)) {

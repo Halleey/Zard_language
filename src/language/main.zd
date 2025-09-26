@@ -1,11 +1,16 @@
 import "src/language/stdlib/Math.zd" as math;
 main {
-int a = input();
-string nome = input();
 
-list test;
-test.addAll(a, nome);
-test.remove(0);
-print(test);
-
+int a;
+a = 14;
+double b = 3.14;
+int z = input();
+int resultado = a + z ;
+print(resultado);
+string nome= "zardelas";
+boolean isReal = true;
+print(isReal);
+print(a);
+print(b);
+print(nome);
 }

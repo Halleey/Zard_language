@@ -28,6 +28,7 @@ public interface LLVMEmitVisitor {
     String visit (ListSizeNode node);
     String visit (ListGetNode node);
     String visit (ListAddAllNode node);
+    String visit (InputNode node);
 
 }
 

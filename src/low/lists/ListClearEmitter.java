@@ -3,7 +3,6 @@ package low.lists;
 import ast.lists.ListClearNode;
 import low.TempManager;
 import low.module.LLVMEmitVisitor;
-
 public class ListClearEmitter {
     private final TempManager temps;
 
@@ -37,6 +36,6 @@ public class ListClearEmitter {
                 return val;
             }
         }
-        return null;
+        throw new RuntimeException("Não encontrou ;;VAL: em: " + code);
     }
 }

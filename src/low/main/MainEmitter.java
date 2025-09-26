@@ -4,6 +4,7 @@ import ast.ASTNode;
 import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
+import ast.inputs.InputNode;
 import ast.lists.ListAddNode;
 import ast.lists.ListNode;
 import ast.loops.WhileNode;
@@ -19,67 +20,50 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 public class MainEmitter {
     private final GlobalStringManager globalStrings;
     private final Set<String> listasAlocadas = new HashSet<>();
     private final TempManager tempManager;
+
     public MainEmitter(GlobalStringManager globalStrings, TempManager tempManager) {
         this.globalStrings = globalStrings;
         this.tempManager = tempManager;
     }
 
     public String emit(MainAST node, LLVisitorMain visitor) {
-        StringBuilder main = new StringBuilder();
-        // coleta todas as strings do AST (Prints, Assigns, VarDecls)
-        for (ASTNode stmt : node.body) {
-            coletarStringsRecursivo(stmt);
-        }
-
-        // coleta strings dentro de listas
-        for (ASTNode stmt : node.body) {
-            if (stmt instanceof VariableDeclarationNode varDecl && varDecl.initializer instanceof ListNode listNode) {
-                for (ASTNode element : listNode.getList().getElements()) {
-                    if (element instanceof LiteralNode lit && lit.value.getType().equals("string")) {
-                        globalStrings.getOrCreateString((String) lit.value.getValue());
-                    }
-                    listasAlocadas.add(varDecl.name);
-                }
-            }
-        }
-
-        // build o llvm
         StringBuilder llvm = new StringBuilder();
 
-        // header + runtime (fora do main)
+        // Header com declarações e tipos opacos
         llvm.append(emitHeader(node)).append("\n");
+
+        // Coleta strings literais para colocar como constantes globais
+        for (ASTNode stmt : node.body) coletarStringsRecursivo(stmt);
+
         llvm.append(globalStrings.getGlobalStrings()).append("\n");
 
-        // Começo do main
+        // Início do main
         llvm.append(emitMainStart());
 
-        // crpo do main
+        // Corpo do main
         for (ASTNode stmt : node.body) {
             llvm.append("  ; ").append(stmt.getClass().getSimpleName()).append("\n");
-            llvm.append(stmt.accept(visitor));
+            llvm.append(stmt.accept(visitor)); // executa visitor de cada statement
         }
 
-
+        // Free das listas alocadas
         if (!listasAlocadas.isEmpty()) {
-            main.append("  ; === Free das listas alocadas ===\n");
+            llvm.append("  ; === Free das listas alocadas ===\n");
             for (String varName : listasAlocadas) {
                 String tmp = tempManager.newTemp();
                 String bc  = tempManager.newTemp();
-                main.append("  ").append(tmp).append(" = load i8*, i8** %")
-                        .append(varName).append("\n");
-                main.append("  ").append(bc).append(" = bitcast i8* ")
-                        .append(tmp).append(" to %ArrayList*\n");
-                main.append("  call void @freeList(%ArrayList* ").append(bc).append(")\n");
+                llvm.append("  ").append(tmp).append(" = load i8*, i8** %").append(varName).append("\n");
+                llvm.append("  ").append(bc).append(" = bitcast i8* ").append(tmp).append(" to %ArrayList*\n");
+                llvm.append("  call void @freeList(%ArrayList* ").append(bc).append(")\n");
             }
         }
-        // fim do main
-        llvm.append(emitMainEnd());
 
+        // Fim do main
+        llvm.append(emitMainEnd());
         return llvm.toString();
     }
 
@@ -128,9 +112,11 @@ public class MainEmitter {
             }
         }
 
+        if (node instanceof InputNode inputNode && inputNode.getPrompt() != null) {
+            globalStrings.getOrCreateString(inputNode.getPrompt());
+        }
     }
 
-    // detecta se ha pelo menos uma lista no MainAST
     private boolean containsList(MainAST node) {
         for (ASTNode stmt : node.body) {
             if (stmt instanceof ListNode) return true;
@@ -140,32 +126,40 @@ public class MainEmitter {
         return false;
     }
 
-    // dentro do MainEmitter
     private String emitHeader(MainAST node) {
         StringBuilder header = new StringBuilder();
-        header.append("""
-        declare i32 @printf(i8*, ...)
-        declare i32 @getchar()
-        @.strInt = private constant [4 x i8] c"%d\\0A\\00"
-        @.strDouble = private constant [4 x i8] c"%f\\0A\\00"
-        @.strStr = private constant [4 x i8] c"%s\\0A\\00"
-        
-        ; === Funções do runtime DynValue ===
-        declare i8* @createInt(i32)
-        declare i8* @createDouble(double)
-        declare i8* @createBool(i1)
-        declare i8* @createString(i8*)
 
+        header.append("""
+            declare i32 @printf(i8*, ...)
+            declare i32 @getchar()
+            @.strInt = private constant [4 x i8] c"%d\\0A\\00"
+            @.strDouble = private constant [4 x i8] c"%f\\0A\\00"
+            @.strStr = private constant [4 x i8] c"%s\\0A\\00"
+
+            ; === Tipo opaco DynValue ===
+            %DynValue = type opaque
+
+            ; === Funções do runtime DynValue ===
+            declare %DynValue* @createInt(i32)
+            declare %DynValue* @createDouble(double)
+            declare %DynValue* @createBool(i1)
+            declare %DynValue* @createString(i8*)
+
+            ; === Funções de conversão DynValue -> tipo primitivo ===
+            declare i32 @dynToInt(%DynValue*)
+            declare double @dynToDouble(%DynValue*)
+            declare i1 @dynToBool(%DynValue*)
+            declare i8* @dynToString(%DynValue*)
+
+            ; === Função de input ===
+            declare %DynValue* @input(i8*)
         """);
 
-        // adiciona runtime de listas se houver alguma
         if (containsList(node)) {
             header.append("\n; === Runtime de listas ===\n");
-            // declaração de funções do  ArrayList
-            header.append("%ArrayList = type opaque\n")
-            .append("%DynValue = type opaque\n");
+            header.append("%ArrayList = type opaque\n");
             header.append("declare i8* @arraylist_create(i64)\n")
-                    .append("declare void @setItems(i8*, i8*)\n")
+                    .append("declare void @setItems(i8*, %DynValue*)\n") // corrigido DynValue*
                     .append("declare void @printList(i8*)\n")
                     .append("declare void @removeItem(%ArrayList*, i64)\n")
                     .append("declare void @clearList(%ArrayList*)\n")
@@ -178,7 +172,6 @@ public class MainEmitter {
 
         return header.toString();
     }
-
 
     private String emitMainStart() {
         return "define i32 @main() {\n";

@@ -1,15 +1,11 @@
 import "src/language/stdlib/Math.zd" as math;
 main {
-int a = 4;
-int b = 3;
-int c = 10;
-list numeros;
-numeros.add(a);
-print(numeros);
-print(numeros.size());
-numeros.remove(0);
-print(numeros);
-numeros.addAll(3,4,5);
-print(numeros);
-print(teste);
+int a = input();
+string nome = input();
+
+list test;
+test.addAll(a, nome);
+test.remove(0);
+print(test);
+
 }

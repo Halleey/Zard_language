@@ -3,9 +3,11 @@ package low.module;
 import ast.exceptions.BreakNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
+import ast.inputs.InputNode;
 import ast.lists.*;
 import ast.loops.WhileNode;
 import low.ifs.IfEmitter;
+import low.inputs.InputEmitter;
 import low.lists.*;
 import low.main.GlobalStringManager;
 import low.TempManager;
@@ -39,6 +41,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final ListSizeEmitter sizeEmitter = new ListSizeEmitter(temps);
     private final ListGetEmitter getEmitter = new ListGetEmitter(temps);
     private final ListAddAllEmitter allEmitter = new ListAddAllEmitter(temps, globalStrings);
+    private final InputEmitter inputEmitter = new InputEmitter(temps, globalStrings);
     private final Set<String> listVars = new HashSet<>();
     public void registerListVar(String name) {
         listVars.add(name);
@@ -158,6 +161,11 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     @Override
     public String visit(ListAddAllNode node) {
         return allEmitter.emit(node, this);
+    }
+
+    @Override
+    public String visit(InputNode node) {
+        return inputEmitter.emit(node);
     }
 
     public TempManager getTemps() {

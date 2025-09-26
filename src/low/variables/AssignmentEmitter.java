@@ -1,9 +1,11 @@
 package low.variables;
 
+import ast.inputs.InputNode;
 import ast.lists.ListNode;
 import ast.variables.AssignmentNode;
 import ast.variables.LiteralNode;
 import low.TempManager;
+import low.inputs.InputEmitter;
 import low.lists.ListEmitter;
 import low.main.GlobalStringManager;
 import low.module.LLVisitorMain;
@@ -31,7 +33,7 @@ public class AssignmentEmitter {
         String llvmType = varTypes.get(assignNode.name);
         StringBuilder llvm = new StringBuilder();
 
-        // Caso 1: Literal direto
+        // LiteralNode
         if (assignNode.valueNode instanceof LiteralNode lit) {
             Object val = lit.value.getValue();
             switch (lit.value.getType()) {
@@ -58,7 +60,7 @@ public class AssignmentEmitter {
             return llvm.toString();
         }
 
-        // Caso 2: Lista
+        // ListNode
         if (assignNode.valueNode instanceof ListNode listNode) {
             ListEmitter listEmitter = new ListEmitter(temps, globalStrings);
             String llvmList = listEmitter.emit(listNode, visitor);
@@ -69,7 +71,31 @@ public class AssignmentEmitter {
             return llvm.toString();
         }
 
-        // Caso 3: Expressão complexa ou variável
+        // InputNode
+        if (assignNode.valueNode instanceof InputNode inputNode) {
+            InputEmitter inputEmitter = new InputEmitter(temps, globalStrings);
+            String tmpDyn = temps.newTemp();
+            String llvmInput = "  " + tmpDyn + " = call %DynValue* @input(i8* " +
+                    (inputNode.getPrompt() != null && !inputNode.getPrompt().isEmpty()
+                            ? "getelementptr ([" + (inputNode.getPrompt().length() + 2) + " x i8], [" +
+                            (inputNode.getPrompt().length() + 2) + " x i8]* " +
+                            globalStrings.getOrCreateString(inputNode.getPrompt()) + ", i32 0, i32 0)"
+                            : "null") + ")\n";
+
+            String tmp = temps.newTemp();
+            String extract;
+            switch (llvmType) {
+                case "i32" -> extract = "  " + tmp + " = call i32 @dynValueToInt(%DynValue* " + tmpDyn + ")\n";
+                case "double" -> extract = "  " + tmp + " = call double @dynValueToDouble(%DynValue* " + tmpDyn + ")\n";
+                case "i1" -> extract = "  " + tmp + " = call i1 @dynValueToBool(%DynValue* " + tmpDyn + ")\n";
+                case "i8*" -> extract = "  " + tmp + " = call i8* @dynValueToString(%DynValue* " + tmpDyn + ")\n";
+                default -> throw new RuntimeException("Tipo desconhecido para input: " + llvmType);
+            }
+
+            return llvmInput + extract + "  store " + llvmType + " " + tmp + ", " + llvmType + "* %" + assignNode.name + "\n;;VAL:" + tmp + ";;TYPE:" + llvmType + "\n";
+        }
+
+        // Expressão complexa ou variável
         String exprLLVM = assignNode.valueNode.accept(visitor);
         String temp = extractTemp(exprLLVM);
         llvm.append(exprLLVM).append("\n")

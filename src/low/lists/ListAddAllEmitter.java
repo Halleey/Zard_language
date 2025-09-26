@@ -24,9 +24,9 @@ public class ListAddAllEmitter {
         String listTmp = extractTemp(listCode);
 
         int argCount = node.getArgs().size();
-        if (argCount == 0) return llvm.toString(); // nada que possamos fazer
+        if (argCount == 0) return llvm.toString();
 
-        // Cria array de DynValue* na stack
+        // Cria array de %DynValue* na stack
         String arrayTmp = temps.newTemp();
         llvm.append("  ").append(arrayTmp).append(" = alloca %DynValue*, i64 ").append(argCount).append("\n");
 
@@ -39,35 +39,30 @@ public class ListAddAllEmitter {
             String valTmp = extractTemp(valCode);
             String valType = extractType(valCode);
 
-            // Cria um DynValue temporário
             String dvTmp = temps.newTemp();
             switch (valType) {
                 case "i32" -> llvm.append("  ").append(dvTmp)
-                        .append(" = call i8* @createInt(i32 ").append(valTmp).append(")\n");
+                        .append(" = call %DynValue* @createInt(i32 ").append(valTmp).append(")\n");
                 case "double" -> llvm.append("  ").append(dvTmp)
-                        .append(" = call i8* @createDouble(double ").append(valTmp).append(")\n");
+                        .append(" = call %DynValue* @createDouble(double ").append(valTmp).append(")\n");
                 case "i1" -> llvm.append("  ").append(dvTmp)
-                        .append(" = call i8* @createBool(i1 ").append(valTmp).append(")\n");
+                        .append(" = call %DynValue* @createBool(i1 ").append(valTmp).append(")\n");
                 case "i8*" -> {
                     if (valueNode instanceof LiteralNode lit && lit.value.getType().equals("string")) {
                         String literal = (String) lit.value.getValue();
                         String strName = globalStringManager.getOrCreateString(literal);
                         llvm.append("  ").append(dvTmp)
-                                .append(" = call i8* @createString(i8* getelementptr ([")
-                                .append(literal.length() + 1).append(" x i8], [")
-                                .append(literal.length() + 1).append(" x i8]* ")
+                                .append(" = call %DynValue* @createString(i8* getelementptr ([")
+                                .append(literal.length() + 2).append(" x i8], [")
+                                .append(literal.length() + 2).append(" x i8]* ")
                                 .append(strName).append(", i32 0, i32 0))\n");
                     } else {
                         llvm.append("  ").append(dvTmp)
-                                .append(" = call i8* @createString(i8* ").append(valTmp).append(")\n");
+                                .append(" = call %DynValue* @createString(i8* ").append(valTmp).append(")\n");
                     }
                 }
                 default -> throw new RuntimeException("Tipo não suportado em ListAddAll: " + valType);
             }
-
-            // Bitcast de i8* para %DynValue*
-            String dvCastTmp = temps.newTemp();
-            llvm.append("  ").append(dvCastTmp).append(" = bitcast i8* ").append(dvTmp).append(" to %DynValue*\n");
 
             // GEP para a posição do array
             String gepTmp = temps.newTemp();
@@ -75,19 +70,18 @@ public class ListAddAllEmitter {
                     .append(arrayTmp).append(", i64 ").append(index).append("\n");
 
             // Store no array
-            llvm.append("  store %DynValue* ").append(dvCastTmp).append(", %DynValue** ").append(gepTmp).append("\n");
+            llvm.append("  store %DynValue* ").append(dvTmp).append(", %DynValue** ").append(gepTmp).append("\n");
 
             index++;
         }
 
-        // Bitcast da lista de i8* para %ArrayList*
+        // Cast da lista de i8* para %ArrayList*
         String listCastTmp = temps.newTemp();
         llvm.append("  ").append(listCastTmp).append(" = bitcast i8* ").append(listTmp).append(" to %ArrayList*\n");
 
         llvm.append("  call void @addAll(%ArrayList* ").append(listCastTmp)
                 .append(", %DynValue** ").append(arrayTmp)
                 .append(", i64 ").append(argCount).append(")\n");
-
 
         return llvm.toString();
     }

@@ -11,6 +11,7 @@ import ast.loops.WhileNode;
 import ast.variables.AssignmentNode;
 import low.TempManager;
 
+
 import low.module.LLVisitorMain;
 import ast.prints.PrintNode;
 import ast.variables.LiteralNode;
@@ -39,6 +40,15 @@ public class MainEmitter {
         }
         llvm.append(globalStrings.getGlobalStrings()).append("\n");
 
+//        FunctionEmitter fnEmitter = new FunctionEmitter(visitor, tempManager);
+//        for (ASTNode stmt : node.body) {
+//            if (stmt instanceof FunctionNode fn) {
+//                llvm.append("; === Função: ").append(fn.getName()).append(" ===\n");
+//                llvm.append(fnEmitter.emit(fn));
+//            }
+//        }
+
+
         llvm.append(emitMainStart());
 
         for (ASTNode stmt : node.body) {
@@ -46,6 +56,7 @@ public class MainEmitter {
             llvm.append("  ; ").append(stmt.getClass().getSimpleName()).append("\n");
             llvm.append(stmt.accept(visitor)); // executa visitor
         }
+
 
         if (!listasAlocadas.isEmpty()) {
             llvm.append("  ; === Free das listas alocadas ===\n");
@@ -59,9 +70,9 @@ public class MainEmitter {
         }
 
         llvm.append(emitMainEnd());
-
         return llvm.toString();
     }
+
 
     private void coletarStringsRecursivo(ASTNode node) {
         if (node instanceof PrintNode printNode && printNode.expr instanceof LiteralNode lit &&

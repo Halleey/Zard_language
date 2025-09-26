@@ -1,13 +1,12 @@
 package low.module;
 
 import ast.exceptions.BreakNode;
+import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
-import ast.inputs.InputNode;
 import ast.lists.*;
 import ast.loops.WhileNode;
 import low.ifs.IfEmitter;
-import low.inputs.InputEmitter;
 import low.lists.*;
 import low.main.GlobalStringManager;
 import low.TempManager;
@@ -24,6 +23,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final Map<String, String> varTypes = new HashMap<>();
 
     private final TempManager temps = new TempManager();
+
     private final GlobalStringManager globalStrings = new GlobalStringManager();
     private final VariableEmitter varEmitter = new VariableEmitter(varTypes, temps, globalStrings, this);
     private final PrintEmitter printEmitter = new PrintEmitter(globalStrings);
@@ -41,14 +41,11 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final ListSizeEmitter sizeEmitter = new ListSizeEmitter(temps);
     private final ListGetEmitter getEmitter = new ListGetEmitter(temps);
     private final ListAddAllEmitter allEmitter = new ListAddAllEmitter(temps, globalStrings);
-    private final Set<String> listVars = new HashSet<>();
-
+    private final Set<String> listVars = new HashSet<>();;
 
     public void registerListVar(String name) {
         listVars.add(name);
     }
-
-
     public boolean isList(String name) {
         return listVars.contains(name);
     }
@@ -168,5 +165,8 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return temps;
     }
 
-
+    @Override
+    public String visit(FunctionNode node) {
+        return "";
+    }
 }

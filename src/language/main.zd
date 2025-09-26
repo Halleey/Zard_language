@@ -1,16 +1,48 @@
 import "src/language/stdlib/Math.zd" as math;
-main {
 
-int a;
-a = 14;
-double b = 3.14;
-int z = input();
-int resultado = a + z ;
-print(resultado);
-string nome= "zardelas";
-boolean isReal = true;
-print(isReal);
-print(a);
-print(b);
-print(nome);
+main {
+    double a = 10;
+    double b = 3;
+    int n = 5;
+
+
+    print("Soma: " + math.sum(a, b));
+    print("Subtração: " + math.sub(a, b));
+    print("Multiplicação: " + math.mul(a, b));
+    print("Divisão: " + math.div(a, b));
+
+
+    print("Potência: " + math.pow(a, 3));
+
+
+    print("Fatorial de " + n + ": " + math.factorial(n));
+
+    print("Raiz quadrada de " + a + ": " + math.sqrt(a));
+
+
+    print("Seno de " + a + ": " + math.sin(a));
+    print("Cosseno de " + a + ": " + math.cos(a));
+    print("Tangente de " + a + ": " + math.tan(a));
+
+    print("Tentando dividir por zero:");
+    print(math.div(a, 0));
+
+    print("Tentando fatorial de número negativo:");
+    print(math.factorial(-3));
+
+    print("Tentando raiz quadrada de número negativo:");
+    print(math.sqrt(-9));
+
+    function dobrar(int a) {
+    return a * 2;
+    }
+
+   function invok(int a) {
+       return dobrar(a);
+   }
+
+    var f = invok;
+    print(f(10));
+
+    print("Fim dos testes.");
 }

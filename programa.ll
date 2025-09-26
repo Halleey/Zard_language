@@ -25,55 +25,37 @@
     declare i1 @inputBool(i8*)
     declare i8*@inputString(i8*)
 
-@.str0 = private constant [10 x i8] c"zardelas\0A\00"
+
+; === Função: teste ===
+define i8* @teste(i8* %a, i8* %z) {
+entry:
+%t0 = alloca i8*
+  store i8* %a, i8** %t0
+%t1 = alloca i8*
+  store i8* %z, i8** %t1
+  %resultado = alloca i32
+  %t2 = load i32, i32* %a
+;;VAL:%t2;;TYPE:i32
+
+  %t3 = load i32, i32* %z
+;;VAL:%t3;;TYPE:i32
+
+  %t4 = add i32 %t2, %t3
+;;VAL:%t4;;TYPE:i32
+
+  store i32 %t4, i32* %resultado
+  %t5 = load i32, i32* %resultado
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t5)
+  ret i8* null
+}
 
 define i32 @main() {
   ; VariableDeclarationNode
   %a = alloca i32
-  ; AssignmentNode
-  store i32 14, i32* %a
-  ; VariableDeclarationNode
-  %b = alloca double
-  store double 3.14, double* %b
-  ; VariableDeclarationNode
-  %z = alloca i32
-  %t0 = call i32 @inputInt(i8* null)
-;;VAL:%t0 ;;TYPE:i32
-  store i32 %t0, i32* %z
-  ; VariableDeclarationNode
-  %resultado = alloca i32
-  %t1 = load i32, i32* %a
-;;VAL:%t1;;TYPE:i32
-
-  %t2 = load i32, i32* %z
-;;VAL:%t2;;TYPE:i32
-
-  %t3 = add i32 %t1, %t2
-;;VAL:%t3;;TYPE:i32
-
-  store i32 %t3, i32* %resultado
+  store i32 10, i32* %a
   ; PrintNode
-  %t4 = load i32, i32* %resultado
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t4)
-  ; VariableDeclarationNode
-  %nome = alloca i8*
-  store i8* getelementptr ([10 x i8], [10 x i8]* @.str0, i32 0, i32 0), i8** %nome
-  ; VariableDeclarationNode
-  %isReal = alloca i1
-  store i1 1, i1* %isReal
-  ; PrintNode
-  %t5 = load i1, i1* %isReal
-  %t6 = zext i1 %t5 to i32
+  %t6 = load i32, i32* %a
   call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t6)
-  ; PrintNode
-  %t7 = load i32, i32* %a
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t7)
-  ; PrintNode
-  %t8 = load double, double* %b
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double %t8)
-  ; PrintNode
-  %t9 = load i8*, i8** %nome
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t9)
   call i32 @getchar()
   ret i32 0
 }

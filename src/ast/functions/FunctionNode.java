@@ -6,21 +6,24 @@ import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;
-
 public class FunctionNode extends ASTNode {
     public final String name;
     public final List<String> params;
+    public final List<String> paramTypes; // novo
     public final List<ASTNode> body;
 
-    public FunctionNode(String name, List<String> params, List<ASTNode> body) {
+    public FunctionNode(String name, List<String> params, List<String> paramTypes, List<ASTNode> body) {
         this.name = name;
         this.params = params;
+        this.paramTypes = paramTypes; // inicializa
         this.body = body;
     }
 
+    public List<String> getParamTypes() { return paramTypes; }
+
     @Override
     public String accept(LLVMEmitVisitor visitor) {
-        return "";
+        return visitor.visit(this);
     }
 
     @Override
@@ -35,7 +38,7 @@ public class FunctionNode extends ASTNode {
         if (!params.isEmpty()) {
             System.out.println(prefix + "  Parameters:");
             for (String p : params) {
-                System.out.println(prefix + "    " + p);
+                System.out.println(prefix + "    " + p + " type " + getParamTypes());
             }
         }
         if (!body.isEmpty()) {

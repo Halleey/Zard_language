@@ -45,8 +45,13 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final ListAddAllEmitter allEmitter = new ListAddAllEmitter(temps, globalStrings);
     private final FunctionEmitter functionEmitter = new FunctionEmitter(this);
     private final Set<String> listVars = new HashSet<>();;
-    private final FunctionCallEmitter callEmiter = new FunctionCallEmitter(temps);
+    private final FunctionCallEmitter callEmiter = new FunctionCallEmitter(temps, this);
+    private final Map<String, FunctionNode> functions = new HashMap<>();
 
+
+    public FunctionNode getFunctionNode(String name) {
+        return functions.get(name);
+    }
 
 
     public void registerListVar(String name) {
@@ -177,12 +182,13 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public String visit(FunctionNode node) {
-        return functionEmitter.emit(node);
+        functions.put(node.getName(), node); // registra função
+        return new FunctionEmitter(this).emit(node);
     }
 
     @Override
     public String visit(FunctionCallNode node) {
-        return callEmiter.emit(node, this);
+        return callEmiter.emit(node);
     }
     public TempManager getTemps() {
         return temps;

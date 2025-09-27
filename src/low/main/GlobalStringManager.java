@@ -1,32 +1,32 @@
 package low.main;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class GlobalStringManager {
-    private final Map<String, String> stringMap = new HashMap<>();
-    private final StringBuilder globalStrings = new StringBuilder();
+    private final Map<String, String> stringMap = new LinkedHashMap<>();
+    private int counter = 0;
 
-    public GlobalStringManager() {}
-
-    public StringBuilder getGlobalStrings() {
-        return globalStrings;
+    public String getOrCreateString(String literal) {
+        if (stringMap.containsKey(literal)) return stringMap.get(literal);
+        String name = "@.str" + counter++;
+        stringMap.put(literal, name);
+        return name;
     }
 
-    public String getOrCreateString(String str) {
-        if (stringMap.containsKey(str)) return stringMap.get(str);
-
-        String strName = "@.str" + stringMap.size();
-        stringMap.put(str, strName);
-
-        int len = str.length() + 2; // +2: \n + \0
-        globalStrings.append(strName)
-                .append(" = private constant [")
-                .append(len)
-                .append(" x i8] c\"")
-                .append(str.replace("\"", "\\\""))
-                .append("\\0A\\00\"\n");
-
-        return strName;
+    public String getGlobalStrings() {
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, String> e : stringMap.entrySet()) {
+            String literal = e.getKey();
+            String name = e.getValue();
+            int len = literal.length() + 1; // +1 para o \00
+            sb.append(name)
+                    .append(" = private constant [")
+                    .append(len)
+                    .append(" x i8] c\"")
+                    .append(literal.replace("\"", "\\22")) // escape aspas
+                    .append("\\00\"\n");
+        }
+        return sb.toString();
     }
 }

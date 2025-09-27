@@ -59,6 +59,10 @@ main {
 
     numeros.remove(0);
 
+    function sub(double a, double b) {
+        return a - b;
+    }
+    print(sub(15, 10));
 
     print(beta + testing);
 }

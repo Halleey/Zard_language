@@ -1,8 +1,5 @@
 package low.variables;
-
-import ast.inputs.InputNode;
 import ast.lists.ListNode;
-import low.inputs.InputEmitter;
 import low.lists.ListEmitter;
 import low.main.GlobalStringManager;
 import low.module.LLVisitorMain;
@@ -10,12 +7,16 @@ import low.TempManager;
 import ast.variables.LiteralNode;
 import ast.variables.VariableDeclarationNode;
 
+import java.util.HashMap;
 import java.util.Map;
+
 public class VariableEmitter {
     private final Map<String, String> varTypes;
     private final TempManager temps;
     private final GlobalStringManager globalStrings;
     private final LLVisitorMain visitor;
+
+    private final Map<String, String> localVars = new HashMap<>();
 
     public VariableEmitter(Map<String, String> varTypes, TempManager temps, GlobalStringManager globalStrings, LLVisitorMain visitor) {
         this.varTypes = varTypes;
@@ -24,87 +25,72 @@ public class VariableEmitter {
         this.visitor = visitor;
     }
 
+    // Aloca a variável na stack e registra no mapa
     public String emitAlloca(VariableDeclarationNode node) {
         String llvmType = switch (node.getType()) {
             case "int" -> "i32";
             case "double" -> "double";
             case "boolean" -> "i1";
-            case "string" -> "i8*";
-            case "list" -> "i8*";
+            case "string", "list", "var" -> "i8*";
             default -> throw new RuntimeException("Tipo desconhecido: " + node.getType());
         };
+
         varTypes.put(node.getName(), llvmType);
-        if (node.getType().equals("list")) {
-            visitor.registerListVar(node.getName());
-        }
-        return "  %" + node.getName() + " = alloca " + llvmType + "\n";
+        if (node.getType().equals("list")) visitor.registerListVar(node.getName());
+
+        String ptrName = "%" + node.getName() + ".addr";
+        localVars.put(node.getName(), ptrName);
+
+        return "  " + ptrName + " = alloca " + llvmType + "\n";
+    }
+
+    public String getVarPtr(String name) {
+        return localVars.get(name);
+    }
+
+    public String emitLoad(String name) {
+        String llvmType = varTypes.getOrDefault(name, "i32");
+        String ptr = getVarPtr(name);
+        if (ptr == null) throw new RuntimeException("Variável não alocada: " + name);
+        String tmp = temps.newTemp();
+        return "  " + tmp + " = load " + llvmType + ", " + llvmType + "* " + ptr + "\n" +
+                ";;VAL:" + tmp + ";;TYPE:" + llvmType + "\n";
     }
 
     public String emitInit(VariableDeclarationNode node) {
         String llvmType = varTypes.get(node.getName());
+        String ptr = getVarPtr(node.getName());
 
-        // Sem inicializador
-        if (node.initializer == null) {
-            if ("list".equals(node.getType())) {
-                String tmp = temps.newTemp();
-                return "  " + tmp + " = call i8* @arraylist_create(i64 4)\n" +
-                        "  store i8* " + tmp + ", i8** %" + node.getName() + "\n";
-            }
-            return "";
-        }
-
-        // LiteralNode
         if (node.initializer instanceof LiteralNode lit) {
             Object val = lit.value.getValue();
             if (llvmType.equals("double") && val instanceof Integer) val = ((Integer) val).doubleValue();
-
             StringBuilder llvm = new StringBuilder();
+
             switch (llvmType) {
-                case "i1" -> llvm.append("  store i1 ").append((Boolean) val ? "1" : "0")
-                        .append(", i1* %").append(node.getName()).append("\n");
-                case "i32" -> llvm.append("  store i32 ").append(val)
-                        .append(", i32* %").append(node.getName()).append("\n");
-                case "double" -> llvm.append("  store double ").append(val)
-                        .append(", double* %").append(node.getName()).append("\n");
+                case "i1" -> llvm.append("  store i1 ").append((Boolean) val ? 1 : 0).append(", i1* ").append(ptr).append("\n")
+                        .append(";;VAL:").append(val).append(";;TYPE:i1\n");
+                case "i32" -> llvm.append("  store i32 ").append(val).append(", i32* ").append(ptr).append("\n")
+                        .append(";;VAL:").append(val).append(";;TYPE:i32\n");
+                case "double" -> llvm.append("  store double ").append(val).append(", double* ").append(ptr).append("\n")
+                        .append(";;VAL:").append(val).append(";;TYPE:double\n");
                 case "i8*" -> {
                     String strName = globalStrings.getOrCreateString((String) val);
-                    int len = ((String) val).length() + 2;
+                    int len = ((String) val).length() + 1;
                     llvm.append("  store i8* getelementptr ([")
                             .append(len).append(" x i8], [").append(len).append(" x i8]* ")
-                            .append(strName).append(", i32 0, i32 0), i8** %")
-                            .append(node.getName()).append("\n");
+                            .append(strName).append(", i32 0, i32 0), i8** ")
+                            .append(ptr).append("\n")
+                            .append(";;VAL:").append(strName).append(";;TYPE:i8*\n");
                 }
             }
             return llvm.toString();
         }
 
-        // ListNode
-        if (node.initializer instanceof ListNode listNode) {
-            ListEmitter listEmitter = new ListEmitter(temps, globalStrings);
-            String llvmList = listEmitter.emit(listNode, visitor);
-            String temp = extractTemp(llvmList);
-            return llvmList + "  store i8* " + temp + ", i8** %" + node.getName() + "\n";
-        }
-
-        // InputNode
-        if (node.initializer instanceof InputNode inputNode) {
-            InputEmitter inputEmitter = new InputEmitter(temps, globalStrings);
-            String llvmInput = inputEmitter.emit(inputNode, llvmType);
-            String tmp = extractTemp(llvmInput);
-            return llvmInput +
-                    "  store " + llvmType + " " + tmp + ", " + llvmType + "* %" + node.getName() + "\n";
-        }
-
-        // Expressão complexa
         String exprLLVM = node.initializer.accept(visitor);
-        String temp = extractTemp(exprLLVM);
-        return exprLLVM + "\n  store " + llvmType + " " + temp + ", " + llvmType + "* %" + node.getName() + "\n";
-    }
-
-    public String emitLoad(String name) {
-        String type = varTypes.getOrDefault(name, "i32");
-        String tmp = temps.newTemp();
-        return "  " + tmp + " = load " + type + ", " + type + "* %" + name + "\n;;VAL:" + tmp + ";;TYPE:" + type + "\n";
+        String tmp = extractTemp(exprLLVM);
+        return exprLLVM +
+                "  store " + llvmType + " " + tmp + ", " + llvmType + "* " + ptr + "\n" +
+                ";;VAL:" + tmp + ";;TYPE:" + llvmType + "\n";
     }
 
     private String extractTemp(String code) {

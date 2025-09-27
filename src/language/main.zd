@@ -1,48 +1,14 @@
 import "src/language/stdlib/Math.zd" as math;
-
 main {
-    double a = 10;
-    double b = 3;
-    int n = 5;
+function somar(int a, int b){return a+b;}
+function multiplicar(double a, int b){return a+b;}
+print(somar(14,13));
 
 
-    print("Soma: " + math.sum(a, b));
-    print("Subtração: " + math.sub(a, b));
-    print("Multiplicação: " + math.mul(a, b));
-    print("Divisão: " + math.div(a, b));
-
-
-    print("Potência: " + math.pow(a, 3));
-
-
-    print("Fatorial de " + n + ": " + math.factorial(n));
-
-    print("Raiz quadrada de " + a + ": " + math.sqrt(a));
-
-
-    print("Seno de " + a + ": " + math.sin(a));
-    print("Cosseno de " + a + ": " + math.cos(a));
-    print("Tangente de " + a + ": " + math.tan(a));
-
-    print("Tentando dividir por zero:");
-    print(math.div(a, 0));
-
-    print("Tentando fatorial de número negativo:");
-    print(math.factorial(-3));
-
-    print("Tentando raiz quadrada de número negativo:");
-    print(math.sqrt(-9));
-
-    function dobrar(int a) {
-    return a * 2;
-    }
-
-   function invok(int a) {
-       return dobrar(a);
-   }
-
-    var f = invok;
-    print(f(10));
-
-    print("Fim dos testes.");
+    list random = ("teste", true, false, 3.75, 9);
+    string nome = "halley";
+    random.add(nome);
+    random.remove(1);
+    print(random.get(1));
+    print(random);
 }

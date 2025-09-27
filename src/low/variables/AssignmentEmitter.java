@@ -32,6 +32,7 @@ public class AssignmentEmitter {
 
         String llvmType = varTypes.get(assignNode.name);
         StringBuilder llvm = new StringBuilder();
+        String varPtr = "%" + assignNode.name + ".addr";  // usa sempre .addr
 
         // LiteralNode
         if (assignNode.valueNode instanceof LiteralNode lit) {
@@ -40,18 +41,18 @@ public class AssignmentEmitter {
 
             switch (llvmType) {
                 case "i32" -> llvm.append("  store i32 ").append(val)
-                        .append(", i32* %").append(assignNode.name).append("\n");
+                        .append(", i32* ").append(varPtr).append("\n");
                 case "double" -> llvm.append("  store double ").append(val)
-                        .append(", double* %").append(assignNode.name).append("\n");
+                        .append(", double* ").append(varPtr).append("\n");
                 case "i1" -> llvm.append("  store i1 ").append((Boolean) val ? "1" : "0")
-                        .append(", i1* %").append(assignNode.name).append("\n");
+                        .append(", i1* ").append(varPtr).append("\n");
                 case "i8*" -> {
                     String strName = globalStrings.getOrCreateString((String) val);
                     int len = ((String) val).length() + 2;
                     llvm.append("  store i8* getelementptr ([")
                             .append(len).append(" x i8], [").append(len).append(" x i8]* ")
-                            .append(strName).append(", i32 0, i32 0), i8** %")
-                            .append(assignNode.name).append("\n");
+                            .append(strName).append(", i32 0, i32 0), i8** ")
+                            .append(varPtr).append("\n");
                 }
             }
             return llvm.toString();
@@ -64,7 +65,7 @@ public class AssignmentEmitter {
             String temp = extractTemp(llvmList);
             llvm.append(llvmList)
                     .append("  store i8* ").append(temp)
-                    .append(", i8** %").append(assignNode.name).append("\n");
+                    .append(", i8** ").append(varPtr).append("\n");
             return llvm.toString();
         }
 
@@ -76,7 +77,7 @@ public class AssignmentEmitter {
 
             llvm.append(llvmInput)
                     .append("  store ").append(llvmType).append(" ").append(tmp)
-                    .append(", ").append(llvmType).append("* %").append(assignNode.name)
+                    .append(", ").append(llvmType).append("* ").append(varPtr)
                     .append("\n");
 
             return llvm.toString();
@@ -87,7 +88,7 @@ public class AssignmentEmitter {
         String temp = extractTemp(exprLLVM);
         llvm.append(exprLLVM)
                 .append("  store ").append(llvmType).append(" ").append(temp)
-                .append(", ").append(llvmType).append("* %").append(assignNode.name)
+                .append(", ").append(llvmType).append("* ").append(varPtr)
                 .append("\n");
 
         return llvm.toString();

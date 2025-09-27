@@ -7,9 +7,8 @@ import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;
-
 public class FunctionCallNode extends ASTNode {
-    private final String name; // ex: "dobrar" ou "math.dobrar"
+    private final String name;
     private final List<ASTNode> args;
 
     public FunctionCallNode(String name, List<ASTNode> args) {
@@ -19,15 +18,14 @@ public class FunctionCallNode extends ASTNode {
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
-
-        return "";
+        return visitor.visit(this);
     }
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
         RuntimeContext currentCtx = ctx;
 
-        // Divide a chamada em namespaces e função
+        // Resolve namespaces
         String[] parts = name.split("\\.");
         for (int i = 0; i < parts.length - 1; i++) {
             String nsName = parts[i];
@@ -35,7 +33,7 @@ public class FunctionCallNode extends ASTNode {
             if (!nsVal.getType().equals("namespace")) {
                 throw new RuntimeException(nsName + " não é um namespace");
             }
-            currentCtx = (RuntimeContext) nsVal.getValue(); // desce para o contexto do namespace
+            currentCtx = (RuntimeContext) nsVal.getValue();
         }
 
         String funcShortName = parts[parts.length - 1];
@@ -46,26 +44,22 @@ public class FunctionCallNode extends ASTNode {
 
         FunctionNode func = (FunctionNode) funcVal.getValue();
 
-        // Cria contexto local filho baseado no namespace/função
         RuntimeContext localCtx = new RuntimeContext(currentCtx);
-
-        // Avalia os argumentos no contexto chamador e declara no localCtx
-        for (int i = 0; i < func.params.size(); i++) {
-            String paramName = func.params.get(i);
-            TypedValue argVal = args.get(i).evaluate(ctx); // contexto chamador
+        for (int i = 0; i < func.getParams().size(); i++) {
+            String paramName = func.getParams().get(i);
+            TypedValue argVal = args.get(i).evaluate(ctx);
             localCtx.declareVariable(paramName, argVal);
         }
 
-        // Executa o corpo da função
         try {
-            for (ASTNode node : func.body) {
+            for (ASTNode node : func.getBody()) {
                 node.evaluate(localCtx);
             }
         } catch (ReturnValue rv) {
             return rv.value;
         }
 
-        return null; // se não houver return
+        return null;
     }
 
     @Override

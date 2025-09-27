@@ -1,9 +1,9 @@
 package low.variables;
 
+import ast.expressions.TypedValue;
 import low.main.GlobalStringManager;
 import low.TempManager;
 import ast.variables.LiteralNode;
-
 public class LiteralEmitter {
     private final TempManager temps;
     private final GlobalStringManager globalStrings;
@@ -14,38 +14,38 @@ public class LiteralEmitter {
     }
 
     public String emit(LiteralNode node) {
-        String type = switch (node.value.getType()) {
-            case "int" -> "i32";
-            case "double" -> "double";
-            case "boolean" -> "i1";
-            case "string" -> "i8*";
-            default -> throw new RuntimeException("Tipo literal desconhecido: " + node.value.getType());
-        };
+        TypedValue value = node.value;
+        String temp = temps.newTemp();
+        StringBuilder llvm = new StringBuilder();
 
-        Object val = node.value.getValue();
-        if (type.equals("double") && val instanceof Integer) val = ((Integer) val).doubleValue();
-
-        String tmp = temps.newTemp();
-
-        if (type.equals("i32") || type.equals("double") || type.equals("i1")) {
-            String llvmVal = switch (type) {
-                case "i32" -> val.toString();
-                case "double" -> val.toString();
-                case "i1" -> ((Boolean) val ? "1" : "0");
-                default -> throw new RuntimeException("Tipo inesperado: " + type);
-            };
-            return "  " + tmp + " = add " + type + " 0, " + llvmVal + "\n;;VAL:" + tmp + ";;TYPE:" + type + "\n";
+        switch (value.getType()) {
+            case "int" -> {
+                llvm.append("  ").append(temp).append(" = add i32 0, ").append(value.getValue()).append("\n");
+                llvm.append(";;VAL:").append(temp).append(";;TYPE:i32\n");
+            }
+            case "double" -> {
+                // Gera literal double diretamente sem somar 0
+                llvm.append("  ").append(temp).append(" = fadd double 0.0, ")
+                        .append(value.getValue()).append("\n");
+                llvm.append(";;VAL:").append(temp).append(";;TYPE:double\n");
+            }
+            case "boolean" -> {
+                boolean b = (Boolean) value.getValue();
+                llvm.append("  ").append(temp).append(" = add i1 0, ").append(b ? 1 : 0).append("\n");
+                llvm.append(";;VAL:").append(temp).append(";;TYPE:i1\n");
+            }
+            case "string" -> {
+                String strName = globalStrings.getOrCreateString((String) value.getValue());
+                llvm.append("  ").append(temp).append(" = getelementptr inbounds ([")
+                        .append(((String) value.getValue()).length() + 1)
+                        .append(" x i8], [")
+                        .append(((String) value.getValue()).length() + 1)
+                        .append(" x i8]* ").append(strName).append(", i32 0, i32 0)\n");
+                llvm.append(";;VAL:").append(temp).append(";;TYPE:i8*\n");
+            }
+            default -> throw new RuntimeException("Literal type not supported: " + value.getType());
         }
 
-        if (type.equals("i8*")) {
-            String strName = globalStrings.getOrCreateString((String) val);
-            int len = ((String) val).length() + 2;
-            String llvm = "  " + tmp + " = bitcast [" + len + " x i8]* " + strName + " to i8*\n";
-            llvm += ";;VAL:" + tmp + ";;TYPE:" + type + "\n";
-            return llvm;
-        }
-
-
-        throw new RuntimeException("LiteralNode não suportado: " + type);
+        return llvm.toString();
     }
 }

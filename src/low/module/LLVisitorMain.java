@@ -1,11 +1,15 @@
 package low.module;
-
 import ast.exceptions.BreakNode;
+import ast.exceptions.ReturnNode;
+import ast.functions.FunctionCallNode;
 import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
 import ast.lists.*;
 import ast.loops.WhileNode;
+import low.exceptions.ReturnEmitter;
+import low.functions.FunctionCallEmitter;
+import low.functions.FunctionEmitter;
 import low.ifs.IfEmitter;
 import low.lists.*;
 import low.main.GlobalStringManager;
@@ -21,11 +25,9 @@ import java.util.*;
 
 public class LLVisitorMain implements LLVMEmitVisitor {
     private final Map<String, String> varTypes = new HashMap<>();
-
     private final TempManager temps = new TempManager();
-
     private final GlobalStringManager globalStrings = new GlobalStringManager();
-    private final VariableEmitter varEmitter = new VariableEmitter(varTypes, temps, globalStrings, this);
+    public final VariableEmitter varEmitter = new VariableEmitter(varTypes, temps, globalStrings, this);
     private final PrintEmitter printEmitter = new PrintEmitter(globalStrings);
     private final AssignmentEmitter assignmentEmitter = new AssignmentEmitter(varTypes, temps, globalStrings, this);
     private final UnaryOpEmitter unaryOpEmitter = new UnaryOpEmitter(varTypes, temps);
@@ -41,7 +43,11 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final ListSizeEmitter sizeEmitter = new ListSizeEmitter(temps);
     private final ListGetEmitter getEmitter = new ListGetEmitter(temps);
     private final ListAddAllEmitter allEmitter = new ListAddAllEmitter(temps, globalStrings);
+    private final FunctionEmitter functionEmitter = new FunctionEmitter(this);
     private final Set<String> listVars = new HashSet<>();;
+    private final FunctionCallEmitter callEmiter = new FunctionCallEmitter(temps);
+
+
 
     public void registerListVar(String name) {
         listVars.add(name);
@@ -49,6 +55,13 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public boolean isList(String name) {
         return listVars.contains(name);
     }
+
+    @Override
+    public String visit(ReturnNode node) {
+        ReturnEmitter emitter = new ReturnEmitter(temps, this);
+        return emitter.emit(node);
+    }
+
 
     public void pushLoopEnd(String label) {
         loopEndLabels.push(label);
@@ -70,6 +83,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         MainEmitter mainEmitter = new MainEmitter(globalStrings, temps);
         return mainEmitter.emit(node, this);
     }
+
 
     public String visit(VariableDeclarationNode node) {
         return varEmitter.emitAlloca(node) + varEmitter.emitInit(node);
@@ -161,12 +175,24 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return allEmitter.emit(node, this);
     }
 
+    @Override
+    public String visit(FunctionNode node) {
+        return functionEmitter.emit(node);
+    }
+
+    @Override
+    public String visit(FunctionCallNode node) {
+        return callEmiter.emit(node, this);
+    }
     public TempManager getTemps() {
         return temps;
     }
 
-    @Override
-    public String visit(FunctionNode node) {
-        return "";
+    public Map<String, String> getVarTypes() {
+        return varTypes;
+    }
+
+    public void putVarType(String name, String type) {
+        varTypes.put(name, type);
     }
 }

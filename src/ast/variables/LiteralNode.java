@@ -8,6 +8,10 @@ import low.module.LLVMEmitVisitor;
 public class LiteralNode extends ASTNode {
     public final TypedValue value;
 
+    public TypedValue getValue() {
+        return value;
+    }
+
     public LiteralNode(TypedValue value) {
         this.value = value;
     }

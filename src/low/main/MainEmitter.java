@@ -11,14 +11,15 @@ import ast.loops.WhileNode;
 import ast.variables.AssignmentNode;
 import low.TempManager;
 
-
+import low.functions.FunctionEmitter;
 import low.module.LLVisitorMain;
 import ast.prints.PrintNode;
 import ast.variables.LiteralNode;
 import ast.variables.VariableDeclarationNode;
+
+
 import java.util.HashSet;
 import java.util.Set;
-
 
 public class MainEmitter {
     private final GlobalStringManager globalStrings;
@@ -38,15 +39,25 @@ public class MainEmitter {
         for (ASTNode stmt : node.body) {
             coletarStringsRecursivo(stmt);
         }
+
+        for (ASTNode stmt : node.body) {
+            if (stmt instanceof VariableDeclarationNode varDecl && varDecl.initializer instanceof ListNode listNode) {
+                for (ASTNode element : listNode.getList().getElements()) {
+                    if (element instanceof LiteralNode lit && lit.value.getType().equals("string")) {
+                        globalStrings.getOrCreateString((String) lit.value.getValue());
+                    }
+                }
+            }
+        }
         llvm.append(globalStrings.getGlobalStrings()).append("\n");
 
-//        FunctionEmitter fnEmitter = new FunctionEmitter(visitor, tempManager);
-//        for (ASTNode stmt : node.body) {
-//            if (stmt instanceof FunctionNode fn) {
-//                llvm.append("; === Função: ").append(fn.getName()).append(" ===\n");
-//                llvm.append(fnEmitter.emit(fn));
-//            }
-//        }
+        FunctionEmitter fnEmitter = new FunctionEmitter(visitor);
+        for (ASTNode stmt : node.body) {
+            if (stmt instanceof FunctionNode fn) {
+                llvm.append("; === Função: ").append(fn.getName()).append(" ===\n");
+                llvm.append(fnEmitter.emit(fn));
+            }
+        }
 
 
         llvm.append(emitMainStart());
@@ -80,9 +91,18 @@ public class MainEmitter {
             globalStrings.getOrCreateString((String) lit.value.getValue());
         }
 
-        if (node instanceof VariableDeclarationNode varDecl && varDecl.initializer instanceof LiteralNode litInit &&
-                litInit.value.getType().equals("string")) {
-            globalStrings.getOrCreateString((String) litInit.value.getValue());
+        if (node instanceof VariableDeclarationNode varDecl) {
+            // Se for literal string
+            if (varDecl.initializer instanceof LiteralNode litInit &&
+                    litInit.value.getType().equals("string")) {
+                globalStrings.getOrCreateString((String) litInit.value.getValue());
+            }
+            // Se for lista
+            else if (varDecl.initializer instanceof ListNode listInit) {
+                for (ASTNode element : listInit.getList().getElements()) {
+                    coletarStringsRecursivo(element); // recursivo para Literals ou outros nós
+                }
+            }
         }
 
         if (node instanceof AssignmentNode assignNode) {
@@ -107,22 +127,13 @@ public class MainEmitter {
         }
 
         if (node instanceof FunctionNode funcNode) {
-            for (ASTNode stmt : funcNode.body) coletarStringsRecursivo(stmt);
+            for (ASTNode stmt : funcNode.getBody()) coletarStringsRecursivo(stmt);
         }
-
-        if (node instanceof ListAddNode listAdd) {
-            ASTNode valueNode = listAdd.getValuesNode();
-            if (valueNode instanceof LiteralNode lit && lit.value.getType().equals("string")) {
-                globalStrings.getOrCreateString((String) lit.value.getValue());
-            } else {
-                coletarStringsRecursivo(valueNode);
-            }
-        }
-
         if (node instanceof InputNode inputNode && inputNode.getPrompt() != null) {
             globalStrings.getOrCreateString(inputNode.getPrompt());
         }
     }
+
 
     private boolean containsList(MainAST node) {
         for (ASTNode stmt : node.body) {

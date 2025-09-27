@@ -46,9 +46,9 @@ public class ImportNode extends ASTNode {
 
             for (ASTNode node : ast) {
                 if (node instanceof FunctionNode funcNode) {
-                    // Aqui armazenamos o FunctionNode no namespace
-                    importCtx.declareVariable(funcNode.name, new TypedValue("function", funcNode));
-                } else if (node instanceof VariableDeclarationNode varNode) {
+                    importCtx.declareVariable(funcNode.getName(), new TypedValue("function", funcNode));
+                }
+                else if (node instanceof VariableDeclarationNode varNode) {
                     varNode.evaluate(importCtx);
                 }
             }

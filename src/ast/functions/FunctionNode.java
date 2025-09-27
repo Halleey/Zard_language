@@ -6,20 +6,29 @@ import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;
-public class FunctionNode extends ASTNode {
-    public final String name;
-    public final List<String> params;
-    public final List<String> paramTypes; // novo
-    public final List<ASTNode> body;
 
-    public FunctionNode(String name, List<String> params, List<String> paramTypes, List<ASTNode> body) {
+
+public class FunctionNode extends ASTNode {
+    private final String name;
+    private final List<String> params;
+    private final List<String> paramTypes;
+    private final List<ASTNode> body;
+    private final String returnType; // novo campo
+
+    public FunctionNode(String name, List<String> params, List<String> paramTypes,
+                        List<ASTNode> body, String returnType) {
         this.name = name;
         this.params = params;
-        this.paramTypes = paramTypes; // inicializa
+        this.paramTypes = paramTypes;
         this.body = body;
+        this.returnType = returnType != null ? returnType : "void"; // default
     }
 
     public List<String> getParamTypes() { return paramTypes; }
+    public String getReturnType() { return returnType; }
+    public String getName() { return name; }
+    public List<String> getParams() { return params; }
+    public List<ASTNode> getBody() { return body; }
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
@@ -34,11 +43,11 @@ public class FunctionNode extends ASTNode {
 
     @Override
     public void print(String prefix) {
-        System.out.println(prefix + "Function: " + name);
+        System.out.println(prefix + "Function: " + name + " returns " + returnType);
         if (!params.isEmpty()) {
             System.out.println(prefix + "  Parameters:");
-            for (String p : params) {
-                System.out.println(prefix + "    " + p + " type " + getParamTypes());
+            for (int i = 0; i < params.size(); i++) {
+                System.out.println(prefix + "    " + params.get(i) + " type " + paramTypes.get(i));
             }
         }
         if (!body.isEmpty()) {
@@ -47,17 +56,5 @@ public class FunctionNode extends ASTNode {
                 stmt.print(prefix + "    ");
             }
         }
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public List<String> getParams() {
-        return params;
-    }
-
-    public List<ASTNode> getBody() {
-        return body;
     }
 }

@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FunctionCallParser {
-
     private final Parser parser;
 
     public FunctionCallParser(Parser parser) {
@@ -16,9 +15,7 @@ public class FunctionCallParser {
     }
 
     public FunctionCallNode parseFunctionCall(String funcName) {
-        // funcName já vem como "math.Max" do parser principal
-
-        parser.eat(Token.TokenType.DELIMITER, "("); // consome '('
+        parser.eat(Token.TokenType.DELIMITER, "(");
 
         List<ASTNode> args = new ArrayList<>();
         if (!parser.current().getValue().equals(")")) {
@@ -39,6 +36,4 @@ public class FunctionCallParser {
 
         return new FunctionCallNode(funcName, args);
     }
-
-
 }

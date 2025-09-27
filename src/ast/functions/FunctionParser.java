@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FunctionParser {
-
     private final Parser parser;
 
     public FunctionParser(Parser parser) {
@@ -26,24 +25,31 @@ public class FunctionParser {
         List<String> paramTypes = new ArrayList<>();
         if (!parser.current().getValue().equals(")")) {
             do {
-                // pega tipo e nome
-                String type = parser.current().getValue();
+                String type = parser.current().getValue(); // tipo do param
                 parser.advance();
-                String name = parser.current().getValue();
+                String name = parser.current().getValue(); // nome do param
                 parser.advance();
 
                 paramNames.add(name);
                 paramTypes.add(type);
 
-                if (parser.current().getValue().equals(",")) parser.advance();
-                else break;
+                if (parser.current().getValue().equals(",")) {
+                    parser.advance();
+                } else {
+                    break;
+                }
             } while (!parser.current().getValue().equals(")"));
         }
         parser.eat(Token.TokenType.DELIMITER, ")");
 
-        parser.pushContext();
+        // tipo de retorno opcional
+        String returnType = "void";
+        if (parser.current().getType() == Token.TokenType.IDENTIFIER) {
+            returnType = parser.current().getValue();
+            parser.advance();
+        }
 
-        // declara variáveis com tipo
+        parser.pushContext();
         for (int i = 0; i < paramNames.size(); i++) {
             parser.declareVariable(paramNames.get(i), paramTypes.get(i));
         }
@@ -51,7 +57,6 @@ public class FunctionParser {
         List<ASTNode> body = parser.parseBlock();
         parser.popContext();
 
-        return new FunctionNode(funcName, paramNames, paramTypes, body); // passa os tipos
+        return new FunctionNode(funcName, paramNames, paramTypes, body, returnType);
     }
-
 }

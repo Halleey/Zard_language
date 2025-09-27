@@ -3,6 +3,7 @@ import low.module.LLVisitorMain;
 import low.TempManager;
 import ast.variables.BinaryOpNode;
 
+
 public class BinaryOpEmitter {
     private final TempManager temps;
     private final LLVisitorMain visitor;
@@ -24,7 +25,6 @@ public class BinaryOpEmitter {
 
         String resultTemp = temps.newTemp();
         StringBuilder llvm = new StringBuilder();
-
 
         llvm.append(leftLLVM).append("\n").append(rightLLVM).append("\n");
 
@@ -85,7 +85,6 @@ public class BinaryOpEmitter {
                 llvm.append("  ").append(tmp).append(" = call i8* @concat_strings(i8* ")
                         .append(leftTemp).append(", i8* ").append(rightTemp).append(")\n")
                         .append(";;VAL:").append(tmp).append(";;TYPE:i8*\n");
-                resultTemp = tmp;
             } else if (node.operator.equals("==") || node.operator.equals("!=")) {
                 String tmp = temps.newTemp();
                 llvm.append("  ").append(tmp).append(" = call i1 @strcmp_eq(i8* ")

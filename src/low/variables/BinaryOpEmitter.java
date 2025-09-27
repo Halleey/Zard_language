@@ -14,21 +14,33 @@ public class BinaryOpEmitter {
     }
 
     public String emit(BinaryOpNode node) {
+        // 1. Avalia os operandos
         String leftLLVM = node.left.accept(visitor);
         String rightLLVM = node.right.accept(visitor);
 
+        // 2. Extrai temp e tipo AST
         String leftTemp = extractTemp(leftLLVM);
         String rightTemp = extractTemp(rightLLVM);
 
-        String leftType = extractType(leftLLVM);
-        String rightType = extractType(rightLLVM);
+        String leftTypeAST = extractType(leftLLVM);
+        String rightTypeAST = extractType(rightLLVM);
+
+        // 3. Converte tipos AST para LLVM
+        String leftType = toLLVMType(leftTypeAST);
+        String rightType = toLLVMType(rightTypeAST);
+
+        // 4. Debug completo
+        System.out.println("=== DEBUG BinaryOpEmitter ===");
+        System.out.println("Operator: " + node.operator);
+        System.out.println("LeftTemp: " + leftTemp + ", LeftType(AST): " + leftTypeAST + ", LeftType(LLVM): " + leftType);
+        System.out.println("RightTemp: " + rightTemp + ", RightType(AST): " + rightTypeAST + ", RightType(LLVM): " + rightType);
 
         String resultTemp = temps.newTemp();
         StringBuilder llvm = new StringBuilder();
 
         llvm.append(leftLLVM).append("\n").append(rightLLVM).append("\n");
 
-        // INT
+        // 5. INT
         if (leftType.equals("i32") && rightType.equals("i32")) {
             String op = switch (node.operator) {
                 case "+" -> "add";
@@ -47,17 +59,19 @@ public class BinaryOpEmitter {
                     .append(" i32 ").append(leftTemp).append(", ").append(rightTemp).append("\n")
                     .append(";;VAL:").append(resultTemp).append(";;TYPE:").append(op.startsWith("icmp") ? "i1" : "i32").append("\n");
         }
-        // DOUBLE
+        // 6. DOUBLE
         else if (leftType.equals("double") || rightType.equals("double")) {
             if (leftType.equals("i32")) {
                 String tmp = temps.newTemp();
                 llvm.append("  ").append(tmp).append(" = sitofp i32 ").append(leftTemp).append(" to double\n");
                 leftTemp = tmp;
+                leftType = "double";
             }
             if (rightType.equals("i32")) {
                 String tmp = temps.newTemp();
                 llvm.append("  ").append(tmp).append(" = sitofp i32 ").append(rightTemp).append(" to double\n");
                 rightTemp = tmp;
+                rightType = "double";
             }
 
             String op = switch (node.operator) {
@@ -78,7 +92,7 @@ public class BinaryOpEmitter {
                     .append(" double ").append(leftTemp).append(", ").append(rightTemp).append("\n")
                     .append(";;VAL:").append(resultTemp).append(";;TYPE:").append(op.startsWith("fcmp") ? "i1" : "double").append("\n");
         }
-        // STRING
+        // 7. STRING
         else if (leftType.equals("i8*") && rightType.equals("i8*")) {
             if (node.operator.equals("+")) {
                 String tmp = temps.newTemp();
@@ -117,5 +131,15 @@ public class BinaryOpEmitter {
     private String extractType(String code) {
         int typeIdx = code.lastIndexOf(";;TYPE:");
         return code.substring(typeIdx + 7).trim();
+    }
+
+    private String toLLVMType(String type) {
+        return switch (type) {
+            case "int" -> "i32";
+            case "double" -> "double";
+            case "boolean" -> "i1";
+            case "string", "list" -> "i8*";
+            default -> type; // já pode estar em LLVM
+        };
     }
 }

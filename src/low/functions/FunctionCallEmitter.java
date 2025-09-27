@@ -2,22 +2,21 @@ package low.functions;
 
 import ast.ASTNode;
 import ast.functions.FunctionCallNode;
-import ast.functions.FunctionNode;
 import low.TempManager;
 import low.module.LLVisitorMain;
 
 import java.util.ArrayList;
 import java.util.List;
+
+
 public class FunctionCallEmitter {
     private final TempManager temps;
-    private final LLVisitorMain visitor;
 
-    public FunctionCallEmitter(TempManager temps, LLVisitorMain visitor) {
+    public FunctionCallEmitter(TempManager temps) {
         this.temps = temps;
-        this.visitor = visitor;
     }
 
-    public String emit(FunctionCallNode node) {
+    public String emit(FunctionCallNode node, LLVisitorMain visitor) {
         StringBuilder sb = new StringBuilder();
         List<String> llvmArgs = new ArrayList<>();
 
@@ -31,24 +30,14 @@ public class FunctionCallEmitter {
             sb.append(argLLVM);
         }
 
-        // Deduz tipo de retorno a partir do FunctionNode
-        FunctionNode fn = visitor.getFunctionNode(node.getName());
-        String fnReturnType = (fn != null) ? fn.getReturnType() : "void";
-        String llvmRetType = mapType(fnReturnType);
+        String retTemp = temps.newTemp();
+        String retType = "i32"; // ajustar se função for dinâmica
 
-        if (llvmRetType.equals("void")) {
-            // Função void: chama direto, sem atribuir
-            sb.append("  call void @").append(node.getName())
-                    .append("(").append(String.join(", ", llvmArgs)).append(")\n");
-        } else {
-            // Função com retorno: cria temp
-            String retTemp = temps.newTemp();
-            sb.append("  ").append(retTemp)
-                    .append(" = call ").append(llvmRetType)
-                    .append(" @").append(node.getName())
-                    .append("(").append(String.join(", ", llvmArgs)).append(")\n")
-                    .append(";;VAL:").append(retTemp).append(";;TYPE:").append(llvmRetType).append("\n");
-        }
+        sb.append("  ").append(retTemp)
+                .append(" = call ").append(retType)
+                .append(" @").append(node.getName())
+                .append("(").append(String.join(", ", llvmArgs)).append(")\n")
+                .append(";;VAL:").append(retTemp).append(";;TYPE:").append(retType).append("\n");
 
         return sb.toString();
     }
@@ -64,16 +53,5 @@ public class FunctionCallEmitter {
         int typeIdx = code.lastIndexOf(";;TYPE:");
         if (typeIdx == -1) throw new RuntimeException("Não encontrou ;;TYPE: em: " + code);
         return code.substring(typeIdx + 7).trim();
-    }
-
-    private String mapType(String type) {
-        return switch (type) {
-            case "int" -> "i32";
-            case "double" -> "double";
-            case "boolean" -> "i1";
-            case "string", "list", "var" -> "i8*";
-            case "void" -> "void";
-            default -> throw new RuntimeException("Tipo não suportado: " + type);
-        };
     }
 }

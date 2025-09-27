@@ -2,7 +2,9 @@ package low.prints;
 
 import ast.ASTNode;
 
+import ast.functions.FunctionCallNode;
 import ast.lists.ListGetNode;
+import low.functions.FunctionCallEmitter;
 import low.lists.ListGetEmitter;
 import low.main.GlobalStringManager;
 import low.module.LLVisitorMain;
@@ -23,7 +25,6 @@ public class PrintEmitter {
         if (expr instanceof LiteralNode lit && lit.value.getType().equals("string")) {
             return emitStringLiteral((String) lit.value.getValue());
         }
-
 
         if (expr instanceof VariableNode varNode) {
             String varName = varNode.getName();

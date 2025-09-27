@@ -1,10 +1,21 @@
 import "src/language/stdlib/Math.zd" as math;
 main {
-int a;
-double b = input();
-string nome = "hallyson";
-boolean isReal = input();
-list teste = ("teste", 13, true, false);
-teste.addAll(a, b, nome, isReal);
-print(teste);
+
+
+function sub(int a, int b) {
+return a -b;
+}
+
+
+function dividir(int a, int b) {
+return a /b;
+}
+print(sub(10,2));
+print(dividir(5,2));
+
+list nomes = ("halley", "angel");
+print("digite um novo nome");
+string no = input();
+nomes.add(no);
+print(nomes);
 }

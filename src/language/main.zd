@@ -1,21 +1,40 @@
 import "src/language/stdlib/Math.zd" as math;
 main {
-
-
-function sub(int a, int b) {
+function soma(int a, int b) {
 return a -b;
 }
 
-
-function dividir(int a, int b) {
-return a /b;
+function bool() {
+return  true;
 }
-print(sub(10,2));
-print(dividir(5,2));
 
-list nomes = ("halley", "angel");
-print("digite um novo nome");
-string no = input();
-nomes.add(no);
+function factorial(int n) {
+    if (n < 0) {
+        print("Erro factorial de numero negativo");
+        return 0;
+    }
+    if (n == 0) {
+     return 1;
+    }
+    return n * factorial(n - 1);
+}
+
+
+function sub(double a, double b) {
+return a -b;
+}
+
+function hello(){return "hello world";}
+
+string nome = input();
+
+list nomes = ("nome",  "angela", 14);
+nomes.add(nome);
+print(nome);
+print(factorial(5));
+print(bool());
+print(soma(3,4));
+print(sub(10.3,2.2));
 print(nomes);
+print(hello());
 }

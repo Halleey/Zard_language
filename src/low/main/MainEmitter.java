@@ -1,6 +1,8 @@
 package low.main;
 
 import ast.ASTNode;
+import ast.exceptions.ReturnNode;
+import ast.functions.FunctionCallNode;
 import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
@@ -19,7 +21,6 @@ import ast.variables.VariableDeclarationNode;
 
 import java.util.HashSet;
 import java.util.Set;
-
 public class MainEmitter {
     private final GlobalStringManager globalStrings;
     private final Set<String> listasAlocadas = new HashSet<>();
@@ -33,31 +34,23 @@ public class MainEmitter {
     public String emit(MainAST node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
 
+
         llvm.append(emitHeader(node)).append("\n");
 
+        // 2. Coleta todos os literais de string, incluindo os de funções
         for (ASTNode stmt : node.body) {
             coletarStringsRecursivo(stmt);
         }
 
-        for (ASTNode stmt : node.body) {
-            if (stmt instanceof VariableDeclarationNode varDecl && varDecl.initializer instanceof ListNode listNode) {
-                for (ASTNode element : listNode.getList().getElements()) {
-                    if (element instanceof LiteralNode lit && lit.value.getType().equals("string")) {
-                        globalStrings.getOrCreateString((String) lit.value.getValue());
-                    }
-                }
-            }
-        }
         llvm.append(globalStrings.getGlobalStrings()).append("\n");
+
 
         FunctionEmitter fnEmitter = new FunctionEmitter(visitor);
         for (ASTNode stmt : node.body) {
             if (stmt instanceof FunctionNode fn) {
-                llvm.append("; === Função: ").append(fn.getName()).append(" ===\n");
                 llvm.append(fnEmitter.emit(fn));
             }
         }
-
 
         llvm.append(emitMainStart());
 
@@ -66,7 +59,6 @@ public class MainEmitter {
             llvm.append("  ; ").append(stmt.getClass().getSimpleName()).append("\n");
             llvm.append(stmt.accept(visitor)); // executa visitor
         }
-
 
         if (!listasAlocadas.isEmpty()) {
             llvm.append("  ; === Free das listas alocadas ===\n");
@@ -83,56 +75,35 @@ public class MainEmitter {
         return llvm.toString();
     }
 
-
     private void coletarStringsRecursivo(ASTNode node) {
-        if (node instanceof PrintNode printNode && printNode.expr instanceof LiteralNode lit &&
-                lit.value.getType().equals("string")) {
+        if (node instanceof LiteralNode lit && lit.value.getType().equals("string")) {
             globalStrings.getOrCreateString((String) lit.value.getValue());
         }
 
-        if (node instanceof VariableDeclarationNode varDecl) {
-            // Se for literal string
-            if (varDecl.initializer instanceof LiteralNode litInit &&
-                    litInit.value.getType().equals("string")) {
-                globalStrings.getOrCreateString((String) litInit.value.getValue());
-            }
-            // Se for lista
-            else if (varDecl.initializer instanceof ListNode listInit) {
-                for (ASTNode element : listInit.getList().getElements()) {
-                    coletarStringsRecursivo(element); // recursivo para Literals ou outros nós
-                }
-            }
-        }
-
-        if (node instanceof AssignmentNode assignNode) {
-            if (assignNode.valueNode instanceof LiteralNode litAssign &&
-                    litAssign.value.getType().equals("string")) {
-                globalStrings.getOrCreateString((String) litAssign.value.getValue());
-            } else {
-                coletarStringsRecursivo(assignNode.valueNode);
-            }
-        }
-
-        if (node instanceof IfNode ifNode) {
+        if (node instanceof PrintNode printNode) {
+            coletarStringsRecursivo(printNode.expr);
+        } else if (node instanceof ReturnNode returnNode && returnNode.expr != null) {
+            coletarStringsRecursivo(returnNode.expr);
+        } else if (node instanceof VariableDeclarationNode varDecl && varDecl.initializer != null) {
+            coletarStringsRecursivo(varDecl.initializer);
+        } else if (node instanceof AssignmentNode assignNode && assignNode.valueNode != null) {
+            coletarStringsRecursivo(assignNode.valueNode);
+        } else if (node instanceof IfNode ifNode) {
             coletarStringsRecursivo(ifNode.condition);
             for (ASTNode stmt : ifNode.thenBranch) coletarStringsRecursivo(stmt);
             if (ifNode.elseBranch != null)
                 for (ASTNode stmt : ifNode.elseBranch) coletarStringsRecursivo(stmt);
-        }
-
-        if (node instanceof WhileNode whileNode) {
+        } else if (node instanceof WhileNode whileNode) {
             coletarStringsRecursivo(whileNode.condition);
             for (ASTNode stmt : whileNode.body) coletarStringsRecursivo(stmt);
-        }
-
-        if (node instanceof FunctionNode funcNode) {
+        } else if (node instanceof FunctionNode funcNode) {
             for (ASTNode stmt : funcNode.getBody()) coletarStringsRecursivo(stmt);
-        }
-        if (node instanceof InputNode inputNode && inputNode.getPrompt() != null) {
+        } else if (node instanceof ListNode listNode) {
+            for (ASTNode element : listNode.getList().getElements()) coletarStringsRecursivo(element);
+        } else if (node instanceof InputNode inputNode && inputNode.getPrompt() != null) {
             globalStrings.getOrCreateString(inputNode.getPrompt());
         }
     }
-
 
     private boolean containsList(MainAST node) {
         for (ASTNode stmt : node.body) {
@@ -172,14 +143,14 @@ public class MainEmitter {
             declare i32 @inputInt(i8*)
             declare double @inputDouble(i8*)
             declare i1 @inputBool(i8*)
-            declare i8*@inputString(i8*)
+            declare i8* @inputString(i8*)
         """);
 
         if (containsList(node)) {
             header.append("\n; === Runtime de listas ===\n");
             header.append("%ArrayList = type opaque\n");
             header.append("declare i8* @arraylist_create(i64)\n")
-                    .append("declare void @setItems(i8*, %DynValue*)\n") // corrigido DynValue*
+                    .append("declare void @setItems(i8*, %DynValue*)\n")
                     .append("declare void @printList(i8*)\n")
                     .append("declare void @removeItem(%ArrayList*, i64)\n")
                     .append("declare void @clearList(%ArrayList*)\n")

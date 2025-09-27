@@ -43,17 +43,10 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final ListSizeEmitter sizeEmitter = new ListSizeEmitter(temps);
     private final ListGetEmitter getEmitter = new ListGetEmitter(temps);
     private final ListAddAllEmitter allEmitter = new ListAddAllEmitter(temps, globalStrings);
-    private final FunctionEmitter functionEmitter = new FunctionEmitter(this);
     private final Set<String> listVars = new HashSet<>();;
     private final FunctionCallEmitter callEmiter = new FunctionCallEmitter(temps);
     private final Map<String, FunctionNode> functions = new HashMap<>();
-
-
-    public FunctionNode getFunctionNode(String name) {
-        return functions.get(name);
-    }
-
-
+    private final Map<String, String> functionTypes = new HashMap<>();
     public void registerListVar(String name) {
         listVars.add(name);
     }
@@ -201,4 +194,21 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public void putVarType(String name, String type) {
         varTypes.put(name, type);
     }
+
+    public void registerFunctionType(String name, String llvmType) {
+        functionTypes.put(name, llvmType);
+    }
+
+    public String getFunctionType(String name) {
+        return functionTypes.get(name); // usado pelo FunctionCallEmitter
+    }
+
+    public FunctionCallEmitter getCallEmitter() {
+        return callEmiter;
+    }
+
+    public GlobalStringManager getGlobalStrings() {
+        return globalStrings;
+    }
+
 }

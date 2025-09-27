@@ -1,6 +1,7 @@
 package low.exceptions;
 
 import ast.exceptions.ReturnNode;
+import ast.variables.LiteralNode;
 import low.TempManager;
 import low.module.LLVisitorMain;
 
@@ -14,16 +15,25 @@ public class ReturnEmitter {
     }
 
     public String emit(ReturnNode node) {
-        // Avalia a expressão do return
+        // Caso retorno de literal string
+        if (node.expr instanceof LiteralNode lit && lit.value.getType().equals("string")) {
+            String str = (String) lit.value.getValue();
+            String strName = visitor.getGlobalStrings().getOrCreateString(str);
+            int len = str.length() + 1; // inclui \0
+            return "  ret i8* getelementptr inbounds ([" + len + " x i8], [" + len + " x i8]* "
+                    + strName + ", i32 0, i32 0)\n";
+        }
+
+        // Avalia expressão normalmente
         String exprLLVM = node.expr.accept(visitor);
 
         // Extrai valor e tipo do ;;VAL: e ;;TYPE:
         String valueTemp = extractTemp(exprLLVM);
         String llvmType = extractType(exprLLVM);
 
-        // Monta o LLVM final
         return exprLLVM + "  ret " + llvmType + " " + valueTemp + "\n";
     }
+
 
     private String extractTemp(String code) {
         int lastValIdx = code.lastIndexOf(";;VAL:");

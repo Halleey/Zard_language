@@ -12,6 +12,7 @@ import ast.prints.PrintNode;
 import ast.variables.LiteralNode;
 import ast.variables.VariableNode;
 
+
 public class PrintEmitter {
     private final GlobalStringManager globalStrings;
 
@@ -22,10 +23,12 @@ public class PrintEmitter {
     public String emit(PrintNode node, LLVisitorMain visitor) {
         ASTNode expr = node.expr;
 
+        // Caso literal string
         if (expr instanceof LiteralNode lit && lit.value.getType().equals("string")) {
             return emitStringLiteral((String) lit.value.getValue());
         }
 
+        // Caso variável
         if (expr instanceof VariableNode varNode) {
             String varName = varNode.getName();
             String type = visitor.getVarType(varName);
@@ -39,29 +42,28 @@ public class PrintEmitter {
             }
         }
 
-
+        // Caso lista.get
         if (expr instanceof ListGetNode listGetNode) {
             ListGetEmitter listGetEmitter = new ListGetEmitter(visitor.getTemps());
-
             String llvmListGet = listGetEmitter.emit(listGetNode, visitor);
-
-
             String tmpDyn = extractTemp(llvmListGet);
-
-            // Retorna LLVM com print seguro
             return llvmListGet + "  call void @printDynValue(%DynValue* " + tmpDyn + ")\n";
         }
 
-        //  outra expressão (int, double, bool)
+        // Caso chamada de função
+        if (expr instanceof FunctionCallNode) {
+            String exprLLVM = expr.accept(visitor);
+            return emitPrimitiveOrExpr(exprLLVM, visitor);
+        }
+
+        // Qualquer outra expressão (int, double, bool)
         String exprLLVM = expr.accept(visitor);
         return emitPrimitiveOrExpr(exprLLVM, visitor);
     }
 
-
-
     private String emitStringLiteral(String value) {
         String strName = globalStrings.getOrCreateString(value);
-        int len = value.length() + 1; // apenas o terminador \0
+        int len = value.length() + 1; // inclui \0
         return "  call i32 (i8*, ...) @printf(i8* getelementptr ([" + len +
                 " x i8], [" + len + " x i8]* " + strName + ", i32 0, i32 0))\n";
     }
@@ -70,6 +72,7 @@ public class PrintEmitter {
         String tmp = visitor.getTemps().newTemp();
         StringBuilder llvm = new StringBuilder();
         llvm.append("  ").append(tmp).append(" = load i8*, i8** %").append(varName).append("\n");
+        // usa sempre @.strStr com [4 x i8] pois é apenas "%s"
         llvm.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* ").append(tmp).append(")\n");
         return llvm.toString();
     }
@@ -108,6 +111,8 @@ public class PrintEmitter {
                 llvm.append("  ").append(zextTmp).append(" = zext i1 ").append(temp).append(" to i32\n");
                 llvm.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 ").append(zextTmp).append(")\n");
             }
+            case "i8*" -> llvm.append("  call i32 (i8*, ...) @printf(i8* ").append(temp).append(")\n");
+
             case "any" ->
                     llvm.append("  call void @printDynValue(%DynValue* ").append(temp).append(")\n");
             default ->

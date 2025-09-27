@@ -1,5 +1,6 @@
 package low.main;
 
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -19,7 +20,7 @@ public class GlobalStringManager {
         for (Map.Entry<String, String> e : stringMap.entrySet()) {
             String literal = e.getKey();
             String name = e.getValue();
-            int len = literal.length() + 1; // +1 para o \00
+            int len = literal.getBytes(StandardCharsets.UTF_8).length + 1; // +1 para o \00
             sb.append(name)
                     .append(" = private constant [")
                     .append(len)
@@ -29,4 +30,5 @@ public class GlobalStringManager {
         }
         return sb.toString();
     }
+
 }

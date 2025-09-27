@@ -12,7 +12,6 @@ import low.module.LLVisitorMain;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class FunctionEmitter {
     private final LLVisitorMain visitor;
 
@@ -27,7 +26,7 @@ public class FunctionEmitter {
         for (int i = 0; i < fn.getParams().size(); i++) {
             String name = fn.getParams().get(i);
             String type = fn.getParamTypes().get(i);
-            visitor.putVarType(name, type);  // <- precisa existir ou usar varTypes.put
+            visitor.putVarType(name, type);
         }
 
         // 2. Deduz tipo de retorno se for void e tiver ReturnNode
@@ -90,10 +89,10 @@ public class FunctionEmitter {
         return "void";
     }
 
-    // Inferência de tipo simples baseada no AST
+    // Inferência de tipo completa baseada no AST
     private String inferType(ASTNode node) {
         if (node instanceof LiteralNode lit) {
-            return lit.value.getType();
+            return lit.value.getType(); // int, double, boolean, string
         } else if (node instanceof VariableNode var) {
             String type = visitor.getVarType(var.getName());
             if (type == null) throw new RuntimeException("Variável não declarada: " + var.getName());
@@ -101,13 +100,24 @@ public class FunctionEmitter {
         } else if (node instanceof BinaryOpNode bin) {
             String leftType = inferType(bin.left);
             String rightType = inferType(bin.right);
+
+            // Promover int -> double se necessário
             if (!leftType.equals(rightType)) {
-                // se quiser, promover int -> double automaticamente
+                if ((leftType.equals("int") && rightType.equals("double")) || (leftType.equals("double") && rightType.equals("int"))) {
+                    return "double";
+                } else {
+                    throw new RuntimeException("Tipos incompatíveis na operação binária: " + leftType + " vs " + rightType);
+                }
             }
             return leftType; // assume iguais
         } else if (node instanceof ReturnNode ret) {
             return inferType(ret.expr);
         }
+//        else if (node instanceof FunctionCallNode call) {
+//            FunctionNode fn = visitor.getFunctionNode(call.getName());
+//            if (fn == null) throw new RuntimeException("Função não encontrada: " + call.getName());
+//            return fn.getReturnType();
+//        }
         throw new RuntimeException("Não foi possível inferir tipo de " + node.getClass());
     }
 

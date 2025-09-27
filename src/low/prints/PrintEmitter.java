@@ -57,7 +57,7 @@ public class PrintEmitter {
 
     private String emitStringLiteral(String value) {
         String strName = globalStrings.getOrCreateString(value);
-        int len = value.length() + 2; // inclui \n e \0
+        int len = value.length() + 1; // inclui \n e \0
         return "  call i32 (i8*, ...) @printf(i8* getelementptr ([" + len +
                 " x i8], [" + len + " x i8]* " + strName + ", i32 0, i32 0))\n";
     }

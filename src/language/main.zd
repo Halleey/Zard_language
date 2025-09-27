@@ -4,6 +4,8 @@ function somar(int a, int b){return a+b;}
 function multiplicar(double a, int b){return a+b;}
 print(somar(14,13));
 
+print("ola gente");
+
 
     list random = ("teste", true, false, 3.75, 9);
     string nome = "halley";

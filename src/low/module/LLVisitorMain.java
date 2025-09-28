@@ -10,6 +10,8 @@ import ast.loops.WhileNode;
 import low.exceptions.ReturnEmitter;
 import low.functions.FunctionCallEmitter;
 import low.functions.FunctionEmitter;
+import low.functions.ReturnTypeInferer;
+import low.functions.TypeMapper;
 import low.ifs.IfEmitter;
 import low.lists.*;
 import low.main.GlobalStringManager;
@@ -53,10 +55,12 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public boolean isList(String name) {
         return listVars.contains(name);
     }
+    private final TypeMapper typeMapper = new TypeMapper();
+    private final ReturnTypeInferer returnInferer = new ReturnTypeInferer(this, typeMapper);
 
     @Override
     public String visit(ReturnNode node) {
-        ReturnEmitter emitter = new ReturnEmitter(temps, this);
+        ReturnEmitter emitter = new ReturnEmitter(temps, this, typeMapper, returnInferer);
         return emitter.emit(node);
     }
 

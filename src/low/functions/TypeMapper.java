@@ -1,7 +1,12 @@
 package low.functions;
+public class TypeMapper {
 
-class TypeMapper {
     public String toLLVM(String type) {
+        switch (type) {
+            case "i32", "double", "i1", "i8*", "void":
+                return type;
+        }
+
         return switch (type) {
             case "int" -> "i32";
             case "double" -> "double";

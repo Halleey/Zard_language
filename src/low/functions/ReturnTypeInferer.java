@@ -15,7 +15,7 @@ import low.module.LLVisitorMain;
 import java.util.HashMap;
 import java.util.Map;
 
-class ReturnTypeInferer {
+public class ReturnTypeInferer {
     private final LLVisitorMain visitor;
 
     public ReturnTypeInferer(LLVisitorMain visitor, TypeMapper typeMapper) {
@@ -62,7 +62,7 @@ class ReturnTypeInferer {
         // Pode expandir para outros nós compostos se necessário
     }
 
-    private String inferType(ASTNode node, Map<String, String> localVars) {
+    public String inferType(ASTNode node, Map<String, String> localVars) {
         if (node instanceof LiteralNode lit) {
             return lit.value.getType();
         } else if (node instanceof VariableNode var) {

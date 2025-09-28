@@ -1,52 +1,12 @@
 import "src/language/stdlib/Math.zd" as math;
-main {
+main{
 
-function factorial(int n) {
-    int result = 1;
-    int i = 1;
-
-    while (i <= n) {
-        result = result * i;
-        i = i + 1;
-    }
-    return result;
+function dobrar(int n){
+return n * 2;
 }
 
-
-
-function fac(int n) {
-    if (n < 0) {
-        print("Erro: factorial de numero negativo!");
-        return 0;
-    }
-    if (n == 0) {
-     return 1;
-    }
-    return n * fac(n - 1);
+function multiplicar(int n){
+return dobrar(n);
 }
-function hello(){return "hello world";}
-
-print(hello());
-list nomes = ("zard", "angel");
-print(nomes);
-
-int a = 4;
-double b =3.14;
-string name = "zard";
-boolean i = true;
-boolean f = false;
-print(a);
-print(b);
-print(name);
-print(i);
-print(f);
-
-nomes.addAll(a, b, name, f);
-nomes.remove(0);
-print(nomes);
-
-    print("Digite um numero para calcular o fatorial:");
-int no = input();
-    print(factorial(no));
-
+print(multiplicar(10));
 }

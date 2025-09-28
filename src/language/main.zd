@@ -11,6 +11,9 @@ function fac(int n) {
     }
     return n * fac(n - 1);
 }
+function hello(){return "hello world";}
+
+print(hello());
 list nomes = ("zard", "angel");
 print(nomes);
 
@@ -26,6 +29,7 @@ print(i);
 print(f);
 
 nomes.addAll(a, b, name, f);
+nomes.remove(0);
 print(nomes);
 
     print("Digite um numero para calcular o fatorial:");

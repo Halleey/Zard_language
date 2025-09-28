@@ -21,6 +21,7 @@ import ast.variables.VariableDeclarationNode;
 
 import java.util.HashSet;
 import java.util.Set;
+
 public class MainEmitter {
     private final GlobalStringManager globalStrings;
     private final Set<String> listasAlocadas = new HashSet<>();

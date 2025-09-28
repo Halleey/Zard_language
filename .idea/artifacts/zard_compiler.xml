@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="zard_compiler">
+    <output-path>$PROJECT_DIR$/out/artifacts/zard_compiler</output-path>
+    <root id="archive" name="zard_AST.jar">
+      <element id="module-output" name="zard_AST" />
+    </root>
+  </artifact>
+</component>

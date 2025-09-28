@@ -1,6 +1,7 @@
 package translate;
 
 import ast.ASTNode;
+
 import ast.exceptions.ReturnValue;
 import ast.runtime.RuntimeContext;
 import low.module.LLVMGenerator;
@@ -12,6 +13,7 @@ import java.nio.file.Path;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.io.*;
 public class Executor {
     public static void main(String[] args) {
         try {
@@ -89,18 +91,17 @@ public class Executor {
 
             // Execução na AST (interpretação)
 //            System.out.println("=== Execution ===");
-//            RuntimeContext ctx = new RuntimeContext();
-//            for (ASTNode node : ast) {
-//                try {
-//                    node.evaluate(ctx);
-//                } catch (ReturnValue rv) {
-//                    break;
-//                }
-//            }
+            RuntimeContext ctx = new RuntimeContext();
+            for (ASTNode node : ast) {
+                try {
+                    node.evaluate(ctx);
+                } catch (ReturnValue rv) {
+                    break;
+                }
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 }
-

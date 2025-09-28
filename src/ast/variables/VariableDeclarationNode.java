@@ -74,4 +74,8 @@ public class VariableDeclarationNode extends ASTNode {
 
     public String getName() { return name; }
     public String getType() { return type; }
+
+    public ASTNode getInitializer() {
+        return initializer;
+    }
 }

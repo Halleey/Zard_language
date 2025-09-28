@@ -1,14 +1,35 @@
 import "src/language/stdlib/Math.zd" as math;
 main {
-function teste(int a) {return a;}
-print(teste(10));
-int a = 5;
-double b  = input();
-string nome = "hallyson";
-boolean l = true;
+
+function fac(int n) {
+    if (n < 0) {
+        print("Erro: factorial de numero negativo!");
+        return 0;
+    }
+    if (n == 0) {
+     return 1;
+    }
+    return n * fac(n - 1);
+}
+list nomes = ("zard", "angel");
+print(nomes);
+
+int a = 4;
+double b =3.14;
+string name = "zard";
+boolean i = true;
+boolean f = false;
 print(a);
 print(b);
-print(nome);
-print(l);
+print(name);
+print(i);
+print(f);
+
+nomes.addAll(a, b, name, f);
+print(nomes);
+
+    print("Digite um numero para calcular o fatorial:");
+int no = input();
+    print(fac(no));
 
 }

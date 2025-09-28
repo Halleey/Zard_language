@@ -1,4 +1,5 @@
 package low;
+
 public class TempManager {
     private int tempCount = 0;
     private int strCount = 0;

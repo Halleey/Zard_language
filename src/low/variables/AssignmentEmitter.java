@@ -11,6 +11,8 @@ import low.main.GlobalStringManager;
 import low.module.LLVisitorMain;
 
 import java.util.Map;
+
+
 public class AssignmentEmitter {
     private final Map<String, String> varTypes;
     private final TempManager temps;
@@ -26,13 +28,14 @@ public class AssignmentEmitter {
     }
 
     public String emit(AssignmentNode assignNode) {
-        if (!varTypes.containsKey(assignNode.name)) {
-            throw new RuntimeException("Variável não declarada: " + assignNode.name);
+        // Pega ponteiro seguro
+        String varPtr = visitor.varEmitter.getVarPtr(assignNode.name);
+        String llvmType = varTypes.get(assignNode.name);
+        if (llvmType == null) {
+            throw new RuntimeException("Tipo LLVM não encontrado para variável: " + assignNode.name);
         }
 
-        String llvmType = varTypes.get(assignNode.name);
         StringBuilder llvm = new StringBuilder();
-        String varPtr = "%" + assignNode.name + ".addr";  // usa sempre .addr
 
         // LiteralNode
         if (assignNode.valueNode instanceof LiteralNode lit) {
@@ -48,7 +51,7 @@ public class AssignmentEmitter {
                         .append(", i1* ").append(varPtr).append("\n");
                 case "i8*" -> {
                     String strName = globalStrings.getOrCreateString((String) val);
-                    int len = ((String) val).length() + 2;
+                    int len = ((String) val).length() + 1;
                     llvm.append("  store i8* getelementptr ([")
                             .append(len).append(" x i8], [").append(len).append(" x i8]* ")
                             .append(strName).append(", i32 0, i32 0), i8** ")

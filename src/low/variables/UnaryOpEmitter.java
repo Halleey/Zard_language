@@ -5,20 +5,31 @@ import low.TempManager;
 import ast.variables.VariableNode;
 
 import java.util.Map;
-
 public class UnaryOpEmitter {
     private final Map<String, String> varTypes;
     private final TempManager temps;
+    private final VariableEmitter varEmitter; // precisa do emissor de variáveis
 
-    public UnaryOpEmitter(Map<String, String> varTypes, TempManager temps) {
+    public UnaryOpEmitter(Map<String, String> varTypes, TempManager temps, VariableEmitter varEmitter) {
         this.varTypes = varTypes;
         this.temps = temps;
+        this.varEmitter = varEmitter;
+    }
+
+    private String normalizeType(String type) {
+        return switch (type) {
+            case "int", "i32" -> "i32";
+            case "double" -> "double";
+            case "string", "i8*", "ptr" -> "i8*";
+            case "boolean", "bool", "i1" -> "i1";
+            default -> type; // deixa passar tipos customizados, se houver
+        };
     }
 
     public String emit(String operator, ASTNode expr) {
         StringBuilder llvm = new StringBuilder();
 
-        // Se for variável
+        // Só tratamos variáveis por enquanto
         if (expr instanceof VariableNode varNode) {
             String varName = varNode.getName();
             String llvmType = varTypes.get(varName);
@@ -27,11 +38,20 @@ public class UnaryOpEmitter {
                 throw new RuntimeException("Variável não declarada: " + varName);
             }
 
-            // Load do valor
+            // normaliza o tipo (int -> i32, boolean -> i1, etc)
+            llvmType = normalizeType(llvmType);
+
+            // pega o ponteiro correto (pode ser %a.addr dentro de função, ou global)
+            String ptr = varEmitter.getVarPtr(varName);
+            if (ptr == null) {
+                throw new RuntimeException("Ponteiro não encontrado para variável: " + varName);
+            }
+
+            // Load do valor atual
             String temp = temps.newTemp();
             llvm.append("  ").append(temp)
                     .append(" = load ").append(llvmType).append(", ")
-                    .append(llvmType).append("* %").append(varName).append("\n");
+                    .append(llvmType).append("* ").append(ptr).append("\n");
 
             switch (operator) {
                 case "++" -> {
@@ -45,7 +65,7 @@ public class UnaryOpEmitter {
                     }
                     // Store de volta
                     llvm.append("  store ").append(llvmType).append(" ").append(inc)
-                            .append(", ").append(llvmType).append("* %").append(varName).append("\n");
+                            .append(", ").append(llvmType).append("* ").append(ptr).append("\n");
                     return llvm.toString();
                 }
                 case "--" -> {
@@ -58,11 +78,11 @@ public class UnaryOpEmitter {
                         throw new RuntimeException("-- não suportado para " + llvmType);
                     }
                     llvm.append("  store ").append(llvmType).append(" ").append(dec)
-                            .append(", ").append(llvmType).append("* %").append(varName).append("\n");
+                            .append(", ").append(llvmType).append("* ").append(ptr).append("\n");
                     return llvm.toString();
                 }
                 case "+" -> {
-                    // operador unário + (basicamente não faz nada)
+                    // operador unário + (basicamente não faz nada além do load)
                     return llvm.toString();
                 }
                 case "-" -> {

@@ -88,15 +88,15 @@ public class Executor {
 //            if (exitCodeAsmFull == 0) System.out.println("Assembly completo gerado (um .s por arquivo)");
 
             // Execução na AST (interpretação)
-            System.out.println("=== Execution ===");
-            RuntimeContext ctx = new RuntimeContext();
-            for (ASTNode node : ast) {
-                try {
-                    node.evaluate(ctx);
-                } catch (ReturnValue rv) {
-                    break;
-                }
-            }
+//            System.out.println("=== Execution ===");
+//            RuntimeContext ctx = new RuntimeContext();
+//            for (ASTNode node : ast) {
+//                try {
+//                    node.evaluate(ctx);
+//                } catch (ReturnValue rv) {
+//                    break;
+//                }
+//            }
 
         } catch (Exception e) {
             e.printStackTrace();

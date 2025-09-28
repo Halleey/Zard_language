@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 public class FunctionCallEmitter {
     private final TempManager temps;
     private final Set<String> beingDeduced = new HashSet<>();
@@ -52,12 +53,19 @@ public class FunctionCallEmitter {
             retType = "i32"; // provisório
         }
 
-        String retTemp = temps.newTemp();
-        sb.append("  ").append(retTemp)
-                .append(" = call ").append(retType)
-                .append(" @").append(node.getName())
-                .append("(").append(String.join(", ", llvmArgs)).append(")\n")
-                .append(";;VAL:").append(retTemp).append(";;TYPE:").append(retType).append("\n");
+        if ("void".equals(retType)) {
+            // Funções void não podem receber nome em LLVM
+            sb.append("  call void @").append(node.getName())
+                    .append("(").append(String.join(", ", llvmArgs)).append(")\n")
+                    .append(";;VAL:void;;TYPE:void\n");
+        } else {
+            String retTemp = temps.newTemp();
+            sb.append("  ").append(retTemp)
+                    .append(" = call ").append(retType)
+                    .append(" @").append(node.getName())
+                    .append("(").append(String.join(", ", llvmArgs)).append(")\n")
+                    .append(";;VAL:").append(retTemp).append(";;TYPE:").append(retType).append("\n");
+        }
 
         return sb.toString();
     }

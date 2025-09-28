@@ -23,31 +23,25 @@ public class WhileEmitter {
 
         llvm.append("  br label %").append(condLabel).append("\n");
 
-        // cond
+        // --- condição ---
         llvm.append(condLabel).append(":\n");
         String condCode = node.condition.accept(visitor);
-
-        // extrai o último valor calculado (ex: %t2)
         String condVal = extractTemp(condCode);
-
-        llvm.append(condCode); // imprime as instruções do cond
+        llvm.append(condCode);
         llvm.append("  br i1 ").append(condVal)
                 .append(", label %").append(bodyLabel)
                 .append(", label %").append(endLabel).append("\n");
 
-        // body
+        // --- corpo ---
         llvm.append(bodyLabel).append(":\n");
-
         visitor.pushLoopEnd(endLabel);
 
         for (ASTNode stmt : node.body) {
-            llvm.append(stmt.accept(visitor));
+            llvm.append(stmt.accept(visitor)); // já gera store/load com ponteiro correto
         }
+
         visitor.popLoopEnd();
-
         llvm.append("  br label %").append(condLabel).append("\n");
-
-        // end
         llvm.append(endLabel).append(":\n");
 
         return llvm.toString();

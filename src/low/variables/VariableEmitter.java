@@ -24,7 +24,7 @@ public class VariableEmitter {
         this.visitor = visitor;
     }
 
-    private String mapLLVMType(String type) {
+    public String mapLLVMType(String type) {
         return switch (type) {
             case "int" -> "i32";
             case "double" -> "double";
@@ -148,4 +148,6 @@ public class VariableEmitter {
     public String getVarPtr(String name) {
         return localVars.get(name);
     }
+
+
 }

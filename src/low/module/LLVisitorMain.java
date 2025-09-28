@@ -30,7 +30,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public final VariableEmitter varEmitter = new VariableEmitter(varTypes, temps, globalStrings, this);
     private final PrintEmitter printEmitter = new PrintEmitter(globalStrings);
     private final AssignmentEmitter assignmentEmitter = new AssignmentEmitter(varTypes, temps, globalStrings, this);
-    private final UnaryOpEmitter unaryOpEmitter = new UnaryOpEmitter(varTypes, temps);
+    private final UnaryOpEmitter unaryOpEmitter = new UnaryOpEmitter(varTypes, temps, varEmitter);
     private final LiteralEmitter literalEmitter = new LiteralEmitter(temps,globalStrings);
     private final BinaryOpEmitter binaryEmitter = new BinaryOpEmitter(temps, this);
     private final IfEmitter ifEmitter = new IfEmitter(temps, this);
@@ -209,6 +209,9 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     public GlobalStringManager getGlobalStrings() {
         return globalStrings;
+    }
+    public VariableEmitter getVariableEmitter() {
+        return varEmitter;
     }
 
 }

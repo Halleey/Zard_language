@@ -21,25 +21,24 @@ public class ListEmitter {
     public String emit(ListNode node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
 
-        // 1️⃣ Registra strings literais para garantir que existam no header
+
         for (ASTNode element : node.getList().getElements()) {
             if (element instanceof LiteralNode lit && lit.value.getType().equals("string")) {
                 globalStrings.getOrCreateString((String) lit.value.getValue());
             }
         }
 
-        // 2️⃣ Cria a lista
+
         String listPtr = temps.newTemp();
         llvm.append("  ").append(listPtr).append(" = call i8* @arraylist_create(i64 4)\n");
 
-        // 3️⃣ Adiciona elementos à lista
+
         for (ASTNode element : node.getList().getElements()) {
             String dvTmp;
 
             if (element instanceof LiteralNode lit) {
                 Object val = lit.value.getValue();
                 String valType = lit.value.getType();
-                System.out.println("TIPO DA VARIAVEL " + valType);
                 dvTmp = temps.newTemp();
                 switch (valType) {
                     case "int" -> llvm.append("  ").append(dvTmp)
@@ -89,7 +88,6 @@ public class ListEmitter {
                     .append(", %DynValue* ").append(dvTmp).append(")\n");
         }
 
-        // 4️⃣ Retorna a lista
         llvm.append(";;VAL:").append(listPtr).append(";;TYPE:i8*\n");
         return llvm.toString();
     }

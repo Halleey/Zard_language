@@ -12,6 +12,18 @@ public class IfNode extends ASTNode {
     public final List<ASTNode> thenBranch;
     public final List<ASTNode> elseBranch; // pode ser null
 
+    public ASTNode getCondition() {
+        return condition;
+    }
+
+    public List<ASTNode> getThenBranch() {
+        return thenBranch;
+    }
+
+    public List<ASTNode> getElseBranch() {
+        return elseBranch;
+    }
+
     public IfNode(ASTNode condition, List<ASTNode> thenBranch, List<ASTNode> elseBranch) {
         this.condition = condition;
         this.thenBranch = thenBranch;

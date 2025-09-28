@@ -12,6 +12,10 @@ public class WhileNode extends ASTNode {
     public final ASTNode condition;
     public final List<ASTNode> body;
 
+    public List<ASTNode> getBody() {
+        return body;
+    }
+
     public WhileNode(ASTNode condition, List<ASTNode> body) {
         this.condition = condition;
         this.body = body;

@@ -59,8 +59,10 @@ public class ListMethodParser {
             }
             case "clear" -> {
                 parser.advance(); // consome '('
-                parser.eat(Token.TokenType.DELIMITER, ")");
+                System.out.println("token atual " + parser.current());
+                parser.eat(Token.TokenType.DELIMITER, "(");
                 ASTNode node = new ListClearNode(listVar);
+                parser.eat(Token.TokenType.DELIMITER, ")");
                 parser.eat(Token.TokenType.DELIMITER, ";");
                 yield node;
             }

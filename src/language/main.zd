@@ -10,7 +10,10 @@ return dobrar(n);
 print(multiplicar(10));
 
 string nome = "hallyson";
-list nomes = (nome, "halley", 3.14, 5, true, false);
+list nomes = ("teste", 99, 9.45, "zard", nome, "halley", 3.14, 5, true, false);
+print(nomes.get(0));
+print(nomes.size());
 print(nomes);
-
+nomes.clear();
+print(nomes);
 }

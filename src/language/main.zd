@@ -4,9 +4,13 @@ main{
 function dobrar(int n){
 return n * 2;
 }
-
 function multiplicar(int n){
 return dobrar(n);
 }
 print(multiplicar(10));
+
+string nome = "hallyson";
+list nomes = (nome, "halley", 3.14, 5, true, false);
+print(nomes);
+
 }

@@ -94,16 +94,14 @@ A linguagem continuará evoluindo para se tornar mais robusta e versátil. Algum
 * ✅ Funções recursivas já são suportadas.
 * ✅ Variáveis tipadas, literais e expressões complexas gerando LLVM IR.
 * ✅ Integração inicial de backend LLVM IR para variáveis, whiles e if's.
-
+* ✅ Inputs funcionais para armazenar entrada do usuário
+* ✅ Suporte a listas dinâmicas no compilador via código C + LLVM 
 ---
 ## 🔄 Melhorias em Desenvolvimento
-
-- 🟡 **Suporte a listas em LLVM:** Implementar inicialização, alocação e manipulação de listas dinâmicas diretamente no LLVM IR.
 - 🟡 **Suporte a mapas em LLVM:** Gerar LLVM para criação, acesso e modificação de mapas dinâmicos.
 - 🟡 **Suporte a funções como valores em LLVM:** Permitir armazenar funções em variáveis e chamá-las dinamicamente no LLVM IR.
-- 🟡 **Expansão do backend LLVM:** Melhorar a geração de IR para expressões complexas, operadores e controle de fluxo.
-- 🟡 **Inputs** Permitir a entrada de dados via teclado, para melhores interações.
-
+- 🟡 **Suporte a importações:** Suporte a importação de módulos externos no back end(somente disponivel na geração AST-front).
+- 🟡 **Otimização llvm:** Otimizar a geração de LLVM para ter melhor perfomance principalmente nas estruturas de dados.
 ## 📂 Uso
 
 1. Escreva seu código em um arquivo `.zd`.

@@ -86,7 +86,7 @@ public class Parser {
         if (tok.getType() == Token.TokenType.KEYWORD) {
             String val = tok.getValue();
             switch (val) {
-                case "int", "double", "string", "boolean", "map", "list", "var"-> {
+                case "int", "double", "string", "boolean", "Map", "List", "var"-> {
                     VarDeclarationParser varParser = new VarDeclarationParser(this);
                     return varParser.parseVarDeclaration();
                 }
@@ -172,10 +172,10 @@ public class Parser {
                 String varType = getVariableType(name);
 
                 ASTNode node;
-                if ("list".equals(varType)) {
+                if ("List".equals(varType)) {
                     ListMethodParser listParser = new ListMethodParser(this);
                     node = listParser.parseStatementListMethod(name);
-                } else if ("map".equals(varType)) {
+                } else if ("Map".equals(varType)) {
                     MapMethodParser mapParser = new MapMethodParser(this);
                     node = mapParser.parseStatementMapMethod(name);
                 } else {

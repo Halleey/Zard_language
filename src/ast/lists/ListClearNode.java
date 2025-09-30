@@ -24,7 +24,7 @@ public class ListClearNode extends ASTNode {
     public TypedValue evaluate(RuntimeContext ctx) {
         DynamicList list = (DynamicList) listNode.evaluate(ctx).getValue();
         list.getElements().clear();
-        return new TypedValue("list", list);
+        return new TypedValue("List", list);
     }
 
 

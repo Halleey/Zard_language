@@ -74,8 +74,8 @@ public class Lexer {
             case "main":
             case "while":
             case "call":
-            case "list":
-            case "map":
+            case "List":
+            case "Map":
             case "boolean":
             case "break":
             case "import":

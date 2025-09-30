@@ -54,14 +54,12 @@ public class Executor {
             cmdExe.addAll(runtimeFiles);
             cmdExe.add("-o");
             cmdExe.add("programa.exe");
-
             ProcessBuilder pbExe = new ProcessBuilder(cmdExe);
             pbExe.inheritIO();
             Process processExe = pbExe.start();
             int exitCodeExe = processExe.waitFor();
             if (exitCodeExe == 0) System.out.println("Executável gerado: programa.exe");
 //
-// Comando para gerar assembly só do LLVM IR
 //            List<String> cmdAsmPure = new ArrayList<>();
 //            cmdAsmPure.add("clang");
 //            cmdAsmPure.add("-S");          // gera assembly

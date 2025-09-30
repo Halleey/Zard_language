@@ -26,7 +26,7 @@ public class ListNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        return new TypedValue("list", list);
+        return new TypedValue("List", list);
     }
 
     @Override

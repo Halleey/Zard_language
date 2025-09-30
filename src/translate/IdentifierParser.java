@@ -46,10 +46,10 @@ public class IdentifierParser {
         if (parser.current().getValue().equals(".")) {
             String varType = parser.getVariableType(name);
 
-            if ("list".equals(varType)) {
+            if ("List".equals(varType)) {
                 ListMethodParser listParser = new ListMethodParser(parser);
                 return listParser.parseExpressionListMethod(name);
-            } else if ("map".equals(varType)) {
+            } else if ("List".equals(varType)) {
                 MapMethodParser mapParser = new MapMethodParser(parser);
                 return mapParser.parseExpressionMapMethod(name);
             } else {

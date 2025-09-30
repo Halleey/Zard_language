@@ -6,12 +6,11 @@ public class TypeMapper {
             case "i32", "double", "i1", "i8*", "void":
                 return type;
         }
-
         return switch (type) {
             case "int" -> "i32";
             case "double" -> "double";
             case "boolean" -> "i1";
-            case "string", "list", "var" -> "i8*";
+            case "string", "List", "var" -> "i8*";
             case "void" -> "void";
             default -> throw new RuntimeException("Tipo não suportado: " + type);
         };

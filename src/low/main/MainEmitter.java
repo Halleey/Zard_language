@@ -2,7 +2,6 @@ package low.main;
 
 import ast.ASTNode;
 import ast.exceptions.ReturnNode;
-import ast.functions.FunctionCallNode;
 import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;

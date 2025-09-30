@@ -37,7 +37,7 @@ public class ListAddAllNode extends ASTNode {
         for (ASTNode argNode : args) {
             TypedValue val = argNode.evaluate(ctx);
 
-            if (val.getType().equals("list")) {
+            if (val.getType().equals("List")) {
                 // Se for uma lista, adiciona cada elemento
                 DynamicList other = (DynamicList) val.getValue();
                 for (ASTNode elemNode : other.getElements()) {
@@ -49,7 +49,7 @@ public class ListAddAllNode extends ASTNode {
             }
         }
 
-        return new TypedValue("list", target);
+        return new TypedValue("List", target);
     }
 
     @Override

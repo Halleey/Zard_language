@@ -30,7 +30,7 @@ public class VarDeclarationParser {
         ASTNode initializer = null;
 
         // --- Listas ---
-        if (type.equals("list")) {
+        if (type.equals("List")) {
             if (parser.current().getValue().equals("=")) {
                 parser.advance();
                 parser.eat(Token.TokenType.DELIMITER, "(");
@@ -48,7 +48,7 @@ public class VarDeclarationParser {
             }
         }
 
-        else if (type.equals("map")) {
+        else if (type.equals("Map")) {
             if (parser.current().getValue().equals("=")) {
                 parser.advance();
                 MapParser mapParser = new MapParser(parser);

@@ -17,7 +17,6 @@ public class ListEmitter {
         this.temps = temps;
         this.globalStrings = globalStrings;
     }
-
     public String emit(ListNode node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
         List<ASTNode> elements = node.getList().getElements();

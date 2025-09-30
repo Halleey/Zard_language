@@ -44,7 +44,7 @@ public class ListParser {
         }
 
         parser.eat(Token.TokenType.DELIMITER, ";");
-        return new VariableDeclarationNode(name, "list", initializer);
+        return new VariableDeclarationNode(name, "List", initializer);
     }
 
 }

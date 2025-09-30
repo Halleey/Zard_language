@@ -27,7 +27,7 @@ public class PrintNode extends ASTNode {
         TypedValue val = expr.evaluate(ctx);
 
         switch (val.getType()) {
-            case "list" -> {
+            case "List" -> {
                 DynamicList list = (DynamicList) val.getValue();
                 // Avalia cada elemento do DynamicList
                 List<Object> values = list.getElements().stream()
@@ -35,7 +35,7 @@ public class PrintNode extends ASTNode {
                         .toList();
                 System.out.println(values);
             }
-            case "map" -> {
+            case "Map" -> {
                 DynamicMap map = (DynamicMap) val.getValue();
                 if (map.size() == 0) {
                     System.out.println("{}");

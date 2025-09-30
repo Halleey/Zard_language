@@ -131,7 +131,7 @@ public class BinaryOpEmitter {
             case "int" -> "i32";
             case "double" -> "double";
             case "boolean" -> "i1";
-            case "string", "list" -> "i8*";
+            case "string", "List" -> "i8*";
             default -> type; // já pode estar em LLVM
         };
     }

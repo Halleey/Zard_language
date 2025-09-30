@@ -30,7 +30,7 @@ public class VariableEmitter {
             case "int" -> "i32";
             case "double" -> "double";
             case "boolean" -> "i1";
-            case "string", "list" -> "i8*";
+            case "string", "List" -> "i8*";
             default -> type; // já é LLVM ou void
         };
     }
@@ -43,7 +43,7 @@ public class VariableEmitter {
         String llvmType = mapLLVMType(node.getType());
         varTypes.put(node.getName(), llvmType);
 
-        if ("list".equals(node.getType())) visitor.registerListVar(node.getName());
+        if ("List".equals(node.getType())) visitor.registerListVar(node.getName());
 
         String cleanName = node.getName().startsWith("%") ? node.getName().substring(1) : node.getName();
         String ptrName = "%" + cleanName;
@@ -55,7 +55,7 @@ public class VariableEmitter {
     public String emitInit(VariableDeclarationNode node) {
         String llvmType = varTypes.get(node.getName());
         if (node.initializer == null) {
-            return "list".equals(node.getType())
+            return "List".equals(node.getType())
                     ? emitStore(node.getName(), "i8*", callArrayListCreate())
                     : "";
         }

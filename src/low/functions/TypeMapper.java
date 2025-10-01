@@ -1,4 +1,5 @@
 package low.functions;
+
 public class TypeMapper {
 
     public String toLLVM(String type) {

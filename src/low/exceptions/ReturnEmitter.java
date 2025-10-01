@@ -8,20 +8,16 @@ import low.functions.ReturnTypeInferer;
 import low.functions.TypeMapper;
 import low.module.LLVisitorMain;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-
 public class ReturnEmitter {
     private final TempManager temps;
     private final LLVisitorMain visitor;
-    private final TypeMapper typeMapper;
-    private final ReturnTypeInferer returnInferer;
 
     public ReturnEmitter(TempManager temps, LLVisitorMain visitor,
                          TypeMapper typeMapper, ReturnTypeInferer returnInferer) {
         this.temps = temps;
         this.visitor = visitor;
-        this.typeMapper = typeMapper;
-        this.returnInferer = returnInferer;
     }
 
     public String emit(ReturnNode node) {
@@ -33,40 +29,40 @@ public class ReturnEmitter {
         if (node.expr instanceof LiteralNode lit && lit.value.getType().equals("string")) {
             String str = (String) lit.value.getValue();
             String strName = visitor.getGlobalStrings().getOrCreateString(str);
-            int len = str.length() + 1; // inclui \0
+            int len = str.length() + 1;
             return "  ret i8* getelementptr inbounds ([" + len + " x i8], [" + len + " x i8]* "
                     + strName + ", i32 0, i32 0)\n";
         }
 
-        String llvmType;
-        if (node.expr instanceof FunctionCallNode callNode) {
-            llvmType = visitor.getFunctionType(callNode.getName());
-
-            if (llvmType == null || "any".equals(llvmType)) {
-                if (visitor.getCallEmitter().isBeingDeduced(callNode.getName())) {
-                    llvmType = "i32";
-                } else {
-
-                    llvmType = returnInferer.inferType(callNode, new HashMap<>());
-                }
-            }
-
-            llvmType = typeMapper.toLLVM(llvmType);
-        }
-
-        else {
-            // Avalia expressão normalmente
-            String exprLLVM = node.expr.accept(visitor);
-            String valueTemp = extractTemp(exprLLVM);
-            String exprType = extractType(exprLLVM);
-            return exprLLVM + "  ret " + exprType + " " + valueTemp + "\n";
-        }
-
-        // Avalia a expressão normalmente
+        // Avalia expressão normalmente
         String exprLLVM = node.expr.accept(visitor);
         String valueTemp = extractTemp(exprLLVM);
+        String exprType = extractType(exprLLVM);
 
-        return exprLLVM + "  ret " + llvmType + " " + valueTemp + "\n";
+        // Descobre tipo de retorno da função atual usando a última função registrada
+        String currentFunctionType = "i32"; // fallback
+        if (!visitor.functionTypes.isEmpty()) {
+            // pega a última função registrada (assumindo que emitimos returns na função certa)
+            currentFunctionType = new ArrayList<>(visitor.functionTypes.values())
+                    .get(visitor.functionTypes.size() - 1);
+        }
+
+        // Se a função retorna double mas a expressão é int, converte
+        if ("double".equals(currentFunctionType) && "i32".equals(exprType)) {
+            String convTemp = temps.newTemp();
+            exprLLVM += "  " + convTemp + " = sitofp i32 " + valueTemp + " to double\n;;VAL:" + convTemp + ";;TYPE:double\n";
+            valueTemp = convTemp;
+            exprType = "double";
+        }
+
+        // Se a função retorna int mas a expressão é double, converte
+        if ("i32".equals(currentFunctionType) && "double".equals(exprType)) {
+            String convTemp = temps.newTemp();
+            exprLLVM += "  " + convTemp + " = fptosi double " + valueTemp + " to i32\n;;VAL:" + convTemp + ";;TYPE:i32\n";
+            valueTemp = convTemp;
+        }
+
+        return exprLLVM + "  ret " + currentFunctionType + " " + valueTemp + "\n";
     }
 
     private String extractTemp(String code) {

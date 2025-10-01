@@ -25,106 +25,91 @@
     declare i1 @inputBool(i8*)
     declare i8* @inputString(i8*)
 
-; === Runtime de listas ===
-%ArrayList = type opaque
-declare i8* @arraylist_create(i64)
-declare void @setItems(i8*, %DynValue*)
-declare void @printList(i8*)
-declare void @removeItem(%ArrayList*, i64)
-declare void @clearList(%ArrayList*)
-declare void @freeList(%ArrayList*)
-declare i32 @size(%ArrayList*)
-declare %DynValue* @getItem(%ArrayList*, i32)
-declare void @printDynValue(%DynValue*)
-declare void @addAll(%ArrayList*, %DynValue**, i64)
+@.str0 = private constant [6 x i8] c"hello\00"
+@.str1 = private constant [52 x i8] c"Aviso: expoente negativo no suportado, retornando 0\00"
 
-@.str0 = private constant [9 x i8] c"hallyson\00"
-@.str1 = private constant [6 x i8] c"teste\00"
-@.str2 = private constant [5 x i8] c"zard\00"
-@.str3 = private constant [7 x i8] c"halley\00"
+; === Função: te ===
+define i8* @te() {
+entry:
+  ret i8* getelementptr inbounds ([6 x i8], [6 x i8]* @.str0, i32 0, i32 0)
+}
+
+; === Função: pow ===
+define double @pow(double %base, i32 %exp) {
+entry:
+  %base.addr = alloca double
+;;VAL:%base.addr;;TYPE:double
+  store double %base, double* %base.addr
+  %exp.addr = alloca i32
+;;VAL:%exp.addr;;TYPE:i32
+  store i32 %exp, i32* %exp.addr
+  %t0 = load i32, i32* %exp.addr
+;;VAL:%t0;;TYPE:i32
+
+  %t1 = add i32 0, 0
+;;VAL:%t1;;TYPE:i32
+
+  %t2 = icmp slt i32 %t0, %t1
+;;VAL:%t2;;TYPE:i1
+
+  br i1 %t2, label %then_0, label %endif_0
+then_0:
+  call i32 (i8*, ...) @printf(i8* getelementptr ([52 x i8], [52 x i8]* @.str1, i32 0, i32 0))
+  %t3 = add i32 0, 0
+;;VAL:%t3;;TYPE:i32
+  %t4 = sitofp i32 %t3 to double
+;;VAL:%t4;;TYPE:double
+  ret double %t4
+  br label %endif_0
+endif_0:
+  %result = alloca double
+;;VAL:%result;;TYPE:double
+  store double 1.0, double* %result
+  %i = alloca i32
+;;VAL:%i;;TYPE:i32
+  store i32 0, i32* %i
+  br label %while_cond_0
+while_cond_0:
+  %t5 = load i32, i32* %i
+;;VAL:%t5;;TYPE:i32
+
+  %t6 = load i32, i32* %exp.addr
+;;VAL:%t6;;TYPE:i32
+
+  %t7 = icmp slt i32 %t5, %t6
+;;VAL:%t7;;TYPE:i1
+  br i1 %t7, label %while_body_1, label %while_end_2
+while_body_1:
+  %t8 = load double, double* %result
+;;VAL:%t8;;TYPE:double
+
+  %t9 = load double, double* %base.addr
+;;VAL:%t9;;TYPE:double
+
+  %t10 = fmul double %t8, %t9
+;;VAL:%t10;;TYPE:double
+  store double %t10, double* %result
+  %t11 = load i32, i32* %i
+  %t12 = add i32 %t11, 1
+  store i32 %t12, i32* %i
+  br label %while_cond_0
+while_end_2:
+  %t13 = load double, double* %result
+;;VAL:%t13;;TYPE:double
+  ret double %t13
+}
 
 define i32 @main() {
-  ; VariableDeclarationNode
-  %list = alloca i8*
-;;VAL:%list;;TYPE:i8*
-  %t0 = call i8* @arraylist_create(i64 4)
-;;VAL:%t0;;TYPE:i8*
-  store i8* %t0, i8** %list
   ; PrintNode
-  %t1 = load i8*, i8** %list
-  call void @printList(i8* %t1)
-  ; VariableDeclarationNode
-  %nome = alloca i8*
-;;VAL:%nome;;TYPE:i8*
-  store i8* getelementptr ([9 x i8], [9 x i8]* @.str0, i32 0, i32 0), i8** %nome
-  ; VariableDeclarationNode
-  %nomes = alloca i8*
-;;VAL:%nomes;;TYPE:i8*
-  %t2 = call i8* @arraylist_create(i64 10)
-  %t3 = alloca [10 x %DynValue*]
-  %t4 = call %DynValue* @createString(i8* getelementptr ([6 x i8], [6 x i8]* @.str1, i32 0, i32 0))
-  %t5 = getelementptr inbounds [10 x %DynValue*], [10 x %DynValue*]* %t3, i32 0, i32 0
-  store %DynValue* %t4, %DynValue** %t5
-  %t6 = call %DynValue* @createInt(i32 99)
-  %t7 = getelementptr inbounds [10 x %DynValue*], [10 x %DynValue*]* %t3, i32 0, i32 1
-  store %DynValue* %t6, %DynValue** %t7
-  %t8 = call %DynValue* @createDouble(double 9.45)
-  %t9 = getelementptr inbounds [10 x %DynValue*], [10 x %DynValue*]* %t3, i32 0, i32 2
-  store %DynValue* %t8, %DynValue** %t9
-  %t10 = call %DynValue* @createString(i8* getelementptr ([5 x i8], [5 x i8]* @.str2, i32 0, i32 0))
-  %t11 = getelementptr inbounds [10 x %DynValue*], [10 x %DynValue*]* %t3, i32 0, i32 3
-  store %DynValue* %t10, %DynValue** %t11
-  %t12 = load i8*, i8** %nome
-;;VAL:%t12;;TYPE:i8*
-  %t13 = call %DynValue* @createString(i8* %t12)
-  %t14 = getelementptr inbounds [10 x %DynValue*], [10 x %DynValue*]* %t3, i32 0, i32 4
-  store %DynValue* %t13, %DynValue** %t14
-  %t15 = call %DynValue* @createString(i8* getelementptr ([7 x i8], [7 x i8]* @.str3, i32 0, i32 0))
-  %t16 = getelementptr inbounds [10 x %DynValue*], [10 x %DynValue*]* %t3, i32 0, i32 5
-  store %DynValue* %t15, %DynValue** %t16
-  %t17 = call %DynValue* @createDouble(double 3.14)
-  %t18 = getelementptr inbounds [10 x %DynValue*], [10 x %DynValue*]* %t3, i32 0, i32 6
-  store %DynValue* %t17, %DynValue** %t18
-  %t19 = call %DynValue* @createInt(i32 5)
-  %t20 = getelementptr inbounds [10 x %DynValue*], [10 x %DynValue*]* %t3, i32 0, i32 7
-  store %DynValue* %t19, %DynValue** %t20
-  %t21 = call %DynValue* @createBool(i1 1)
-  %t22 = getelementptr inbounds [10 x %DynValue*], [10 x %DynValue*]* %t3, i32 0, i32 8
-  store %DynValue* %t21, %DynValue** %t22
-  %t23 = call %DynValue* @createBool(i1 0)
-  %t24 = getelementptr inbounds [10 x %DynValue*], [10 x %DynValue*]* %t3, i32 0, i32 9
-  store %DynValue* %t23, %DynValue** %t24
-  %t25 = getelementptr inbounds [10 x %DynValue*], [10 x %DynValue*]* %t3, i32 0, i32 0
-  %t26 = bitcast i8* %t2 to %ArrayList*
-  call void @addAll(%ArrayList* %t26, %DynValue** %t25, i64 10)
-;;VAL:%t2;;TYPE:i8*
-  store i8* %t2, i8** %nomes
+  %t14 = call i8* @te()
+  call i32 (i8*, ...) @printf(i8* %t14)
   ; PrintNode
-  %t27 = load i8*, i8** %nomes
-  %t28 = bitcast i8* %t27 to %ArrayList*
-  %t29 = add i32 0, 0
-  %t30 = call %DynValue* @getItem(%ArrayList* %t28, i32 %t29)
-;;VAL:%t30
-;;TYPE:any
-  call void @printDynValue(%DynValue* %t30)
-  ; PrintNode
-  %t31 = load i8*, i8** %nomes
-;;VAL:%t31;;TYPE:i8*
-  %t32 = bitcast i8* %t31 to %ArrayList*
-  %t33 = call i32 @size(%ArrayList* %t32)
-  
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t33)
-  ; PrintNode
-  %t34 = load i8*, i8** %nomes
-  call void @printList(i8* %t34)
-  ; ListClearNode
-  %t35 = load i8*, i8** %nomes
-;;VAL:%t35;;TYPE:i8*
-  %t36 = bitcast i8* %t35 to %ArrayList*
-  call void @clearList(%ArrayList* %t36)
-  ; PrintNode
-  %t37 = load i8*, i8** %nomes
-  call void @printList(i8* %t37)
+  %t15 = fadd double 0.0, 2.0
+;;VAL:%t15;;TYPE:double
+  %t16 = add i32 0, 1
+;;VAL:%t16;;TYPE:i32
+  %t17 = call double @pow(double %t15, i32 %t16)
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double %t17)
   call i32 @getchar()
   ret i32 0
 }

@@ -2,14 +2,22 @@ import "src/language/stdlib/Math.zd" as math;
 main{
 
 
-List list;
-print(list);
-string nome = "hallyson";
-List nomes = ("teste", 99, 9.45, "zard", nome, "halley", 3.14, 5, true, false);
-print(nomes.get(0));
-print(nomes.size());
-print(nomes);
-nomes.clear();
-print(nomes);
+function te(){return "hello";}
+print(te());
+
+function pow(double base, int exp) {
+    if (exp < 0) {
+        print("Aviso: expoente negativo no suportado, retornando 0");
+        return 0;
+    }
+    double result = 1;
+    int i = 0;
+    while (i < exp) {
+        result = result * base;
+        i++;
+    }
+    return result;
+}
+print(pow(2.0, 1));
 
 }

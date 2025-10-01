@@ -48,7 +48,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final Set<String> listVars = new HashSet<>();;
     private final FunctionCallEmitter callEmiter = new FunctionCallEmitter(temps);
     private final Map<String, FunctionNode> functions = new HashMap<>();
-    private final Map<String, String> functionTypes = new HashMap<>();
+    public final Map<String, String> functionTypes = new HashMap<>();
     public void registerListVar(String name) {
         listVars.add(name);
     }

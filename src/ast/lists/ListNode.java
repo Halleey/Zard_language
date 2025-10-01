@@ -28,7 +28,6 @@ public class ListNode extends ASTNode {
     public TypedValue evaluate(RuntimeContext ctx) {
         return new TypedValue("List", list);
     }
-
     @Override
     public void print(String prefix) {
         System.out.println(prefix + "List:");

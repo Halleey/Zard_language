@@ -10,6 +10,7 @@ import ast.variables.VariableDeclarationNode;
 
 import java.util.HashMap;
 import java.util.Map;
+
 public class VariableEmitter {
     private final Map<String, String> varTypes; // nome -> tipo LLVM
     private final TempManager temps;

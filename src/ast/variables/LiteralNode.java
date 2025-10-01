@@ -11,6 +11,9 @@ public class LiteralNode extends ASTNode {
     public TypedValue getValue() {
         return value;
     }
+    public String getType() {
+        return value.getType();
+    }
 
     public LiteralNode(TypedValue value) {
         this.value = value;
@@ -30,6 +33,5 @@ public class LiteralNode extends ASTNode {
     public void print(String prefix) {
         System.out.println(prefix + "Literal: (" + value.getType() + ") " + value.getValue());
     }
-
 }
 

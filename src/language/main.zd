@@ -2,8 +2,14 @@ import "src/language/stdlib/Math.zd" as math;
 main{
 
 
+List teste = ("hello", 13, true);
+print(teste);
 function te(){return "hello";}
 print(te());
+
+function adde(List list){list.add(3);}
+call adde(teste);
+print(teste);
 
 function pow(double base, int exp) {
     if (exp < 0) {
@@ -18,6 +24,6 @@ function pow(double base, int exp) {
     }
     return result;
 }
-print(pow(2.0, 1));
+print(pow(2.0, -1));
 
 }

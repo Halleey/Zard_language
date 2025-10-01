@@ -2,8 +2,6 @@ package translate;
 
 import ast.ASTNode;
 import ast.inputs.InputParser;
-import ast.lists.DynamicList;
-import ast.lists.ListNode;
 import ast.expressions.TypedValue;
 import tokens.Token;
 import ast.variables.BinaryOpNode;
@@ -12,7 +10,6 @@ import ast.variables.UnaryOpNode;
 
 import java.util.ArrayList;
 import java.util.List;
-
 
 public class ExpressionParser {
     private final Parser parent;
@@ -65,10 +62,11 @@ public class ExpressionParser {
             return new UnaryOpNode(op, factor);
         }
 
-        // Lista vazia: ()
+        // Proibição de listas vazias sem tipo
         if (tok.getValue().equals("(") && parent.peek().getValue().equals(")")) {
-            parent.advance(); parent.advance();
-            return new ListNode(new DynamicList(new ArrayList<>()));
+            throw new RuntimeException(
+                    "Listas vazias devem ter tipo especificado, ex: List<int> x; nada de ()"
+            );
         }
 
         switch (tok.getType()) {
@@ -125,4 +123,3 @@ public class ExpressionParser {
         return args;
     }
 }
-

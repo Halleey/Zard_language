@@ -6,6 +6,7 @@ import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
 import ast.inputs.InputNode;
+import ast.lists.ListAddNode;
 import ast.lists.ListNode;
 import ast.loops.WhileNode;
 import ast.variables.AssignmentNode;
@@ -102,6 +103,9 @@ public class MainEmitter {
             for (ASTNode element : listNode.getList().getElements()) coletarStringsRecursivo(element);
         } else if (node instanceof InputNode inputNode && inputNode.getPrompt() != null) {
             globalStrings.getOrCreateString(inputNode.getPrompt());
+        }
+        else if (node instanceof ListAddNode addNode) {
+            coletarStringsRecursivo(addNode.getValuesNode());
         }
     }
 

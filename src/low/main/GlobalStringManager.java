@@ -45,4 +45,9 @@ public class GlobalStringManager {
         return stringMap.get(literal);
     }
 
+    public int getLength(String literal) {
+        // retorna tamanho real do literal em bytes UTF-8 + 1 para o \00
+        return getStringLen(literal);
+    }
+
 }

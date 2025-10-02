@@ -13,6 +13,7 @@
 @.str2 = private constant [6 x i8] c"maior\00"
 @.str3 = private constant [5 x i8] c"meio\00"
 @.str4 = private constant [22 x i8] c"nenhum dos anteriores\00"
+@.str5 = private constant [6 x i8] c"hello\00"
 
 ; === Função: hello ===
 define i32 @hello(i32 %a, i32 %b) {
@@ -93,97 +94,190 @@ endif_1:
   ret i32 %t17
 }
 
+; === Função: fac ===
+define i32 @fac(i32 %n) {
+entry:
+  %n_addr = alloca i32
+  store i32 %n, i32* %n_addr
+;;VAL:%n_addr;;TYPE:i32
+  %t18 = load i32, i32* %n_addr
+;;VAL:%t18;;TYPE:i32
+
+  %t19 = add i32 0, 0
+;;VAL:%t19;;TYPE:i32
+
+  %t20 = icmp slt i32 %t18, %t19
+;;VAL:%t20;;TYPE:i1
+
+  br i1 %t20, label %then_2, label %endif_2
+then_2:
+  %t21 = getelementptr inbounds [36 x i8], [36 x i8]* @.str0, i32 0, i32 0
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t21)
+  %t22 = add i32 0, 0
+;;VAL:%t22;;TYPE:i32
+  ret i32 %t22
+  br label %endif_2
+endif_2:
+  %result = alloca i32
+;;VAL:%result;;TYPE:i32
+  %t23 = add i32 0, 1
+;;VAL:%t23;;TYPE:i32
+  store i32 %t23, i32* %result
+  %i = alloca i32
+;;VAL:%i;;TYPE:i32
+  %t24 = add i32 0, 1
+;;VAL:%t24;;TYPE:i32
+  store i32 %t24, i32* %i
+  br label %while_cond_0
+while_cond_0:
+  %t25 = load i32, i32* %i
+;;VAL:%t25;;TYPE:i32
+
+  %t26 = load i32, i32* %n_addr
+;;VAL:%t26;;TYPE:i32
+
+  %t27 = icmp sle i32 %t25, %t26
+;;VAL:%t27;;TYPE:i1
+  br i1 %t27, label %while_body_1, label %while_end_2
+while_body_1:
+  %t28 = load i32, i32* %result
+;;VAL:%t28;;TYPE:i32
+
+  %t29 = load i32, i32* %i
+;;VAL:%t29;;TYPE:i32
+
+  %t30 = mul i32 %t28, %t29
+;;VAL:%t30;;TYPE:i32
+  store i32 %t30, i32* %result
+  %t31 = load i32, i32* %i
+;;VAL:%t31;;TYPE:i32
+
+  %t32 = add i32 0, 1
+;;VAL:%t32;;TYPE:i32
+
+  %t33 = add i32 %t31, %t32
+;;VAL:%t33;;TYPE:i32
+  store i32 %t33, i32* %i
+  br label %while_cond_0
+while_end_2:
+  %t34 = load i32, i32* %result
+;;VAL:%t34;;TYPE:i32
+  ret i32 %t34
+}
+
+; === Função: hi ===
+define %String* @hi() {
+entry:
+  %t35 = getelementptr inbounds [6 x i8], [6 x i8]* @.str5, i32 0, i32 0
+  %t36 = alloca %String
+  %t37 = getelementptr inbounds %String, %String* %t36, i32 0, i32 0
+  store i8* %t35, i8** %t37
+  %t38 = getelementptr inbounds %String, %String* %t36, i32 0, i32 1
+  store i64 5, i64* %t38
+  ret %String* %t36
+}
+
 define i32 @main() {
   ; PrintNode
-  %t18 = add i32 0, 3
-;;VAL:%t18;;TYPE:i32
-  %t19 = add i32 0, 4
-;;VAL:%t19;;TYPE:i32
-  %t20 = call i32 @hello(i32 %t18, i32 %t19)
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t20)
+  %t39 = add i32 0, 3
+;;VAL:%t39;;TYPE:i32
+  %t40 = add i32 0, 4
+;;VAL:%t40;;TYPE:i32
+  %t41 = call i32 @hello(i32 %t39, i32 %t40)
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t41)
   ; PrintNode
-  %t21 = add i32 0, 5
-;;VAL:%t21;;TYPE:i32
-  %t22 = call i32 @factorial(i32 %t21)
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t22)
+  %t42 = add i32 0, 5
+;;VAL:%t42;;TYPE:i32
+  %t43 = call i32 @fac(i32 %t42)
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t43)
+  ; PrintNode
+  %t44 = add i32 0, 5
+;;VAL:%t44;;TYPE:i32
+  %t45 = call i32 @factorial(i32 %t44)
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t45)
   ; VariableDeclarationNode
   %nome = alloca %String
-;;VAL:%nome;;TYPE:%String
-  %t23 = getelementptr inbounds [9 x i8], [9 x i8]* @.str1, i32 0, i32 0
-;;VAL:%t23;;TYPE:i8*
-  %t24 = getelementptr inbounds %String, %String* %nome, i32 0, i32 0
-  store i8* %t23, i8** %t24
-  %t25 = getelementptr inbounds %String, %String* %nome, i32 0, i32 1
-  store i64 8, i64* %t25
+;;VAL:%nome;;TYPE:%String*
+  %t46 = getelementptr inbounds [9 x i8], [9 x i8]* @.str1, i32 0, i32 0
+;;VAL:%t46;;TYPE:i8*
+  %t47 = getelementptr inbounds %String, %String* %nome, i32 0, i32 0
+  store i8* %t46, i8** %t47
+  %t48 = getelementptr inbounds %String, %String* %nome, i32 0, i32 1
+  store i64 8, i64* %t48
   ; VariableDeclarationNode
   %a = alloca i32
 ;;VAL:%a;;TYPE:i32
-  %t26 = add i32 0, 3
-;;VAL:%t26;;TYPE:i32
-  store i32 %t26, i32* %a
+  %t49 = add i32 0, 3
+;;VAL:%t49;;TYPE:i32
+  store i32 %t49, i32* %a
   ; VariableDeclarationNode
   %b = alloca double
 ;;VAL:%b;;TYPE:double
-  %t27 = fadd double 0.0, 3.4
-;;VAL:%t27;;TYPE:double
-  store double %t27, double* %b
+  %t50 = fadd double 0.0, 3.4
+;;VAL:%t50;;TYPE:double
+  store double %t50, double* %b
   ; VariableDeclarationNode
   %real = alloca i1
 ;;VAL:%real;;TYPE:i1
-  %t28 = add i1 0, 0
-;;VAL:%t28;;TYPE:i1
-  store i1 %t28, i1* %real
+  %t51 = add i1 0, 0
+;;VAL:%t51;;TYPE:i1
+  store i1 %t51, i1* %real
   ; PrintNode
-  %t29 = load i32, i32* %a
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t29)
+  %t52 = load i32, i32* %a
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t52)
   ; PrintNode
-  %t30 = load double, double* %b
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double %t30)
+  %t53 = load double, double* %b
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double %t53)
   ; PrintNode
-  %t31 = load i1, i1* %real
-  %t32 = zext i1 %t31 to i32
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t32)
+  %t54 = load i1, i1* %real
+  %t55 = zext i1 %t54 to i32
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t55)
   ; PrintNode
-  %t33 = getelementptr inbounds %String, %String* %nome, i32 0, i32 0
-  %t34 = load i8*, i8** %t33
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t34)
+  %t56 = getelementptr inbounds %String, %String* %nome, i32 0, i32 0
+  %t57 = load i8*, i8** %t56
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t57)
   ; IfNode
-  %t35 = load i32, i32* %a
-;;VAL:%t35;;TYPE:i32
+  %t58 = load i32, i32* %a
+;;VAL:%t58;;TYPE:i32
 
-  %t36 = add i32 0, 10
-;;VAL:%t36;;TYPE:i32
+  %t59 = add i32 0, 10
+;;VAL:%t59;;TYPE:i32
 
-  %t37 = icmp sgt i32 %t35, %t36
-;;VAL:%t37;;TYPE:i1
+  %t60 = icmp sgt i32 %t58, %t59
+;;VAL:%t60;;TYPE:i1
 
-  br i1 %t37, label %then_2, label %else_2
-then_2:
-  %t38 = getelementptr inbounds [6 x i8], [6 x i8]* @.str2, i32 0, i32 0
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t38)
-  br label %endif_2
-else_2:
-  %t39 = load i32, i32* %a
-;;VAL:%t39;;TYPE:i32
-
-  %t40 = add i32 0, 1
-;;VAL:%t40;;TYPE:i32
-
-  %t41 = icmp slt i32 %t39, %t40
-;;VAL:%t41;;TYPE:i1
-
-  br i1 %t41, label %then_3, label %else_3
+  br i1 %t60, label %then_3, label %else_3
 then_3:
-  %t42 = getelementptr inbounds [5 x i8], [5 x i8]* @.str3, i32 0, i32 0
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t42)
+  %t61 = getelementptr inbounds [6 x i8], [6 x i8]* @.str2, i32 0, i32 0
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t61)
   br label %endif_3
 else_3:
-  %t43 = getelementptr inbounds [22 x i8], [22 x i8]* @.str4, i32 0, i32 0
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t43)
+  %t62 = load i32, i32* %a
+;;VAL:%t62;;TYPE:i32
+
+  %t63 = add i32 0, 1
+;;VAL:%t63;;TYPE:i32
+
+  %t64 = icmp slt i32 %t62, %t63
+;;VAL:%t64;;TYPE:i1
+
+  br i1 %t64, label %then_4, label %else_4
+then_4:
+  %t65 = getelementptr inbounds [5 x i8], [5 x i8]* @.str3, i32 0, i32 0
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t65)
+  br label %endif_4
+else_4:
+  %t66 = getelementptr inbounds [22 x i8], [22 x i8]* @.str4, i32 0, i32 0
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t66)
+  br label %endif_4
+endif_4:
   br label %endif_3
 endif_3:
-  br label %endif_2
-endif_2:
+  ; PrintNode
+  %t67 = call %String* @hi()
+  %t68 = getelementptr inbounds %String, %String* %t67, i32 0, i32 0
+  %t69 = load i8*, i8** %t68
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t69)
   call i32 @getchar()
   ret i32 0
 }

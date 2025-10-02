@@ -11,80 +11,108 @@ import low.module.LLVisitorMain;
 import java.util.ArrayList;
 import java.util.HashMap;
 public class ReturnEmitter {
-    private final TempManager temps;
     private final LLVisitorMain visitor;
+    private final TempManager temps;
 
-    public ReturnEmitter(TempManager temps, LLVisitorMain visitor,
-                         TypeMapper typeMapper, ReturnTypeInferer returnInferer) {
-        this.temps = temps;
+    public ReturnEmitter(LLVisitorMain visitor, TempManager temps) {
         this.visitor = visitor;
+        this.temps = temps;
     }
 
     public String emit(ReturnNode node) {
+        StringBuilder sb = new StringBuilder();
+
         if (node.expr == null) {
-            System.out.println("[DEBUG] Return void");
-            return "  ret void\n";
+            sb.append("  ret void\n");
+            return sb.toString();
         }
 
-        if (node.expr instanceof LiteralNode lit && lit.value.getType().equals("string")) {
-            String str = (String) lit.value.getValue();
-            String strName = visitor.getGlobalStrings().getOrCreateString(str);
-            int len = str.length() + 1;
-            System.out.println("[DEBUG] Return string literal: " + str);
-            return "  ret i8* getelementptr inbounds ([" + len + " x i8], [" + len + " x i8]* "
-                    + strName + ", i32 0, i32 0)\n";
+        // gera código da expressão (pode criar markers ;;VAL:;;TYPE:)
+        String exprCode = node.expr.accept(visitor);
+        sb.append(exprCode);
+
+        // extrai temp e tipo do código gerado
+        String temp = extractTemp(exprCode);
+        String type = extractType(exprCode);
+
+        // caso 1: função já retorna %String* (apenas repassa)
+        if ("%String*".equals(type)) {
+            sb.append("  ret %String* ").append(temp).append("\n");
+            return sb.toString();
         }
 
-        System.out.println("[DEBUG] Avaliando expressão de return: " + node.expr.getClass().getSimpleName());
+        // caso 2: expressão é literal string com i8* temp
+        // detectamos literal se node.expr instanceof LiteralNode e tipo i8* ou i8*
+        if (node.expr instanceof LiteralNode lit && "string".equals(lit.value.getType())) {
+            // temp provavelmente contém um getelementptr ... (i8*)
+            int len = ((String) lit.value.getValue()).length();
 
-        String exprLLVM = node.expr.accept(visitor);
+            // monta struct %String na stack
+            String sAlloca = temps.newTemp();
+            sb.append("  ").append(sAlloca).append(" = alloca %String\n");
 
-        System.out.println("[DEBUG] LLVM gerado pela expressão:\n" + exprLLVM);
+            // campo .data (i8*)
+            String fld0 = temps.newTemp();
+            sb.append("  ").append(fld0)
+                    .append(" = getelementptr inbounds %String, %String* ")
+                    .append(sAlloca).append(", i32 0, i32 0\n");
+            sb.append("  store i8* ").append(temp).append(", i8** ").append(fld0).append("\n");
 
-        String valueTemp = extractTemp(exprLLVM);
-        String exprType = extractType(exprLLVM);
+            // campo .length (i64)
+            String fld1 = temps.newTemp();
+            sb.append("  ").append(fld1)
+                    .append(" = getelementptr inbounds %String, %String* ")
+                    .append(sAlloca).append(", i32 0, i32 1\n");
+            sb.append("  store i64 ").append(len).append(", i64* ").append(fld1).append("\n");
 
-        System.out.println("[DEBUG] Temp extraído: " + valueTemp + ", Tipo extraído: " + exprType);
-
-        String currentFunctionType = "i32";
-        if (!visitor.functionTypes.isEmpty()) {
-            currentFunctionType = new ArrayList<>(visitor.functionTypes.values())
-                    .get(visitor.functionTypes.size() - 1);
+            sb.append("  ret %String* ").append(sAlloca).append("\n");
+            return sb.toString();
         }
 
-        // conversões automáticas se necessário
-        if ("double".equals(currentFunctionType) && "i32".equals(exprType)) {
-            String convTemp = temps.newTemp();
-            exprLLVM += "  " + convTemp + " = sitofp i32 " + valueTemp + " to double\n;;VAL:" + convTemp + ";;TYPE:double\n";
-            valueTemp = convTemp;
-            exprType = "double";
-            System.out.println("[DEBUG] Convertendo i32 para double, novo temp: " + valueTemp);
+        // caso 3: expressão produz i8* (não-literal) -> aloca struct, armazena ptr e length=0 (ou substituir por strlen)
+        if ("i8*".equals(type)) {
+            String sAlloca = temps.newTemp();
+            sb.append("  ").append(sAlloca).append(" = alloca %String\n");
+
+            String fld0 = temps.newTemp();
+            sb.append("  ").append(fld0)
+                    .append(" = getelementptr inbounds %String, %String* ")
+                    .append(sAlloca).append(", i32 0, i32 0\n");
+            sb.append("  store i8* ").append(temp).append(", i8** ").append(fld0).append("\n");
+
+            String fld1 = temps.newTemp();
+            sb.append("  ").append(fld1)
+                    .append(" = getelementptr inbounds %String, %String* ")
+                    .append(sAlloca).append(", i32 0, i32 1\n");
+            sb.append("  store i64 0, i64* ").append(fld1).append("\n"); // length unknown here
+
+            sb.append("  ret %String* ").append(sAlloca).append("\n");
+            return sb.toString();
         }
 
-        if ("i32".equals(currentFunctionType) && "double".equals(exprType)) {
-            String convTemp = temps.newTemp();
-            exprLLVM += "  " + convTemp + " = fptosi double " + valueTemp + " to i32\n;;VAL:" + convTemp + ";;TYPE:i32\n";
-            valueTemp = convTemp;
-            exprType = "i32";
-            System.out.println("[DEBUG] Convertendo double para i32, novo temp: " + valueTemp);
-        }
-
-        System.out.println("[DEBUG] Return final: tipo=" + currentFunctionType + ", temp=" + valueTemp);
-
-        return exprLLVM + "  ret " + currentFunctionType + " " + valueTemp + "\n";
+        // caso default: retorna diretamente se tipos batem (int, double, i1 etc)
+        sb.append("  ret ").append(type).append(" ").append(temp).append("\n");
+        return sb.toString();
     }
 
     private String extractTemp(String code) {
-        int lastValIdx = code.lastIndexOf(";;VAL:");
-        if (lastValIdx == -1) throw new RuntimeException("Não encontrou ;;VAL: em: " + code);
-        int typeIdx = code.indexOf(";;TYPE:", lastValIdx);
-        return code.substring(lastValIdx + 6, typeIdx).trim();
+        int idx = code.lastIndexOf(";;VAL:");
+        if (idx == -1) {
+            // fallback: última linha se for uma expressão simples
+            String[] lines = code.strip().split("\n");
+            String last = lines[lines.length - 1];
+            // tenta extrair token final
+            String[] parts = last.trim().split("\\s+");
+            return parts[parts.length - 1];
+        }
+        int endIdx = code.indexOf(";;TYPE:", idx);
+        return code.substring(idx + 6, endIdx).trim();
     }
 
     private String extractType(String code) {
-        int typeIdx = code.lastIndexOf(";;TYPE:");
-        if (typeIdx == -1) throw new RuntimeException("Não encontrou ;;TYPE: em: " + code);
-        int newlineIdx = code.indexOf("\n", typeIdx);
-        return code.substring(typeIdx + 7, newlineIdx == -1 ? code.length() : newlineIdx).trim();
+        int idx = code.indexOf(";;TYPE:");
+        if (idx == -1) return "";
+        int endIdx = code.indexOf("\n", idx);
+        return code.substring(idx + 7, endIdx == -1 ? code.length() : endIdx).trim();
     }
 }

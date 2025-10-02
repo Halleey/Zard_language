@@ -1,16 +1,12 @@
 package low.prints;
 
 import ast.ASTNode;
-
-import ast.functions.FunctionCallNode;
-import ast.lists.ListGetNode;
-import low.functions.FunctionCallEmitter;
-import low.lists.ListGetEmitter;
 import low.main.GlobalStringManager;
 import low.module.LLVisitorMain;
 import ast.prints.PrintNode;
 import ast.variables.LiteralNode;
 import ast.variables.VariableNode;
+
 public class PrintEmitter {
     private final GlobalStringManager globalStrings;
 
@@ -31,12 +27,13 @@ public class PrintEmitter {
             String varName = varNode.getName();
             String type = visitor.getVarType(varName);
 
-            if ("%String".equals(type)) {
+            if ("%String".equals(type) || "%String*".equals(type)) {
                 return emitStringVariable(varName, visitor);
             } else {
                 return emitPrimitiveVariable(varName, type, visitor);
             }
         }
+
 
         // Qualquer outra expressão
         String exprLLVM = expr.accept(visitor);
@@ -118,7 +115,7 @@ public class PrintEmitter {
                 llvm.append("  ").append(zextTmp).append(" = zext i1 ").append(temp).append(" to i32\n");
                 llvm.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 ").append(zextTmp).append(")\n");
             }
-            case "%String" -> {
+            case "%String*" -> {
                 String tmpPtr = visitor.getTemps().newTemp();
                 String tmpLoad = visitor.getTemps().newTemp();
                 llvm.append("  ").append(tmpPtr).append(" = getelementptr inbounds %String, %String* ").append(temp).append(", i32 0, i32 0\n");

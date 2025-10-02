@@ -59,7 +59,6 @@ public class VarDeclarationParser {
     public ASTNode parseListDeclaration() {
 
         // Captura o tipo da lista dentro de <>
-        System.out.println("debug -----" + parser.current());
         String elementType = parser.current().getValue(); // tipo da lista, ex: int, string
         parser.advance();
         parser.eat(Token.TokenType.OPERATOR, ">");

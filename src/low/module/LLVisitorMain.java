@@ -60,7 +60,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public String visit(ReturnNode node) {
-        ReturnEmitter emitter = new ReturnEmitter(temps, this, typeMapper, returnInferer);
+        ReturnEmitter emitter = new ReturnEmitter( this, temps);
         return emitter.emit(node);
     }
 

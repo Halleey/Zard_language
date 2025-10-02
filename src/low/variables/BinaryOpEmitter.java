@@ -13,26 +13,23 @@ public class BinaryOpEmitter {
 
     public String emit(BinaryOpNode node) {
 
-        System.out.println("[DEBUG] BinaryOpEmitter: operador=" + node.operator);
 
         // Avalia left e right
         String leftLLVM = node.left.accept(visitor);
         String rightLLVM = node.right.accept(visitor);
 
-        System.out.println("[DEBUG] LLVM left:\n" + leftLLVM);
-        System.out.println("[DEBUG] LLVM right:\n" + rightLLVM);
 
         String leftTemp = extractTemp(leftLLVM);
         String rightTemp = extractTemp(rightLLVM);
-        System.out.println("[DEBUG] Temps extraídos: left=" + leftTemp + ", right=" + rightTemp);
+
 
         String leftTypeAST = extractType(leftLLVM);
         String rightTypeAST = extractType(rightLLVM);
-        System.out.println("[DEBUG] Types extraídos do AST: left=" + leftTypeAST + ", right=" + rightTypeAST);
+
 
         String leftType = toLLVMType(leftTypeAST);
         String rightType = toLLVMType(rightTypeAST);
-        System.out.println("[DEBUG] Types convertidos para LLVM: left=" + leftType + ", right=" + rightType);
+
 
         String resultTemp = temps.newTemp();
         StringBuilder llvm = new StringBuilder();
@@ -89,7 +86,7 @@ public class BinaryOpEmitter {
                     .append(";;VAL:").append(resultTemp).append(";;TYPE:").append(op.startsWith("fcmp") ? "i1" : "double").append("\n");
         }
         else if (leftType.equals("i8*") && rightType.equals("i8*")) {
-            System.out.println("[DEBUG] Operação entre strings: " + node.operator);
+
             if (node.operator.equals("+")) {
                 String tmp = temps.newTemp();
                 llvm.append("  ").append(tmp).append(" = call i8* @concat_strings(i8* ")
@@ -114,7 +111,6 @@ public class BinaryOpEmitter {
             throw new RuntimeException("Tipos incompatíveis para operação: " + leftType + " " + node.operator + " " + rightType);
         }
 
-        System.out.println("[DEBUG] LLVM final BinaryOp:\n" + llvm.toString());
         return llvm.toString();
     }
 

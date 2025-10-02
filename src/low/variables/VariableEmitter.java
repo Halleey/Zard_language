@@ -7,9 +7,8 @@ import ast.variables.VariableDeclarationNode;
 
 import java.util.HashMap;
 import java.util.Map;
-
 public class VariableEmitter {
-    private final Map<String, String> varTypes; // nome -> LLVM type
+    private final Map<String, String> varTypes; // nome -> LLVM type (ex: "i32", "%String*")
     private final TempManager temps;
     private final LLVisitorMain visitor;
     private final Map<String, String> localVars = new HashMap<>();
@@ -26,17 +25,27 @@ public class VariableEmitter {
 
     public String emitAlloca(VariableDeclarationNode node) {
         String llvmType = mapLLVMType(node.getType());
-        // caso especial para string: aloca struct, não ponteiro
+
+        // caso especial para string:
+        // - alloca deve ser "alloca %String" (reserva struct)
+        // - mas varTypes deve guardar "%String*" (tipo do valor carregado)
         if (node.getType().equals("string")) {
-            llvmType = "%String";
+            // grava o tipo "valor" como ponteiro para struct
+            varTypes.put(node.getName(), "%String*");
+            String ptr = "%" + node.getName();
+            localVars.put(node.getName(), ptr);
+
+            // alloca %String -> ptr (que tem tipo %String*)
+            return "  " + ptr + " = alloca %String\n;;VAL:" + ptr + ";;TYPE:%String*\n";
         }
+
+        // caso normal (int, double, boolean, lista)
         varTypes.put(node.getName(), llvmType);
         String ptr = "%" + node.getName();
         localVars.put(node.getName(), ptr);
 
         return "  " + ptr + " = alloca " + llvmType + "\n;;VAL:" + ptr + ";;TYPE:" + llvmType + "\n";
     }
-
 
     public String emitInit(VariableDeclarationNode node) {
         String llvmType = varTypes.get(node.getName());
@@ -54,7 +63,7 @@ public class VariableEmitter {
             int len = literal.length();
 
             StringBuilder sb = new StringBuilder();
-            String varPtr = getVarPtr(node.getName());
+            String varPtr = getVarPtr(node.getName()); // example: %nome
 
             // ponteiro para os dados da string literal
             String tmp = temps.newTemp();
@@ -64,14 +73,14 @@ public class VariableEmitter {
                     .append(" x i8]* ").append(globalName).append(", i32 0, i32 0\n")
                     .append(";;VAL:").append(tmp).append(";;TYPE:i8*\n");
 
-            // inicializa campo .data
+            // inicializa campo .data (i8*)
             String ptrField = temps.newTemp();
             sb.append("  ").append(ptrField)
                     .append(" = getelementptr inbounds %String, %String* ")
                     .append(varPtr).append(", i32 0, i32 0\n");
             sb.append("  store i8* ").append(tmp).append(", i8** ").append(ptrField).append("\n");
 
-            // inicializa campo .length
+            // inicializa campo .length (i64)
             String lenField = temps.newTemp();
             sb.append("  ").append(lenField)
                     .append(" = getelementptr inbounds %String, %String* ")
@@ -81,14 +90,16 @@ public class VariableEmitter {
             return sb.toString();
         }
 
-        // padrão para int/double/bool/lista
+        // padrão para int/double/bool/lista e outros casos
         String exprLLVM = node.initializer.accept(visitor);
         String temp = extractTemp(exprLLVM);
         return exprLLVM + emitStore(node.getName(), llvmType, temp);
     }
 
-
     private String emitStore(String name, String type, String value) {
+        // type é, por exemplo, "i32", "double", "%String*", "i8*"
+        // para armazenar um valor do tipo X num alloca cujo nome é %name,
+        // precisamos de "store X value, X* %name"
         return "  store " + type + " " + value + ", " + type + "* %" + name + "\n";
     }
 
@@ -98,22 +109,23 @@ public class VariableEmitter {
     }
 
     public String emitLoad(String name) {
-        String llvmType = varTypes.get(name); // deve ser i32, double, i1, i8*, etc.
-        String ptr = localVars.get(name);
+        String llvmType = varTypes.get(name); // ex: "i32", "%String*", "double"
+        String ptr = localVars.get(name);     // ex: %nome
         String tmp = temps.newTemp();
         return "  " + tmp + " = load " + llvmType + ", " + llvmType + "* " + ptr
                 + "\n;;VAL:" + tmp + ";;TYPE:" + llvmType + "\n";
     }
 
-
     private String extractTemp(String code) {
         int idx = code.lastIndexOf(";;VAL:");
+        if (idx == -1) return code.trim();
         int endIdx = code.indexOf(";;TYPE:", idx);
         return code.substring(idx + 6, endIdx).trim();
     }
 
     private String extractType(String code) {
         int idx = code.indexOf(";;TYPE:");
+        if (idx == -1) return "";
         int endIdx = code.indexOf("\n", idx);
         return code.substring(idx + 7, endIdx == -1 ? code.length() : endIdx).trim();
     }

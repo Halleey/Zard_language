@@ -1,8 +1,7 @@
 
 main{
-function int hello(int a, int b){return a + b;}
-print(hello(3, 4));
-function int factorial(int n) {
+
+function int  factorial(int n) {
     if (n < 0) {
         print("Erro: factorial de numero negativo!");
         return 0;
@@ -12,39 +11,14 @@ function int factorial(int n) {
     }
     return n * factorial(n - 1);
 }
-function int fac(int n) {
-    if (n < 0) {
-        print("Erro: factorial de numero negativo!");
-        return 0;
-    }
 
-    int result = 1;
-    int i = 1;
-
-    while (i <= n) {
-        result = result * i;
-        i = i + 1;
-    }
-
-    return result;
-}
-
-
-print(fac(5));
 print(factorial(5));
 
-string nome = "hallyson";
-int a = 3;
-double b= 3.4;
-boolean real = false;
-print(a);
-print(b);
-print(real);
+string nome = "halley";
+List<int> numeros = (3,4,55);
+print(numeros);
+List<double> flut = (3.14, 4.4);
+print(flut);
 print(nome);
-if(a > 10) {print("maior");}
-else if(a < 1) {print("meio");}
-else {print("nenhum dos anteriores");}
 
-function string hi(){return "hello";}
-print(hi());
 }

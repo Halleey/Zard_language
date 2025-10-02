@@ -21,7 +21,6 @@ import ast.variables.VariableDeclarationNode;
 
 import java.util.HashSet;
 import java.util.Set;
-
 public class MainEmitter {
     private final GlobalStringManager globalStrings;
     private final Set<String> listasAlocadas = new HashSet<>();
@@ -35,17 +34,16 @@ public class MainEmitter {
     public String emit(MainAST node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
 
-
-        llvm.append(emitHeader(node)).append("\n");
+        // 1. Cabeçalhos e declarações externas (printf, malloc, ArrayList runtime)
+        llvm.append(emitHeader()).append("\n");
 
         // 2. Coleta todos os literais de string, incluindo os de funções
         for (ASTNode stmt : node.body) {
             coletarStringsRecursivo(stmt);
         }
-
         llvm.append(globalStrings.getGlobalStrings()).append("\n");
 
-
+        // 3. Emite todas as funções
         FunctionEmitter fnEmitter = new FunctionEmitter(visitor);
         for (ASTNode stmt : node.body) {
             if (stmt instanceof FunctionNode fn) {
@@ -53,14 +51,24 @@ public class MainEmitter {
             }
         }
 
+        // 4. Emissão do início do main
         llvm.append(emitMainStart());
 
+        // 5. Emite o corpo do main
         for (ASTNode stmt : node.body) {
-            if (stmt instanceof FunctionNode) continue; // função já foi emitida
+            if (stmt instanceof FunctionNode) continue;
             llvm.append("  ; ").append(stmt.getClass().getSimpleName()).append("\n");
-            llvm.append(stmt.accept(visitor)); // executa visitor
+            llvm.append(stmt.accept(visitor));
+
+            // marca listas alocadas para free
+            if (stmt instanceof VariableDeclarationNode varDecl && varDecl.getType().startsWith("List")) {
+                listasAlocadas.add(varDecl.getName());
+            } else if (stmt instanceof ListNode) {
+                // se for lista inline, poderia criar um temp, mas normalmente estará em uma variável
+            }
         }
 
+        // 6. Free das listas
         if (!listasAlocadas.isEmpty()) {
             llvm.append("  ; === Free das listas alocadas ===\n");
             for (String varName : listasAlocadas) {
@@ -72,7 +80,9 @@ public class MainEmitter {
             }
         }
 
+        // 7. Fim do main
         llvm.append(emitMainEnd());
+
         return llvm.toString();
     }
 
@@ -103,37 +113,34 @@ public class MainEmitter {
             for (ASTNode element : listNode.getList().getElements()) coletarStringsRecursivo(element);
         } else if (node instanceof InputNode inputNode && inputNode.getPrompt() != null) {
             globalStrings.getOrCreateString(inputNode.getPrompt());
-        }
-        else if (node instanceof ListAddNode addNode) {
+        } else if (node instanceof ListAddNode addNode) {
             coletarStringsRecursivo(addNode.getValuesNode());
         }
     }
-
-    private boolean containsList(MainAST node) {
-        for (ASTNode stmt : node.body) {
-            if (stmt instanceof ListNode) return true;
-            if (stmt instanceof VariableDeclarationNode varDecl && varDecl.initializer instanceof ListNode)
-                return true;
-        }
-        return false;
-    }
-
-    private String emitHeader(MainAST node) {
-        StringBuilder header = new StringBuilder();
-
-        header.append("""
+    private String emitHeader() {
+        return """
         declare i32 @printf(i8*, ...)
         declare i32 @getchar()
-        declare i8* @malloc(i64) ; necessário para alocação de arrays
+        declare i8* @malloc(i64)
+        declare i8* @arraylist_create(i64)
+
+        declare void @arraylist_add_int(i8*, i32)
+        declare void @arraylist_add_double(i8*, double)
+        declare void @arraylist_add_string(i8*, i8*)
+
+        declare void @arraylist_print_int(i8*)
+        declare void @arraylist_print_double(i8*)
+        declare void @arraylist_print_string(i8*)
+
+        declare void @freeList(%ArrayList*)
 
         @.strInt = private constant [4 x i8] c"%d\\0A\\00"
         @.strDouble = private constant [4 x i8] c"%f\\0A\\00"
         @.strStr = private constant [4 x i8] c"%s\\0A\\00"
 
         %String = type { i8*, i64 }
-    """);
-
-        return header.toString();
+        %ArrayList = type opaque
+        """;
     }
 
     private String emitMainStart() {

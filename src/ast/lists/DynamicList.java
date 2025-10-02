@@ -60,4 +60,6 @@ public class DynamicList {
         List<TypedValue> vals = evaluate(new RuntimeContext()); // opcional para debug
         return vals.toString();
     }
+
+
 }

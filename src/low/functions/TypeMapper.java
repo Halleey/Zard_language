@@ -12,6 +12,7 @@ public class TypeMapper {
             case "boolean" -> "i1";
             case "string" -> "%String*";
             case "void" -> "void";
+            case "List" -> "i8*";
             default -> throw new RuntimeException("Tipo não suportado: " + type);
         };
     }

@@ -29,8 +29,9 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final Map<String, String> varTypes = new HashMap<>();
     private final TempManager temps = new TempManager();
     private final GlobalStringManager globalStrings = new GlobalStringManager();
+    private final Map<String, String> listElementTypes = new HashMap<>();
     public final VariableEmitter varEmitter = new VariableEmitter(varTypes, temps, this);
-    private final PrintEmitter printEmitter = new PrintEmitter(globalStrings);
+    public final PrintEmitter printEmitter = new PrintEmitter(globalStrings, temps);
     private final AssignmentEmitter assignmentEmitter = new AssignmentEmitter(varTypes, temps, globalStrings, this);
     private final UnaryOpEmitter unaryOpEmitter = new UnaryOpEmitter(varTypes, temps, varEmitter);
     private final LiteralEmitter literalEmitter = new LiteralEmitter(temps,globalStrings);
@@ -49,15 +50,18 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final FunctionCallEmitter callEmiter = new FunctionCallEmitter(temps);
     private final Map<String, FunctionNode> functions = new HashMap<>();
     public final Map<String, String> functionTypes = new HashMap<>();
-    public void registerListVar(String name) {
-        listVars.add(name);
-    }
     public boolean isList(String name) {
         return listVars.contains(name);
     }
     private final TypeMapper typeMapper = new TypeMapper();
     private final ReturnTypeInferer returnInferer = new ReturnTypeInferer(this, typeMapper);
+    public void registerListElementType(String varName, String elementType) {
+        listElementTypes.put(varName, elementType);
+    }
 
+    public String getListElementType(String varName) {
+        return listElementTypes.get(varName);
+    }
     @Override
     public String visit(ReturnNode node) {
         ReturnEmitter emitter = new ReturnEmitter( this, temps);

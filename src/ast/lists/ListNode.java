@@ -5,19 +5,18 @@ import ast.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
-import java.util.List;
-
+import java.util.List;// Nó AST que representa uma lista tipada
 public class ListNode extends ASTNode {
 
     private final DynamicList list;
 
+    public DynamicList getList() {
+        return list;
+    }
     public ListNode(DynamicList list) {
         this.list = list;
     }
 
-    public DynamicList getList() {
-        return list;
-    }
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
@@ -28,11 +27,12 @@ public class ListNode extends ASTNode {
     public TypedValue evaluate(RuntimeContext ctx) {
         return new TypedValue("List", list);
     }
+
     @Override
     public void print(String prefix) {
-        System.out.println(prefix + "List:");
-        List<ASTNode> elements = list.getElements();
+        System.out.println(prefix + "List<" + list.getElementType() + ">:");
 
+        List<ASTNode> elements = list.getElements();
         if (elements.isEmpty()) {
             System.out.println(prefix + "  (vazia)");
         } else {
@@ -42,6 +42,4 @@ public class ListNode extends ASTNode {
             }
         }
     }
-
-
 }

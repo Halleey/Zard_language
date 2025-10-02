@@ -122,48 +122,16 @@ public class MainEmitter {
         StringBuilder header = new StringBuilder();
 
         header.append("""
-            declare i32 @printf(i8*, ...)
-            declare i32 @getchar()
-            @.strInt = private constant [4 x i8] c"%d\\0A\\00"
-            @.strDouble = private constant [4 x i8] c"%f\\0A\\00"
-            @.strStr = private constant [4 x i8] c"%s\\0A\\00"
+        declare i32 @printf(i8*, ...)
+        declare i32 @getchar()
+        declare i8* @malloc(i64) ; necessário para alocação de arrays
 
-            ; === Tipo opaco DynValue ===
-            %DynValue = type opaque
+        @.strInt = private constant [4 x i8] c"%d\\0A\\00"
+        @.strDouble = private constant [4 x i8] c"%f\\0A\\00"
+        @.strStr = private constant [4 x i8] c"%s\\0A\\00"
 
-            ; === Funções do runtime DynValue ===
-            declare %DynValue* @createInt(i32)
-            declare %DynValue* @createDouble(double)
-            declare %DynValue* @createBool(i1)
-            declare %DynValue* @createString(i8*)
-
-            ; === Funções de conversão DynValue -> tipo primitivo ===
-            declare i32 @dynToInt(%DynValue*)
-            declare double @dynToDouble(%DynValue*)
-            declare i1 @dynToBool(%DynValue*)
-            declare i8* @dynToString(%DynValue*)
-
-            ; === Função de input ===
-            declare i32 @inputInt(i8*)
-            declare double @inputDouble(i8*)
-            declare i1 @inputBool(i8*)
-            declare i8* @inputString(i8*)
-        """);
-
-        if (containsList(node)) {
-            header.append("\n; === Runtime de listas ===\n");
-            header.append("%ArrayList = type opaque\n");
-            header.append("declare i8* @arraylist_create(i64)\n")
-                    .append("declare void @setItems(i8*, %DynValue*)\n")
-                    .append("declare void @printList(i8*)\n")
-                    .append("declare void @removeItem(%ArrayList*, i64)\n")
-                    .append("declare void @clearList(%ArrayList*)\n")
-                    .append("declare void @freeList(%ArrayList*)\n")
-                    .append("declare i32 @size(%ArrayList*)\n")
-                    .append("declare %DynValue* @getItem(%ArrayList*, i32)\n")
-                    .append("declare void @printDynValue(%DynValue*)\n")
-                    .append("declare void @addAll(%ArrayList*, %DynValue**, i64)\n");
-        }
+        %String = type { i8*, i64 }
+    """);
 
         return header.toString();
     }

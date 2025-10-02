@@ -11,7 +11,7 @@ public class TypeMapper {
             case "int" -> "i32";
             case "double" -> "double";
             case "boolean" -> "i1";
-            case "string", "List", "var" -> "i8*";
+            case "string" -> "%String*";
             case "void" -> "void";
             default -> throw new RuntimeException("Tipo não suportado: " + type);
         };

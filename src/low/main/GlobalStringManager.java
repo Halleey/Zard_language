@@ -3,6 +3,8 @@ package low.main;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+
 public class GlobalStringManager {
     private final Map<String, String> stringMap = new LinkedHashMap<>();
     private int counter = 0;

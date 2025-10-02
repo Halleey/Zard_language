@@ -17,6 +17,14 @@ public class FunctionParser {
     public FunctionNode parseFunction() {
         parser.advance(); // consome 'function'
 
+        // Lê tipo de retorno (opcional)
+        String returnType = "void";
+        if (parser.current().getType() == Token.TokenType.KEYWORD || parser.current().getType() == Token.TokenType.IDENTIFIER) {
+            returnType = parser.current().getValue();
+            parser.advance();
+        }
+
+        // Agora lê o nome da função
         String funcName = parser.current().getValue();
         parser.advance();
 
@@ -42,13 +50,6 @@ public class FunctionParser {
         }
         parser.eat(Token.TokenType.DELIMITER, ")");
 
-        // tipo de retorno opcional
-        String returnType = "void";
-        if (parser.current().getType() == Token.TokenType.IDENTIFIER) {
-            returnType = parser.current().getValue();
-            parser.advance();
-        }
-
         parser.pushContext();
         for (int i = 0; i < paramNames.size(); i++) {
             parser.declareVariable(paramNames.get(i), paramTypes.get(i));
@@ -59,4 +60,5 @@ public class FunctionParser {
 
         return new FunctionNode(funcName, paramNames, paramTypes, body, returnType);
     }
+
 }

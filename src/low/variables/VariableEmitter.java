@@ -1,9 +1,6 @@
 package low.variables;
-import ast.inputs.InputNode;
-import ast.lists.ListNode;
-import low.inputs.InputEmitter;
-import low.lists.ListEmitter;
-import low.main.GlobalStringManager;
+import ast.variables.LiteralNode;
+import low.functions.TypeMapper;
 import low.module.LLVisitorMain;
 import low.TempManager;
 import ast.variables.VariableDeclarationNode;
@@ -12,91 +9,87 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class VariableEmitter {
-    private final Map<String, String> varTypes; // nome -> tipo LLVM
+    private final Map<String, String> varTypes; // nome -> LLVM type
     private final TempManager temps;
-    private final GlobalStringManager globalStrings;
     private final LLVisitorMain visitor;
-    private final Map<String, String> localVars = new HashMap<>(); // nome -> ponteiro (%var)
+    private final Map<String, String> localVars = new HashMap<>();
 
-    public VariableEmitter(Map<String, String> varTypes, TempManager temps,
-                           GlobalStringManager globalStrings, LLVisitorMain visitor) {
+    public VariableEmitter(Map<String, String> varTypes, TempManager temps, LLVisitorMain visitor) {
         this.varTypes = varTypes;
         this.temps = temps;
-        this.globalStrings = globalStrings;
         this.visitor = visitor;
     }
 
     public String mapLLVMType(String type) {
-        return switch (type) {
-            case "int" -> "i32";
-            case "double" -> "double";
-            case "boolean" -> "i1";
-            case "string", "List" -> "i8*";
-            default -> type; // já é LLVM ou void
-        };
-    }
-
-    public void registerVarPtr(String name, String ptr) {
-        localVars.put(name, ptr);
+        return new TypeMapper().toLLVM(type);
     }
 
     public String emitAlloca(VariableDeclarationNode node) {
         String llvmType = mapLLVMType(node.getType());
+        // caso especial para string: aloca struct, não ponteiro
+        if (node.getType().equals("string")) {
+            llvmType = "%String";
+        }
         varTypes.put(node.getName(), llvmType);
+        String ptr = "%" + node.getName();
+        localVars.put(node.getName(), ptr);
 
-        if ("List".equals(node.getType())) visitor.registerListVar(node.getName());
-
-        String cleanName = node.getName().startsWith("%") ? node.getName().substring(1) : node.getName();
-        String ptrName = "%" + cleanName;
-        localVars.put(node.getName(), ptrName);
-
-        return "  " + ptrName + " = alloca " + llvmType + "\n;;VAL:" + ptrName + ";;TYPE:" + llvmType + "\n";
+        return "  " + ptr + " = alloca " + llvmType + "\n;;VAL:" + ptr + ";;TYPE:" + llvmType + "\n";
     }
+
 
     public String emitInit(VariableDeclarationNode node) {
         String llvmType = varTypes.get(node.getName());
         if (node.initializer == null) {
-            return "List".equals(node.getType())
-                    ? emitStore(node.getName(), "i8*", callArrayListCreate())
-                    : "";
+            if ("List".equals(node.getType())) {
+                return emitStore(node.getName(), llvmType, callArrayListCreate());
+            }
+            return "";
         }
 
-        if (node.initializer instanceof ast.variables.LiteralNode lit) {
-            return emitLiteralInit(node.getName(), llvmType, lit.value.getValue());
+        // caso especial: string literal
+        if (node.getType().equals("string") && node.initializer instanceof LiteralNode lit) {
+            String literal = (String) lit.value.getValue();
+            String globalName = visitor.getGlobalStrings().getGlobalName(literal);
+            int len = literal.length();
+
+            StringBuilder sb = new StringBuilder();
+            String varPtr = getVarPtr(node.getName());
+
+            // ponteiro para os dados da string literal
+            String tmp = temps.newTemp();
+            sb.append("  ").append(tmp)
+                    .append(" = getelementptr inbounds [")
+                    .append(len + 1).append(" x i8], [").append(len + 1)
+                    .append(" x i8]* ").append(globalName).append(", i32 0, i32 0\n")
+                    .append(";;VAL:").append(tmp).append(";;TYPE:i8*\n");
+
+            // inicializa campo .data
+            String ptrField = temps.newTemp();
+            sb.append("  ").append(ptrField)
+                    .append(" = getelementptr inbounds %String, %String* ")
+                    .append(varPtr).append(", i32 0, i32 0\n");
+            sb.append("  store i8* ").append(tmp).append(", i8** ").append(ptrField).append("\n");
+
+            // inicializa campo .length
+            String lenField = temps.newTemp();
+            sb.append("  ").append(lenField)
+                    .append(" = getelementptr inbounds %String, %String* ")
+                    .append(varPtr).append(", i32 0, i32 1\n");
+            sb.append("  store i64 ").append(len).append(", i64* ").append(lenField).append("\n");
+
+            return sb.toString();
         }
 
-        String exprLLVM;
-        if (node.initializer instanceof ListNode listNode) {
-            exprLLVM = new ListEmitter(temps, globalStrings).emit(listNode, visitor);
-        } else if (node.initializer instanceof InputNode inputNode) {
-            exprLLVM = new InputEmitter(temps, globalStrings).emit(inputNode, llvmType);
-        } else {
-            exprLLVM = node.initializer.accept(visitor);
-        }
-
-
+        // padrão para int/double/bool/lista
+        String exprLLVM = node.initializer.accept(visitor);
         String temp = extractTemp(exprLLVM);
         return exprLLVM + emitStore(node.getName(), llvmType, temp);
     }
 
-    private String emitLiteralInit(String name, String llvmType, Object val) {
-        if ("double".equals(llvmType) && val instanceof Integer i) val = i.doubleValue();
-        return switch (llvmType) {
-            case "i1" -> emitStore(name, llvmType, (Boolean) val ? "1" : "0");
-            case "i32", "double" -> emitStore(name, llvmType, val.toString());
-            case "i8*" -> {
-                String strName = globalStrings.getOrCreateString((String) val);
-                int len = ((String) val).length() + 1;
-                yield emitStore(name, llvmType,
-                        "getelementptr ([" + len + " x i8], [" + len + " x i8]* "
-                                + strName + ", i32 0, i32 0)");
-            }
-            default -> "";
-        };
-    }
 
-    private String emitStore(String varName, String type, String value) {
-        return "  store " + type + " " + value + ", " + type + "* %" + varName + "\n";
+    private String emitStore(String name, String type, String value) {
+        return "  store " + type + " " + value + ", " + type + "* %" + name + "\n";
     }
 
     private String callArrayListCreate() {
@@ -105,26 +98,31 @@ public class VariableEmitter {
     }
 
     public String emitLoad(String name) {
-        String type = varTypes.get(name);
-        if (type == null) throw new RuntimeException("Variável não alocada: " + name);
-
-        type = mapLLVMType(type);
-        String tmp = temps.newTemp();
+        String llvmType = varTypes.get(name); // deve ser i32, double, i1, i8*, etc.
         String ptr = localVars.get(name);
-        if (ptr == null) throw new RuntimeException("Variável não alocada: " + name);
-
-        return "  " + tmp + " = load " + type + ", " + type + "* " + ptr +
-                "\n;;VAL:" + tmp + ";;TYPE:" + type + "\n";
+        String tmp = temps.newTemp();
+        return "  " + tmp + " = load " + llvmType + ", " + llvmType + "* " + ptr
+                + "\n;;VAL:" + tmp + ";;TYPE:" + llvmType + "\n";
     }
 
+
     private String extractTemp(String code) {
-        int lastValIdx = code.lastIndexOf(";;VAL:");
-        if (lastValIdx == -1) throw new RuntimeException("Não encontrou ;;VAL: em: " + code);
-        int typeIdx = code.indexOf(";;TYPE:", lastValIdx);
-        return code.substring(lastValIdx + 6, typeIdx).trim();
+        int idx = code.lastIndexOf(";;VAL:");
+        int endIdx = code.indexOf(";;TYPE:", idx);
+        return code.substring(idx + 6, endIdx).trim();
+    }
+
+    private String extractType(String code) {
+        int idx = code.indexOf(";;TYPE:");
+        int endIdx = code.indexOf("\n", idx);
+        return code.substring(idx + 7, endIdx == -1 ? code.length() : endIdx).trim();
     }
 
     public String getVarPtr(String name) {
         return localVars.get(name);
+    }
+
+    public void registerVarPtr(String name, String ptr) {
+        localVars.put(name, ptr);
     }
 }

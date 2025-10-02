@@ -2,8 +2,6 @@ package low.variables;
 import low.module.LLVisitorMain;
 import low.TempManager;
 import ast.variables.BinaryOpNode;
-
-
 public class BinaryOpEmitter {
     private final TempManager temps;
     private final LLVisitorMain visitor;
@@ -15,24 +13,29 @@ public class BinaryOpEmitter {
 
     public String emit(BinaryOpNode node) {
 
+        System.out.println("[DEBUG] BinaryOpEmitter: operador=" + node.operator);
+
+        // Avalia left e right
         String leftLLVM = node.left.accept(visitor);
         String rightLLVM = node.right.accept(visitor);
 
+        System.out.println("[DEBUG] LLVM left:\n" + leftLLVM);
+        System.out.println("[DEBUG] LLVM right:\n" + rightLLVM);
 
         String leftTemp = extractTemp(leftLLVM);
         String rightTemp = extractTemp(rightLLVM);
+        System.out.println("[DEBUG] Temps extraídos: left=" + leftTemp + ", right=" + rightTemp);
 
         String leftTypeAST = extractType(leftLLVM);
         String rightTypeAST = extractType(rightLLVM);
-
+        System.out.println("[DEBUG] Types extraídos do AST: left=" + leftTypeAST + ", right=" + rightTypeAST);
 
         String leftType = toLLVMType(leftTypeAST);
         String rightType = toLLVMType(rightTypeAST);
-
+        System.out.println("[DEBUG] Types convertidos para LLVM: left=" + leftType + ", right=" + rightType);
 
         String resultTemp = temps.newTemp();
         StringBuilder llvm = new StringBuilder();
-
         llvm.append(leftLLVM).append("\n").append(rightLLVM).append("\n");
 
         if (leftType.equals("i32") && rightType.equals("i32")) {
@@ -53,17 +56,16 @@ public class BinaryOpEmitter {
                     .append(" i32 ").append(leftTemp).append(", ").append(rightTemp).append("\n")
                     .append(";;VAL:").append(resultTemp).append(";;TYPE:").append(op.startsWith("icmp") ? "i1" : "i32").append("\n");
         }
-
         else if (leftType.equals("double") || rightType.equals("double")) {
             if (leftType.equals("i32")) {
                 String tmp = temps.newTemp();
-                llvm.append("  ").append(tmp).append(" = sitofp i32 ").append(leftTemp).append(" to double\n");
+                llvm.append("  ").append(tmp).append(" = sitofp i32 ").append(leftTemp).append(" to double\n;;VAL:").append(tmp).append(";;TYPE:double\n");
                 leftTemp = tmp;
                 leftType = "double";
             }
             if (rightType.equals("i32")) {
                 String tmp = temps.newTemp();
-                llvm.append("  ").append(tmp).append(" = sitofp i32 ").append(rightTemp).append(" to double\n");
+                llvm.append("  ").append(tmp).append(" = sitofp i32 ").append(rightTemp).append(" to double\n;;VAL:").append(tmp).append(";;TYPE:double\n");
                 rightTemp = tmp;
                 rightType = "double";
             }
@@ -87,6 +89,7 @@ public class BinaryOpEmitter {
                     .append(";;VAL:").append(resultTemp).append(";;TYPE:").append(op.startsWith("fcmp") ? "i1" : "double").append("\n");
         }
         else if (leftType.equals("i8*") && rightType.equals("i8*")) {
+            System.out.println("[DEBUG] Operação entre strings: " + node.operator);
             if (node.operator.equals("+")) {
                 String tmp = temps.newTemp();
                 llvm.append("  ").append(tmp).append(" = call i8* @concat_strings(i8* ")
@@ -111,6 +114,7 @@ public class BinaryOpEmitter {
             throw new RuntimeException("Tipos incompatíveis para operação: " + leftType + " " + node.operator + " " + rightType);
         }
 
+        System.out.println("[DEBUG] LLVM final BinaryOp:\n" + llvm.toString());
         return llvm.toString();
     }
 
@@ -123,7 +127,9 @@ public class BinaryOpEmitter {
 
     private String extractType(String code) {
         int typeIdx = code.lastIndexOf(";;TYPE:");
-        return code.substring(typeIdx + 7).trim();
+        if (typeIdx == -1) throw new RuntimeException("Não encontrou ;;TYPE: em: " + code);
+        int newlineIdx = code.indexOf("\n", typeIdx);
+        return code.substring(typeIdx + 7, newlineIdx == -1 ? code.length() : newlineIdx).trim();
     }
 
     private String toLLVMType(String type) {
@@ -132,7 +138,7 @@ public class BinaryOpEmitter {
             case "double" -> "double";
             case "boolean" -> "i1";
             case "string", "List" -> "i8*";
-            default -> type; // já pode estar em LLVM
+            default -> type;
         };
     }
 }

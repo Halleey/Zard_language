@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 public class FunctionCallEmitter {
     private final TempManager temps;
     private final Set<String> beingDeduced = new HashSet<>();
@@ -33,28 +32,35 @@ public class FunctionCallEmitter {
     public String emit(FunctionCallNode node, LLVisitorMain visitor) {
         StringBuilder sb = new StringBuilder();
         List<String> llvmArgs = new ArrayList<>();
+        TypeMapper typeMapper = new TypeMapper();
 
         // Avalia argumentos
         for (ASTNode arg : node.getArgs()) {
             String argLLVM = arg.accept(visitor);
             String temp = extractTemp(argLLVM);
-            String type = extractType(argLLVM);
+            String type = typeMapper.toLLVM(extractType(argLLVM)); // converte para LLVM nativo
+
+            // Se for string, transforma em %String*
+            if ("string".equals(type)) type = "%String*";
 
             llvmArgs.add(type + " " + temp);
             sb.append(argLLVM);
         }
 
-        // Pega o tipo de retorno
+        // Tipo de retorno
         String retType = visitor.getFunctionType(node.getName());
         if (retType == null) throw new RuntimeException("Função não registrada: " + node.getName());
 
-        // Se a função está sendo deduzida (recursiva), usa tipo provisório
+        // deduz recursão se necessário
         if ("any".equals(retType) && beingDeduced.contains(node.getName())) {
             retType = "i32"; // provisório
         }
 
+        // converte retorno para LLVM nativo
+        retType = typeMapper.toLLVM(retType);
+        if ("string".equals(retType)) retType = "%String*";
+
         if ("void".equals(retType)) {
-            // Funções void não podem receber nome em LLVM
             sb.append("  call void @").append(node.getName())
                     .append("(").append(String.join(", ", llvmArgs)).append(")\n")
                     .append(";;VAL:void;;TYPE:void\n");

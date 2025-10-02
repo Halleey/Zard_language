@@ -1,29 +1,30 @@
-import "src/language/stdlib/Math.zd" as math;
+
 main{
+function int hello(int a, int b){return a + b;}
+print(hello(3, 4));
 
 
-List teste = ("hello", 13, true);
-print(teste);
-function te(){return "hello";}
-print(te());
-
-function adde(List list){list.add(3);}
-call adde(teste);
-print(teste);
-
-function pow(double base, int exp) {
-    if (exp < 0) {
-        print("Aviso: expoente negativo no suportado, retornando 0");
+function int factorial(int n) {
+    if (n < 0) {
+        print("Erro: factorial de numero negativo!");
         return 0;
     }
-    double result = 1;
-    int i = 0;
-    while (i < exp) {
-        result = result * base;
-        i++;
+    if (n == 0) {
+     return 1;
     }
-    return result;
+    return n * factorial(n - 1);
 }
-print(pow(2.0, -1));
+print(factorial(5));
 
+string nome = "hallyson";
+int a = 3;
+double b= 3.4;
+boolean real = false;
+print(a);
+print(b);
+print(real);
+print(nome);
+if(a > 10) {print("maior");}
+else if(a < 1) {print("meio");}
+else {print("nenhum dos anteriores");}
 }

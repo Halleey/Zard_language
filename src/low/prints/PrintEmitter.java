@@ -11,8 +11,6 @@ import low.module.LLVisitorMain;
 import ast.prints.PrintNode;
 import ast.variables.LiteralNode;
 import ast.variables.VariableNode;
-
-
 public class PrintEmitter {
     private final GlobalStringManager globalStrings;
 
@@ -23,68 +21,77 @@ public class PrintEmitter {
     public String emit(PrintNode node, LLVisitorMain visitor) {
         ASTNode expr = node.expr;
 
-        // Caso literal string
+        // Literal string
         if (expr instanceof LiteralNode lit && lit.value.getType().equals("string")) {
-            return emitStringLiteral((String) lit.value.getValue());
+            return emitStringLiteral((String) lit.value.getValue(), visitor);
         }
 
-        // Caso variável
+        // Variável
         if (expr instanceof VariableNode varNode) {
             String varName = varNode.getName();
             String type = visitor.getVarType(varName);
 
-            if ("i8*".equals(type)) {
-                if (visitor.isList(varName)) {
-                    return emitListVariable(varName, visitor);
-                } else {
-                    return emitStringVariable(varName, visitor);
-                }
+            if ("%String".equals(type)) {
+                return emitStringVariable(varName, visitor);
+            } else {
+                return emitPrimitiveVariable(varName, type, visitor);
             }
         }
 
-        // Caso lista.get
-        if (expr instanceof ListGetNode listGetNode) {
-            ListGetEmitter listGetEmitter = new ListGetEmitter(visitor.getTemps());
-            String llvmListGet = listGetEmitter.emit(listGetNode, visitor);
-            String tmpDyn = extractTemp(llvmListGet);
-            return llvmListGet + "  call void @printDynValue(%DynValue* " + tmpDyn + ")\n";
-        }
-
-        // Caso chamada de função
-        if (expr instanceof FunctionCallNode) {
-            String exprLLVM = expr.accept(visitor);
-            return emitPrimitiveOrExpr(exprLLVM, visitor);
-        }
-
-        // Qualquer outra expressão (int, double, bool)
+        // Qualquer outra expressão
         String exprLLVM = expr.accept(visitor);
         return emitPrimitiveOrExpr(exprLLVM, visitor);
     }
 
-    private String emitStringLiteral(String value) {
+    // --- Literais ---
+    private String emitStringLiteral(String value, LLVisitorMain visitor) {
         String strName = globalStrings.getOrCreateString(value);
         int len = value.length() + 1; // inclui \0
-        return "  call i32 (i8*, ...) @printf(i8* getelementptr ([" + len +
-                " x i8], [" + len + " x i8]* " + strName + ", i32 0, i32 0))\n";
+        String tmp = visitor.getTemps().newTemp();
+        // Atenção: sem parênteses extras no getelementptr
+        return "  " + tmp + " = getelementptr inbounds [" + len + " x i8], [" + len + " x i8]* " + strName + ", i32 0, i32 0\n" +
+                "  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* " + tmp + ")\n";
     }
 
+    // --- Variáveis do tipo %String ---
     private String emitStringVariable(String varName, LLVisitorMain visitor) {
-        String tmp = visitor.getTemps().newTemp();
-        StringBuilder llvm = new StringBuilder();
-        llvm.append("  ").append(tmp).append(" = load i8*, i8** %").append(varName).append("\n");
-        // usa sempre @.strStr com [4 x i8] pois é apenas "%s"
-        llvm.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* ").append(tmp).append(")\n");
-        return llvm.toString();
+        String tmpPtr = visitor.getTemps().newTemp();
+        String tmpLoad = visitor.getTemps().newTemp();
+        StringBuilder sb = new StringBuilder();
+
+        // pega ponteiro da struct %String { i8*, i64 }
+        sb.append("  ").append(tmpPtr)
+                .append(" = getelementptr inbounds %String, %String* %").append(varName).append(", i32 0, i32 0\n");
+        sb.append("  ").append(tmpLoad)
+                .append(" = load i8*, i8** ").append(tmpPtr).append("\n");
+        sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* ").append(tmpLoad).append(")\n");
+
+        return sb.toString();
     }
 
-    private String emitListVariable(String varName, LLVisitorMain visitor) {
+    // --- Variáveis nativas ---
+    private String emitPrimitiveVariable(String varName, String type, LLVisitorMain visitor) {
         String tmp = visitor.getTemps().newTemp();
-        StringBuilder llvm = new StringBuilder();
-        llvm.append("  ").append(tmp).append(" = load i8*, i8** %").append(varName).append("\n");
-        llvm.append("  call void @printList(i8* ").append(tmp).append(")\n");
-        return llvm.toString();
+        StringBuilder sb = new StringBuilder();
+        sb.append("  ").append(tmp).append(" = load ").append(type).append(", ").append(type).append("* %").append(varName).append("\n");
+
+        switch (type) {
+            case "i32" ->
+                    sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 ").append(tmp).append(")\n");
+            case "double" ->
+                    sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double ").append(tmp).append(")\n");
+            case "i1" -> {
+                String zextTmp = visitor.getTemps().newTemp();
+                sb.append("  ").append(zextTmp).append(" = zext i1 ").append(tmp).append(" to i32\n");
+                sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 ").append(zextTmp).append(")\n");
+            }
+            default -> throw new RuntimeException("Tipo não suportado no print: " + type);
+        }
+
+        return sb.toString();
     }
 
+    // --- Expressões ---
     private String emitPrimitiveOrExpr(String exprLLVM, LLVisitorMain visitor) {
         int markerIdx = exprLLVM.lastIndexOf(";;VAL:");
         if (markerIdx == -1) return exprLLVM;
@@ -111,12 +118,14 @@ public class PrintEmitter {
                 llvm.append("  ").append(zextTmp).append(" = zext i1 ").append(temp).append(" to i32\n");
                 llvm.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 ").append(zextTmp).append(")\n");
             }
-            case "i8*" -> llvm.append("  call i32 (i8*, ...) @printf(i8* ").append(temp).append(")\n");
-
-            case "any" ->
-                    llvm.append("  call void @printDynValue(%DynValue* ").append(temp).append(")\n");
-            default ->
-                    throw new RuntimeException("Tipo não suportado no print: " + type);
+            case "%String" -> {
+                String tmpPtr = visitor.getTemps().newTemp();
+                String tmpLoad = visitor.getTemps().newTemp();
+                llvm.append("  ").append(tmpPtr).append(" = getelementptr inbounds %String, %String* ").append(temp).append(", i32 0, i32 0\n");
+                llvm.append("  ").append(tmpLoad).append(" = load i8*, i8** ").append(tmpPtr).append("\n");
+                llvm.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* ").append(tmpLoad).append(")\n");
+            }
+            default -> throw new RuntimeException("Tipo não suportado no print: " + type);
         }
 
         return llvm.toString();

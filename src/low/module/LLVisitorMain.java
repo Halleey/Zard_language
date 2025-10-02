@@ -29,7 +29,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final Map<String, String> varTypes = new HashMap<>();
     private final TempManager temps = new TempManager();
     private final GlobalStringManager globalStrings = new GlobalStringManager();
-    public final VariableEmitter varEmitter = new VariableEmitter(varTypes, temps, globalStrings, this);
+    public final VariableEmitter varEmitter = new VariableEmitter(varTypes, temps, this);
     private final PrintEmitter printEmitter = new PrintEmitter(globalStrings);
     private final AssignmentEmitter assignmentEmitter = new AssignmentEmitter(varTypes, temps, globalStrings, this);
     private final UnaryOpEmitter unaryOpEmitter = new UnaryOpEmitter(varTypes, temps, varEmitter);
@@ -37,7 +37,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final BinaryOpEmitter binaryEmitter = new BinaryOpEmitter(temps, this);
     private final IfEmitter ifEmitter = new IfEmitter(temps, this);
     private final WhileEmitter whileEmitter = new WhileEmitter(temps, this);
-    private final ListEmitter listEmitter = new ListEmitter(temps, globalStrings);
+    private final ListEmitter listEmitter = new ListEmitter(temps);
     private final Deque<String> loopEndLabels = new ArrayDeque<>();
     private final ListAddEmitter listAddEmitter = new ListAddEmitter(temps, globalStrings);
     private final ListRemoveEmitter listRemoveEmitter = new ListRemoveEmitter(temps);

@@ -62,15 +62,15 @@ public class AssignmentEmitter {
         }
 
         // ListNode
-        if (assignNode.valueNode instanceof ListNode listNode) {
-            ListEmitter listEmitter = new ListEmitter(temps, globalStrings);
-            String llvmList = listEmitter.emit(listNode, visitor);
-            String temp = extractTemp(llvmList);
-            llvm.append(llvmList)
-                    .append("  store i8* ").append(temp)
-                    .append(", i8** ").append(varPtr).append("\n");
-            return llvm.toString();
-        }
+//        if (assignNode.valueNode instanceof ListNode listNode) {
+//            ListEmitter listEmitter = new ListEmitter(temps, globalStrings);
+//            String llvmList = listEmitter.emit(listNode, visitor);
+//            String temp = extractTemp(llvmList);
+//            llvm.append(llvmList)
+//                    .append("  store i8* ").append(temp)
+//                    .append(", i8** ").append(varPtr).append("\n");
+//            return llvm.toString();
+//        }
 
         // InputNode
         if (assignNode.valueNode instanceof InputNode inputNode) {

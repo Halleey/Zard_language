@@ -50,6 +50,11 @@ public class FunctionCallNode extends ASTNode {
         for (int i = 0; i < func.getParams().size(); i++) {
             String paramName = func.getParams().get(i);
             TypedValue argVal = args.get(i).evaluate(ctx);
+
+            // Conversão implícita se necessário: int → double
+            String paramType = func.getParamTypes().get(i);
+            argVal = promoteTypeIfNeeded(argVal, paramType);
+
             localCtx.declareVariable(paramName, argVal);
         }
 
@@ -58,12 +63,26 @@ public class FunctionCallNode extends ASTNode {
                 node.evaluate(localCtx);
             }
         } catch (ReturnValue rv) {
-            return rv.value;
+            TypedValue retVal = rv.value;
+            return promoteTypeIfNeeded(retVal, func.getReturnType());
         }
 
+        // void
         return null;
     }
 
+    private TypedValue promoteTypeIfNeeded(TypedValue value, String targetType) {
+        if (value == null) return null;
+
+        if (value.getType().equals(targetType)) return value;
+        if (targetType.equals("double") && value.getType().equals("int")) {
+            return new TypedValue("double", ((Integer)value.getValue()).doubleValue());
+        }
+        if (!value.getType().equals(targetType)) {
+            throw new RuntimeException("Não é possível converter " + value.getType() + " para " + targetType);
+        }
+        return value;
+    }
     @Override
     public void print(String prefix) {
         System.out.println(prefix + "FunctionCall: " + name);

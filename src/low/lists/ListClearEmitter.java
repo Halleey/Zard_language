@@ -3,6 +3,7 @@ package low.lists;
 import ast.lists.ListClearNode;
 import low.TempManager;
 import low.module.LLVMEmitVisitor;
+
 public class ListClearEmitter {
     private final TempManager temps;
 
@@ -12,30 +13,28 @@ public class ListClearEmitter {
 
     public String emit(ListClearNode node, LLVMEmitVisitor visitor) {
         StringBuilder llvm = new StringBuilder();
-
         String listCode = node.getListNode().accept(visitor);
         llvm.append(listCode);
-        String listVal = extractValue(listCode);
+        String listTmp = extractTemp(listCode);
 
-        // Cast de i8* para %ArrayList*
-        String listCast = temps.newTemp();
-        llvm.append("  ").append(listCast)
-                .append(" = bitcast i8* ").append(listVal)
+        //  Cast de i8* para %ArrayList*
+        String listCastTmp = temps.newTemp();
+        llvm.append("  ").append(listCastTmp)
+                .append(" = bitcast i8* ").append(listTmp)
                 .append(" to %ArrayList*\n");
 
-        llvm.append("  call void @clearList(%ArrayList* ").append(listCast).append(")\n");
+        // Chama a função de clear
+        llvm.append("  call void @clearList(%ArrayList* ").append(listCastTmp).append(")\n");
+
+        // Atualiza VAL/TYPE para fluxo do visitor
+        llvm.append(";;VAL:").append(listCastTmp).append(";;TYPE:%ArrayList*\n");
 
         return llvm.toString();
     }
 
-    private String extractValue(String code) {
-        for (String line : code.split("\n")) {
-            if (line.contains(";;VAL:")) {
-                String val = line.split(";;VAL:")[1].trim();
-                if (val.contains(";;TYPE")) val = val.split(";;TYPE")[0].trim();
-                return val;
-            }
-        }
-        throw new RuntimeException("Não encontrou ;;VAL: em: " + code);
+    private String extractTemp(String code) {
+        int lastValIdx = code.lastIndexOf(";;VAL:");
+        int typeIdx = code.indexOf(";;TYPE:", lastValIdx);
+        return code.substring(lastValIdx + 6, typeIdx).trim();
     }
 }

@@ -27,7 +27,7 @@ int update_string(ArrayList* list, size_t index, char* str);
 void* getItem(ArrayList* list, size_t index);
 int length(ArrayList* list);
 
-
+void clearList(ArrayList* list);
 void freeList(ArrayList* list);
 
 #endif

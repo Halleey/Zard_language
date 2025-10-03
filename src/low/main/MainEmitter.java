@@ -136,7 +136,7 @@ public class MainEmitter {
     declare void @arraylist_print_int(%ArrayList*)
     declare void @arraylist_print_double(%ArrayList*)
     declare void @arraylist_print_string(%ArrayList*)
-
+    declare void @clearList(%ArrayList*)
     declare void @freeList(%ArrayList*)
 
     @.strInt = private constant [4 x i8] c"%d\\0A\\00"

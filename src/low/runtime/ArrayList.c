@@ -98,3 +98,15 @@ void freeList(ArrayList* list) {
     free(list->data);
     free(list);
 }
+
+void clearList(ArrayList* list) {
+    if (!list) return;
+
+    for (size_t i = 0; i < list->length; i++) {
+        if (list->data[i]) {
+            free(list->data[i]);
+            list->data[i] = NULL;
+        }
+    }
+    list->length = 0;
+}

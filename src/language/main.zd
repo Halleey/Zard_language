@@ -4,6 +4,7 @@ string nome = "halley";
 List<int> numeros;
 numeros.add(14);
 List<String> nomes = ("teste", "clebinho xuxucao");
+numeros.clear();
 print(numeros);
 print(nomes);
 

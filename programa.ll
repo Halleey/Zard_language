@@ -10,7 +10,7 @@ declare void @arraylist_add_string(%ArrayList*, i8*)
 declare void @arraylist_print_int(%ArrayList*)
 declare void @arraylist_print_double(%ArrayList*)
 declare void @arraylist_print_string(%ArrayList*)
-
+declare void @clearList(%ArrayList*)
 declare void @freeList(%ArrayList*)
 
 @.strInt = private constant [4 x i8] c"%d\0A\00"
@@ -60,28 +60,29 @@ define i32 @main() {
   %t11 = bitcast [17 x i8]* @.str2 to i8*
 ;;VAL:%t11;;TYPE:i8*
   call void @arraylist_add_string(%ArrayList* %t9, i8* %t11)
-  %t12 = load %String*, %String** %nome
-;;VAL:%t12;;TYPE:%String*
-  %t13 = getelementptr inbounds %String, %String* %t12, i32 0, i32 0
-  %t14 = load i8*, i8** %t13
-  call void @arraylist_add_string(%ArrayList* %t9, i8* %t14)
 ;;VAL:%t8;;TYPE:i8*
   store i8* %t8, i8** %nomes
+  ; ListClearNode
+  %t12 = load i8*, i8** %numeros
+;;VAL:%t12;;TYPE:i8*
+  %t13 = bitcast i8* %t12 to %ArrayList*
+  call void @clearList(%ArrayList* %t13)
+;;VAL:%t13;;TYPE:%ArrayList*
   ; PrintNode
-  %t15 = load i8*, i8** %numeros
-  %t16 = bitcast i8* %t15 to %ArrayList*
-  call void @arraylist_print_int(%ArrayList* %t16)
+  %t14 = load i8*, i8** %numeros
+  %t15 = bitcast i8* %t14 to %ArrayList*
+  call void @arraylist_print_int(%ArrayList* %t15)
   ; PrintNode
-  %t17 = load i8*, i8** %nomes
-  %t18 = bitcast i8* %t17 to %ArrayList*
-  call void @arraylist_print_string(%ArrayList* %t18)
+  %t16 = load i8*, i8** %nomes
+  %t17 = bitcast i8* %t16 to %ArrayList*
+  call void @arraylist_print_string(%ArrayList* %t17)
   ; === Free das listas alocadas ===
-  %t19 = load i8*, i8** %numeros
-  %t20 = bitcast i8* %t19 to %ArrayList*
-  call void @freeList(%ArrayList* %t20)
-  %t21 = load i8*, i8** %nomes
-  %t22 = bitcast i8* %t21 to %ArrayList*
-  call void @freeList(%ArrayList* %t22)
+  %t18 = load i8*, i8** %numeros
+  %t19 = bitcast i8* %t18 to %ArrayList*
+  call void @freeList(%ArrayList* %t19)
+  %t20 = load i8*, i8** %nomes
+  %t21 = bitcast i8* %t20 to %ArrayList*
+  call void @freeList(%ArrayList* %t21)
   ; === Wait for key press before exiting ===
   call i32 @getchar()
   ret i32 0

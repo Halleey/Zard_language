@@ -6,7 +6,7 @@ declare i8* @arraylist_create(i64)
 declare void @arraylist_add_int(%ArrayList*, i32)
 declare void @arraylist_add_double(%ArrayList*, double)
 declare void @arraylist_add_string(%ArrayList*, i8*)
-
+declare i8* @getItem(%ArrayList*, i64)
 declare void @arraylist_print_int(%ArrayList*)
 declare void @arraylist_print_double(%ArrayList*)
 declare void @arraylist_print_string(%ArrayList*)
@@ -22,7 +22,7 @@ declare void @freeList(%ArrayList*)
 
 @.str0 = private constant [7 x i8] c"halley\00"
 @.str1 = private constant [6 x i8] c"teste\00"
-@.str2 = private constant [17 x i8] c"clebinho xuxucao\00"
+@.str2 = private constant [30 x i8] c"teste de elementos com espaco\00"
 
 define i32 @main() {
   ; VariableDeclarationNode
@@ -57,7 +57,7 @@ define i32 @main() {
   %t10 = bitcast [6 x i8]* @.str1 to i8*
 ;;VAL:%t10;;TYPE:i8*
   call void @arraylist_add_string(%ArrayList* %t9, i8* %t10)
-  %t11 = bitcast [17 x i8]* @.str2 to i8*
+  %t11 = bitcast [30 x i8]* @.str2 to i8*
 ;;VAL:%t11;;TYPE:i8*
   call void @arraylist_add_string(%ArrayList* %t9, i8* %t11)
 ;;VAL:%t8;;TYPE:i8*
@@ -75,14 +75,17 @@ define i32 @main() {
   ; PrintNode
   %t16 = load i8*, i8** %nomes
   %t17 = bitcast i8* %t16 to %ArrayList*
-  call void @arraylist_print_string(%ArrayList* %t17)
+  %t18 = add i32 0, 1
+  %t19 = zext i32 %t18 to i64
+  %t20 = call i8* @getItem(%ArrayList* %t17, i64 %t19)
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t20)
   ; === Free das listas alocadas ===
-  %t18 = load i8*, i8** %numeros
-  %t19 = bitcast i8* %t18 to %ArrayList*
-  call void @freeList(%ArrayList* %t19)
-  %t20 = load i8*, i8** %nomes
-  %t21 = bitcast i8* %t20 to %ArrayList*
-  call void @freeList(%ArrayList* %t21)
+  %t21 = load i8*, i8** %numeros
+  %t22 = bitcast i8* %t21 to %ArrayList*
+  call void @freeList(%ArrayList* %t22)
+  %t23 = load i8*, i8** %nomes
+  %t24 = bitcast i8* %t23 to %ArrayList*
+  call void @freeList(%ArrayList* %t24)
   ; === Wait for key press before exiting ===
   call i32 @getchar()
   ret i32 0

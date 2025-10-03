@@ -7,8 +7,6 @@ import low.module.LLVisitorMain;
 import ast.prints.PrintNode;
 import ast.variables.LiteralNode;
 import ast.variables.VariableNode;
-
-
 public class PrintEmitter {
     private final GlobalStringManager globalStrings;
     private final TempManager temps;
@@ -21,32 +19,36 @@ public class PrintEmitter {
     public String emit(PrintNode node, LLVisitorMain visitor) {
         ASTNode expr = node.expr;
 
-        // Literal string
         if (expr instanceof LiteralNode lit && lit.value.getType().equals("string")) {
-            return emitStringLiteral((String) lit.value.getValue(), visitor);
+            return emitStringLiteral((String) lit.value.getValue());
         }
 
-        // Variável
         if (expr instanceof VariableNode varNode) {
             String varName = varNode.getName();
             String type = visitor.getVarType(varName);
 
             if ("%String".equals(type) || "%String*".equals(type)) {
-                return emitStringVariable(varName, visitor);
-            } else if ("i8*".equals(type)) { // listas são representadas como i8*
-                return emitListVariable(varName, visitor);
-            } else {
-                return emitPrimitiveVariable(varName, type, visitor);
+                return emitStringVariable(varName);
             }
+
+            // Listas completas registradas
+            if ("i8*".equals(type)) {
+                String elemType = visitor.getListElementType(varName);
+                if (elemType != null) {
+                    return emitFullList(varName, elemType);
+                }
+            }
+
+            // Variáveis primitivas
+            return emitPrimitiveVariable(varName, type);
         }
 
         // Qualquer outra expressão
         String exprLLVM = expr.accept(visitor);
-        return emitPrimitiveOrExpr(exprLLVM, visitor);
+        return emitExprOrElement(exprLLVM, visitor);
     }
 
-
-    private String emitStringLiteral(String value, LLVisitorMain visitor) {
+    private String emitStringLiteral(String value) {
         String strName = globalStrings.getOrCreateString(value);
         int len = value.length() + 1;
         String tmp = temps.newTemp();
@@ -55,32 +57,22 @@ public class PrintEmitter {
                 "  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* " + tmp + ")\n";
     }
 
-    // --- Variáveis do tipo %String ---
-    private String emitStringVariable(String varName, LLVisitorMain visitor) {
+    private String emitStringVariable(String varName) {
         String tmpPtr = temps.newTemp();
         String tmpLoad = temps.newTemp();
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("  ").append(tmpPtr)
-                .append(" = getelementptr inbounds %String, %String* %").append(varName).append(", i32 0, i32 0\n");
-        sb.append("  ").append(tmpLoad)
-                .append(" = load i8*, i8** ").append(tmpPtr).append("\n");
-        sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* ").append(tmpLoad).append(")\n");
-
-        return sb.toString();
+        return "  " + tmpPtr + " = getelementptr inbounds %String, %String* %" + varName + ", i32 0, i32 0\n" +
+                "  " + tmpLoad + " = load i8*, i8** " + tmpPtr + "\n" +
+                "  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* " + tmpLoad + ")\n";
     }
 
-    // --- Variáveis primitivas ---
-    private String emitPrimitiveVariable(String varName, String type, LLVisitorMain visitor) {
+    private String emitPrimitiveVariable(String varName, String type) {
         String tmp = temps.newTemp();
         StringBuilder sb = new StringBuilder();
         sb.append("  ").append(tmp).append(" = load ").append(type).append(", ").append(type).append("* %").append(varName).append("\n");
 
         switch (type) {
-            case "i32" ->
-                    sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 ").append(tmp).append(")\n");
-            case "double" ->
-                    sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double ").append(tmp).append(")\n");
+            case "i32" -> sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 ").append(tmp).append(")\n");
+            case "double" -> sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double ").append(tmp).append(")\n");
             case "i1" -> {
                 String zextTmp = temps.newTemp();
                 sb.append("  ").append(zextTmp).append(" = zext i1 ").append(tmp).append(" to i32\n");
@@ -88,26 +80,15 @@ public class PrintEmitter {
             }
             default -> throw new RuntimeException("Tipo não suportado no print: " + type);
         }
-
         return sb.toString();
     }
 
-    private String emitListVariable(String varName, LLVisitorMain visitor) {
-        String tmpList = temps.newTemp();
-        String tmpCast = temps.newTemp();
+    private String emitFullList(String varName, String elemType) {
+        String tmp = temps.newTemp();
         StringBuilder sb = new StringBuilder();
-
-        // 1. Carrega i8* da variável
-        sb.append("  ").append(tmpList)
-                .append(" = load i8*, i8** %").append(varName).append("\n");
-
-        // 2. Bitcast para %ArrayList*
-        sb.append("  ").append(tmpCast)
-                .append(" = bitcast i8* ").append(tmpList).append(" to %ArrayList*\n");
-
-        // 3. Chama a função correta de print
-        String elemType = visitor.getListElementType(varName);
-        if (elemType == null) throw new RuntimeException("Elemento de lista não registrado para: " + varName);
+        sb.append("  ").append(tmp).append(" = load i8*, i8** %").append(varName).append("\n");
+        String tmpCast = temps.newTemp();
+        sb.append("  ").append(tmpCast).append(" = bitcast i8* ").append(tmp).append(" to %ArrayList*\n");
 
         String printFunc;
         switch (elemType.toLowerCase()) {
@@ -118,17 +99,15 @@ public class PrintEmitter {
         }
 
         sb.append("  call void ").append(printFunc).append("(%ArrayList* ").append(tmpCast).append(")\n");
-
         return sb.toString();
     }
 
-    private String emitPrimitiveOrExpr(String exprLLVM, LLVisitorMain visitor) {
+    private String emitExprOrElement(String exprLLVM, LLVisitorMain visitor) {
         int markerIdx = exprLLVM.lastIndexOf(";;VAL:");
         if (markerIdx == -1) return exprLLVM;
 
         String codePart = exprLLVM.substring(0, markerIdx);
         String valTypePart = exprLLVM.substring(markerIdx);
-
         String temp = extractTemp(valTypePart);
         String type = extractType(valTypePart);
 
@@ -139,24 +118,14 @@ public class PrintEmitter {
         }
 
         switch (type) {
-            case "i32" ->
-                    llvm.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 ").append(temp).append(")\n");
-            case "double" ->
-                    llvm.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double ").append(temp).append(")\n");
+            case "i32" -> llvm.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 ").append(temp).append(")\n");
+            case "double" -> llvm.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double ").append(temp).append(")\n");
             case "i1" -> {
                 String zextTmp = temps.newTemp();
                 llvm.append("  ").append(zextTmp).append(" = zext i1 ").append(temp).append(" to i32\n");
                 llvm.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 ").append(zextTmp).append(")\n");
             }
-            case "i32*", "double*", "%String*" -> {
-                String printFunc;
-                switch (type) {
-                    case "i32*" -> printFunc = "@arraylist_print_int";
-                    case "double*" -> printFunc = "@arraylist_print_double";
-                    default -> printFunc = "@arraylist_print_string";
-                }
-                llvm.append("  call void ").append(printFunc).append("(i8* ").append(temp).append(")\n");
-            }
+            case "i8*" -> llvm.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* ").append(temp).append(")\n");
             default -> throw new RuntimeException("Tipo não suportado no print: " + type);
         }
 

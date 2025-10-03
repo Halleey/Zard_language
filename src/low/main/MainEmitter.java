@@ -132,7 +132,7 @@ public class MainEmitter {
     declare void @arraylist_add_int(%ArrayList*, i32)
     declare void @arraylist_add_double(%ArrayList*, double)
     declare void @arraylist_add_string(%ArrayList*, i8*)
-
+    declare i8* @getItem(%ArrayList*, i64)
     declare void @arraylist_print_int(%ArrayList*)
     declare void @arraylist_print_double(%ArrayList*)
     declare void @arraylist_print_string(%ArrayList*)

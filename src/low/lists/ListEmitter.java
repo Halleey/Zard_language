@@ -2,9 +2,12 @@ package low.lists;
 
 import ast.ASTNode;
 import ast.lists.ListNode;
+import ast.variables.VariableNode;
 import low.TempManager;
 import low.module.LLVisitorMain;
 import java.util.List;
+
+
 public class ListEmitter {
     private final TempManager temps;
 
@@ -20,7 +23,8 @@ public class ListEmitter {
         // 1. Cria a lista
         String listPtr = temps.newTemp();
         llvm.append("  ").append(listPtr)
-                .append(" = call i8* @arraylist_create(i64 ").append(Math.max(4, n)).append(")\n");
+                .append(" = call i8* @arraylist_create(i64 ")
+                .append(Math.max(4, n)).append(")\n");
 
         // bitcast para %ArrayList* uma vez
         String listCast = temps.newTemp();
@@ -34,7 +38,7 @@ public class ListEmitter {
 
             String temp = extractTemp(elemLLVM);
             String type = extractType(elemLLVM);
-
+            System.out.println("--------" + type);
             switch (type) {
                 case "i32" -> llvm.append("  call void @arraylist_add_int(%ArrayList* ")
                         .append(listCast).append(", i32 ").append(temp).append(")\n");
@@ -42,21 +46,15 @@ public class ListEmitter {
                 case "double" -> llvm.append("  call void @arraylist_add_double(%ArrayList* ")
                         .append(listCast).append(", double ").append(temp).append(")\n");
 
-                case "%String*" -> {
-                    // pega o i8* do struct String
-                    String loaded = temps.newTemp();
-                    llvm.append("  ").append(loaded)
-                            .append(" = getelementptr inbounds %String, %String* ")
-                            .append(temp).append(", i32 0, i32 0\n");
-
-                    String realData = temps.newTemp();
-                    llvm.append("  ").append(realData)
-                            .append(" = load i8*, i8** ").append(loaded).append("\n");
-
-                    llvm.append("  call void @arraylist_add_string(%ArrayList* ")
-                            .append(listCast).append(", i8* ").append(realData).append(")\n");
+                case "%String" -> {
+                    if (element instanceof VariableNode varNode) {
+                        // passa o ponteiro alocado direto
+                        llvm.append("  call void @arraylist_add_String(%ArrayList* ")
+                                .append(listCast).append(", %String* %").append(varNode.getName()).append(")\n");
+                    } else {
+                        throw new RuntimeException("Only variable %String supported for now");
+                    }
                 }
-
                 case "i8*" -> llvm.append("  call void @arraylist_add_string(%ArrayList* ")
                         .append(listCast).append(", i8* ").append(temp).append(")\n");
 
@@ -79,6 +77,15 @@ public class ListEmitter {
         llvm.append(";;VAL:").append(listPtr).append(";;TYPE:i8*\n");
         return llvm.toString();
     }
+
+    private String tempVarPointer(ASTNode element) {
+        if (element instanceof VariableNode var) {
+            return var.getName(); // já é o ponteiro alocado
+        }
+        // para literais ou construções novas, você precisa alocá-las primeiro
+        throw new RuntimeException("Cannot get pointer to non-variable %String literal");
+    }
+
 
     private String extractTemp(String code) {
         int idx = code.lastIndexOf(";;VAL:");

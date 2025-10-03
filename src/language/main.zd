@@ -1,11 +1,13 @@
 
 main{
 string nome = "halley";
+string teste = "zard";
 List<int> numeros;
 numeros.add(14);
-List<String> nomes = ("teste", "teste de elementos com espaco");
+List<String> nomes = (teste, "teste", "teste de elementos com espaco", nome);
 numeros.clear();
+nome = "teste";
 print(numeros);
-print(nomes.get(1));
-
+print(nomes.get(0));
+print(nomes);
 }

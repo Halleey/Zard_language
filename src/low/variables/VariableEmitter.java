@@ -33,9 +33,10 @@ public class VariableEmitter {
         localVars.put(node.getName(), ptr);
 
         if (node.getType().equals("string")) {
-            varTypes.put(node.getName(), "%String*");
+            varTypes.put(node.getName(), "%String");
             return "  " + ptr + " = alloca %String\n;;VAL:" + ptr + ";;TYPE:%String*\n";
         }
+
 
         if (node.getType().startsWith("List")) {
             varTypes.put(node.getName(), "i8*"); // ponteiro genérico para listas

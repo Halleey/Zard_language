@@ -1,6 +1,7 @@
 #ifndef ARRAYLIST_H
 #define ARRAYLIST_H
 #include <stdlib.h>
+#include "String.h"
 
 typedef struct {
     void **data;
@@ -13,6 +14,7 @@ ArrayList* arraylist_create(size_t initial_capacity);
 void arraylist_add_int(ArrayList* list, int value);
 void arraylist_add_double(ArrayList* list, double value);
 void arraylist_add_string(ArrayList* list, char* str);
+void arraylist_add_String(ArrayList* list, String* str);
 
 void arraylist_addAll_int(ArrayList* list, int* values, size_t n);
 void arraylist_addAll_double(ArrayList* list, double* values, size_t n);

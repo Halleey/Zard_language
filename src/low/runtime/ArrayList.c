@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 ArrayList* arraylist_create(size_t initial_capacity) {
     ArrayList* list = malloc(sizeof(ArrayList));
     if (!list) return NULL;
@@ -109,4 +110,20 @@ void clearList(ArrayList* list) {
         }
     }
     list->length = 0;
+}
+
+void arraylist_add_String(ArrayList* list, String* str) {
+    if (!str) return;
+    if (!str->data) return;
+
+    ensureCapacity(list);
+
+    size_t len = str->length + 1;
+    char* copy = malloc(len);
+
+
+    memcpy(copy, str->data, len);
+
+
+    list->data[list->length++] = copy;
 }

@@ -3,7 +3,9 @@ package low.main;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
+import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class GlobalStringManager {
     private final Map<String, String> stringMap = new LinkedHashMap<>();
@@ -22,23 +24,28 @@ public class GlobalStringManager {
             String literal = e.getKey();
             String name = e.getValue();
             int len = getStringLen(literal);
+
+            // Aqui garantimos que o literal final sempre contém o terminador nulo
             sb.append(name)
                     .append(" = private constant [")
                     .append(len)
                     .append(" x i8] c\"")
                     .append(escapeString(literal))
-                    .append("\\00\"\n");
+                    .append("\\00\"\n"); // <-- terminador nulo explícito
         }
         return sb.toString();
     }
 
     public int getStringLen(String literal) {
+        // +1 para o terminador nulo
         return literal.getBytes(StandardCharsets.UTF_8).length + 1;
     }
 
-
     public String escapeString(String literal) {
-        return literal.replace("\"", "\\22");
+        // Escapa aspas duplas e barras invertidas
+        return literal
+                .replace("\\", "\\5C") // evita quebrar strings com barra
+                .replace("\"", "\\22");
     }
 
     public String getGlobalName(String literal) {
@@ -46,8 +53,6 @@ public class GlobalStringManager {
     }
 
     public int getLength(String literal) {
-        // retorna tamanho real do literal em bytes UTF-8 + 1 para o \00
         return getStringLen(literal);
     }
-
 }

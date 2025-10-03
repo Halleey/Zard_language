@@ -21,7 +21,9 @@ declare void @freeList(%ArrayList*)
 %ArrayList = type opaque
 
 @.str0 = private constant [36 x i8] c"Erro: factorial de numero negativo!\00"
-@.str1 = private constant [7 x i8] c"halley\00"
+@.str1 = private constant [6 x i8] c"teste\00"
+@.str2 = private constant [17 x i8] c"clebinho xuxucao\00"
+@.str3 = private constant [7 x i8] c"halley\00"
 
 ; === Função: factorial ===
 define i32 @factorial(i32 %n) {
@@ -89,58 +91,77 @@ define i32 @main() {
   %t16 = call i32 @factorial(i32 %t15)
   call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t16)
   ; VariableDeclarationNode
+  %nomes = alloca i8*
+;;VAL:%nomes;;TYPE:i8*
+  %t17 = call i8* @arraylist_create(i64 4)
+  %t18 = bitcast [6 x i8]* @.str1 to i8*
+;;VAL:%t18;;TYPE:i8*
+  call void @arraylist_add_string(i8* %t17, i8* %t18)
+  %t19 = bitcast [17 x i8]* @.str2 to i8*
+;;VAL:%t19;;TYPE:i8*
+  call void @arraylist_add_string(i8* %t17, i8* %t19)
+;;VAL:%t17;;TYPE:i8*
+  store i8* %t17, i8** %nomes
+  ; VariableDeclarationNode
   %nome = alloca %String
 ;;VAL:%nome;;TYPE:%String*
-  %t17 = getelementptr inbounds [7 x i8], [7 x i8]* @.str1, i32 0, i32 0
-;;VAL:%t17;;TYPE:i8*
-  %t18 = getelementptr inbounds %String, %String* %nome, i32 0, i32 0
-  store i8* %t17, i8** %t18
-  %t19 = getelementptr inbounds %String, %String* %nome, i32 0, i32 1
-  store i64 6, i64* %t19
+  %t20 = bitcast [7 x i8]* @.str3 to i8*
+;;VAL:%t20;;TYPE:i8*
+  %t21 = getelementptr inbounds %String, %String* %nome, i32 0, i32 0
+  store i8* %t20, i8** %t21
+  %t22 = getelementptr inbounds %String, %String* %nome, i32 0, i32 1
+  store i64 6, i64* %t22
   ; VariableDeclarationNode
   %numeros = alloca i8*
 ;;VAL:%numeros;;TYPE:i8*
-  %t20 = call i8* @arraylist_create(i64 4)
-;;VAL:%t20;;TYPE:i8*
-  store i8* %t20, i8** %numeros
-  %t21 = add i32 0, 3
-;;VAL:%t21;;TYPE:i32
-  call void @arraylist_add_int(i8* %t20, i32 %t21)
-  %t22 = add i32 0, 4
-;;VAL:%t22;;TYPE:i32
-  call void @arraylist_add_int(i8* %t20, i32 %t22)
-  %t23 = add i32 0, 55
-;;VAL:%t23;;TYPE:i32
-  call void @arraylist_add_int(i8* %t20, i32 %t23)
+  %t23 = call i8* @arraylist_create(i64 4)
+  %t24 = add i32 0, 3
+;;VAL:%t24;;TYPE:i32
+  call void @arraylist_add_int(i8* %t23, i32 %t24)
+  %t25 = add i32 0, 4
+;;VAL:%t25;;TYPE:i32
+  call void @arraylist_add_int(i8* %t23, i32 %t25)
+  %t26 = add i32 0, 55
+;;VAL:%t26;;TYPE:i32
+  call void @arraylist_add_int(i8* %t23, i32 %t26)
+;;VAL:%t23;;TYPE:i8*
+  store i8* %t23, i8** %numeros
   ; PrintNode
-  %t24 = load i8*, i8** %numeros
-  call void @arraylist_print_int(i8* %t24)
+  %t27 = load i8*, i8** %numeros
+  call void @arraylist_print_int(i8* %t27)
+  ; PrintNode
+  %t28 = load i8*, i8** %nomes
+  call void @arraylist_print_string(i8* %t28)
   ; VariableDeclarationNode
   %flut = alloca i8*
 ;;VAL:%flut;;TYPE:i8*
-  %t25 = call i8* @arraylist_create(i64 4)
-;;VAL:%t25;;TYPE:i8*
-  store i8* %t25, i8** %flut
-  %t26 = fadd double 0.0, 3.14
-;;VAL:%t26;;TYPE:double
-  call void @arraylist_add_double(i8* %t25, double %t26)
-  %t27 = fadd double 0.0, 4.4
-;;VAL:%t27;;TYPE:double
-  call void @arraylist_add_double(i8* %t25, double %t27)
+  %t29 = call i8* @arraylist_create(i64 4)
+  %t30 = fadd double 0.0, 3.14
+;;VAL:%t30;;TYPE:double
+  call void @arraylist_add_double(i8* %t29, double %t30)
+  %t31 = fadd double 0.0, 4.4
+;;VAL:%t31;;TYPE:double
+  call void @arraylist_add_double(i8* %t29, double %t31)
+;;VAL:%t29;;TYPE:i8*
+  store i8* %t29, i8** %flut
   ; PrintNode
-  %t28 = load i8*, i8** %flut
-  call void @arraylist_print_double(i8* %t28)
+  %t32 = load i8*, i8** %flut
+  call void @arraylist_print_double(i8* %t32)
   ; PrintNode
-  %t29 = getelementptr inbounds %String, %String* %nome, i32 0, i32 0
-  %t30 = load i8*, i8** %t29
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t30)
+  %t33 = getelementptr inbounds %String, %String* %nome, i32 0, i32 0
+  %t34 = load i8*, i8** %t33
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t34)
   ; === Free das listas alocadas ===
-  %t31 = load i8*, i8** %numeros
-  %t32 = bitcast i8* %t31 to %ArrayList*
-  call void @freeList(%ArrayList* %t32)
-  %t33 = load i8*, i8** %flut
-  %t34 = bitcast i8* %t33 to %ArrayList*
-  call void @freeList(%ArrayList* %t34)
+  %t35 = load i8*, i8** %numeros
+  %t36 = bitcast i8* %t35 to %ArrayList*
+  call void @freeList(%ArrayList* %t36)
+  %t37 = load i8*, i8** %flut
+  %t38 = bitcast i8* %t37 to %ArrayList*
+  call void @freeList(%ArrayList* %t38)
+  %t39 = load i8*, i8** %nomes
+  %t40 = bitcast i8* %t39 to %ArrayList*
+  call void @freeList(%ArrayList* %t40)
+  ; === Wait for key press before exiting ===
   call i32 @getchar()
   ret i32 0
 }

@@ -45,10 +45,10 @@ public class PrintEmitter {
         return emitPrimitiveOrExpr(exprLLVM, visitor);
     }
 
-    // --- Literais ---
+
     private String emitStringLiteral(String value, LLVisitorMain visitor) {
         String strName = globalStrings.getOrCreateString(value);
-        int len = value.length() + 1; // inclui \0
+        int len = value.length() + 1;
         String tmp = temps.newTemp();
         return "  " + tmp + " = getelementptr inbounds [" + len + " x i8], [" + len + " x i8]* "
                 + strName + ", i32 0, i32 0\n" +
@@ -104,12 +104,13 @@ public class PrintEmitter {
         if (elemType == null) throw new RuntimeException("Elemento de lista não registrado para: " + varName);
 
         String printFunc;
-        switch (elemType) {
+        switch (elemType.toLowerCase()) { // normaliza para minúscula
             case "int" -> printFunc = "@arraylist_print_int";
             case "double" -> printFunc = "@arraylist_print_double";
             case "string" -> printFunc = "@arraylist_print_string";
             default -> throw new RuntimeException("Tipo não suportado para print de lista: " + elemType);
         }
+
 
         sb.append("  call void ").append(printFunc).append("(i8* ").append(tmpList).append(")\n");
         return sb.toString();

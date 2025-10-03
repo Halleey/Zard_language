@@ -38,13 +38,13 @@ public class LiteralEmitter {
             }
             case "string" -> {
                 String strName = globalStrings.getOrCreateString((String) value.getValue());
-                llvm.append("  ").append(temp).append(" = getelementptr inbounds ([")
-                        .append(((String) value.getValue()).length() + 1)
-                        .append(" x i8], [")
-                        .append(((String) value.getValue()).length() + 1)
-                        .append(" x i8]* ").append(strName).append(", i32 0, i32 0)\n");
+                int len = ((String) value.getValue()).length() + 1;
+                llvm.append("  ").append(temp)
+                        .append(" = bitcast [").append(len).append(" x i8]* ")
+                        .append(strName).append(" to i8*\n");
                 llvm.append(";;VAL:").append(temp).append(";;TYPE:i8*\n");
             }
+
             default -> throw new RuntimeException("Literal type not supported: " + value.getType());
         }
 

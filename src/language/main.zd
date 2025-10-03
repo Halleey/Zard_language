@@ -14,9 +14,11 @@ function int  factorial(int n) {
 
 print(factorial(5));
 
+List<String> nomes = ("teste", "clebinho xuxucao");
 string nome = "halley";
 List<int> numeros = (3,4,55);
 print(numeros);
+print(nomes);
 List<double> flut = (3.14, 4.4);
 print(flut);
 print(nome);

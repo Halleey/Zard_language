@@ -1,7 +1,7 @@
 #include "ArrayList.h"
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
 ArrayList* arraylist_create(size_t initial_capacity) {
     ArrayList* list = malloc(sizeof(ArrayList));
     if (!list) return NULL;
@@ -38,7 +38,10 @@ void arraylist_add_double(ArrayList* list, double value) {
 
 void arraylist_add_string(ArrayList* list, char* str) {
     ensureCapacity(list);
-    list->data[list->length++] = str;
+    size_t len = strlen(str) + 1;
+    char* copy = malloc(len);
+    memcpy(copy, str, len);
+    list->data[list->length++] = copy;
 }
 
 void arraylist_addAll_int(ArrayList* list, int* values, size_t n) {

@@ -34,10 +34,10 @@ public class MainEmitter {
     public String emit(MainAST node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
 
-        // 1. Cabeçalhos e declarações externas (printf, malloc, ArrayList runtime)
+        // 1. Cabeçalhos e declarações externas
         llvm.append(emitHeader()).append("\n");
 
-        // 2. Coleta todos os literais de string, incluindo os de funções
+        // 2. Coleta todos os literais de string, incluindo os de funções e listas
         for (ASTNode stmt : node.body) {
             coletarStringsRecursivo(stmt);
         }
@@ -51,10 +51,10 @@ public class MainEmitter {
             }
         }
 
-        // 4. Emissão do início do main
+        // 4. Início do main
         llvm.append(emitMainStart());
 
-        // 5. Emite o corpo do main
+        // 5. Corpo do main
         for (ASTNode stmt : node.body) {
             if (stmt instanceof FunctionNode) continue;
             llvm.append("  ; ").append(stmt.getClass().getSimpleName()).append("\n");
@@ -63,12 +63,10 @@ public class MainEmitter {
             // marca listas alocadas para free
             if (stmt instanceof VariableDeclarationNode varDecl && varDecl.getType().startsWith("List")) {
                 listasAlocadas.add(varDecl.getName());
-            } else if (stmt instanceof ListNode) {
-                // se for lista inline, poderia criar um temp, mas normalmente estará em uma variável
             }
         }
 
-        // 6. Free das listas
+        // 6. Free das listas alocadas
         if (!listasAlocadas.isEmpty()) {
             llvm.append("  ; === Free das listas alocadas ===\n");
             for (String varName : listasAlocadas) {
@@ -80,8 +78,12 @@ public class MainEmitter {
             }
         }
 
-        // 7. Fim do main
-        llvm.append(emitMainEnd());
+        // 7. Espera o usuário apertar uma tecla antes de fechar
+        llvm.append("  ; === Wait for key press before exiting ===\n");
+        llvm.append("  call i32 @getchar()\n");
+
+        // 8. Retorno do main
+        llvm.append("  ret i32 0\n}\n");
 
         return llvm.toString();
     }
@@ -117,6 +119,7 @@ public class MainEmitter {
             coletarStringsRecursivo(addNode.getValuesNode());
         }
     }
+
     private String emitHeader() {
         return """
         declare i32 @printf(i8*, ...)
@@ -145,9 +148,5 @@ public class MainEmitter {
 
     private String emitMainStart() {
         return "define i32 @main() {\n";
-    }
-
-    private String emitMainEnd() {
-        return "  call i32 @getchar()\n  ret i32 0\n}\n";
     }
 }

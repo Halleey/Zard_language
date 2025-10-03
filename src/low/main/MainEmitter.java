@@ -21,6 +21,8 @@ import ast.variables.VariableDeclarationNode;
 
 import java.util.HashSet;
 import java.util.Set;
+
+
 public class MainEmitter {
     private final GlobalStringManager globalStrings;
     private final Set<String> listasAlocadas = new HashSet<>();
@@ -122,28 +124,28 @@ public class MainEmitter {
 
     private String emitHeader() {
         return """
-        declare i32 @printf(i8*, ...)
-        declare i32 @getchar()
-        declare i8* @malloc(i64)
-        declare i8* @arraylist_create(i64)
+    declare i32 @printf(i8*, ...)
+    declare i32 @getchar()
+    declare i8* @malloc(i64)
+    declare i8* @arraylist_create(i64)
 
-        declare void @arraylist_add_int(i8*, i32)
-        declare void @arraylist_add_double(i8*, double)
-        declare void @arraylist_add_string(i8*, i8*)
+    declare void @arraylist_add_int(%ArrayList*, i32)
+    declare void @arraylist_add_double(%ArrayList*, double)
+    declare void @arraylist_add_string(%ArrayList*, i8*)
 
-        declare void @arraylist_print_int(i8*)
-        declare void @arraylist_print_double(i8*)
-        declare void @arraylist_print_string(i8*)
+    declare void @arraylist_print_int(%ArrayList*)
+    declare void @arraylist_print_double(%ArrayList*)
+    declare void @arraylist_print_string(%ArrayList*)
 
-        declare void @freeList(%ArrayList*)
+    declare void @freeList(%ArrayList*)
 
-        @.strInt = private constant [4 x i8] c"%d\\0A\\00"
-        @.strDouble = private constant [4 x i8] c"%f\\0A\\00"
-        @.strStr = private constant [4 x i8] c"%s\\0A\\00"
+    @.strInt = private constant [4 x i8] c"%d\\0A\\00"
+    @.strDouble = private constant [4 x i8] c"%f\\0A\\00"
+    @.strStr = private constant [4 x i8] c"%s\\0A\\00"
 
-        %String = type { i8*, i64 }
-        %ArrayList = type opaque
-        """;
+    %String = type { i8*, i64 }
+    %ArrayList = type opaque
+    """;
     }
 
     private String emitMainStart() {

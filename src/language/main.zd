@@ -1,26 +1,10 @@
 
 main{
-
-function int  factorial(int n) {
-    if (n < 0) {
-        print("Erro: factorial de numero negativo!");
-        return 0;
-    }
-    if (n == 0) {
-     return 1;
-    }
-    return n * factorial(n - 1);
-}
-
-print(factorial(5));
-
-List<String> nomes = ("teste", "clebinho xuxucao");
 string nome = "halley";
-List<int> numeros = (3,4,55);
+List<int> numeros;
+numeros.add(14);
+List<String> nomes = ("teste", "clebinho xuxucao");
 print(numeros);
 print(nomes);
-List<double> flut = (3.14, 4.4);
-print(flut);
-print(nome);
 
 }

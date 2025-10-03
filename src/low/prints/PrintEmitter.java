@@ -92,31 +92,36 @@ public class PrintEmitter {
         return sb.toString();
     }
 
-    // --- Variáveis do tipo lista ---
     private String emitListVariable(String varName, LLVisitorMain visitor) {
         String tmpList = temps.newTemp();
+        String tmpCast = temps.newTemp();
         StringBuilder sb = new StringBuilder();
 
+        // 1. Carrega i8* da variável
         sb.append("  ").append(tmpList)
                 .append(" = load i8*, i8** %").append(varName).append("\n");
 
+        // 2. Bitcast para %ArrayList*
+        sb.append("  ").append(tmpCast)
+                .append(" = bitcast i8* ").append(tmpList).append(" to %ArrayList*\n");
+
+        // 3. Chama a função correta de print
         String elemType = visitor.getListElementType(varName);
         if (elemType == null) throw new RuntimeException("Elemento de lista não registrado para: " + varName);
 
         String printFunc;
-        switch (elemType.toLowerCase()) { // normaliza para minúscula
+        switch (elemType.toLowerCase()) {
             case "int" -> printFunc = "@arraylist_print_int";
             case "double" -> printFunc = "@arraylist_print_double";
             case "string" -> printFunc = "@arraylist_print_string";
             default -> throw new RuntimeException("Tipo não suportado para print de lista: " + elemType);
         }
 
+        sb.append("  call void ").append(printFunc).append("(%ArrayList* ").append(tmpCast).append(")\n");
 
-        sb.append("  call void ").append(printFunc).append("(i8* ").append(tmpList).append(")\n");
         return sb.toString();
     }
 
-    // --- Expressões ---
     private String emitPrimitiveOrExpr(String exprLLVM, LLVisitorMain visitor) {
         int markerIdx = exprLLVM.lastIndexOf(";;VAL:");
         if (markerIdx == -1) return exprLLVM;

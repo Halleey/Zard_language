@@ -6,6 +6,7 @@ import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
 import ast.inputs.InputNode;
+import ast.lists.ListAddAllNode;
 import ast.lists.ListAddNode;
 import ast.lists.ListNode;
 import ast.loops.WhileNode;
@@ -20,6 +21,7 @@ import ast.variables.VariableDeclarationNode;
 
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 
@@ -134,8 +136,17 @@ public class MainEmitter {
             for (ASTNode element : listNode.getList().getElements()) coletarStringsRecursivo(element);
         } else if (node instanceof ListAddNode addNode) {
             coletarStringsRecursivo(addNode.getValuesNode());
+        } else if (node instanceof ListAddAllNode addAllNode) {
+            coletarStringsRecursivo(addAllNode.getArgs()); // agora chama a sobrecarga
         }
     }
+
+    private void coletarStringsRecursivo(List<ASTNode> nodes) {
+        for (ASTNode node : nodes) {
+            coletarStringsRecursivo(node);
+        }
+    }
+
 
     private String emitHeader() {
         return """
@@ -153,6 +164,8 @@ public class MainEmitter {
     declare void @arraylist_add_double(%ArrayList*, double)
     declare void @arraylist_add_string(%ArrayList*, i8*)
     declare void @arraylist_add_String(%ArrayList*, %String*)
+    declare void @arraylist_addAll_string(%ArrayList* %list, i8** %strings, i64 %n)         
+    declare void @arraylist_addAll_String(%ArrayList* %list, %String** %strings, i64 %n)          
     declare i8* @getItem(%ArrayList*, i64)
     declare void @arraylist_print_int(%ArrayList*)
     declare void @arraylist_print_double(%ArrayList*)

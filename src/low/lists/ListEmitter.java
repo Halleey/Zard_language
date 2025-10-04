@@ -19,19 +19,16 @@ public class ListEmitter {
         StringBuilder llvm = new StringBuilder();
         List<ASTNode> elements = node.getList().getElements();
         int n = elements.size();
-
-        // 1. Cria a lista
         String listPtr = temps.newTemp();
         llvm.append("  ").append(listPtr)
                 .append(" = call i8* @arraylist_create(i64 ")
                 .append(Math.max(4, n)).append(")\n");
 
-        // bitcast para %ArrayList* uma vez
         String listCast = temps.newTemp();
         llvm.append("  ").append(listCast)
                 .append(" = bitcast i8* ").append(listPtr).append(" to %ArrayList*\n");
 
-        // 2. Adiciona elementos
+
         for (ASTNode element : elements) {
             String elemLLVM = element.accept(visitor);
             llvm.append(elemLLVM);
@@ -77,15 +74,6 @@ public class ListEmitter {
         llvm.append(";;VAL:").append(listPtr).append(";;TYPE:i8*\n");
         return llvm.toString();
     }
-
-    private String tempVarPointer(ASTNode element) {
-        if (element instanceof VariableNode var) {
-            return var.getName(); // já é o ponteiro alocado
-        }
-        // para literais ou construções novas, você precisa alocá-las primeiro
-        throw new RuntimeException("Cannot get pointer to non-variable %String literal");
-    }
-
 
     private String extractTemp(String code) {
         int idx = code.lastIndexOf(";;VAL:");

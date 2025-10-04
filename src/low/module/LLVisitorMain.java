@@ -10,8 +10,6 @@ import ast.loops.WhileNode;
 import low.exceptions.ReturnEmitter;
 import low.functions.FunctionCallEmitter;
 import low.functions.FunctionEmitter;
-import low.functions.ReturnTypeInferer;
-import low.functions.TypeMapper;
 import low.ifs.IfEmitter;
 import low.lists.*;
 import low.main.GlobalStringManager;
@@ -46,15 +44,9 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final ListSizeEmitter sizeEmitter = new ListSizeEmitter(temps);
     private final ListGetEmitter getEmitter = new ListGetEmitter(temps);
     private final ListAddAllEmitter allEmitter = new ListAddAllEmitter(temps, globalStrings);
-    private final Set<String> listVars = new HashSet<>();;
     private final FunctionCallEmitter callEmiter = new FunctionCallEmitter(temps);
     private final Map<String, FunctionNode> functions = new HashMap<>();
     public final Map<String, String> functionTypes = new HashMap<>();
-    public boolean isList(String name) {
-        return listVars.contains(name);
-    }
-    private final TypeMapper typeMapper = new TypeMapper();
-    private final ReturnTypeInferer returnInferer = new ReturnTypeInferer(this, typeMapper);
     public void registerListElementType(String varName, String elementType) {
         listElementTypes.put(varName, elementType);
     }
@@ -195,9 +187,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return temps;
     }
 
-    public Map<String, String> getVarTypes() {
-        return varTypes;
-    }
 
     public void putVarType(String name, String type) {
         varTypes.put(name, type);

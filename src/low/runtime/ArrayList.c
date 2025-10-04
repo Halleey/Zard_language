@@ -54,8 +54,16 @@ void arraylist_addAll_double(ArrayList* list, double* values, size_t n) {
 }
 
 void arraylist_addAll_string(ArrayList* list, char** strings, size_t n) {
-    for (size_t i = 0; i < n; i++) arraylist_add_string(list, strings[i]);
+    for (size_t i = 0; i < n; i++) {
+        arraylist_add_string(list, strings[i]);
+    }
 }
+void arraylist_addAll_String(ArrayList* list, String** strings, size_t n) {
+    for (size_t i = 0; i < n; i++) {
+        arraylist_add_String(list, strings[i]);
+    }
+}
+
 
 void removeItem(ArrayList* list, size_t index) {
     if (index >= list->length) return;

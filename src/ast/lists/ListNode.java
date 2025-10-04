@@ -6,6 +6,7 @@ import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;// Nó AST que representa uma lista tipada
+
 public class ListNode extends ASTNode {
 
     private final DynamicList list;

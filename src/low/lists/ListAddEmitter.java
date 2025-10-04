@@ -19,7 +19,7 @@ public class ListAddEmitter {
     public String emit(ListAddNode node, LLVMEmitVisitor visitor) {
         StringBuilder llvm = new StringBuilder();
 
-        // 1. Avalia a lista
+
         String listCode = node.getListNode().accept(visitor);
         llvm.append(listCode);
         String listTmp = extractTemp(listCode);
@@ -29,13 +29,11 @@ public class ListAddEmitter {
         llvm.append("  ").append(listCastTmp).append(" = bitcast i8* ").append(listTmp)
                 .append(" to %ArrayList*\n");
 
-        // 2. Avalia o valor a adicionar
         String valCode = node.getValuesNode().accept(visitor);
         llvm.append(valCode);
         String valTmp = extractTemp(valCode);
         String valType = extractType(valCode);
 
-        // 3. Chama a função de adição correta
         switch (valType) {
             case "i32" -> llvm.append("  call void @arraylist_add_int(%ArrayList* ").append(listCastTmp)
                     .append(", i32 ").append(valTmp).append(")\n");
@@ -58,7 +56,7 @@ public class ListAddEmitter {
             default -> throw new RuntimeException("Tipo não suportado em ListAdd: " + valType);
         }
 
-        // 4. Atualiza VAL/TYPE para fluxo do visitor
+
         llvm.append(";;VAL:").append(listCastTmp).append(";;TYPE:%ArrayList*\n");
 
         return llvm.toString();

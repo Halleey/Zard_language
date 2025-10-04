@@ -2,14 +2,13 @@
 main{
 
 
-boolean teste = input();
-boolean teste2 = input();
-print(teste);
-print(teste2);
-double teste3= input();
-print(teste3);
-
-int a = input();
-List <int> nomes = (1,2,3,4, a);
+List<string> nomes;
+List <int> numeros= (1,2,3);
+print(numeros);
+function void teste(List list){list.add(13);}
+function void tes(List list){list.addAll("teste", "space is ...");}
+call teste(numeros);
+call tes(nomes);
 print(nomes);
+print(numeros);
 }

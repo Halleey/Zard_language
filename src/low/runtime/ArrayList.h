@@ -19,6 +19,8 @@ void arraylist_add_String(ArrayList* list, String* str);
 void arraylist_addAll_int(ArrayList* list, int* values, size_t n);
 void arraylist_addAll_double(ArrayList* list, double* values, size_t n);
 void arraylist_addAll_string(ArrayList* list, char** strings, size_t n);
+void arraylist_addAll_String(ArrayList* list, String** strings, size_t n);
+
 
 
 void removeItem(ArrayList* list, size_t index);

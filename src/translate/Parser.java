@@ -70,7 +70,6 @@ public class Parser {
                 " mas encontrado " + current().getValue() + " tipo " + current().getType());
     }
 
-    // ------------------- MÉTODO CENTRAL -------------------
     public List<ASTNode> parse() {
         List<ASTNode> nodes = new ArrayList<>();
         while (current().getType() != Token.TokenType.EOF) {
@@ -79,7 +78,6 @@ public class Parser {
         return nodes;
     }
 
-    // ------------------- STATEMENTS -------------------
     public ASTNode parseStatement() {
         Token tok = current();
 
@@ -193,7 +191,6 @@ public class Parser {
     }
 
 
-    // ------------------- EXPRESSIONS -------------------
     public ASTNode parseExpression() {
         return new ExpressionParser(this).parseExpression();
     }
@@ -208,7 +205,6 @@ public class Parser {
         return new ExpressionParser(this).parseArguments();
     }
 
-    // ------------------- BLOCKS -------------------
     public List<ASTNode> parseBlock() {
         List<ASTNode> nodes = new ArrayList<>();
         eat(Token.TokenType.DELIMITER, "{");

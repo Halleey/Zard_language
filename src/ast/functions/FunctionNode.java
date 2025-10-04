@@ -41,6 +41,18 @@ public class FunctionNode extends ASTNode {
         return null;
     }
 
+    public FunctionNode withPrefixedName(String prefix) {
+        String newName = prefix + "_" + this.name;
+        return new FunctionNode(
+                newName,
+                this.params,
+                this.paramTypes,
+                this.body,
+                this.returnType
+        );
+    }
+
+
     @Override
     public void print(String prefix) {
         System.out.println(prefix + "Function: " + name + " returns " + returnType);

@@ -27,6 +27,12 @@ public class MainEmitter {
     private final GlobalStringManager globalStrings;
     private final Set<String> listasAlocadas = new HashSet<>();
     private final TempManager tempManager;
+    private boolean usesLists = false;
+    private boolean usesInputInt = false;
+    private boolean usesInputDouble = false;
+    private boolean usesInputBool = false;
+    private boolean usesInputString = false;
+
 
     public MainEmitter(GlobalStringManager globalStrings, TempManager tempManager) {
         this.globalStrings = globalStrings;
@@ -95,14 +101,25 @@ public class MainEmitter {
             globalStrings.getOrCreateString((String) lit.value.getValue());
         }
 
-        if (node instanceof PrintNode printNode) {
+        if (node instanceof InputNode inputNode) {
+            usesInputInt = true;
+            usesInputDouble = true;
+            usesInputBool = true;
+            usesInputString = true;
+
+            if (inputNode.getPrompt() != null)
+                globalStrings.getOrCreateString(inputNode.getPrompt());
+        }
+
+        if (node instanceof VariableDeclarationNode varDecl) {
+            if (varDecl.getType().startsWith("List")) usesLists = true;
+            if (varDecl.initializer != null) coletarStringsRecursivo(varDecl.initializer);
+        } else if (node instanceof AssignmentNode assignNode && assignNode.valueNode != null) {
+            coletarStringsRecursivo(assignNode.valueNode);
+        } else if (node instanceof PrintNode printNode) {
             coletarStringsRecursivo(printNode.expr);
         } else if (node instanceof ReturnNode returnNode && returnNode.expr != null) {
             coletarStringsRecursivo(returnNode.expr);
-        } else if (node instanceof VariableDeclarationNode varDecl && varDecl.initializer != null) {
-            coletarStringsRecursivo(varDecl.initializer);
-        } else if (node instanceof AssignmentNode assignNode && assignNode.valueNode != null) {
-            coletarStringsRecursivo(assignNode.valueNode);
         } else if (node instanceof IfNode ifNode) {
             coletarStringsRecursivo(ifNode.condition);
             for (ASTNode stmt : ifNode.thenBranch) coletarStringsRecursivo(stmt);
@@ -115,8 +132,6 @@ public class MainEmitter {
             for (ASTNode stmt : funcNode.getBody()) coletarStringsRecursivo(stmt);
         } else if (node instanceof ListNode listNode) {
             for (ASTNode element : listNode.getList().getElements()) coletarStringsRecursivo(element);
-        } else if (node instanceof InputNode inputNode && inputNode.getPrompt() != null) {
-            globalStrings.getOrCreateString(inputNode.getPrompt());
         } else if (node instanceof ListAddNode addNode) {
             coletarStringsRecursivo(addNode.getValuesNode());
         }
@@ -128,21 +143,27 @@ public class MainEmitter {
     declare i32 @getchar()
     declare i8* @malloc(i64)
     declare i8* @arraylist_create(i64)
-
+    
+    declare i32 @inputInt(i8*)
+    declare double @inputDouble(i8*)
+    declare i1 @inputBool(i8*)
+    declare i8* @inputString(i8*)
+    
     declare void @arraylist_add_int(%ArrayList*, i32)
     declare void @arraylist_add_double(%ArrayList*, double)
     declare void @arraylist_add_string(%ArrayList*, i8*)
+    declare void @arraylist_add_String(%ArrayList*, %String*)
     declare i8* @getItem(%ArrayList*, i64)
     declare void @arraylist_print_int(%ArrayList*)
     declare void @arraylist_print_double(%ArrayList*)
     declare void @arraylist_print_string(%ArrayList*)
     declare void @clearList(%ArrayList*)
     declare void @freeList(%ArrayList*)
-    declare void @arraylist_add_String(%ArrayList*, %String*)      
+    
     @.strInt = private constant [4 x i8] c"%d\\0A\\00"
     @.strDouble = private constant [4 x i8] c"%f\\0A\\00"
     @.strStr = private constant [4 x i8] c"%s\\0A\\00"
-
+    
     %String = type { i8*, i64 }
     %ArrayList = type opaque
     """;

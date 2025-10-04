@@ -2,6 +2,8 @@ package low.inputs;
 import ast.inputs.InputNode;
 import low.TempManager;
 import low.main.GlobalStringManager;
+
+
 public class InputEmitter {
     private final TempManager tempManager;
     private final GlobalStringManager globalStringManager;
@@ -11,7 +13,6 @@ public class InputEmitter {
         this.globalStringManager = globalStringManager;
     }
 
-    // Recebe o tipo LLVM como argumento
     public String emit(InputNode node, String llvmType) {
         String argOperand;
         if (node.getPrompt() != null && !node.getPrompt().isEmpty()) {
@@ -24,17 +25,26 @@ public class InputEmitter {
         }
 
         String tmp = tempManager.newTemp();
-        String inputFunc = switch (llvmType) {
-            case "i32" -> "@inputInt";
-            case "double" -> "@inputDouble";
-            case "i1" -> "@inputBool";
-            case "i8*" -> "@inputString";
-            default -> throw new RuntimeException("Tipo desconhecido para input: " + llvmType);
-        };
+        StringBuilder sb = new StringBuilder();
 
-        // Chamar direto a função tipada
-        return "  " + tmp + " = call " + llvmType + " " + inputFunc + "(i8* " + argOperand + ")\n"
-                + ";;VAL:" + tmp + " ;;TYPE:" + llvmType + "\n";
+        switch (llvmType) {
+            case "i32" -> {
+                sb.append("  ").append(tmp).append(" = call i32 @inputInt(i8* ").append(argOperand).append(")\n");
+                sb.append(";;VAL:").append(tmp).append(";;TYPE:i32\n");
+            }
+            case "double" -> {
+                sb.append("  ").append(tmp).append(" = call double @inputDouble(i8* ").append(argOperand).append(")\n");
+                sb.append(";;VAL:").append(tmp).append(";;TYPE:double\n");
+            }
+            case "i1" -> {
+                sb.append("  ").append(tmp).append(" = call i1 @inputBool(i8* ").append(argOperand).append(")\n");
+                sb.append(";;VAL:").append(tmp).append(";;TYPE:i1\n");
+            }
+            default -> throw new RuntimeException("Tipo desconhecido para input: " + llvmType);
+        }
+
+        return sb.toString();
     }
+
 
 }

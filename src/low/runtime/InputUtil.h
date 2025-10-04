@@ -9,7 +9,6 @@
 #define strcasecmp _stricmp
 #endif
 
-// Funções de input tipadas
 int inputInt(const char* prompt);
 double inputDouble(const char* prompt);
 int inputBool(const char* prompt);

@@ -1,8 +1,9 @@
 package low.variables;
-import ast.ASTNode;
+import ast.inputs.InputNode;
 import ast.lists.ListNode;
 import ast.variables.LiteralNode;
 import low.functions.TypeMapper;
+import low.inputs.InputEmitter;
 import low.lists.ListEmitter;
 import low.module.LLVisitorMain;
 import low.TempManager;
@@ -33,7 +34,7 @@ public class VariableEmitter {
         localVars.put(node.getName(), ptr);
 
         if (node.getType().equals("string")) {
-            varTypes.put(node.getName(), "%String");
+            varTypes.put(node.getName(), "%String"); // tipo do struct
             return "  " + ptr + " = alloca %String\n;;VAL:" + ptr + ";;TYPE:%String*\n";
         }
 
@@ -58,6 +59,12 @@ public class VariableEmitter {
             }
             return "";
         }
+        if(node.initializer instanceof InputNode inputNode) {
+            InputEmitter inputEmitter = new InputEmitter(temps, visitor.getGlobalStrings());
+            String code = inputEmitter.emit(inputNode, llvmType);
+            String temp = extractTemp(code);
+            return code +   emitStore(node.getName(), llvmType, temp);
+        }
 
         if (node.getType().startsWith("List")) {
             if (node.initializer instanceof ListNode listNode) {
@@ -77,8 +84,6 @@ public class VariableEmitter {
         }
 
 
-
-        // === String initialization ===
         if (node.getType().equals("string") && node.initializer instanceof LiteralNode lit) {
             String literal = (String) lit.value.getValue();
             String globalName = visitor.getGlobalStrings().getGlobalName(literal);
@@ -122,8 +127,13 @@ public class VariableEmitter {
     }
 
     private String emitStore(String name, String type, String value) {
+        if (type.equals("%String")) {
+            // estamos lidando com um ponteiro para struct
+            return "  store %String* " + value + ", %String** %" + name + "\n";
+        }
         return "  store " + type + " " + value + ", " + type + "* %" + name + "\n";
     }
+
 
     public String emitLoad(String name) {
         String llvmType = varTypes.get(name);

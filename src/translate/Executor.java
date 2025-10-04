@@ -43,6 +43,7 @@ public class Executor {
             // arquivos C do runtime
             List<String> runtimeFiles = List.of(
                     "src/low/runtime/String.c",
+                    "src/low/runtime/InputUtil.c",
                     "src/low/runtime/ArrayList.c",
                     "src/low/runtime/PrintList.c"
             );

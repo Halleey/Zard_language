@@ -159,7 +159,7 @@ public class MainEmitter {
     declare double @inputDouble(i8*)
     declare i1 @inputBool(i8*)
     declare i8* @inputString(i8*)
-    
+    declare %String* @createString(i8*)\s
     declare void @arraylist_add_int(%ArrayList*, i32)
     declare void @arraylist_add_double(%ArrayList*, double)
     declare void @arraylist_add_string(%ArrayList*, i8*)

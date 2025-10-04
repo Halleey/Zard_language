@@ -1,14 +1,11 @@
 
 main{
-
-
-List<string> nomes;
-List <int> numeros= (1,2,3);
-print(numeros);
-function void teste(List list){list.add(13);}
-function void tes(List list){list.addAll("teste", "space is ...");}
-call teste(numeros);
-call tes(nomes);
+print("digite um nome");
+string nome = input();
+print("digite uma idade");
+int idade = input();
+print(nome);
+print(idade);
+List<string> nomes =("testando espaco em branco", nome);
 print(nomes);
-print(numeros);
 }

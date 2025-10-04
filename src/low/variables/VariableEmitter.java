@@ -34,8 +34,8 @@ public class VariableEmitter {
         localVars.put(node.getName(), ptr);
 
         if (node.getType().equals("string")) {
-            varTypes.put(node.getName(), "%String"); // tipo do struct
-            return "  " + ptr + " = alloca %String\n;;VAL:" + ptr + ";;TYPE:%String*\n";
+            varTypes.put(node.getName(), "%String*"); // tipo do struct
+            return "  " + ptr + " = alloca %String*\n;;VAL:" + ptr + ";;TYPE:%String*\n";
         }
 
 

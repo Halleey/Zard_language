@@ -2,7 +2,6 @@ package low;
 
 public class TempManager {
     private int tempCount = 0;
-    private int strCount = 0;
     private int labelCount = 0;
     private String lastTemp; // guarda o último temp gerado
 

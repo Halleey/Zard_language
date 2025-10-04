@@ -72,7 +72,6 @@ public class AssignmentEmitter {
             return llvm.toString();
         }
 
-        // === InputNode ===
         if (assignNode.valueNode instanceof InputNode inputNode) {
             InputEmitter inputEmitter = new InputEmitter(temps, globalStrings);
             String llvmInput = inputEmitter.emit(inputNode, llvmType);
@@ -89,6 +88,7 @@ public class AssignmentEmitter {
             }
             return llvm.toString();
         }
+
 
         //  (opcional)
         if (assignNode.valueNode instanceof ListNode listNode) {

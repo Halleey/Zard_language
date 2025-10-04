@@ -7,6 +7,7 @@ import low.module.LLVisitorMain;
 import ast.prints.PrintNode;
 import ast.variables.LiteralNode;
 import ast.variables.VariableNode;
+
 public class PrintEmitter {
     private final GlobalStringManager globalStrings;
     private final TempManager temps;
@@ -58,12 +59,22 @@ public class PrintEmitter {
     }
 
     private String emitStringVariable(String varName) {
-        String tmpPtr = temps.newTemp();
-        String tmpLoad = temps.newTemp();
-        return "  " + tmpPtr + " = getelementptr inbounds %String, %String* %" + varName + ", i32 0, i32 0\n" +
-                "  " + tmpLoad + " = load i8*, i8** " + tmpPtr + "\n" +
-                "  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* " + tmpLoad + ")\n";
+        String tmpLoad = temps.newTemp();   // carrega o %String* real
+        String tmpData = temps.newTemp();   // pega o .data
+        String tmpChar = temps.newTemp();   // carrega i8* da string
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("  ").append(tmpLoad).append(" = load %String*, %String** %").append(varName).append("\n");
+
+        sb.append("  ").append(tmpData).append(" = getelementptr inbounds %String, %String* ").append(tmpLoad)
+                .append(", i32 0, i32 0\n");
+
+        sb.append("  ").append(tmpChar).append(" = load i8*, i8** ").append(tmpData).append("\n");
+        sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* ").append(tmpChar).append(")\n");
+
+        return sb.toString();
     }
+
 
     private String emitPrimitiveVariable(String varName, String type) {
         String tmp = temps.newTemp();

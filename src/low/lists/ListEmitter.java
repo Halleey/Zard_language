@@ -35,7 +35,6 @@ public class ListEmitter {
 
             String temp = extractTemp(elemLLVM);
             String type = extractType(elemLLVM);
-            System.out.println("--------" + type);
             switch (type) {
                 case "i32" -> llvm.append("  call void @arraylist_add_int(%ArrayList* ")
                         .append(listCast).append(", i32 ").append(temp).append(")\n");
@@ -43,15 +42,24 @@ public class ListEmitter {
                 case "double" -> llvm.append("  call void @arraylist_add_double(%ArrayList* ")
                         .append(listCast).append(", double ").append(temp).append(")\n");
 
-                case "%String" -> {
+                case "%String*" -> {
                     if (element instanceof VariableNode varNode) {
-                        // passa o ponteiro alocado direto
+                        String tmp = temps.newTemp();
+                        llvm.append("  ").append(tmp)
+                                .append(" = load %String*, %String** %")
+                                .append(varNode.getName()).append("\n");
                         llvm.append("  call void @arraylist_add_String(%ArrayList* ")
-                                .append(listCast).append(", %String* %").append(varNode.getName()).append(")\n");
+                                .append(listCast).append(", %String* ").append(tmp).append(")\n");
                     } else {
-                        throw new RuntimeException("Only variable %String supported for now");
+                        // literal ou expressão
+                        String tmp = temps.newTemp();
+                        llvm.append("  ").append(tmp)
+                                .append(" = call %String* @createString(i8* ").append(temp).append(")\n");
+                        llvm.append("  call void @arraylist_add_String(%ArrayList* ")
+                                .append(listCast).append(", %String* ").append(tmp).append(")\n");
                     }
                 }
+
                 case "i8*" -> llvm.append("  call void @arraylist_add_string(%ArrayList* ")
                         .append(listCast).append(", i8* ").append(temp).append(")\n");
 

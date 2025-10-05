@@ -5,6 +5,7 @@ import ast.functions.FunctionCallNode;
 import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
+import ast.imports.ImportNode;
 import ast.lists.*;
 import ast.loops.WhileNode;
 import low.exceptions.ReturnEmitter;
@@ -47,13 +48,15 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final FunctionCallEmitter callEmiter = new FunctionCallEmitter(temps);
     private final Map<String, FunctionNode> functions = new HashMap<>();
     public final Map<String, String> functionTypes = new HashMap<>();
+
+
     public void registerListElementType(String varName, String elementType) {
         listElementTypes.put(varName, elementType);
     }
-
     public String getListElementType(String varName) {
         return listElementTypes.get(varName);
     }
+
     @Override
     public String visit(ReturnNode node) {
         ReturnEmitter emitter = new ReturnEmitter( this, temps);
@@ -211,5 +214,15 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return varEmitter;
     }
 
+    public void registerFunction(String name, FunctionNode node) {
+        functions.put(name, node);
+    }
 
+    public FunctionNode getFunction(String name) {
+        return functions.get(name);
+    }
+
+    public boolean hasFunction(String name) {
+        return functions.containsKey(name);
+    }
 }

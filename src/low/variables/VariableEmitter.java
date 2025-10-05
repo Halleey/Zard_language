@@ -158,10 +158,4 @@ public class VariableEmitter {
         return code.substring(lastValIdx + 6, typeIdx).trim();
     }
 
-    private String extractType(String code) {
-        int idx = code.indexOf(";;TYPE:");
-        int endIdx = code.indexOf("\n", idx);
-        if (endIdx == -1) endIdx = code.length();
-        return code.substring(idx + 7, endIdx).trim();
-    }
 }

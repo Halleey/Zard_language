@@ -32,4 +32,8 @@ public class ReturnNode extends ASTNode {
             expr.print(prefix + "  ");
         }
     }
+
+    public ASTNode getExpr() {
+        return expr;
+    }
 }

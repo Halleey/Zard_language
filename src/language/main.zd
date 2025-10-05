@@ -1,8 +1,4 @@
-import "src/language/stdlib/base.zd" as math;
 main{
-print(math.factorial(5));
-List<string> test;
-function void teste(List list){list.add("hello world");}
-call teste(test);
-print(test);
+List<int> numeros = (11,2,3);
+print(numeros);
 }

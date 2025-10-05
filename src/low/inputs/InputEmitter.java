@@ -2,6 +2,8 @@ package low.inputs;
 import ast.inputs.InputNode;
 import low.TempManager;
 import low.main.GlobalStringManager;
+
+
 public class InputEmitter {
     private final TempManager tempManager;
     private final GlobalStringManager globalStringManager;

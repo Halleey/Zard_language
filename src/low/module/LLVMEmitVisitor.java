@@ -6,6 +6,7 @@ import ast.functions.FunctionCallNode;
 import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
+import ast.imports.ImportNode;
 import ast.inputs.InputNode;
 import ast.lists.*;
 import ast.loops.WhileNode;

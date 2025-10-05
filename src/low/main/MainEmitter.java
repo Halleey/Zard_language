@@ -54,9 +54,16 @@ public class MainEmitter {
         ImportEmitter importEmitter = new ImportEmitter(visitor);
         for (ASTNode stmt : node.body) {
             if (stmt instanceof ImportNode importNode) {
-                llvm.append(importEmitter.emit(importNode));
+                llvm.append(";; ==== Import module: ")
+                        .append(importNode.path())
+                        .append(" as ")
+                        .append(importNode.alias())
+                        .append(" ====\n");
+                llvm.append(importEmitter.emit(importNode)).append("\n");
             }
         }
+
+
 
         FunctionEmitter fnEmitter = new FunctionEmitter(visitor);
         for (ASTNode stmt : node.body) {
@@ -153,6 +160,7 @@ public class MainEmitter {
         sb.append("""
             declare i32 @printf(i8*, ...)
             declare i32 @getchar()
+            declare void @printString(%String*)
             declare i8* @malloc(i64)
             declare i8* @arraylist_create(i64)
             declare void @clearList(%ArrayList*)

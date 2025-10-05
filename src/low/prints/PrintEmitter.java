@@ -136,6 +136,8 @@ public class PrintEmitter {
                 llvm.append("  ").append(zextTmp).append(" = zext i1 ").append(temp).append(" to i32\n");
                 llvm.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 ").append(zextTmp).append(")\n");
             }
+            case "%String*" -> llvm.append("  call void @printString(%String* ").append(temp).append(")\n");
+
             case "i8*" -> llvm.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* ").append(temp).append(")\n");
             default -> throw new RuntimeException("Tipo não suportado no print: " + type);
         }

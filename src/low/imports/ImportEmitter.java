@@ -34,29 +34,18 @@ public class ImportEmitter {
 
             StringBuilder moduleIR = new StringBuilder();
 
-            moduleIR.append("""
-                declare i32 @printf(i8*, ...)
-                declare i32 @getchar()
-                declare i8* @malloc(i64)
-                declare i8* @arraylist_create(i64)
-                declare void @clearList(%ArrayList*)
-                declare void @freeList(%ArrayList*)
-
-                %String = type { i8*, i64 }
-                %ArrayList = type opaque
-                """).append("\n");
-
             FunctionEmitter fnEmitter = new FunctionEmitter(visitor);
+
+            // Para cada função, gera IR com prefixo do alias e registra
             for (ASTNode n : ast) {
                 if (n instanceof FunctionNode func) {
                     String qualified = alias + "." + func.getName();
                     String llvmName = qualified.replace('.', '_');
 
-                    // Registra função no visitor
                     visitor.registerImportedFunction(qualified, func);
                     visitor.registerFunctionType(qualified, func.getReturnType());
 
-                    // Gera IR da função, renomeando o símbolo
+                    // IR da função com nome qualificado
                     String funcIR = fnEmitter.emit(func)
                             .replace("@" + func.getName() + "(", "@" + llvmName + "(");
 
@@ -64,30 +53,10 @@ public class ImportEmitter {
                 }
             }
 
-            StringBuilder declares = new StringBuilder();
-            TypeMapper typeMapper = new TypeMapper();
-            for (ASTNode n : ast) {
-                if (n instanceof FunctionNode func) {
-                    String qualified = alias + "." + func.getName();
-                    String llvmName = qualified.replace('.', '_');
-                    String retType = typeMapper.toLLVM(func.getReturnType());
-                    List<String> paramTypes = func.getParamTypes().stream()
-                            .map(typeMapper::toLLVM)
-                            .toList();
+            // REMOVIDO: declarações redundantes de 'declare'
+            // Não é necessário declarar funções que já têm 'define'
 
-                    declares.append("declare ")
-                            .append(retType)
-                            .append(" @").append(llvmName).append("(")
-                            .append(String.join(", ", paramTypes))
-                            .append(")\n");
-                }
-            }
-
-            String llFileName = Path.of(path).toString().replace(".zd", ".ll");
-            Files.writeString(Path.of(llFileName), moduleIR.toString());
-            System.out.println("LLVM IR gerado para módulo importado: " + llFileName);
-
-            return "; imported module " + path + " as " + alias + "\n" + declares;
+            return moduleIR.toString();
 
         } catch (IOException e) {
             throw new RuntimeException("Failed to import module: " + node.path(), e);

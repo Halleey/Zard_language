@@ -74,15 +74,21 @@ public class FunctionCallNode extends ASTNode {
     private TypedValue promoteTypeIfNeeded(TypedValue value, String targetType) {
         if (value == null) return null;
 
-        if (value.getType().equals(targetType)) return value;
-        if (targetType.equals("double") && value.getType().equals("int")) {
+        String valueType = value.getType();
+
+        if (valueType.equals(targetType)) return value;
+
+        if (targetType.equals("double") && valueType.equals("int")) {
             return new TypedValue("double", ((Integer)value.getValue()).doubleValue());
         }
-        if (!value.getType().equals(targetType)) {
-            throw new RuntimeException("Não é possível converter " + value.getType() + " para " + targetType);
+
+        if (targetType.startsWith("List<") && valueType.equals("List")) {
+            return new TypedValue(targetType, value.getValue());
         }
-        return value;
+
+        throw new RuntimeException("Não é possível converter " + valueType + " para " + targetType);
     }
+
     @Override
     public void print(String prefix) {
         System.out.println(prefix + "FunctionCall: " + name);

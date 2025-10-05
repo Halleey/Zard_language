@@ -4,7 +4,6 @@ import ast.ASTNode;
 import ast.functions.FunctionNode;
 import ast.imports.ImportNode;
 import low.functions.FunctionEmitter;
-import low.functions.TypeMapper;
 import low.module.LLVisitorMain;
 import tokens.Lexer;
 import tokens.Token;
@@ -14,6 +13,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+
 public class ImportEmitter {
     private final LLVisitorMain visitor;
 
@@ -52,10 +52,6 @@ public class ImportEmitter {
                     moduleIR.append(funcIR).append("\n");
                 }
             }
-
-            // REMOVIDO: declarações redundantes de 'declare'
-            // Não é necessário declarar funções que já têm 'define'
-
             return moduleIR.toString();
 
         } catch (IOException e) {

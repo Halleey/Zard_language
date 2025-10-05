@@ -167,23 +167,25 @@ public class Parser {
                 String methodName = current().getValue();
 
                 // verifica o tipo da variável para redirecionar
+                // verifica o tipo da variável para redirecionar
                 String varType = getVariableType(name);
+                String baseType = varType.contains("<") ? varType.substring(0, varType.indexOf("<")) : varType;
 
                 ASTNode node;
-                if ("List".equals(varType)) {
-                    ListMethodParser listParser = new ListMethodParser(this);
-                    node = listParser.parseStatementListMethod(name);
-                } else if ("Map".equals(varType)) {
-                    MapMethodParser mapParser = new MapMethodParser(this);
-                    node = mapParser.parseStatementMapMethod(name);
-                } else {
-                    throw new RuntimeException("Tipo " + varType + " não suporta métodos: " + methodName);
+                switch (baseType) {
+                    case "List" -> {
+                        ListMethodParser listParser = new ListMethodParser(this);
+                        node = listParser.parseStatementListMethod(name);
+                    }
+                    case "Map" -> {
+                        MapMethodParser mapParser = new MapMethodParser(this);
+                        node = mapParser.parseStatementMapMethod(name);
+                    }
+                    default -> throw new RuntimeException("Tipo " + varType + " não suporta métodos: " + methodName);
                 }
-
-                return node; // retorna AST correta, sem executar nada aqui
+                return node;
             }
-
-            // Caso normal: variável/atribuição/unário
+                // Caso normal: variável/atribuição/unário
             IdentifierParser idParser = new IdentifierParser(this);
             return idParser.parseAsStatement(name);
         }

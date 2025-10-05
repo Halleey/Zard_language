@@ -222,15 +222,9 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return varEmitter;
     }
 
-    public void registerFunction(String name, FunctionNode node) {
-        functions.put(name, node);
+
+    public Map<String, String> getListElementTypes() {
+        return listElementTypes;
     }
 
-    public FunctionNode getFunction(String name) {
-        return functions.get(name);
-    }
-
-    public boolean hasFunction(String name) {
-        return functions.containsKey(name);
-    }
 }

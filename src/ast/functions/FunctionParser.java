@@ -31,24 +31,38 @@ public class FunctionParser {
         parser.eat(Token.TokenType.DELIMITER, "(");
         List<String> paramNames = new ArrayList<>();
         List<String> paramTypes = new ArrayList<>();
-        if (!parser.current().getValue().equals(")")) {
+
+        while (!parser.current().getValue().equals(")")) {
+            // --- Parse do tipo ---
+            StringBuilder typeBuilder = new StringBuilder();
+            int angleBrackets = 0;
+
             do {
-                String type = parser.current().getValue(); // tipo do param
+                String val = parser.current().getValue();
+                typeBuilder.append(val);
+                if (val.equals("<")) angleBrackets++;
+                if (val.equals(">")) angleBrackets--;
                 parser.advance();
-                String name = parser.current().getValue(); // nome do param
+            } while (angleBrackets > 0 ||
+                    (parser.current().getType() != Token.TokenType.IDENTIFIER && !parser.current().getValue().equals(",")));
+
+            String type = typeBuilder.toString();
+
+            // --- Nome do parâmetro ---
+            String name = parser.current().getValue();
+            parser.advance();
+
+            paramTypes.add(type);
+            paramNames.add(name);
+
+            // Se tiver vírgula, consome
+            if (parser.current().getValue().equals(",")) {
                 parser.advance();
-
-                paramNames.add(name);
-                paramTypes.add(type);
-
-                if (parser.current().getValue().equals(",")) {
-                    parser.advance();
-                } else {
-                    break;
-                }
-            } while (!parser.current().getValue().equals(")"));
+            }
         }
+
         parser.eat(Token.TokenType.DELIMITER, ")");
+
 
         parser.pushContext();
         for (int i = 0; i < paramNames.size(); i++) {

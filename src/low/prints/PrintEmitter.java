@@ -59,21 +59,17 @@ public class PrintEmitter {
     }
 
     private String emitStringVariable(String varName) {
-        String tmpLoad = temps.newTemp();   // carrega o %String* real
-        String tmpData = temps.newTemp();   // pega o .data
-        String tmpChar = temps.newTemp();   // carrega i8* da string
+        String tmpLoad = temps.newTemp();
 
         StringBuilder sb = new StringBuilder();
-        sb.append("  ").append(tmpLoad).append(" = load %String*, %String** %").append(varName).append("\n");
+        sb.append("  ").append(tmpLoad)
+                .append(" = load %String*, %String** %").append(varName).append("\n");
 
-        sb.append("  ").append(tmpData).append(" = getelementptr inbounds %String, %String* ").append(tmpLoad)
-                .append(", i32 0, i32 0\n");
-
-        sb.append("  ").append(tmpChar).append(" = load i8*, i8** ").append(tmpData).append("\n");
-        sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* ").append(tmpChar).append(")\n");
+        sb.append("  call void @printString(%String* ").append(tmpLoad).append(")\n");
 
         return sb.toString();
     }
+
 
 
     private String emitPrimitiveVariable(String varName, String type) {

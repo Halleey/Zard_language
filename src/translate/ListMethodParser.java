@@ -2,6 +2,7 @@ package translate;
 
 import ast.ASTNode;
 import ast.lists.*;
+import ast.variables.VariableDeclarationNode;
 import tokens.Token;
 import ast.variables.VariableNode;
 
@@ -38,10 +39,19 @@ public class ListMethodParser {
             case "add" -> {
                 arg = consumer();
                 if (arg == null) throw new RuntimeException("Método add requer argumento");
-                ASTNode node = new ListAddNode(listVar, arg);
+
+                String elementType = "unknown";
+                String listType = parser.getVariableType(name);
+                if (listType != null && listType.startsWith("List<") && listType.endsWith(">")) {
+                    elementType = listType.substring(5, listType.length() - 1); // extrai "string"
+                }
+
+                ASTNode node = new ListAddNode(listVar, arg, elementType);
                 parser.eat(Token.TokenType.DELIMITER, ";");
                 yield node;
             }
+
+
             case "addAll" -> {
                 parser.advance();
                 ExpressionParser exprParser = new ExpressionParser(parser);

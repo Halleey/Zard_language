@@ -227,4 +227,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return listElementTypes;
     }
 
+    public GlobalStringManager getGlobalStringManager() {
+        return globalStrings;
+    }
 }

@@ -9,15 +9,16 @@ public class ListAddNode extends ASTNode {
 
     private final ASTNode listNode;
     private final ASTNode valuesNode;
+    private final String elementType; // novo campo
 
-    public ListAddNode(ASTNode listNode, ASTNode valuesNode) {
+    public ListAddNode(ASTNode listNode, ASTNode valuesNode, String elementType) {
         this.listNode = listNode;
         this.valuesNode = valuesNode;
+        this.elementType = elementType;
     }
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
-
         return visitor.visit(this);
     }
 
@@ -31,7 +32,7 @@ public class ListAddNode extends ASTNode {
 
     @Override
     public void print(String prefix) {
-        System.out.println(prefix + "ListAdd:");
+        System.out.println(prefix + "ListAdd (type=" + elementType + "):");
         System.out.println(prefix + "  List:");
         listNode.print(prefix + "    ");
         System.out.println(prefix + "  Value to Add:");
@@ -44,5 +45,9 @@ public class ListAddNode extends ASTNode {
 
     public ASTNode getValuesNode() {
         return valuesNode;
+    }
+
+    public String getElementType() {
+        return elementType;
     }
 }

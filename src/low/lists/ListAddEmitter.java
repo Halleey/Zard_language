@@ -39,6 +39,11 @@ public class ListAddEmitter {
                     .append(", i32 ").append(valTmp).append(")\n");
             case "double" -> llvm.append("  call void @arraylist_add_double(%ArrayList* ").append(listCastTmp)
                     .append(", double ").append(valTmp).append(")\n");
+            case "%String*" -> {
+                // caso especial para o struct String do runtime
+                llvm.append("  call void @arraylist_add_String(%ArrayList* ").append(listCastTmp)
+                        .append(", %String* ").append(valTmp).append(")\n");
+            }
             case "i8*" -> {
                 if (node.getValuesNode() instanceof LiteralNode lit && lit.value.getType().equals("string")) {
                     String literal = (String) lit.value.getValue();
@@ -52,6 +57,7 @@ public class ListAddEmitter {
                     llvm.append("  call void @arraylist_add_string(%ArrayList* ").append(listCastTmp)
                             .append(", i8* ").append(valTmp).append(")\n");
                 }
+
             }
             default -> throw new RuntimeException("Tipo não suportado em ListAdd: " + valType);
         }

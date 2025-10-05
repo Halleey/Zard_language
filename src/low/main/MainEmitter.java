@@ -5,6 +5,7 @@ import ast.exceptions.ReturnNode;
 import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
+import ast.imports.ImportNode;
 import ast.inputs.InputNode;
 import ast.lists.ListAddAllNode;
 import ast.lists.ListAddNode;
@@ -14,6 +15,7 @@ import ast.variables.AssignmentNode;
 import low.TempManager;
 
 import low.functions.FunctionEmitter;
+import low.imports.ImportEmitter;
 import low.module.LLVisitorMain;
 import ast.prints.PrintNode;
 import ast.variables.LiteralNode;
@@ -23,6 +25,8 @@ import ast.variables.VariableDeclarationNode;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+
 public class MainEmitter {
     private final GlobalStringManager globalStrings;
     private final TempManager tempManager;
@@ -38,12 +42,21 @@ public class MainEmitter {
     public String emit(MainAST node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
 
+        // Coleta todas as strings e tipos de lista antes de emitir
         for (ASTNode stmt : node.body) {
             coletarStringsRecursivo(stmt);
         }
 
         llvm.append(emitHeader()).append("\n");
+
         llvm.append(globalStrings.getGlobalStrings()).append("\n");
+
+        ImportEmitter importEmitter = new ImportEmitter(visitor);
+        for (ASTNode stmt : node.body) {
+            if (stmt instanceof ImportNode importNode) {
+                llvm.append(importEmitter.emit(importNode));
+            }
+        }
 
         FunctionEmitter fnEmitter = new FunctionEmitter(visitor);
         for (ASTNode stmt : node.body) {
@@ -52,9 +65,10 @@ public class MainEmitter {
             }
         }
 
+        // Função principal
         llvm.append("define i32 @main() {\n");
         for (ASTNode stmt : node.body) {
-            if (stmt instanceof FunctionNode) continue;
+            if (stmt instanceof FunctionNode || stmt instanceof ImportNode) continue;
 
             llvm.append("  ; ").append(stmt.getClass().getSimpleName()).append("\n");
             llvm.append(stmt.accept(visitor));
@@ -64,6 +78,7 @@ public class MainEmitter {
             }
         }
 
+        // Libera as listas no final
         if (!listasAlocadas.isEmpty()) {
             llvm.append("  ; === Free das listas alocadas ===\n");
             for (String varName : listasAlocadas) {
@@ -126,9 +141,7 @@ public class MainEmitter {
     }
 
     private void coletarStringsRecursivo(List<ASTNode> nodes) {
-        for (ASTNode node : nodes) {
-            coletarStringsRecursivo(node);
-        }
+        for (ASTNode node : nodes) coletarStringsRecursivo(node);
     }
 
     private void registrarTipoDeLista(String tipoCompleto) {
@@ -137,8 +150,6 @@ public class MainEmitter {
 
     private String emitHeader() {
         StringBuilder sb = new StringBuilder();
-
-        // Declarações sempre necessárias
         sb.append("""
             declare i32 @printf(i8*, ...)
             declare i32 @getchar()
@@ -153,7 +164,7 @@ public class MainEmitter {
 
             %String = type { i8*, i64 }
             %ArrayList = type opaque
-            """);
+        """);
 
         if (usesInput) {
             sb.append("""
@@ -162,32 +173,31 @@ public class MainEmitter {
                 declare i1 @inputBool(i8*)
                 declare i8* @inputString(i8*)
                 declare %String* @createString(i8*)
-                """);
+            """);
         }
 
-        // Declarações específicas de listas usadas
         for (String tipo : tiposDeListasUsados) {
             if (tipo.contains("<int>")) {
                 sb.append("""
                     declare void @arraylist_add_int(%ArrayList*, i32)
                     declare void @arraylist_print_int(%ArrayList*)
-                    """);
+                """);
             } else if (tipo.contains("<double>")) {
                 sb.append("""
                     declare void @arraylist_add_double(%ArrayList*, double)
                     declare void @arraylist_print_double(%ArrayList*)
-                    """);
+                """);
             } else if (tipo.contains("<string>")) {
                 sb.append("""
                     declare void @arraylist_add_string(%ArrayList*, i8*)
                     declare void @arraylist_addAll_string(%ArrayList*, i8**, i64)
                     declare void @arraylist_print_string(%ArrayList*)
-                    """);
+                """);
             } else if (tipo.contains("<String>")) {
                 sb.append("""
                     declare void @arraylist_add_String(%ArrayList*, %String*)
                     declare void @arraylist_addAll_String(%ArrayList*, %String**, i64)
-                    """);
+                """);
             }
         }
 

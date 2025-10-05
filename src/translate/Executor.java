@@ -47,18 +47,47 @@ public class Executor {
                     "src/low/runtime/ArrayList.c",
                     "src/low/runtime/PrintList.c"
             );
-            // Comando para gerar executável
+
+            List<String> importedModules = List.of(
+                    "src/language/stdlib/t.ll" // adicione aqui todos os imports .ll
+            );
+
+            List<String> importedObjects = new ArrayList<>();
+            for (String mod : importedModules) {
+                // cria o .o correspondente
+                String obj = mod.replaceAll("\\.ll$", ".o");
+                importedObjects.add(obj);
+
+                // compila .ll para .o
+                List<String> cmdCompile = new ArrayList<>();
+                cmdCompile.add("clang");
+                cmdCompile.add("-c");
+                cmdCompile.add(mod);
+                cmdCompile.add("-o");
+                cmdCompile.add(obj);
+
+                ProcessBuilder pbCompile = new ProcessBuilder(cmdCompile);
+                pbCompile.inheritIO();
+                Process processCompile = pbCompile.start();
+                int exitCodeCompile = processCompile.waitFor();
+                if (exitCodeCompile != 0) throw new RuntimeException("Falha ao compilar módulo: " + mod);
+                System.out.println("Módulo compilado: " + obj);
+            }
+
             List<String> cmdExe = new ArrayList<>();
             cmdExe.add("clang");
             cmdExe.add("programa.ll");
             cmdExe.addAll(runtimeFiles);
+            cmdExe.addAll(importedObjects);
             cmdExe.add("-o");
             cmdExe.add("programa.exe");
+
             ProcessBuilder pbExe = new ProcessBuilder(cmdExe);
             pbExe.inheritIO();
             Process processExe = pbExe.start();
             int exitCodeExe = processExe.waitFor();
             if (exitCodeExe == 0) System.out.println("Executável gerado: programa.exe");
+            else throw new RuntimeException("Falha ao linkar executável");
 //
 //            List<String> cmdAsmPure = new ArrayList<>();
 //            cmdAsmPure.add("clang");

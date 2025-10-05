@@ -12,6 +12,7 @@ import low.exceptions.ReturnEmitter;
 import low.functions.FunctionCallEmitter;
 import low.functions.FunctionEmitter;
 import low.ifs.IfEmitter;
+import low.imports.ImportEmitter;
 import low.lists.*;
 import low.main.GlobalStringManager;
 import low.TempManager;
@@ -48,8 +49,12 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final FunctionCallEmitter callEmiter = new FunctionCallEmitter(temps);
     private final Map<String, FunctionNode> functions = new HashMap<>();
     public final Map<String, String> functionTypes = new HashMap<>();
+    private final Map<String, FunctionNode> importedFunctions = new HashMap<>();
+    private final ImportEmitter importEmitter = new ImportEmitter(this);
 
-
+    public void registerImportedFunction(String qualifiedName, FunctionNode func) {
+        importedFunctions.put(qualifiedName, func);
+    }
     public void registerListElementType(String varName, String elementType) {
         listElementTypes.put(varName, elementType);
     }
@@ -63,7 +68,10 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return emitter.emit(node);
     }
 
-
+    @Override
+    public String visit(ImportNode node) {
+        return importEmitter.emit(node);
+    }
     public void pushLoopEnd(String label) {
         loopEndLabels.push(label);
     }

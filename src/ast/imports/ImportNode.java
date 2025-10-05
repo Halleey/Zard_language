@@ -30,7 +30,7 @@ public class ImportNode extends ASTNode {
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
-        return "";
+        return visitor.visit(this);
     }
 
     @Override
@@ -42,18 +42,30 @@ public class ImportNode extends ASTNode {
             Parser parser = new Parser(tokens);
             List<ASTNode> ast = parser.parse();
 
+            // Contexto isolado para o módulo
             RuntimeContext importCtx = new RuntimeContext();
 
             for (ASTNode node : ast) {
                 if (node instanceof FunctionNode funcNode) {
                     importCtx.declareVariable(funcNode.getName(), new TypedValue("function", funcNode));
+
+                    // Também registra no contexto global com prefixo: alias.nomeFunc
+                    String qualifiedName = alias + "." + funcNode.getName();
+                    ctx.declareVariable(qualifiedName, new TypedValue("function", funcNode));
                 }
                 else if (node instanceof VariableDeclarationNode varNode) {
                     varNode.evaluate(importCtx);
+
+                    // registra variável também com alias.
+                    String qualifiedName = alias + "." + varNode.getName();
+                    TypedValue val = importCtx.getVariable(varNode.getName());
+                    ctx.declareVariable(qualifiedName, val);
                 }
             }
 
+            // Também guarda o namespace completo, caso o usuário queira usar alias diretamente
             ctx.declareVariable(alias, new TypedValue("namespace", importCtx));
+
         } catch (IOException e) {
             throw new RuntimeException("Erro ao importar arquivo: " + path, e);
         }

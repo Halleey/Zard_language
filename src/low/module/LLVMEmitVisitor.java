@@ -35,5 +35,6 @@ public interface LLVMEmitVisitor {
     String visit (FunctionNode node);
     String visit (FunctionCallNode node);
     String visit (ReturnNode node);
+    String visit (ImportNode node);
 }
 

@@ -162,10 +162,7 @@ public class MainEmitter {
             declare i32 @getchar()
             declare void @printString(%String*)
             declare i8* @malloc(i64)
-            declare i8* @arraylist_create(i64)
-            declare void @clearList(%ArrayList*)
-            declare void @freeList(%ArrayList*)
-
+         
             @.strInt = private constant [4 x i8] c"%d\\0A\\00"
             @.strDouble = private constant [4 x i8] c"%f\\0A\\00"
             @.strStr = private constant [4 x i8] c"%s\\0A\\00"
@@ -187,22 +184,34 @@ public class MainEmitter {
         for (String tipo : tiposDeListasUsados) {
             if (tipo.contains("<int>")) {
                 sb.append("""
+                    declare i8* @arraylist_create(i64)
+                    declare void @clearList(%ArrayList*)
+                    declare void @freeList(%ArrayList*)
                     declare void @arraylist_add_int(%ArrayList*, i32)
                     declare void @arraylist_print_int(%ArrayList*)
                 """);
             } else if (tipo.contains("<double>")) {
                 sb.append("""
+                     declare i8* @arraylist_create(i64)
+                    declare void @clearList(%ArrayList*)
+                    declare void @freeList(%ArrayList*)
                     declare void @arraylist_add_double(%ArrayList*, double)
                     declare void @arraylist_print_double(%ArrayList*)
                 """);
             } else if (tipo.contains("<string>")) {
                 sb.append("""
+                     declare i8* @arraylist_create(i64)
+                    declare void @clearList(%ArrayList*)
+                    declare void @freeList(%ArrayList*)
                     declare void @arraylist_add_string(%ArrayList*, i8*)
                     declare void @arraylist_addAll_string(%ArrayList*, i8**, i64)
                     declare void @arraylist_print_string(%ArrayList*)
                 """);
             } else if (tipo.contains("<String>")) {
                 sb.append("""
+                    declare i8* @arraylist_create(i64)
+                    declare void @clearList(%ArrayList*)
+                    declare void @freeList(%ArrayList*)
                     declare void @arraylist_add_String(%ArrayList*, %String*)
                     declare void @arraylist_addAll_String(%ArrayList*, %String**, i64)
                 """);

@@ -77,8 +77,11 @@ public class ImportNode extends ASTNode {
 
     @Override
     public void print(String prefix) {
-        System.out.println(prefix + "Import: \"" + path + "\" as " + alias);
+        System.out.println(prefix + "ImportNode:");
+        System.out.println(prefix + "  ├─ Path : \"" + path + "\"");
+        System.out.println(prefix + "  └─ Alias: " + alias);
     }
+
 
     public String alias() {
         return alias;

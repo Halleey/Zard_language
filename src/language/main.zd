@@ -1,16 +1,7 @@
 import "src/language/stdlib/t.zd" as math;
 main{
-
-function int factorial(int n )
-{
-if(n == 0) {return 1;}
-return n * factorial(n -1 );
-}
-print(factorial(6));
-List<string> nomes;
-call math.addlist(nomes);
-print(nomes);
-List<int> numeros = (11,2,3);
-print(math.factorial(5));
-print(numeros);
+function int somar(int a, int b) {return a +b;}
+print(somar(114,33));
+function string teste(){return "hello world";}
+ print(teste());
 }

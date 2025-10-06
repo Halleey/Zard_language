@@ -7,6 +7,13 @@ a = 0;
 List<int> numeros;
 while(a < 10) {numeros.add(a); a++;}
 List<string> nomes = ("teste", "teste");
-print(nomes.size());
+nomes.add("ok");
+string nome = "zzz";
+nomes.add(nome);
+print(numeros);
+print(nomes);
+numeros.clear();
+nomes.clear();
+print(nomes);
 print(numeros);
 }

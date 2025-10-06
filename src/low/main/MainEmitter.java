@@ -195,6 +195,7 @@ public class MainEmitter {
                     declare void @arraylist_add_int(%struct.ArrayListInt*, i32)
                     declare void @arraylist_addAll_int(%struct.ArrayListInt*, i32*, i64)
                     declare void @arraylist_print_int(%struct.ArrayListInt*)
+                    declare void @arraylist_clear_int(%struct.ArrayListInt*)
                     declare void @arraylist_free_int(%struct.ArrayListInt*)
                 """);
             }

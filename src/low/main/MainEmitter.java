@@ -41,7 +41,7 @@ public class MainEmitter {
 
     public String emit(MainAST node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
-        // ⚡ ImportEmitter recebe o mesmo Set
+
         ImportEmitter importEmitter = new ImportEmitter(visitor, this.tiposDeListasUsados);
 
 
@@ -120,9 +120,6 @@ public class MainEmitter {
         return llvm.toString();
     }
 
-    // ----------------------------------------------------------------------
-    // Coleta de strings, inputs e tipos de listas
-    // ----------------------------------------------------------------------
     private void coletarStringsRecursivo(ASTNode node) {
         if (node instanceof LiteralNode lit && lit.value.getType().equals("string"))
             globalStrings.getOrCreateString((String) lit.value.getValue());
@@ -160,9 +157,6 @@ public class MainEmitter {
         tiposDeListasUsados.add(tipoCompleto.trim());
     }
 
-    // ----------------------------------------------------------------------
-    // Header
-    // ----------------------------------------------------------------------
     private String emitHeader() {
         StringBuilder sb = new StringBuilder();
         sb.append("""

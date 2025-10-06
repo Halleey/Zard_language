@@ -3,5 +3,5 @@ main{
 
 
 List<int> nume= (3);
-
+print(nume);
 }

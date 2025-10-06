@@ -31,9 +31,12 @@ define i32 @main() {
   call void @arraylist_add_int(%struct.ArrayListInt* %t0, i32 %t1)
 ;;VAL:%t0;;TYPE:%struct.ArrayListInt*
   store %struct.ArrayListInt* %t0, %struct.ArrayListInt** %nume
-  ; === Free das listas alocadas ===
+  ; PrintNode
   %t2 = load %struct.ArrayListInt*, %struct.ArrayListInt** %nume
-  call void @arraylist_free_int(%struct.ArrayListInt* %t2)
+  call void @arraylist_print_int(%struct.ArrayListInt* %t2)
+  ; === Free das listas alocadas ===
+  %t3 = load %struct.ArrayListInt*, %struct.ArrayListInt** %nume
+  call void @arraylist_free_int(%struct.ArrayListInt* %t3)
   call i32 @getchar()
   ret i32 0
 }

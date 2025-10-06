@@ -12,6 +12,8 @@ import ast.variables.VariableDeclarationNode;
 import java.util.HashMap;
 import java.util.Map;
 
+
+
 public class VariableEmitter {
     private final Map<String, String> varTypes; // nome -> LLVM type
     private final TempManager temps;
@@ -28,68 +30,50 @@ public class VariableEmitter {
         return new TypeMapper().toLLVM(type);
     }
 
+    // === Alocações ===
     public String emitAlloca(VariableDeclarationNode node) {
-        String llvmType = mapLLVMType(node.getType());
         String ptr = "%" + node.getName();
         localVars.put(node.getName(), ptr);
 
-        if (node.getType().equals("string")) {
-            varTypes.put(node.getName(), "%String*"); // tipo do struct
-            return "  " + ptr + " = alloca %String*\n;;VAL:" + ptr + ";;TYPE:%String*\n";
+        switch (node.getType()) {
+            case "string" -> {
+                varTypes.put(node.getName(), "%String*");
+                return "  " + ptr + " = alloca %String*\n;;VAL:" + ptr + ";;TYPE:%String*\n";
+            }
+            case "List<int>" -> {
+                varTypes.put(node.getName(), "%struct.ArrayListInt*");
+                return "  " + ptr + " = alloca %struct.ArrayListInt*\n;;VAL:" + ptr + ";;TYPE:%struct.ArrayListInt*\n";
+            }
+            default -> {
+                if (node.getType().startsWith("List")) {
+                    varTypes.put(node.getName(), "i8*"); // listas genéricas
+                    return "  " + ptr + " = alloca i8*\n;;VAL:" + ptr + ";;TYPE:i8*\n";
+                }
+                String llvmType = mapLLVMType(node.getType());
+                varTypes.put(node.getName(), llvmType);
+                return "  " + ptr + " = alloca " + llvmType + "\n;;VAL:" + ptr + ";;TYPE:" + llvmType + "\n";
+            }
         }
-
-
-        if (node.getType().startsWith("List")) {
-            varTypes.put(node.getName(), "i8*"); // ponteiro genérico para listas
-            return "  " + ptr + " = alloca i8*\n;;VAL:" + ptr + ";;TYPE:i8*\n";
-        }
-
-        varTypes.put(node.getName(), llvmType);
-        return "  " + ptr + " = alloca " + llvmType + "\n;;VAL:" + ptr + ";;TYPE:" + llvmType + "\n";
     }
+
+    // === Inicialização de variáveis ===
     public String emitInit(VariableDeclarationNode node) {
         String llvmType = varTypes.get(node.getName());
         String varPtr = getVarPtr(node.getName());
         StringBuilder sb = new StringBuilder();
 
-        // ===== Sem inicializador =====
+        // Sem inicializador
         if (node.initializer == null) {
-            // Listas
             if (node.getType().startsWith("List")) {
-                return callArrayListCreateAndStore(varPtr, 4);
+                return node.getType().equals("List<int>")
+                        ? callArrayListCreateIntAndStore(varPtr)
+                        : callArrayListCreateAndStore(varPtr);
             }
-
-            // Strings vazias
-            if (node.getType().equals("string")) {
-                String tmpRaw = temps.newTemp();
-                String tmpStruct = temps.newTemp();
-
-                // malloc sempre retorna i8*, depois bitcast para %String*
-                sb.append("  ").append(tmpRaw)
-                        .append(" = call i8* @malloc(i64 ptrtoint (%String* getelementptr (%String, %String* null, i32 1) to i64))\n");
-                sb.append("  ").append(tmpStruct)
-                        .append(" = bitcast i8* ").append(tmpRaw).append(" to %String*\n");
-
-                // inicializa .data para null
-                String ptrField = temps.newTemp();
-                sb.append("  ").append(ptrField)
-                        .append(" = getelementptr inbounds %String, %String* ").append(tmpStruct).append(", i32 0, i32 0\n");
-                sb.append("  store i8* null, i8** ").append(ptrField).append("\n");
-
-                // inicializa .length para 0
-                String lenField = temps.newTemp();
-                sb.append("  ").append(lenField)
-                        .append(" = getelementptr inbounds %String, %String* ").append(tmpStruct).append(", i32 0, i32 1\n");
-                sb.append("  store i64 0, i64* ").append(lenField).append("\n");
-
-                // armazena na variável
-                sb.append("  store %String* ").append(tmpStruct).append(", %String** ").append(varPtr).append("\n");
-                return sb.toString();
-            }
-
+            if (node.getType().equals("string")) return createEmptyString(varPtr);
             return "";
         }
 
+        // Inicializador via input
         if (node.initializer instanceof InputNode inputNode) {
             InputEmitter inputEmitter = new InputEmitter(temps, visitor.getGlobalStrings());
             String code = inputEmitter.emit(inputNode, llvmType);
@@ -97,7 +81,7 @@ public class VariableEmitter {
             return code + emitStore(node.getName(), llvmType, temp);
         }
 
-
+        // Inicializador é lista
         if (node.getType().startsWith("List")) {
             if (node.initializer instanceof ListNode listNode) {
                 ListEmitter listEmitter = new ListEmitter(temps);
@@ -107,70 +91,96 @@ public class VariableEmitter {
                 String elementType = listNode.getList().getElementType();
                 visitor.registerListElementType(node.getName(), elementType);
 
-                return listLLVM + "  store i8* " + tmpList + ", i8** " + varPtr + "\n";
+                // Armazenamento correto por tipo
+                if (node.getType().equals("List<int>")) {
+                    return listLLVM + "  store %struct.ArrayListInt* " + tmpList + ", %struct.ArrayListInt** " + varPtr + "\n";
+                } else {
+                    return listLLVM + "  store i8* " + tmpList + ", i8** " + varPtr + "\n";
+                }
             } else {
-                return callArrayListCreateAndStore(varPtr, 4);
+                return node.getType().equals("List<int>")
+                        ? callArrayListCreateIntAndStore(varPtr)
+                        : callArrayListCreateAndStore(varPtr);
             }
         }
 
+        // Inicializador é string literal
         if (node.getType().equals("string") && node.initializer instanceof LiteralNode lit) {
-            String literal = (String) lit.value.getValue();
-            String globalName = visitor.getGlobalStrings().getGlobalName(literal);
-            int len = literal.length();
-
-            String tmpRaw = temps.newTemp();
-            String tmpStruct = temps.newTemp();
-
-            // malloc + bitcast
-            sb.append("  ").append(tmpRaw)
-                    .append(" = call i8* @malloc(i64 ptrtoint (%String* getelementptr (%String, %String* null, i32 1) to i64))\n");
-            sb.append("  ").append(tmpStruct)
-                    .append(" = bitcast i8* ").append(tmpRaw).append(" to %String*\n");
-
-            // bitcast do literal
-            String tmpData = temps.newTemp();
-            sb.append("  ").append(tmpData)
-                    .append(" = bitcast [").append(len + 1).append(" x i8]* ").append(globalName)
-                    .append(" to i8*\n");
-
-            // inicializa .data
-            String ptrField = temps.newTemp();
-            sb.append("  ").append(ptrField)
-                    .append(" = getelementptr inbounds %String, %String* ").append(tmpStruct).append(", i32 0, i32 0\n");
-            sb.append("  store i8* ").append(tmpData).append(", i8** ").append(ptrField).append("\n");
-
-            // inicializa .length
-            String lenField = temps.newTemp();
-            sb.append("  ").append(lenField)
-                    .append(" = getelementptr inbounds %String, %String* ").append(tmpStruct).append(", i32 0, i32 1\n");
-            sb.append("  store i64 ").append(len).append(", i64* ").append(lenField).append("\n");
-
-            sb.append("  store %String* ").append(tmpStruct).append(", %String** ").append(varPtr).append("\n");
-
-            return sb.toString();
+            return createStringFromLiteral(varPtr, (String) lit.value.getValue());
         }
 
-
+        // Inicializador padrão (expressões)
         String exprLLVM = node.initializer.accept(visitor);
         String temp = extractTemp(exprLLVM);
         return exprLLVM + emitStore(node.getName(), llvmType, temp);
     }
 
-    private String callArrayListCreateAndStore(String varPtr, int capacity) {
+    // === Helpers para listas e strings ===
+    private String callArrayListCreateAndStore(String varPtr) {
         String tmp = temps.newTemp();
-        return "  " + tmp + " = call i8* @arraylist_create(i64 " + capacity + ")\n" +
+        return "  " + tmp + " = call i8* @arraylist_create(i64 4)\n" +
                 ";;VAL:" + tmp + ";;TYPE:i8*\n" +
                 "  store i8* " + tmp + ", i8** " + varPtr + "\n";
     }
 
+    private String callArrayListCreateIntAndStore(String varPtr) {
+        String tmp = temps.newTemp();
+        return "  " + tmp + " = call %struct.ArrayListInt* @arraylist_create_int(i64 4)\n" +
+                ";;VAL:" + tmp + ";;TYPE:%struct.ArrayListInt*\n" +
+                "  store %struct.ArrayListInt* " + tmp + ", %struct.ArrayListInt** " + varPtr + "\n";
+    }
+
+    private String createEmptyString(String varPtr) {
+        String tmpRaw = temps.newTemp();
+        String tmpStruct = temps.newTemp();
+        StringBuilder sb = new StringBuilder();
+        sb.append("  ").append(tmpRaw).append(" = call i8* @malloc(i64 ptrtoint (%String* getelementptr (%String, %String* null, i32 1) to i64))\n");
+        sb.append("  ").append(tmpStruct).append(" = bitcast i8* ").append(tmpRaw).append(" to %String*\n");
+        String ptrField = temps.newTemp();
+        sb.append("  ").append(ptrField).append(" = getelementptr inbounds %String, %String* ").append(tmpStruct).append(", i32 0, i32 0\n");
+        sb.append("  store i8* null, i8** ").append(ptrField).append("\n");
+        String lenField = temps.newTemp();
+        sb.append("  ").append(lenField).append(" = getelementptr inbounds %String, %String* ").append(tmpStruct).append(", i32 0, i32 1\n");
+        sb.append("  store i64 0, i64* ").append(lenField).append("\n");
+        sb.append("  store %String* ").append(tmpStruct).append(", %String** ").append(varPtr).append("\n");
+        return sb.toString();
+    }
+
+    private String createStringFromLiteral(String varPtr, String literal) {
+        StringBuilder sb = new StringBuilder();
+        int len = literal.length();
+        String globalName = visitor.getGlobalStrings().getGlobalName(literal);
+        String tmpRaw = temps.newTemp();
+        String tmpStruct = temps.newTemp();
+
+        sb.append("  ").append(tmpRaw).append(" = call i8* @malloc(i64 ptrtoint (%String* getelementptr (%String, %String* null, i32 1) to i64))\n");
+        sb.append("  ").append(tmpStruct).append(" = bitcast i8* ").append(tmpRaw).append(" to %String*\n");
+
+        String tmpData = temps.newTemp();
+        sb.append("  ").append(tmpData).append(" = bitcast [").append(len+1).append(" x i8]* ").append(globalName).append(" to i8*\n");
+
+        String ptrField = temps.newTemp();
+        sb.append("  ").append(ptrField).append(" = getelementptr inbounds %String, %String* ").append(tmpStruct).append(", i32 0, i32 0\n");
+        sb.append("  store i8* ").append(tmpData).append(", i8** ").append(ptrField).append("\n");
+
+        String lenField = temps.newTemp();
+        sb.append("  ").append(lenField).append(" = getelementptr inbounds %String, %String* ").append(tmpStruct).append(", i32 0, i32 1\n");
+        sb.append("  store i64 ").append(len).append(", i64* ").append(lenField).append("\n");
+
+        sb.append("  store %String* ").append(tmpStruct).append(", %String** ").append(varPtr).append("\n");
+        return sb.toString();
+    }
+
+    // === Load e Store ===
     private String emitStore(String name, String type, String value) {
-        if (type.equals("%String")) {
-            // estamos lidando com um ponteiro para struct
+        if (type.equals("%String*") || type.equals("%String")) {
             return "  store %String* " + value + ", %String** %" + name + "\n";
+        }
+        if (type.equals("%struct.ArrayListInt*")) {
+            return "  store %struct.ArrayListInt* " + value + ", %struct.ArrayListInt** %" + name + "\n";
         }
         return "  store " + type + " " + value + ", " + type + "* %" + name + "\n";
     }
-
 
     public String emitLoad(String name) {
         String llvmType = varTypes.get(name);
@@ -180,13 +190,9 @@ public class VariableEmitter {
                 + "\n;;VAL:" + tmp + ";;TYPE:" + llvmType + "\n";
     }
 
-    public String getVarPtr(String name) {
-        return localVars.get(name);
-    }
+    public String getVarPtr(String name) { return localVars.get(name); }
 
-    public void registerVarPtr(String name, String ptr) {
-        localVars.put(name, ptr);
-    }
+    public void registerVarPtr(String name, String ptr) { localVars.put(name, ptr); }
 
     private String extractTemp(String code) {
         int lastValIdx = code.lastIndexOf(";;VAL:");
@@ -194,5 +200,4 @@ public class VariableEmitter {
         int typeIdx = code.indexOf(";;TYPE:", lastValIdx);
         return code.substring(lastValIdx + 6, typeIdx).trim();
     }
-
 }

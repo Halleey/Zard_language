@@ -1,6 +1,7 @@
-import "src/language/stdlib/t.zd" as math;
+
 main{
 
 
+List<int> nume= (3);
 
 }

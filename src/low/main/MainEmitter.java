@@ -97,12 +97,20 @@ public class MainEmitter {
         if (!listasAlocadas.isEmpty()) {
             llvm.append("  ; === Free das listas alocadas ===\n");
             for (String varName : listasAlocadas) {
-                String tmp = tempManager.newTemp();
-                String bc  = tempManager.newTemp();
-                llvm.append("  ").append(tmp).append(" = load i8*, i8** %").append(varName).append("\n");
-                llvm.append("  ").append(bc).append(" = bitcast i8* ").append(tmp).append(" to %ArrayList*\n");
-                llvm.append("  call void @freeList(%ArrayList* ").append(bc).append(")\n");
+                String tipoLista = visitor.getListElementType(varName); // precisa do map de tipos
+                if (tipoLista.equals("int")) {
+                    String tmp = tempManager.newTemp();
+                    llvm.append("  ").append(tmp).append(" = load %struct.ArrayListInt*, %struct.ArrayListInt** %").append(varName).append("\n");
+                    llvm.append("  call void @arraylist_free_int(%struct.ArrayListInt* ").append(tmp).append(")\n");
+                } else {
+                    String tmp = tempManager.newTemp();
+                    String bc  = tempManager.newTemp();
+                    llvm.append("  ").append(tmp).append(" = load i8*, i8** %").append(varName).append("\n");
+                    llvm.append("  ").append(bc).append(" = bitcast i8* ").append(tmp).append(" to %ArrayList*\n");
+                    llvm.append("  call void @freeList(%ArrayList* ").append(bc).append(")\n");
+                }
             }
+
         }
 
         llvm.append("  call i32 @getchar()\n");
@@ -188,11 +196,15 @@ public class MainEmitter {
         for (String tipo : tiposDeListasUsados) {
             if (tipo.contains("<int>")) {
                 sb.append("""
-                    declare void @arraylist_add_int(%ArrayList*, i32)
-                    declare void @arraylist_addAll_int(%ArrayList*, i32*, i64)
-                    declare void @arraylist_print_int(%ArrayList*)
+                    %struct.ArrayListInt = type { i32*, i64, i64 }
+                    declare %struct.ArrayListInt* @arraylist_create_int(i64)
+                    declare void @arraylist_add_int(%struct.ArrayListInt*, i32)
+                    declare void @arraylist_addAll_int(%struct.ArrayListInt*, i32*, i64)
+                    declare void @arraylist_print_int(%struct.ArrayListInt*)
+                    declare void @arraylist_free_int(%struct.ArrayListInt*)
                 """);
-            } else if (tipo.contains("<double>")) {
+            }
+            else if (tipo.contains("<double>")) {
                 sb.append("""
                     declare void @arraylist_add_double(%ArrayList*, double)
                     declare void @arraylist_addAll_double(%ArrayList*, double*, i64)

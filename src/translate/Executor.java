@@ -45,6 +45,7 @@ public class Executor {
                     "src/low/runtime/String.c",
                     "src/low/runtime/InputUtil.c",
                     "src/low/runtime/ArrayList.c",
+                    "src/low/runtime/ArrayListInt.c",
                     "src/low/runtime/PrintList.c"
             );
 

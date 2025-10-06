@@ -23,12 +23,7 @@ static void ensureCapacity(ArrayList* list) {
     }
 }
 
-void arraylist_add_int(ArrayList* list, int value) {
-    ensureCapacity(list);
-    int* ptr = malloc(sizeof(int));
-    *ptr = value;
-    list->data[list->length++] = ptr;
-}
+
 
 void arraylist_add_double(ArrayList* list, double value) {
     ensureCapacity(list);
@@ -45,9 +40,6 @@ void arraylist_add_string(ArrayList* list, char* str) {
     list->data[list->length++] = copy;
 }
 
-void arraylist_addAll_int(ArrayList* list, int* values, size_t n) {
-    for (size_t i = 0; i < n; i++) arraylist_add_int(list, values[i]);
-}
 
 void arraylist_addAll_double(ArrayList* list, double* values, size_t n) {
     for (size_t i = 0; i < n; i++) arraylist_add_double(list, values[i]);

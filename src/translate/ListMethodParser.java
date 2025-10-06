@@ -80,12 +80,8 @@ public class ListMethodParser {
         };
     }
 
-
     public ASTNode parseExpressionListMethod(String name) {
-        // consome o '.'
-        parser.eat(Token.TokenType.DELIMITER, ".");
-
-        // agora pega o método
+        // ⚠️ o token atual aqui deve ser o nome do método: "size" ou "get"
         String method = parser.current().getValue();
         parser.advance(); // consome o nome do método
 

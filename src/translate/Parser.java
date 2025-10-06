@@ -166,8 +166,6 @@ public class Parser {
                 advance(); // consome '.'
                 String methodName = current().getValue();
 
-                // verifica o tipo da variável para redirecionar
-                // verifica o tipo da variável para redirecionar
                 String varType = getVariableType(name);
                 String baseType = varType.contains("<") ? varType.substring(0, varType.indexOf("<")) : varType;
 

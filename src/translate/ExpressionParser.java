@@ -11,6 +11,8 @@ import ast.variables.UnaryOpNode;
 import java.util.ArrayList;
 import java.util.List;
 
+
+
 public class ExpressionParser {
     private final Parser parent;
 
@@ -58,7 +60,7 @@ public class ExpressionParser {
         if (tok.getValue().equals("+") || tok.getValue().equals("-")) {
             String op = tok.getValue();
             parent.advance();
-            ASTNode factor = parseFactor(); // recursivo
+            ASTNode factor = parseFactor();
             return new UnaryOpNode(op, factor);
         }
 
@@ -95,7 +97,7 @@ public class ExpressionParser {
                 String name = tok.getValue();
                 parent.advance();
                 IdentifierParser idParser = new IdentifierParser(parent);
-                return idParser.parseAsExpression(name);
+                return idParser.parseAsExpression(name); // agora com suporte a métodos de lista
             }
         }
 

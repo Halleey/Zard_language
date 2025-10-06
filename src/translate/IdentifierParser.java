@@ -36,41 +36,48 @@ public class IdentifierParser {
         return new VariableNode(name);
     }
     public ASTNode parseAsExpression(String name) {
-        // Se houver chamada de função ou namespace
-        if (parser.current().getValue().equals("(")) {
+        Token current = parser.current();
+
+        // Chamada de função
+        if (current.getValue().equals("(")) {
             List<ASTNode> args = parser.parseArguments();
-            return new FunctionCallNode(name, args); // chamada normal de função
+            return new FunctionCallNode(name, args);
         }
 
+        // Método ou membro
+        if (current.getValue().equals(".")) {
+            parser.advance(); // consome '.'
 
-        if (parser.current().getValue().equals(".")) {
             String varType = parser.getVariableType(name);
-
-            if ("List".equals(varType)) {
-                ListMethodParser listParser = new ListMethodParser(parser);
-                return listParser.parseExpressionListMethod(name);
-            } else if ("List".equals(varType)) {
-                MapMethodParser mapParser = new MapMethodParser(parser);
-                return mapParser.parseExpressionMapMethod(name);
-            } else {
-                // Continua suporte a namespace/função
-                parser.advance();
-                String memberName = parser.current().getValue();
-                parser.advance();
-
-                String fullName = name + "." + memberName;
-
-                if (parser.current().getValue().equals("(")) {
-                    List<ASTNode> args = parser.parseArguments();
-                    return new FunctionCallNode(fullName, args);
+            if (varType != null) {
+                String baseType = varType.contains("<") ? varType.substring(0, varType.indexOf("<")) : varType;
+                switch (baseType) {
+                    case "List" -> {
+                        ListMethodParser listParser = new ListMethodParser(parser);
+                        return listParser.parseExpressionListMethod(name);
+                    }
+                    case "Map" -> {
+                        MapMethodParser mapParser = new MapMethodParser(parser);
+                        return mapParser.parseExpressionMapMethod(name);
+                    }
                 }
+            }
 
+            // Se não é lista nem mapa, assume membro/função
+            String memberName = parser.current().getValue();
+            parser.advance();
+            String fullName = name + "." + memberName;
+
+            if (parser.current().getValue().equals("(")) {
+                List<ASTNode> args = parser.parseArguments();
+                return new FunctionCallNode(fullName, args);
+            } else {
                 return new FunctionReferenceNode(fullName);
             }
         }
 
+        // Variável ou import (null safe)
         return new VariableNode(name);
     }
-
 
 }

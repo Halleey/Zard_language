@@ -29,42 +29,42 @@ public class Executor {
             ASTPrinter.printAST(ast);
 
             // LLVM
-            LLVMGenerator llvmGen = new LLVMGenerator();
-            String llvmCode = llvmGen.generate(ast);
-
-            System.out.println("=== LLVM IR ===");
-            System.out.println(llvmCode);
-
-            // Salvar arquivo LLVM
-            Path llPath = Path.of("programa.ll");
-            Files.writeString(llPath, llvmCode);
-            System.out.println("LLVM IR salvo em programa.ll");
-
-            // arquivos C do runtime
-            List<String> runtimeFiles = List.of(
-                    "src/low/runtime/String.c",
-                    "src/low/runtime/InputUtil.c",
-                    "src/low/runtime/ArrayList.c",
-                    "src/low/runtime/ArrayListInt.c",
-                    "src/low/runtime/PrintList.c"
-            );
-
-            List<String> cmdExe = new ArrayList<>();
-            cmdExe.add("clang");
-            cmdExe.add("programa.ll");
-            cmdExe.addAll(runtimeFiles);
-            cmdExe.add("-o");
-            cmdExe.add("programa.exe");
-
-            ProcessBuilder pbExe = new ProcessBuilder(cmdExe);
-            pbExe.inheritIO();
-            Process processExe = pbExe.start();
-            int exitCodeExe = processExe.waitFor();
-
-            if (exitCodeExe == 0)
-                System.out.println("Executável gerado: programa.exe");
-            else
-                throw new RuntimeException("Falha ao linkar executável");
+//            LLVMGenerator llvmGen = new LLVMGenerator();
+//            String llvmCode = llvmGen.generate(ast);
+//
+//            System.out.println("=== LLVM IR ===");
+//            System.out.println(llvmCode);
+//
+//            // Salvar arquivo LLVM
+//            Path llPath = Path.of("programa.ll");
+//            Files.writeString(llPath, llvmCode);
+//            System.out.println("LLVM IR salvo em programa.ll");
+//
+//            // arquivos C do runtime
+//            List<String> runtimeFiles = List.of(
+//                    "src/low/runtime/String.c",
+//                    "src/low/runtime/InputUtil.c",
+//                    "src/low/runtime/ArrayList.c",
+//                    "src/low/runtime/ArrayListInt.c",
+//                    "src/low/runtime/PrintList.c"
+//            );
+//
+//            List<String> cmdExe = new ArrayList<>();
+//            cmdExe.add("clang");
+//            cmdExe.add("programa.ll");
+//            cmdExe.addAll(runtimeFiles);
+//            cmdExe.add("-o");
+//            cmdExe.add("programa.exe");
+//
+//            ProcessBuilder pbExe = new ProcessBuilder(cmdExe);
+//            pbExe.inheritIO();
+//            Process processExe = pbExe.start();
+//            int exitCodeExe = processExe.waitFor();
+//
+//            if (exitCodeExe == 0)
+//                System.out.println("Executável gerado: programa.exe");
+//            else
+//                throw new RuntimeException("Falha ao linkar executável");
 //
 //            List<String> cmdAsmPure = new ArrayList<>();
 //            cmdAsmPure.add("clang");

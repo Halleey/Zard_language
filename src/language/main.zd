@@ -1,13 +1,12 @@
-
+import "src/language/stdlib/t.zd" as math;
 main{
 
-List<int> nume= (3);
-List<string> teste =("zard", "ang");
-List<double> tes = (3.14,0.2,99.2);
-string name = "halley";
-teste.addAll("nome", "testando");
-nume.addAll(5,3,4,5);
-print(teste);
-print(tes);
-print(nume);
+print(math.factorial(5));
+int a;
+a = 0;
+List<int> numeros;
+while(a < 10) {numeros.add(a); a++;}
+List<string> nomes = ("teste", "teste");
+print(nomes.size());
+print(numeros);
 }

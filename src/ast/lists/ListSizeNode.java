@@ -23,7 +23,7 @@ public class ListSizeNode extends ASTNode {
         // Avalia o ASTNode para obter o valor
         TypedValue listVal = nome.evaluate(ctx);
 
-        if (!listVal.getType().equals("List")) {
+        if (!listVal.getType().startsWith("List")) {
             throw new RuntimeException("O valor avaliado não é uma lista");
         }
 

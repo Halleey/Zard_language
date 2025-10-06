@@ -23,8 +23,6 @@ static void ensureCapacity(ArrayList* list) {
     }
 }
 
-
-
 void arraylist_add_double(ArrayList* list, double value) {
     ensureCapacity(list);
     double* ptr = malloc(sizeof(double));

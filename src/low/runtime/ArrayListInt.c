@@ -25,6 +25,10 @@ void arraylist_add_int(ArrayListInt* list, int value) {
     list->data[list->length++] = value;
 }
 
+void arraylist_addAll_int(ArrayListInt* list, int* values, size_t n) {
+    for (size_t i = 0; i < n; i++) arraylist_add_int(list, values[i]);
+}
+
 int arraylist_update_int(ArrayListInt* list, size_t index, int value) {
     if (index >= list->length) return 0;
     list->data[index] = value;

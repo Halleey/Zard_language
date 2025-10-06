@@ -26,8 +26,6 @@ import ast.lists.ListNode;
 import ast.loops.WhileNode;
 
 
-
-
 public class ImportEmitter {
     private final LLVisitorMain visitor;
     private final Set<String> tiposDeListasUsados = new HashSet<>();
@@ -114,15 +112,24 @@ public class ImportEmitter {
             coletarListas(whileNode.condition);
             whileNode.body.forEach(this::coletarListas);
         } else if (node instanceof ListAddNode addNode) {
-            // O próprio nó já sabe o tipo do elemento
-            String listType = "List<" + addNode.getElementType() + ">";
-            tiposDeListasUsados.add(listType);
-            System.out.println("        -> Detected ListAddNode for type: " + listType);
+            ASTNode listNode = addNode.getListNode();
 
-            // Continua coletando tipos dentro do valor adicionado
+            // se for VariableNode, pega o tipo registrado no visitor
+            String listType = null;
+            if (listNode instanceof VariableNode varNode) {
+                listType = visitor.getListElementType(varNode.getName());
+            } else if (listNode instanceof ListNode listLiteral) {
+                listType = "List<" + listLiteral.getList().getElementType() + ">";
+            }
+
+            if (listType != null) {
+                tiposDeListasUsados.add(listType);
+                System.out.println("        -> Detected ListAddNode for type: " + listType);
+            }
+
             coletarListas(addNode.getValuesNode());
         }
-        else if (node instanceof ListAddAllNode addAllNode) {
+     else if (node instanceof ListAddAllNode addAllNode) {
             System.out.println("        -> Visiting ListAddAllNode");
             coletarListas(addAllNode.getArgs());
         }

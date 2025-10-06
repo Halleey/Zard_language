@@ -10,14 +10,20 @@ import java.util.List;// Nó AST que representa uma lista tipada
 public class ListNode extends ASTNode {
 
     private final DynamicList list;
+    private final String type;
+
+    public ListNode(DynamicList list) {
+        this.list = list;
+        this.type = "List<" + list.getElementType() + ">";
+    }
 
     public DynamicList getList() {
         return list;
     }
-    public ListNode(DynamicList list) {
-        this.list = list;
-    }
 
+    public String getType() {
+        return type;
+    }
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
@@ -26,12 +32,13 @@ public class ListNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        return new TypedValue("List", list);
+        // aqui já devolvemos o tipo completo
+        return new TypedValue(type, list);
     }
 
     @Override
     public void print(String prefix) {
-        System.out.println(prefix + "List<" + list.getElementType() + ">:");
+        System.out.println(prefix + type + ":");
 
         List<ASTNode> elements = list.getElements();
         if (elements.isEmpty()) {

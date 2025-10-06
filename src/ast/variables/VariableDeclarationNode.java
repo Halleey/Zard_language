@@ -1,6 +1,7 @@
 package ast.variables;
 import ast.ASTNode;
 import ast.lists.DynamicList;
+import ast.lists.ListNode;
 import ast.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
@@ -8,9 +9,9 @@ import low.module.LLVMEmitVisitor;
 import java.util.ArrayList;
 
 public class VariableDeclarationNode extends ASTNode {
-    public final String name;
-    public final String type;
-    public final ASTNode initializer; // pode ser null
+    private final String name;
+    private final String type;          // Ex.: int, double, string, List<int>, List<string>
+    public final ASTNode initializer;  // pode ser null
 
     public VariableDeclarationNode(String name, String type, ASTNode initializer) {
         this.name = name;
@@ -26,45 +27,24 @@ public class VariableDeclarationNode extends ASTNode {
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
         TypedValue value;
-        if (type.equals("var")) {
-            if (initializer == null) {
-                throw new RuntimeException("Variável 'var " + name + "' precisa de inicialização para inferir tipo.");
-            }
-            value = initializer.evaluate(ctx);
-            ctx.declareVariable(name, value);
-            return value;
-        }
 
+        // --- Inicialização ---
         if (initializer != null) {
             value = initializer.evaluate(ctx);
+
+            // Se for lista literal, garante que o tipo bate
+            if (initializer instanceof ListNode listNode) {
+                String declaredElementType = getListElementType(type); // ex: List<string> → string
+                if (!declaredElementType.equals(listNode.getList().getElementType())) {
+                    throw new RuntimeException("Tipo incompatível: variável " + name +
+                            " declarada como " + type + " mas lista contém " +
+                            listNode.getList().getElementType());
+                }
+                value = new TypedValue(type, listNode.getList());
+            }
         } else {
-            value = getDefaultValue();
-        }
-
-        if (type.equals("double") && value.getType().equals("int")) {
-            value = new TypedValue("double", ((Integer)value.getValue()).doubleValue());
-        }
-
-        if (type.startsWith("List<")) {
-            if (initializer == null) {
-                value = new TypedValue(type, new DynamicList(type.substring(5, type.length() - 1), new ArrayList<>()));
-            }
-
-            else if (value.getType().equals("List") || value.getType().startsWith("List<")) {
-                value = new TypedValue(type, value.getValue());
-            }
-
-            else {
-                throw new RuntimeException("Typing error: variável " + name +
-                        " declarada como " + type +
-                        " mas inicializada com " + value.getType());
-            }
-        }
-
-        else if (!value.getType().equals(type)) {
-            throw new RuntimeException("Typing error: " + name +
-                    " declarado como " + type +
-                    " mas inicializado como " + value.getType());
+            // Se não há inicializador, cria valor padrão
+            value = createDefaultValue(type);
         }
 
         ctx.declareVariable(name, value);
@@ -80,23 +60,32 @@ public class VariableDeclarationNode extends ASTNode {
         }
     }
 
-    private TypedValue getDefaultValue() {
-        return switch (type) {
-            case "int" -> new TypedValue("int", 0);
-            case "double" -> new TypedValue("double", 0.0);
-            case "string" -> new TypedValue("string", "");
-            case "boolean" -> new TypedValue("boolean", false);
+    // --- Helpers ---
+
+    private TypedValue createDefaultValue(String type) {
+        switch (type) {
+            case "int" ->      { return new TypedValue("int", 0); }
+            case "double" ->   { return new TypedValue("double", 0.0); }
+            case "string" ->   { return new TypedValue("string", ""); }
+            case "boolean" ->  { return new TypedValue("boolean", false); }
             default -> {
                 if (type.startsWith("List<")) {
-                    String elementType = type.substring(5, type.length() - 1);
-                    yield new TypedValue(type, new DynamicList(elementType, new ArrayList<>()));
+                    String elementType = getListElementType(type);
+                    return new TypedValue(type, new DynamicList(elementType, new ArrayList<>()));
                 }
                 throw new RuntimeException("Tipo desconhecido: " + type);
             }
-        };
+        }
     }
 
+    private String getListElementType(String listType) {
+        if (!listType.startsWith("List<") || !listType.endsWith(">")) {
+            throw new RuntimeException("Tipo inválido de lista: " + listType);
+        }
+        return listType.substring(5, listType.length() - 1);
+    }
+
+    // --- Getters ---
     public String getName() { return name; }
     public String getType() { return type; }
-    public ASTNode getInitializer() { return initializer; }
 }

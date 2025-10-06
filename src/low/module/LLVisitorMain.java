@@ -22,7 +22,6 @@ import low.variables.*;
 import low.whiles.WhileEmitter;
 import ast.prints.PrintNode;
 import ast.variables.*;
-
 import java.util.*;
 
 public class LLVisitorMain implements LLVMEmitVisitor {
@@ -88,7 +87,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     }
 
     @Override
-    public String visit(MainAST node) {
+    public String visit(MainAST node)  {
         MainEmitter mainEmitter = new MainEmitter(globalStrings, temps);
         return mainEmitter.emit(node, this);
     }
@@ -221,8 +220,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public VariableEmitter getVariableEmitter() {
         return varEmitter;
     }
-
-
     public Map<String, String> getListElementTypes() {
         return listElementTypes;
     }

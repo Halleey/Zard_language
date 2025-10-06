@@ -41,15 +41,22 @@ public class MainEmitter {
     public String emit(MainAST node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
 
-        // Coleta todas as strings e tipos de lista do main
-        for (ASTNode stmt : node.body) coletarStringsRecursivo(stmt);
+        ImportEmitter importEmitter = new ImportEmitter(visitor);
 
-        // Header com declarações necessárias
+        for (ASTNode stmt : node.body) {
+            if (stmt instanceof ImportNode importNode) {
+                // Emite temporariamente para coletar tipos
+                importEmitter.emit(importNode);
+                importEmitter.getTiposDeListasUsados()
+                        .forEach(this::registrarTipoDeLista);
+            } else {
+                coletarStringsRecursivo(stmt);
+            }
+        }
+        System.out.println("---------" + tiposDeListasUsados);
         llvm.append(emitHeader()).append("\n");
         llvm.append(globalStrings.getGlobalStrings()).append("\n");
 
-        // Imports
-        ImportEmitter importEmitter = new ImportEmitter(visitor);
         for (ASTNode stmt : node.body) {
             if (stmt instanceof ImportNode importNode) {
                 llvm.append(";; ==== Import module: ")
@@ -58,24 +65,17 @@ public class MainEmitter {
                         .append(importNode.alias())
                         .append(" ====\n");
                 llvm.append(importEmitter.emit(importNode)).append("\n");
-
-                // Propaga tipos de lista usados no import
-                importEmitter.getTiposDeListasUsados()
-                        .forEach(this::registrarTipoDeLista);
             }
         }
 
-        // Funções definidas no main
         FunctionEmitter fnEmitter = new FunctionEmitter(visitor);
         for (ASTNode stmt : node.body) {
             if (stmt instanceof FunctionNode fn) llvm.append(fnEmitter.emit(fn));
         }
 
-        // Função principal
         llvm.append("define i32 @main() {\n");
         for (ASTNode stmt : node.body) {
             if (stmt instanceof FunctionNode || stmt instanceof ImportNode) continue;
-
             llvm.append("  ; ").append(stmt.getClass().getSimpleName()).append("\n");
             llvm.append(stmt.accept(visitor));
 
@@ -84,7 +84,6 @@ public class MainEmitter {
             }
         }
 
-        // Libera listas alocadas
         if (!listasAlocadas.isEmpty()) {
             llvm.append("  ; === Free das listas alocadas ===\n");
             for (String varName : listasAlocadas) {

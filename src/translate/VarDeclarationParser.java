@@ -28,7 +28,6 @@ public class VarDeclarationParser {
         ASTNode initializer = null;
 
         if (type.equals("List")) {
-            // Delegamos toda a lógica de listas para o método específico
             return parseListDeclaration();
         } else if (type.equals("Map")) {
             if (parser.current().getValue().equals("=")) {
@@ -39,9 +38,9 @@ public class VarDeclarationParser {
                 initializer = new MapNode(new DynamicMap());
             }
         } else {
-            // Declaração normal
+
             if (!type.equals("var")) {
-                parser.declareVariableType(name, type); // sempre String
+                parser.declareVariableType(name, type);
             }
 
             if (parser.current().getValue().equals("=")) {
@@ -49,7 +48,6 @@ public class VarDeclarationParser {
                 initializer = parser.parseExpression();
             }
         }
-
         parser.eat(Token.TokenType.DELIMITER, ";");
         parser.declareVariableType(name, type); // declara sempre como String
 
@@ -58,8 +56,7 @@ public class VarDeclarationParser {
 
     public ASTNode parseListDeclaration() {
 
-        // Captura o tipo da lista dentro de <>
-        String elementType = parser.current().getValue(); // tipo da lista, ex: int, string
+        String elementType = parser.current().getValue(); // ex: int, string
         parser.advance();
         parser.eat(Token.TokenType.OPERATOR, ">");
 
@@ -69,7 +66,6 @@ public class VarDeclarationParser {
 
         DynamicList dynamicList;
 
-        // Inicialização opcional
         if (parser.current().getValue().equals("=")) {
             parser.advance();
             parser.eat(Token.TokenType.DELIMITER, "(");
@@ -90,10 +86,9 @@ public class VarDeclarationParser {
 
         parser.eat(Token.TokenType.DELIMITER, ";");
 
-        // Declara a variável como String "list" no parser/contexto
-        parser.declareVariableType(varName, "List");
+        String fullType = "List<" + elementType + ">";
+        parser.declareVariableType(varName, fullType);
 
-        // Retorna o nó de declaração com ListNode encapsulando DynamicList
-        return new VariableDeclarationNode(varName, "List", new ListNode(dynamicList));
+        return new VariableDeclarationNode(varName, fullType, new ListNode(dynamicList));
     }
 }

@@ -49,7 +49,8 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final Map<String, FunctionNode> functions = new HashMap<>();
     public final Map<String, String> functionTypes = new HashMap<>();
     private final Map<String, FunctionNode> importedFunctions = new HashMap<>();
-    private final ImportEmitter importEmitter = new ImportEmitter(this);
+    private final Set<String> tiposDeListasUsados = new HashSet<>();
+    private final ImportEmitter importEmitter = new ImportEmitter(this, this.tiposDeListasUsados);
 
     public void registerImportedFunction(String qualifiedName, FunctionNode func) {
         importedFunctions.put(qualifiedName, func);
@@ -88,7 +89,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public String visit(MainAST node)  {
-        MainEmitter mainEmitter = new MainEmitter(globalStrings, temps);
+        MainEmitter mainEmitter = new MainEmitter(globalStrings, temps, tiposDeListasUsados);
         return mainEmitter.emit(node, this);
     }
 
@@ -220,11 +221,5 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public VariableEmitter getVariableEmitter() {
         return varEmitter;
     }
-    public Map<String, String> getListElementTypes() {
-        return listElementTypes;
-    }
 
-    public GlobalStringManager getGlobalStringManager() {
-        return globalStrings;
-    }
 }

@@ -3,3 +3,4 @@ function int factorial(int n )
 if(n == 0) {return 1;}
 return n * factorial(n -1 );
 }
+function void tes(List<string> list) {list.add("teste um hello world");}

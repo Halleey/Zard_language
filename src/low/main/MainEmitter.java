@@ -30,32 +30,34 @@ public class MainEmitter {
     private final GlobalStringManager globalStrings;
     private final TempManager tempManager;
     private final Set<String> listasAlocadas = new HashSet<>();
-    private final Set<String> tiposDeListasUsados = new HashSet<>();
+    private final Set<String> tiposDeListasUsados;
     private boolean usesInput = false;
 
-    public MainEmitter(GlobalStringManager globalStrings, TempManager tempManager) {
+    public MainEmitter(GlobalStringManager globalStrings, TempManager tempManager, Set<String> tiposDeListasUsados) {
         this.globalStrings = globalStrings;
         this.tempManager = tempManager;
+        this.tiposDeListasUsados = tiposDeListasUsados;
     }
 
     public String emit(MainAST node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
+        // ⚡ ImportEmitter recebe o mesmo Set
+        ImportEmitter importEmitter = new ImportEmitter(visitor, this.tiposDeListasUsados);
 
-        ImportEmitter importEmitter = new ImportEmitter(visitor);
 
         for (ASTNode stmt : node.body) {
             if (stmt instanceof ImportNode importNode) {
-                // Emite temporariamente para coletar tipos
+
                 importEmitter.emit(importNode);
-                importEmitter.getTiposDeListasUsados()
-                        .forEach(this::registrarTipoDeLista);
             } else {
                 coletarStringsRecursivo(stmt);
+
             }
         }
-        System.out.println("---------" + tiposDeListasUsados);
+
         llvm.append(emitHeader()).append("\n");
         llvm.append(globalStrings.getGlobalStrings()).append("\n");
+
 
         for (ASTNode stmt : node.body) {
             if (stmt instanceof ImportNode importNode) {
@@ -64,13 +66,19 @@ public class MainEmitter {
                         .append(" as ")
                         .append(importNode.alias())
                         .append(" ====\n");
-                llvm.append(importEmitter.emit(importNode)).append("\n");
+                String importIR = importEmitter.emit(importNode);
+                llvm.append(importIR).append("\n");
+
             }
         }
 
+
         FunctionEmitter fnEmitter = new FunctionEmitter(visitor);
         for (ASTNode stmt : node.body) {
-            if (stmt instanceof FunctionNode fn) llvm.append(fnEmitter.emit(fn));
+            if (stmt instanceof FunctionNode fn) {
+                llvm.append(fnEmitter.emit(fn));
+
+            }
         }
 
         llvm.append("define i32 @main() {\n");
@@ -79,8 +87,10 @@ public class MainEmitter {
             llvm.append("  ; ").append(stmt.getClass().getSimpleName()).append("\n");
             llvm.append(stmt.accept(visitor));
 
-            if (stmt instanceof VariableDeclarationNode varDecl && varDecl.getType().startsWith("List")) {
+            if (stmt instanceof VariableDeclarationNode varDecl &&
+                    varDecl.getType().startsWith("List")) {
                 listasAlocadas.add(varDecl.getName());
+
             }
         }
 
@@ -98,37 +108,34 @@ public class MainEmitter {
         llvm.append("  call i32 @getchar()\n");
         llvm.append("  ret i32 0\n}\n");
 
+
         return llvm.toString();
     }
 
+    // ----------------------------------------------------------------------
+    // Coleta de strings, inputs e tipos de listas
+    // ----------------------------------------------------------------------
     private void coletarStringsRecursivo(ASTNode node) {
         if (node instanceof LiteralNode lit && lit.value.getType().equals("string"))
             globalStrings.getOrCreateString((String) lit.value.getValue());
-
         if (node instanceof InputNode inputNode) {
             usesInput = true;
             if (inputNode.getPrompt() != null)
                 globalStrings.getOrCreateString(inputNode.getPrompt());
         }
-
         if (node instanceof VariableDeclarationNode varDecl) {
             if (varDecl.getType().startsWith("List")) registrarTipoDeLista(varDecl.getType());
             if (varDecl.initializer != null) coletarStringsRecursivo(varDecl.initializer);
-        } else if (node instanceof AssignmentNode assignNode && assignNode.valueNode != null)
-            coletarStringsRecursivo(assignNode.valueNode);
-        else if (node instanceof PrintNode printNode) coletarStringsRecursivo(printNode.expr);
-        else if (node instanceof ReturnNode returnNode && returnNode.expr != null)
-            coletarStringsRecursivo(returnNode.expr);
-        else if (node instanceof IfNode ifNode) {
+        } else if (node instanceof FunctionNode func) {
+            func.getBody().forEach(this::coletarStringsRecursivo);
+        } else if (node instanceof IfNode ifNode) {
             coletarStringsRecursivo(ifNode.condition);
             ifNode.thenBranch.forEach(this::coletarStringsRecursivo);
             if (ifNode.elseBranch != null) ifNode.elseBranch.forEach(this::coletarStringsRecursivo);
         } else if (node instanceof WhileNode whileNode) {
             coletarStringsRecursivo(whileNode.condition);
             whileNode.body.forEach(this::coletarStringsRecursivo);
-        } else if (node instanceof FunctionNode funcNode)
-            funcNode.getBody().forEach(this::coletarStringsRecursivo);
-        else if (node instanceof ListNode listNode) {
+        } else if (node instanceof ListNode listNode) {
             registrarTipoDeLista("List<" + listNode.getList().getElementType() + ">");
             listNode.getList().getElements().forEach(this::coletarStringsRecursivo);
         } else if (node instanceof ListAddNode addNode)
@@ -144,6 +151,10 @@ public class MainEmitter {
     private void registrarTipoDeLista(String tipoCompleto) {
         tiposDeListasUsados.add(tipoCompleto.trim());
     }
+
+    // ----------------------------------------------------------------------
+    // Header
+    // ----------------------------------------------------------------------
     private String emitHeader() {
         StringBuilder sb = new StringBuilder();
         sb.append("""
@@ -151,22 +162,18 @@ public class MainEmitter {
             declare i32 @getchar()
             declare void @printString(%String*)
             declare i8* @malloc(i64)
-         
+            
             @.strInt = private constant [4 x i8] c"%d\\0A\\00"
             @.strDouble = private constant [4 x i8] c"%f\\0A\\00"
             @.strStr = private constant [4 x i8] c"%s\\0A\\00"
 
-            
             declare i8* @arraylist_create(i64)
             declare void @clearList(%ArrayList*)
             declare void @freeList(%ArrayList*)
 
-
             %String = type { i8*, i64 }
             %ArrayList = type opaque
         """);
-
-
 
         if (usesInput) {
             sb.append("""
@@ -181,23 +188,21 @@ public class MainEmitter {
         for (String tipo : tiposDeListasUsados) {
             if (tipo.contains("<int>")) {
                 sb.append("""
-             
                     declare void @arraylist_add_int(%ArrayList*, i32)
                     declare void @arraylist_addAll_int(%ArrayList*, i32*, i64)
                     declare void @arraylist_print_int(%ArrayList*)
                 """);
             } else if (tipo.contains("<double>")) {
                 sb.append("""
-                    declare void @arraylist_addAll_double(%ArrayList*, double*, i64)
                     declare void @arraylist_add_double(%ArrayList*, double)
+                    declare void @arraylist_addAll_double(%ArrayList*, double*, i64)
                     declare void @arraylist_print_double(%ArrayList*)
                 """);
             } else if (tipo.contains("<string>")) {
                 sb.append("""
-                
                     declare void @arraylist_add_string(%ArrayList*, i8*)
                     declare void @arraylist_addAll_string(%ArrayList*, i8**, i64)
-                    declare void @arraylist_print_string(%ArrayList*)   
+                    declare void @arraylist_print_string(%ArrayList*)
                     declare void @arraylist_add_String(%ArrayList*, %String*)
                     declare void @arraylist_addAll_String(%ArrayList*, %String**, i64)
                 """);

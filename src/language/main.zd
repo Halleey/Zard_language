@@ -1,7 +1,6 @@
-
+import "src/language/stdlib/t.zd" as math;
 main{
 
-List<string>nomes;
-nomes.add("teste");
-print(nomes);
+
+
 }

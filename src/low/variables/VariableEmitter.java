@@ -38,19 +38,10 @@ public class VariableEmitter {
             return "  " + ptr + " = alloca %String*\n;;VAL:" + ptr + ";;TYPE:%String*\n";
         }
 
-        if (node.getType().startsWith("List")) {
-            String listType = node.getType();
-            String llvmListType;
-            System.out.println("---------- tipo da lista  " + listType);
-            if (listType.equals("List<int>")) {
-                llvmListType = "%ArrayListInt*";
-            } else {
-                // Fallback genérico
-                llvmListType = "i8*";
-            }
 
-            varTypes.put(node.getName(), llvmListType);
-            return "  " + ptr + " = alloca " + llvmListType + "\n;;VAL:" + ptr + ";;TYPE:" + llvmListType + "\n";
+        if (node.getType().startsWith("List")) {
+            varTypes.put(node.getName(), "i8*"); // ponteiro genérico para listas
+            return "  " + ptr + " = alloca i8*\n;;VAL:" + ptr + ";;TYPE:i8*\n";
         }
 
         varTypes.put(node.getName(), llvmType);

@@ -1,7 +1,13 @@
 
 main{
 
-
 List<int> nume= (3);
+List<string> teste =("zard", "ang");
+List<double> tes = (3.14,0.2,99.2);
+string name = "halley";
+teste.add(name);
+nume.add(5);
+print(teste);
+print(tes);
 print(nume);
 }

@@ -1,4 +1,4 @@
-package low.lists;
+package low.lists.ints;
 
 import ast.ASTNode;
 import ast.lists.ListNode;

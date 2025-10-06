@@ -3,6 +3,7 @@ package low.lists;
 import ast.lists.ListAddNode;
 import ast.variables.LiteralNode;
 import low.TempManager;
+import low.lists.ints.ListIntAddEmitter;
 import low.main.GlobalStringManager;
 import low.module.LLVMEmitVisitor;
 
@@ -10,30 +11,34 @@ import low.module.LLVMEmitVisitor;
 public class ListAddEmitter {
     private final TempManager temps;
     private final GlobalStringManager globalStringManager;
-
+    private final ListIntAddEmitter intAddEmitter;
     public ListAddEmitter(TempManager temps, GlobalStringManager globalStringManager) {
         this.temps = temps;
         this.globalStringManager = globalStringManager;
+        this.intAddEmitter = new ListIntAddEmitter(temps);
     }
 
     public String emit(ListAddNode node, LLVMEmitVisitor visitor) {
         StringBuilder llvm = new StringBuilder();
 
-
         String listCode = node.getListNode().accept(visitor);
         llvm.append(listCode);
-        String listTmp = extractTemp(listCode);
+        String valCode = node.getValuesNode().accept(visitor);
+        String valType = extractType(valCode);
 
+
+        if (valType.equals("i32")) {
+            return intAddEmitter.emit(node, visitor);
+        }
+
+        String listTmp = extractTemp(listCode);
         // bitcast para %ArrayList* antes da chamada
         String listCastTmp = temps.newTemp();
         llvm.append("  ").append(listCastTmp).append(" = bitcast i8* ").append(listTmp)
                 .append(" to %ArrayList*\n");
 
-        String valCode = node.getValuesNode().accept(visitor);
         llvm.append(valCode);
         String valTmp = extractTemp(valCode);
-        String valType = extractType(valCode);
-
         switch (valType) {
             case "i32" -> llvm.append("  call void @arraylist_add_int(%ArrayList* ").append(listCastTmp)
                     .append(", i32 ").append(valTmp).append(")\n");

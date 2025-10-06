@@ -4,6 +4,7 @@ import ast.ASTNode;
 import ast.lists.ListNode;
 import ast.variables.VariableNode;
 import low.TempManager;
+import low.lists.ints.IntListEmitter;
 import low.module.LLVisitorMain;
 import java.util.List;
 
@@ -21,9 +22,6 @@ public class ListEmitter {
         String elementType = node.getList().getElementType();
         if (elementType == null || elementType.equals("any")) {
             elementType = visitor.getListElementType(node.getList().getElementType());
-        }
-        if (elementType == null) {
-            elementType = "any";
         }
 
         // Se for List<int>, delega para IntListEmitter

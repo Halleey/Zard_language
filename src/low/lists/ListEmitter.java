@@ -35,11 +35,11 @@ public class ListEmitter {
             return intEmitter.emit(node, visitor);
         }
         if("double".equals(elementType)){
-            return doubleEmitter.emiter(node, visitor);
+            return doubleEmitter.emit(node, visitor);
         }
         if ("boolean".equals(elementType)) {
 
-            return boolEmitter.emiter(node, visitor);
+            return boolEmitter.emit(node, visitor);
         }
 
         // Caso genérico (todos os outros tipos)

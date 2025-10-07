@@ -112,13 +112,13 @@ public class VariableEmitter {
                 }
                 else if(node.getType().equals("List<boolean>")){
                     ListBoolEmitter boolEmitter = new ListBoolEmitter(temps);
-                    listLLVM = boolEmitter.emiter(listNode, visitor);
+                    listLLVM = boolEmitter.emit(listNode, visitor);
                     tmpList = extractTemp(listLLVM);
                     return listLLVM+ "  store %struct.ArrayListBool* " + tmpList + ", %struct.ArrayListBool** " + varPtr+ "\n";
                 }
                 else if (node.getType().equals("List<double>")) {
                     ListDoubleEmitter listEmitter = new ListDoubleEmitter(temps);
-                    listLLVM = listEmitter.emiter(listNode, visitor);
+                    listLLVM = listEmitter.emit(listNode, visitor);
                     tmpList = extractTemp(listLLVM);
                     return listLLVM + "  store %struct.ArrayListDouble* " + tmpList + ", %struct.ArrayListDouble** " + varPtr + "\n";
                 }

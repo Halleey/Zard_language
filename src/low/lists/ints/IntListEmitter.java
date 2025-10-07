@@ -24,19 +24,36 @@ public class IntListEmitter {
                 .append(" = call %struct.ArrayListInt* @arraylist_create_int(i64 ")
                 .append(Math.max(4, n)).append(")\n");
 
-        for (ASTNode element : elements) {
-            String elemLLVM = element.accept(visitor);
-            llvm.append(elemLLVM);
+        if (n > 0) {
+            // Cria array temporário na stack
+            String tempArray = temps.newTemp();
+            llvm.append("  ").append(tempArray)
+                    .append(" = alloca i32, i64 ").append(n).append("\n");
 
-            String temp = extractTemp(elemLLVM);
-            String type = extractType(elemLLVM);
+            // Preenche array temporário
+            for (int i = 0; i < n; i++) {
+                ASTNode element = elements.get(i);
+                String elemLLVM = element.accept(visitor);
+                llvm.append(elemLLVM);
 
-            if (!type.equals("i32")) {
-                throw new RuntimeException("List<int> expected i32 element, got " + type);
+                String temp = extractTemp(elemLLVM);
+                String type = extractType(elemLLVM);
+                if (!type.equals("i32")) {
+                    throw new RuntimeException("List<int> expected i32 element, got " + type);
+                }
+
+                String gep = temps.newTemp();
+                llvm.append("  ").append(gep)
+                        .append(" = getelementptr inbounds i32, i32* ").append(tempArray)
+                        .append(", i64 ").append(i).append("\n");
+
+                llvm.append("  store i32 ").append(temp).append(", i32* ").append(gep).append("\n");
             }
 
-            llvm.append("  call void @arraylist_add_int(%struct.ArrayListInt* ")
-                    .append(listPtr).append(", i32 ").append(temp).append(")\n");
+            // Chamada única addAll
+            llvm.append("  call void @arraylist_addAll_int(%struct.ArrayListInt* ")
+                    .append(listPtr).append(", i32* ").append(tempArray)
+                    .append(", i64 ").append(n).append(")\n");
         }
 
         llvm.append(";;VAL:").append(listPtr).append(";;TYPE:%struct.ArrayListInt*\n");

@@ -4,6 +4,7 @@ import ast.ASTNode;
 import ast.lists.ListNode;
 import ast.variables.VariableNode;
 import low.TempManager;
+import low.lists.doubles.ListDoubleEmitter;
 import low.lists.ints.IntListEmitter;
 import low.module.LLVisitorMain;
 import java.util.List;
@@ -11,10 +12,11 @@ import java.util.List;
 public class ListEmitter {
     private final TempManager temps;
     private final IntListEmitter intEmitter;
-
+    private final ListDoubleEmitter doubleEmitter;
     public ListEmitter(TempManager temps) {
         this.temps = temps;
         this.intEmitter = new IntListEmitter(temps);
+        this.doubleEmitter = new ListDoubleEmitter(temps);
     }
 
     public String emit(ListNode node, LLVisitorMain visitor) {
@@ -24,11 +26,12 @@ public class ListEmitter {
             elementType = visitor.getListElementType(node.getList().getElementType());
         }
 
-        // Se for List<int>, delega para IntListEmitter
         if ("int".equals(elementType)) {
             return intEmitter.emit(node, visitor);
         }
-
+        if("double".equals(elementType)){
+            return doubleEmitter.emiter(node, visitor);
+        }
         // Caso genérico (todos os outros tipos)
         StringBuilder llvm = new StringBuilder();
         List<ASTNode> elements = node.getList().getElements();
@@ -51,8 +54,6 @@ public class ListEmitter {
             String type = extractType(elemLLVM);
 
             switch (type) {
-                case "double" -> llvm.append("  call void @arraylist_add_double(%ArrayList* ")
-                        .append(listCast).append(", double ").append(temp).append(")\n");
                 case "%String*" -> {
                     String tmp = element instanceof VariableNode varNode
                             ? "%"+varNode.getName()
@@ -80,7 +81,6 @@ public class ListEmitter {
                 }
             }
         }
-
         llvm.append(";;VAL:").append(listPtr).append(";;TYPE:i8*\n");
         return llvm.toString();
     }

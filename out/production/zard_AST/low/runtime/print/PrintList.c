@@ -16,7 +16,7 @@ void arraylist_print_int(ArrayListInt* list) {
     printf("]\n");
 }
 
-void arraylist_print_double(ArrayList* list) {
+void arraylist_print_double(ArrayListDouble* list) {
     if (!list) {
         printf("[]\n");
         return;
@@ -24,8 +24,7 @@ void arraylist_print_double(ArrayList* list) {
 
     printf("[");
     for (size_t i = 0; i < list->length; i++) {
-        double* val = (double*) list->data[i];
-        printf("%f", *val);
+        printf("%f", list->data[i]);
         if (i < list->length - 1)
             printf(", ");
     }

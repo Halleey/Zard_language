@@ -99,9 +99,19 @@ public class MainEmitter {
                 String tipoLista = visitor.getListElementType(varName); // precisa do map de tipos
                 if (tipoLista.equals("int")) {
                     String tmp = tempManager.newTemp();
-                    llvm.append("  ").append(tmp).append(" = load %struct.ArrayListInt*, %struct.ArrayListInt** %").append(varName).append("\n");
+                    llvm.append("  ").append(tmp).append(" = load %struct.ArrayListInt*, %struct.ArrayListInt** %").
+                            append(varName).append("\n");
                     llvm.append("  call void @arraylist_free_int(%struct.ArrayListInt* ").append(tmp).append(")\n");
-                } else {
+                }
+                else if ("double".equals(tipoLista)) {
+                    String tmp = tempManager.newTemp();
+                    llvm.append("  ").append(tmp)
+                            .append(" = load %struct.ArrayListDouble*, %struct.ArrayListDouble** %")
+                            .append(varName).append("\n");
+                    llvm.append("  call void @arraylist_free_double(%struct.ArrayListDouble* ")
+                            .append(tmp).append(")\n");
+                }
+                else {
                     String tmp = tempManager.newTemp();
                     String bc  = tempManager.newTemp();
                     llvm.append("  ").append(tmp).append(" = load i8*, i8** %").append(varName).append("\n");
@@ -209,9 +219,13 @@ public class MainEmitter {
             }
             else if (tipo.contains("<double>")) {
                 sb.append("""
-                    declare void @arraylist_add_double(%ArrayList*, double)
-                    declare void @arraylist_addAll_double(%ArrayList*, double*, i64)
-                    declare void @arraylist_print_double(%ArrayList*)
+                    %struct.ArrayListDouble = type { double*, i64, i64 }
+                    declare %struct.ArrayListDouble* @arraylist_create_double(i64)
+                    declare void @arraylist_add_double(%struct.ArrayListDouble*, double)
+                    declare void @arraylist_addAll_double(%struct.ArrayListDouble*, double*, i64)
+                    declare void @arraylist_print_double(%struct.ArrayListDouble*)
+                    declare void @arraylist_clear_double(%struct.ArrayListDouble*)
+                    declare void @arraylist_free_double(%struct.ArrayListDouble*)
                 """);
             } else if (tipo.contains("<string>")) {
                 sb.append("""

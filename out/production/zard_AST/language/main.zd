@@ -1,6 +1,14 @@
 import "src/language/stdlib/t.zd" as math;
 main{
 
+
+List<int> inteiros;
+List list =("zard");
+List<int> numberss= (2,3,4);
+
+inteiros.add(2);
+List flut = (3.14);
+print(flut);
 boolean t = true;
 print(t);
 

@@ -95,6 +95,12 @@ public class PrintEmitter {
             sb.append("  call void @arraylist_print_int(%struct.ArrayListInt* ").append(tmp).append(")\n");
             return sb.toString();
         }
+        if ("%struct.ArrayListDouble*".equals(llvmType)) {
+            // Lista de int tipada
+            sb.append("  ").append(tmp).append(" = load %struct.ArrayListDouble*, %struct.ArrayListDouble** %").append(varName).append("\n");
+            sb.append("  call void @arraylist_print_double(%struct.ArrayListDouble* ").append(tmp).append(")\n");
+            return sb.toString();
+        }
 
         // Genéricas: i8* -> %ArrayList*
         sb.append("  ").append(tmp).append(" = load i8*, i8** %").append(varName).append("\n");
@@ -102,12 +108,11 @@ public class PrintEmitter {
         sb.append("  ").append(tmpCast).append(" = bitcast i8* ").append(tmp).append(" to %ArrayList*\n");
 
         String printFunc;
-        switch (elemType.toLowerCase()) {
-            case "double" -> printFunc = "@arraylist_print_double";
-            case "string" -> printFunc = "@arraylist_print_string";
-            default -> throw new RuntimeException("Unsupported list element type: " + elemType);
+        if (elemType.equals("string")) {
+            printFunc = "@arraylist_print_string";
+        } else {
+            throw new RuntimeException("Unsupported list element type: " + elemType);
         }
-
         sb.append("  call void ").append(printFunc).append("(%ArrayList* ").append(tmpCast).append(")\n");
         return sb.toString();
     }

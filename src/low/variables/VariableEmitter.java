@@ -5,6 +5,8 @@ import ast.variables.LiteralNode;
 import low.functions.TypeMapper;
 import low.inputs.InputEmitter;
 import low.lists.ListEmitter;
+import low.lists.doubles.ListDoubleEmitter;
+import low.lists.ints.IntListEmitter;
 import low.module.LLVisitorMain;
 import low.TempManager;
 import ast.variables.VariableDeclarationNode;
@@ -30,6 +32,7 @@ public class VariableEmitter {
         return new TypeMapper().toLLVM(type);
     }
 
+    /** Declara uma variável local e faz o alloca correto. */
     public String emitAlloca(VariableDeclarationNode node) {
         String ptr = "%" + node.getName();
         localVars.put(node.getName(), ptr);
@@ -43,6 +46,10 @@ public class VariableEmitter {
                 varTypes.put(node.getName(), "%struct.ArrayListInt*");
                 return "  " + ptr + " = alloca %struct.ArrayListInt*\n;;VAL:" + ptr + ";;TYPE:%struct.ArrayListInt*\n";
             }
+            case "List<double>" -> {
+                varTypes.put(node.getName(), "%struct.ArrayListDouble*");
+                return "  " + ptr + " = alloca %struct.ArrayListDouble*\n;;VAL:" + ptr + ";;TYPE:%struct.ArrayListDouble*\n";
+            }
             default -> {
                 if (node.getType().startsWith("List")) {
                     varTypes.put(node.getName(), "i8*");
@@ -55,20 +62,26 @@ public class VariableEmitter {
         }
     }
 
+    /** Inicializa a variável (literal, input, lista ou string). */
     public String emitInit(VariableDeclarationNode node) {
         String llvmType = varTypes.get(node.getName());
         String varPtr = getVarPtr(node.getName());
 
+        // Variável sem inicializador
         if (node.initializer == null) {
             if (node.getType().startsWith("List")) {
-                return node.getType().equals("List<int>")
-                        ? callArrayListCreateIntAndStore(varPtr)
-                        : callArrayListCreateAndStore(varPtr);
+                return switch (node.getType()) {
+                    case "List<int>" -> callArrayListCreateIntAndStore(varPtr);
+                    case "List<double>" -> callArrayListCreateDoubleAndStore(varPtr);
+                    default -> callArrayListCreateAndStore(varPtr);
+                };
             }
-            if (node.getType().equals("string")) return stringEmitter.createEmptyString(varPtr);
+            if (node.getType().equals("string"))
+                return stringEmitter.createEmptyString(varPtr);
             return "";
         }
 
+        // InputNode
         if (node.initializer instanceof InputNode inputNode) {
             InputEmitter inputEmitter = new InputEmitter(temps, visitor.getGlobalStrings());
             String code = inputEmitter.emit(inputNode, llvmType);
@@ -76,36 +89,55 @@ public class VariableEmitter {
             return code + emitStore(node.getName(), llvmType, temp);
         }
 
+        // Listas
         if (node.getType().startsWith("List")) {
             if (node.initializer instanceof ListNode listNode) {
-                ListEmitter listEmitter = new ListEmitter(temps);
-                String listLLVM = listEmitter.emit(listNode, visitor);
-                String tmpList = extractTemp(listLLVM);
-
                 String elementType = listNode.getList().getElementType();
                 visitor.registerListElementType(node.getName(), elementType);
 
+                String listLLVM;
+                String tmpList;
+
+                // Emissão especializada por tipo
                 if (node.getType().equals("List<int>")) {
+                    IntListEmitter listEmitter = new IntListEmitter(temps);
+                    listLLVM = listEmitter.emit(listNode, visitor);
+                    tmpList = extractTemp(listLLVM);
                     return listLLVM + "  store %struct.ArrayListInt* " + tmpList + ", %struct.ArrayListInt** " + varPtr + "\n";
-                } else {
+                }
+                else if (node.getType().equals("List<double>")) {
+                    ListDoubleEmitter listEmitter = new ListDoubleEmitter(temps);
+                    listLLVM = listEmitter.emiter(listNode, visitor);
+                    tmpList = extractTemp(listLLVM);
+                    return listLLVM + "  store %struct.ArrayListDouble* " + tmpList + ", %struct.ArrayListDouble** " + varPtr + "\n";
+                }
+                else {
+                    ListEmitter listEmitter = new ListEmitter(temps);
+                    listLLVM = listEmitter.emit(listNode, visitor);
+                    tmpList = extractTemp(listLLVM);
                     return listLLVM + "  store i8* " + tmpList + ", i8** " + varPtr + "\n";
                 }
             } else {
-                return node.getType().equals("List<int>")
-                        ? callArrayListCreateIntAndStore(varPtr)
-                        : callArrayListCreateAndStore(varPtr);
+                return switch (node.getType()) {
+                    case "List<int>" -> callArrayListCreateIntAndStore(varPtr);
+                    case "List<double>" -> callArrayListCreateDoubleAndStore(varPtr);
+                    default -> callArrayListCreateAndStore(varPtr);
+                };
             }
         }
 
+        // String literal
         if (node.getType().equals("string") && node.initializer instanceof LiteralNode lit) {
             return stringEmitter.createStringFromLiteral(varPtr, (String) lit.value.getValue());
         }
 
+        // Expressão comum
         String exprLLVM = node.initializer.accept(visitor);
         String temp = extractTemp(exprLLVM);
         return exprLLVM + emitStore(node.getName(), llvmType, temp);
     }
 
+    /** Helpers de criação de listas */
     private String callArrayListCreateAndStore(String varPtr) {
         String tmp = temps.newTemp();
         return "  " + tmp + " = call i8* @arraylist_create(i64 4)\n" +
@@ -120,7 +152,14 @@ public class VariableEmitter {
                 "  store %struct.ArrayListInt* " + tmp + ", %struct.ArrayListInt** " + varPtr + "\n";
     }
 
-    // === Load e Store ===
+    private String callArrayListCreateDoubleAndStore(String varPtr) {
+        String tmp = temps.newTemp();
+        return "  " + tmp + " = call %struct.ArrayListDouble* @arraylist_create_double(i64 4)\n" +
+                ";;VAL:" + tmp + ";;TYPE:%struct.ArrayListDouble*\n" +
+                "  store %struct.ArrayListDouble* " + tmp + ", %struct.ArrayListDouble** " + varPtr + "\n";
+    }
+
+    /** Emite store genérico */
     private String emitStore(String name, String type, String value) {
         if (type.equals("%String*") || type.equals("%String")) {
             return stringEmitter.emitStore(name, value);
@@ -128,15 +167,19 @@ public class VariableEmitter {
         if (type.equals("%struct.ArrayListInt*")) {
             return "  store %struct.ArrayListInt* " + value + ", %struct.ArrayListInt** %" + name + "\n";
         }
+        if (type.equals("%struct.ArrayListDouble*")) {
+            return "  store %struct.ArrayListDouble* " + value + ", %struct.ArrayListDouble** %" + name + "\n";
+        }
         return "  store " + type + " " + value + ", " + type + "* %" + name + "\n";
     }
 
+    /** Carrega variável para uso em expressão */
     public String emitLoad(String name) {
         String llvmType = varTypes.get(name);
         String ptr = localVars.get(name);
         String tmp = temps.newTemp();
-        return "  " + tmp + " = load " + llvmType + ", " + llvmType + "* " + ptr
-                + "\n;;VAL:" + tmp + ";;TYPE:" + llvmType + "\n";
+        return "  " + tmp + " = load " + llvmType + ", " + llvmType + "* " + ptr +
+                "\n;;VAL:" + tmp + ";;TYPE:" + llvmType + "\n";
     }
 
     public String getVarPtr(String name) { return localVars.get(name); }
@@ -145,7 +188,8 @@ public class VariableEmitter {
 
     private String extractTemp(String code) {
         int lastValIdx = code.lastIndexOf(";;VAL:");
-        if (lastValIdx == -1) throw new RuntimeException("Cannot find ;;VAL: in: " + code);
+        if (lastValIdx == -1)
+            throw new RuntimeException("Cannot find ;;VAL: in: " + code);
         int typeIdx = code.indexOf(";;TYPE:", lastValIdx);
         return code.substring(lastValIdx + 6, typeIdx).trim();
     }

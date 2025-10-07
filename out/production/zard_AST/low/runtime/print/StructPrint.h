@@ -15,4 +15,11 @@ typedef struct ArrayListInt {
     size_t capacity;
 } ArrayListInt;
 
+typedef struct ArrayListDouble {
+    double* data;
+    size_t length;
+    size_t capacity;
+} ArrayListDouble;
+
+
 #endif

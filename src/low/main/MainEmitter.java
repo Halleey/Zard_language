@@ -224,7 +224,8 @@ public class MainEmitter {
                     declare void @arraylist_print_int(%struct.ArrayListInt*)
                     declare void @arraylist_clear_int(%struct.ArrayListInt*)
                     declare void @arraylist_free_int(%struct.ArrayListInt*)
-                    declare i32 @arraylist_get_int(%struct.ArrayListInt*, i64, i32*)
+                    declare i32  @arraylist_get_int(%struct.ArrayListInt*, i64, i32*)
+                    declare void @arraylist_remove_int(%struct.ArrayListInt*, i64)
                 """);
             }
             else if (tipo.contains("<double>")) {

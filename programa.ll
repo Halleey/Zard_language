@@ -87,7 +87,8 @@ entry:
     declare void @arraylist_print_int(%struct.ArrayListInt*)
     declare void @arraylist_clear_int(%struct.ArrayListInt*)
     declare void @arraylist_free_int(%struct.ArrayListInt*)
-    declare i32 @arraylist_get_int(%struct.ArrayListInt*, i64, i32*)
+    declare i32  @arraylist_get_int(%struct.ArrayListInt*, i64, i32*)
+    declare void @arraylist_remove_int(%struct.ArrayListInt*, i64)
     declare void @arraylist_add_string(%ArrayList*, i8*)
     declare void @arraylist_addAll_string(%ArrayList*, i8**, i64)
     declare void @arraylist_print_string(%ArrayList*)
@@ -153,22 +154,63 @@ define i32 @main() {
   call void @arraylist_add_int(%struct.ArrayListInt* %t26, i32 %t30)
 ;;VAL:%t26;;TYPE:%struct.ArrayListInt*
   store %struct.ArrayListInt* %t26, %struct.ArrayListInt** %numbers
-  ; PrintNode
+  ; ListRemoveNode
   %t32 = load %struct.ArrayListInt*, %struct.ArrayListInt** %numbers
   %t33 = add i32 0, 1
   %t34 = zext i32 %t33 to i64
-  %t35 = alloca i32
-  %t36 = call i32 @arraylist_get_int(%struct.ArrayListInt* %t32, i64 %t34, i32* %t35)
-  %t37 = load i32, i32* %t35
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t37)
-  ; === Free das listas alocadas ===
-  %t38 = load i8*, i8** %nomes
-  %t39 = bitcast i8* %t38 to %ArrayList*
-  call void @freeList(%ArrayList* %t39)
+  call void @arraylist_remove_int(%struct.ArrayListInt* %t32, i64 %t34)
+  ; PrintNode
+  %t35 = load %struct.ArrayListInt*, %struct.ArrayListInt** %numbers
+  call void @arraylist_print_int(%struct.ArrayListInt* %t35)
+  ; VariableDeclarationNode
+  %x = alloca i32
+;;VAL:%x;;TYPE:i32
+  %t36 = add i32 0, 99
+;;VAL:%t36;;TYPE:i32
+  store i32 %t36, i32* %x
+  ; VariableDeclarationNode
+  %z = alloca i32
+;;VAL:%z;;TYPE:i32
+  %t37 = add i32 0, 33
+;;VAL:%t37;;TYPE:i32
+  store i32 %t37, i32* %z
+  ; ListAddAllNode
   %t40 = load %struct.ArrayListInt*, %struct.ArrayListInt** %numbers
-  call void @arraylist_free_int(%struct.ArrayListInt* %t40)
-  %t41 = load %struct.ArrayListBool*, %struct.ArrayListBool** %is
-  call void @arraylist_free_bool(%struct.ArrayListBool* %t41)
+;;VAL:%t40;;TYPE:%struct.ArrayListInt*
+  %t41 = alloca i32, i64 5
+  %t42 = add i32 0, 3
+;;VAL:%t42;;TYPE:i32
+  %t43 = getelementptr inbounds i32, i32* %t41, i64 0
+  store i32 %t42, i32* %t43
+  %t44 = add i32 0, 4
+;;VAL:%t44;;TYPE:i32
+  %t45 = getelementptr inbounds i32, i32* %t41, i64 1
+  store i32 %t44, i32* %t45
+  %t46 = add i32 0, 5
+;;VAL:%t46;;TYPE:i32
+  %t47 = getelementptr inbounds i32, i32* %t41, i64 2
+  store i32 %t46, i32* %t47
+  %t48 = load i32, i32* %x
+;;VAL:%t48;;TYPE:i32
+  %t49 = getelementptr inbounds i32, i32* %t41, i64 3
+  store i32 %t48, i32* %t49
+  %t50 = load i32, i32* %z
+;;VAL:%t50;;TYPE:i32
+  %t51 = getelementptr inbounds i32, i32* %t41, i64 4
+  store i32 %t50, i32* %t51
+  call void @arraylist_addAll_int(%struct.ArrayListInt* %t40, i32* %t41, i64 5)
+;;VAL:%t40;;TYPE:%struct.ArrayListInt*
+  ; PrintNode
+  %t52 = load %struct.ArrayListInt*, %struct.ArrayListInt** %numbers
+  call void @arraylist_print_int(%struct.ArrayListInt* %t52)
+  ; === Free das listas alocadas ===
+  %t53 = load i8*, i8** %nomes
+  %t54 = bitcast i8* %t53 to %ArrayList*
+  call void @freeList(%ArrayList* %t54)
+  %t55 = load %struct.ArrayListInt*, %struct.ArrayListInt** %numbers
+  call void @arraylist_free_int(%struct.ArrayListInt* %t55)
+  %t56 = load %struct.ArrayListBool*, %struct.ArrayListBool** %is
+  call void @arraylist_free_bool(%struct.ArrayListBool* %t56)
   call i32 @getchar()
   ret i32 0
 }

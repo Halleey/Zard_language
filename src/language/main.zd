@@ -7,6 +7,10 @@ print(is);
 List<string> nomes = ("zard", "test");
 print(nomes.get(1));
 List numbers = (3,4,5,6);
-print(numbers.get(1));
-
+numbers.remove(1);
+print(numbers);
+int x = 99;
+int z = 33;
+numbers.addAll(3,4,5, x, z);
+print(numbers);
 }

@@ -57,17 +57,21 @@ public class AssignmentEmitter {
                             .append(strName).append(", i32 0, i32 0), i8** ")
                             .append(varPtr).append("\n");
                 }
-                case "%String" -> {
-                    // LiteralNode com string já aloca struct %String
-                    String strTmp = globalStrings.getOrCreateString((String) val); // pode reutilizar global
+                case "%String*" -> {
+                    String strName = globalStrings.getOrCreateString((String) val);
+                    // carrega ponteiro atual da variável
                     String tmpPtr = temps.newTemp();
-                    llvm.append("  ").append(tmpPtr).append(" = alloca %String\n");
-                    llvm.append("  %tdata = getelementptr inbounds %String, %String* ").append(tmpPtr).append(", i32 0, i32 0\n");
-                    llvm.append("  store i8* ").append(strTmp).append(", i8** %tdata\n");
-                    llvm.append("  %tlen = getelementptr inbounds %String, %String* ").append(tmpPtr).append(", i32 0, i32 1\n");
-                    llvm.append("  store i64 ").append(((String) val).length()).append(", i64* %tlen\n");
-                    llvm.append("  store %String* ").append(tmpPtr).append(", %String** ").append(varPtr).append("\n");
+                    llvm.append("  ").append(tmpPtr).append(" = load %String*, %String** ").append(varPtr).append("\n");
+                    // chama setString
+                    llvm.append("  call void @setString(%String* ").append(tmpPtr)
+                            .append(", i8* getelementptr ([")
+                            .append(((String) val).length() + 1)
+                            .append(" x i8], [")
+                            .append(((String) val).length() + 1)
+                            .append(" x i8]* ")
+                            .append(strName).append(", i32 0, i32 0))\n");
                 }
+
             }
             return llvm.toString();
         }

@@ -11,6 +11,7 @@ import ast.lists.ListAddAllNode;
 import ast.lists.ListAddNode;
 import ast.lists.ListNode;
 import ast.loops.WhileNode;
+import ast.prints.PrintNode;
 import ast.variables.AssignmentNode;
 import low.TempManager;
 
@@ -126,6 +127,12 @@ public class MainEmitter {
             if (inputNode.getPrompt() != null)
                 globalStrings.getOrCreateString(inputNode.getPrompt());
         }
+        if (node instanceof PrintNode printNode) {
+            ASTNode expr = printNode.expr;
+            if (expr instanceof LiteralNode lit && lit.value.getType().equals("string")) {
+                globalStrings.getOrCreateString((String) lit.value.getValue());
+            }
+        }
         if (node instanceof VariableDeclarationNode varDecl) {
             if (varDecl.getType().startsWith("List")) registrarTipoDeLista(varDecl.getType());
             if (varDecl.initializer != null) coletarStringsRecursivo(varDecl.initializer);
@@ -164,7 +171,8 @@ public class MainEmitter {
             declare i32 @getchar()
             declare void @printString(%String*)
             declare i8* @malloc(i64)
-            
+            declare void @setString(%String*, i8*)
+                
             @.strInt = private constant [4 x i8] c"%d\\0A\\00"
             @.strDouble = private constant [4 x i8] c"%f\\0A\\00"
             @.strStr = private constant [4 x i8] c"%s\\0A\\00"

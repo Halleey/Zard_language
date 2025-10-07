@@ -47,10 +47,6 @@ public class PrintEmitter {
         return emitExprOrElement(exprLLVM, visitor);
     }
 
-    // -------------------------------
-    // Métodos auxiliares
-    // -------------------------------
-
     private String emitStringLiteral(String value) {
         String strName = globalStrings.getOrCreateString(value);
         int len = value.length() + 1;
@@ -59,6 +55,7 @@ public class PrintEmitter {
                 + strName + ", i32 0, i32 0\n" +
                 "  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* " + tmp + ")\n";
     }
+
 
     private String emitStringVariable(String varName) {
         String tmpLoad = temps.newTemp();

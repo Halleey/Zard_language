@@ -89,6 +89,7 @@ entry:
     declare void @arraylist_free_int(%struct.ArrayListInt*)
     declare i32  @arraylist_get_int(%struct.ArrayListInt*, i64, i32*)
     declare void @arraylist_remove_int(%struct.ArrayListInt*, i64)
+    declare i32  @arraylist_size_int(%struct.ArrayListInt*)
     declare void @arraylist_add_string(%ArrayList*, i8*)
     declare void @arraylist_addAll_string(%ArrayList*, i8**, i64)
     declare void @arraylist_print_string(%ArrayList*)
@@ -227,18 +228,21 @@ define i32 @main() {
   call void @arraylist_addAll_int(%struct.ArrayListInt* %t54, i32* %t55, i64 5)
 ;;VAL:%t54;;TYPE:%struct.ArrayListInt*
   ; PrintNode
-  %t66 = load %struct.ArrayListInt*, %struct.ArrayListInt** %numbers
-  call void @arraylist_print_int(%struct.ArrayListInt* %t66)
+  %t67 = load %struct.ArrayListInt*, %struct.ArrayListInt** %numbers
+;;VAL:%t67;;TYPE:%struct.ArrayListInt*
+  %t68 = call i32 @arraylist_size_int(%struct.ArrayListInt* %t67)
+  
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t68)
   ; === Free das listas alocadas ===
-  %t67 = load %struct.ArrayListInt*, %struct.ArrayListInt** %tes
-  call void @arraylist_free_int(%struct.ArrayListInt* %t67)
-  %t68 = load i8*, i8** %nomes
-  %t69 = bitcast i8* %t68 to %ArrayList*
-  call void @freeList(%ArrayList* %t69)
-  %t70 = load %struct.ArrayListInt*, %struct.ArrayListInt** %numbers
-  call void @arraylist_free_int(%struct.ArrayListInt* %t70)
-  %t71 = load %struct.ArrayListBool*, %struct.ArrayListBool** %is
-  call void @arraylist_free_bool(%struct.ArrayListBool* %t71)
+  %t69 = load %struct.ArrayListInt*, %struct.ArrayListInt** %tes
+  call void @arraylist_free_int(%struct.ArrayListInt* %t69)
+  %t70 = load i8*, i8** %nomes
+  %t71 = bitcast i8* %t70 to %ArrayList*
+  call void @freeList(%ArrayList* %t71)
+  %t72 = load %struct.ArrayListInt*, %struct.ArrayListInt** %numbers
+  call void @arraylist_free_int(%struct.ArrayListInt* %t72)
+  %t73 = load %struct.ArrayListBool*, %struct.ArrayListBool** %is
+  call void @arraylist_free_bool(%struct.ArrayListBool* %t73)
   call i32 @getchar()
   ret i32 0
 }

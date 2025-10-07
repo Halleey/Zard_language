@@ -15,5 +15,5 @@ print(tes);
 int x = 99;
 int z = 33;
 numbers.addAll(3,4,5, x, z);
-print(numbers);
+print(numbers.size());
 }

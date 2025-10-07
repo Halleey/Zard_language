@@ -41,6 +41,10 @@ int arraylist_get_int(ArrayListInt* list, size_t index, int* out) {
     return 1;
 }
 
+int arraylist_size_int(ArrayListInt* list) {
+    return list ? list->length : 0;
+}
+
 void arraylist_remove_int(ArrayListInt* list, size_t index) {
     if (index >= list->length) return;
     for (size_t i = index; i < list->length - 1; i++)

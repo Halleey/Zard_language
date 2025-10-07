@@ -18,5 +18,6 @@ void arraylist_clear_int(ArrayListInt* list);
 void arraylist_free_int(ArrayListInt* list);
 int arraylist_update_int(ArrayListInt* list, size_t index, int value);
 int arraylist_get_int(ArrayListInt* list, size_t index, int* out);
+int arraylist_size_int(ArrayListInt* list);
 
 #endif

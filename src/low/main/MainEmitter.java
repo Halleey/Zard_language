@@ -17,7 +17,6 @@ import low.TempManager;
 import low.functions.FunctionEmitter;
 import low.imports.ImportEmitter;
 import low.module.LLVisitorMain;
-import ast.prints.PrintNode;
 import ast.variables.LiteralNode;
 import ast.variables.VariableDeclarationNode;
 
@@ -47,7 +46,6 @@ public class MainEmitter {
 
         for (ASTNode stmt : node.body) {
             if (stmt instanceof ImportNode importNode) {
-
                 importEmitter.emit(importNode);
             } else {
                 coletarStringsRecursivo(stmt);
@@ -145,6 +143,8 @@ public class MainEmitter {
             listNode.getList().getElements().forEach(this::coletarStringsRecursivo);
         } else if (node instanceof ListAddNode addNode)
             coletarStringsRecursivo(addNode.getValuesNode());
+        else if (node instanceof AssignmentNode assignNode)
+            coletarStringsRecursivo(assignNode.valueNode);
         else if (node instanceof ListAddAllNode addAllNode)
             coletarStringsRecursivo(addAllNode.getArgs());
     }

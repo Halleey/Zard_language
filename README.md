@@ -28,7 +28,7 @@
 
 ```zard
 import "src/language/stdlib/Math.zd" as math;
-
+Exemplo no high level(nem todas as funções abaixo estão presentes no llvm)
 main {
     int contador = 0;
     string mensagem = "Início do programa";
@@ -67,6 +67,20 @@ main {
 }
 ```
 
+
+## Exemplo Para lista
+```zard
+
+import "src/language/stdlib/Math.zd" as math;
+
+main {
+
+->se não tiver argumentos, é necessário informar o tipo
+List<int> numeros;
+-> Se possui argumentos, infere automaticamente, elimando a necessidade de <type>
+List list = (3,4,5);
+}
+```
 ---
 
 ## 🚀 Futuro da Zard
@@ -95,12 +109,13 @@ A linguagem continuará evoluindo para se tornar mais robusta e versátil. Algum
 * ✅ Variáveis tipadas, literais e expressões complexas gerando LLVM IR.
 * ✅ Integração inicial de backend LLVM IR para variáveis, whiles e if's.
 * ✅ Inputs funcionais para armazenar entrada do usuário
-* ✅ Suporte a listas dinâmicas no compilador via código C + LLVM 
+* ✅ Suporte a listas  no compilador via código C + LLVM 
+* ✅ Suporte a instância dinâmicas de lista onde não é necessário especificar o tipo (inferida automaticamente desde que haja argumentos)
+* ✅ **Suporte a importações:** Suporte a importação de módulos externos no back end.
 ---
 ## 🔄 Melhorias em Desenvolvimento
 - 🟡 **Suporte a mapas em LLVM:** Gerar LLVM para criação, acesso e modificação de mapas dinâmicos.
 - 🟡 **Suporte a funções como valores em LLVM:** Permitir armazenar funções em variáveis e chamá-las dinamicamente no LLVM IR.
-- 🟡 **Suporte a importações:** Suporte a importação de módulos externos no back end(somente disponivel na geração AST-front).
 - 🟡 **Otimização llvm:** Otimizar a geração de LLVM para ter melhor perfomance principalmente nas estruturas de dados.
 ## 📂 Uso
 

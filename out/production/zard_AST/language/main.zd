@@ -1,8 +1,32 @@
 import "src/language/stdlib/t.zd" as math;
 main{
-string nome = "zard";
-print(nome);
-string teste;
-teste = "x";
-print(teste);
+
+boolean t = true;
+print(t);
+
+print(math.factorial(5));
+int a;
+a = 0;
+
+List<int> numeros;
+while(a < 10) {numeros.add(a); a++;}
+
+
+List nomes = ("teste", "teste");
+nomes.add("ok");
+
+string nome;
+nome = input();
+
+nomes.add(nome);
+print(numeros);
+
+call math.tes(nomes);
+print(nomes);
+
+numeros.clear();
+nomes.clear();
+
+print(nomes);
+
 }

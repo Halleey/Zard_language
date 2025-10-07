@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "String.h"
+#include "Stringz.h"
 
 String* createString(const char *text) {
     String *str = malloc(sizeof(String));

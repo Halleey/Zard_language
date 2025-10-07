@@ -16,6 +16,7 @@ import java.util.List;
 public class Executor {
     public static void main(String[] args) {
         try {
+            // Caminho do arquivo de entrada
             String filePath = args.length > 0 ? args[0] : "src/language/main.zd";
             String code = Files.readString(Path.of(filePath));
 
@@ -28,7 +29,7 @@ public class Executor {
             System.out.println("=== AST ===");
             ASTPrinter.printAST(ast);
 
-            // LLVM
+            // LLVM IR
             LLVMGenerator llvmGen = new LLVMGenerator();
             String llvmCode = llvmGen.generate(ast);
 
@@ -40,31 +41,43 @@ public class Executor {
             Files.writeString(llPath, llvmCode);
             System.out.println("LLVM IR salvo em programa.ll");
 
-            // arquivos C do runtime
+            // Arquivos C do runtime
             List<String> runtimeFiles = List.of(
-                    "src/low/runtime/String.c",
-                    "src/low/runtime/InputUtil.c",
+                    "src/low/runtime/string/Stringz.c",
+                    "src/low/runtime/inputs/InputUtil.c",
                     "src/low/runtime/ArrayList.c",
                     "src/low/runtime/ArrayListInt.c",
-                    "src/low/runtime/PrintList.c"
+                    "src/low/runtime/print/PrintList.c"
             );
 
+            // Flags de include para headers
+            List<String> includeDirs = List.of(
+                    "-Isrc/low/runtime/string",
+                    "-Isrc/low/runtime/input",
+                    "-Isrc/low/runtime/list",
+                    "-Isrc/low/runtime/print"
+            );
+
+            // Montar comando do clang
             List<String> cmdExe = new ArrayList<>();
             cmdExe.add("clang");
             cmdExe.add("programa.ll");
             cmdExe.addAll(runtimeFiles);
+            cmdExe.addAll(includeDirs);
             cmdExe.add("-o");
             cmdExe.add("programa.exe");
 
+            System.out.println("Executando clang para gerar executável...");
             ProcessBuilder pbExe = new ProcessBuilder(cmdExe);
-            pbExe.inheritIO();
+            pbExe.inheritIO(); // Para ver a saída do compilador
             Process processExe = pbExe.start();
             int exitCodeExe = processExe.waitFor();
 
-            if (exitCodeExe == 0)
+            if (exitCodeExe == 0) {
                 System.out.println("Executável gerado: programa.exe");
-            else
+            } else {
                 throw new RuntimeException("Falha ao linkar executável");
+            }
 //
 //            List<String> cmdAsmPure = new ArrayList<>();
 //            cmdAsmPure.add("clang");

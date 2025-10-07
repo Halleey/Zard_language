@@ -1,7 +1,7 @@
 #ifndef ARRAYLIST_H
 #define ARRAYLIST_H
 #include <stdlib.h>
-#include "String.h"
+#include "Stringz.h"
 
 typedef struct {
     void **data;

@@ -1,5 +1,8 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "InputUtil.h"
-#include "String.h"
+#include "Stringz.h"
 int inputInt(const char* prompt) {
     char buffer[256];
     if (prompt && strlen(prompt) > 0) printf("%s: ", prompt);

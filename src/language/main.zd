@@ -8,7 +8,7 @@ int a;
 a = 0;
 List<int> numeros;
 while(a < 10) {numeros.add(a); a++;}
-List<string> nomes = ("teste", "teste");
+List nomes = ("teste", "teste");
 nomes.add("ok");
 string nome;
 nome = input();

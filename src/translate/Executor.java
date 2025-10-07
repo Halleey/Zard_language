@@ -46,8 +46,9 @@ public class Executor {
                     "src/low/runtime/string/Stringz.c",
                     "src/low/runtime/inputs/InputUtil.c",
                     "src/low/runtime/ArrayList.c",
-                    "src/low/runtime/ArrayListInt.c",
-                    "src/low/runtime/print/PrintList.c"
+                    "src/low/runtime/ints/ArrayListInt.c",
+                    "src/low/runtime/print/PrintList.c",
+                    ""
             );
 
             // Flags de include para headers

@@ -4,6 +4,7 @@ import ast.ASTNode;
 import ast.lists.ListNode;
 import ast.variables.VariableNode;
 import low.TempManager;
+import low.lists.bool.ListBoolEmitter;
 import low.lists.doubles.ListDoubleEmitter;
 import low.lists.ints.IntListEmitter;
 import low.module.LLVisitorMain;
@@ -13,10 +14,14 @@ public class ListEmitter {
     private final TempManager temps;
     private final IntListEmitter intEmitter;
     private final ListDoubleEmitter doubleEmitter;
+    private final ListBoolEmitter boolEmitter;
+
+
     public ListEmitter(TempManager temps) {
         this.temps = temps;
         this.intEmitter = new IntListEmitter(temps);
         this.doubleEmitter = new ListDoubleEmitter(temps);
+        this.boolEmitter = new ListBoolEmitter(temps);
     }
 
     public String emit(ListNode node, LLVisitorMain visitor) {
@@ -32,6 +37,11 @@ public class ListEmitter {
         if("double".equals(elementType)){
             return doubleEmitter.emiter(node, visitor);
         }
+        if ("boolean".equals(elementType)) {
+
+            return boolEmitter.emiter(node, visitor);
+        }
+
         // Caso genérico (todos os outros tipos)
         StringBuilder llvm = new StringBuilder();
         List<ASTNode> elements = node.getList().getElements();

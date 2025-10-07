@@ -1,40 +1,9 @@
 import "src/language/stdlib/t.zd" as math;
 main{
 
+List is = (true, false);
 
-List<int> inteiros;
-List list =("zard");
-List<int> numberss= (2,3,4);
+print(is);
 
-inteiros.add(2);
-List flut = (3.14);
-print(flut);
-boolean t = true;
-print(t);
-
-print(math.factorial(5));
-int a;
-a = 0;
-
-List<int> numeros;
-while(a < 10) {numeros.add(a); a++;}
-
-
-List nomes = ("teste", "teste");
-nomes.add("ok");
-
-string nome;
-nome = input();
-
-nomes.add(nome);
-print(numeros);
-
-call math.tes(nomes);
-print(nomes);
-
-numeros.clear();
-nomes.clear();
-
-print(nomes);
 
 }

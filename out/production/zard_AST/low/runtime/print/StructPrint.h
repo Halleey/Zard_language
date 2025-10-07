@@ -1,6 +1,6 @@
 #ifndef STRUCTPRINT_H
 #define STRUCTPRINT_H
-
+#include <stdbool.h>
 #include <stddef.h>
 
 typedef struct ArrayList {
@@ -20,6 +20,12 @@ typedef struct ArrayListDouble {
     size_t length;
     size_t capacity;
 } ArrayListDouble;
+
+typedef struct ArrayListBool {
+    bool* data;
+    size_t length;
+    size_t capacity;
+} ArrayListBool;
 
 
 #endif

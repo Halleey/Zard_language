@@ -47,6 +47,7 @@ public class Executor {
                     "src/low/runtime/inputs/InputUtil.c",
                     "src/low/runtime/ArrayList.c",
                     "src/low/runtime/ints/ArrayListInt.c",
+                    "src/low/runtime/bool/ArrayListBool.c",
                     "src/low/runtime/doubles/ArrayListDouble.c",
                     "src/low/runtime/print/PrintList.c",
                     ""

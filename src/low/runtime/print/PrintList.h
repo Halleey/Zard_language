@@ -5,6 +5,7 @@
 
 void arraylist_print_int(ArrayListInt* list);
 void arraylist_print_double(ArrayListDouble* list);
+void arraylist_print_bool(ArrayListBool* list);
 void arraylist_print_string(ArrayList* list);
 
 #endif

@@ -5,6 +5,7 @@ import ast.variables.LiteralNode;
 import low.functions.TypeMapper;
 import low.inputs.InputEmitter;
 import low.lists.ListEmitter;
+import low.lists.bool.ListBoolEmitter;
 import low.lists.doubles.ListDoubleEmitter;
 import low.lists.ints.IntListEmitter;
 import low.module.LLVisitorMain;
@@ -50,6 +51,10 @@ public class VariableEmitter {
                 varTypes.put(node.getName(), "%struct.ArrayListDouble*");
                 return "  " + ptr + " = alloca %struct.ArrayListDouble*\n;;VAL:" + ptr + ";;TYPE:%struct.ArrayListDouble*\n";
             }
+            case "List<boolean>" -> {
+                varTypes.put(node.getName(), "%struct.ArrayListBool*");
+                return "  " + ptr + " = alloca %struct.ArrayListBool*\n;;VAL:" + ptr + ";;TYPE:%struct.ArrayListBool*\n";
+            }
             default -> {
                 if (node.getType().startsWith("List")) {
                     varTypes.put(node.getName(), "i8*");
@@ -72,6 +77,7 @@ public class VariableEmitter {
             if (node.getType().startsWith("List")) {
                 return switch (node.getType()) {
                     case "List<int>" -> callArrayListCreateIntAndStore(varPtr);
+                    case "List<boolean>" -> callArrayListCreateBoolAndStore(varPtr);
                     case "List<double>" -> callArrayListCreateDoubleAndStore(varPtr);
                     default -> callArrayListCreateAndStore(varPtr);
                 };
@@ -97,13 +103,18 @@ public class VariableEmitter {
 
                 String listLLVM;
                 String tmpList;
-
                 // Emissão especializada por tipo
                 if (node.getType().equals("List<int>")) {
                     IntListEmitter listEmitter = new IntListEmitter(temps);
                     listLLVM = listEmitter.emit(listNode, visitor);
                     tmpList = extractTemp(listLLVM);
                     return listLLVM + "  store %struct.ArrayListInt* " + tmpList + ", %struct.ArrayListInt** " + varPtr + "\n";
+                }
+                else if(node.getType().equals("List<boolean>")){
+                    ListBoolEmitter boolEmitter = new ListBoolEmitter(temps);
+                    listLLVM = boolEmitter.emiter(listNode, visitor);
+                    tmpList = extractTemp(listLLVM);
+                    return listLLVM+ "  store %struct.ArrayListBool* " + tmpList + ", %struct.ArrayListBool** " + varPtr+ "\n";
                 }
                 else if (node.getType().equals("List<double>")) {
                     ListDoubleEmitter listEmitter = new ListDoubleEmitter(temps);
@@ -117,12 +128,6 @@ public class VariableEmitter {
                     tmpList = extractTemp(listLLVM);
                     return listLLVM + "  store i8* " + tmpList + ", i8** " + varPtr + "\n";
                 }
-            } else {
-                return switch (node.getType()) {
-                    case "List<int>" -> callArrayListCreateIntAndStore(varPtr);
-                    case "List<double>" -> callArrayListCreateDoubleAndStore(varPtr);
-                    default -> callArrayListCreateAndStore(varPtr);
-                };
             }
         }
 
@@ -159,7 +164,15 @@ public class VariableEmitter {
                 "  store %struct.ArrayListDouble* " + tmp + ", %struct.ArrayListDouble** " + varPtr + "\n";
     }
 
-    /** Emite store genérico */
+    private String callArrayListCreateBoolAndStore(String varPtr){
+        String tmp = temps.newTemp();
+        return "  " + tmp + " = call %struct.ArrayListBool* @arraylist_create_bool(i64 4)\n"+
+                ";;VAL: "+ tmp + ";;TYPE:struct.ArrayListBool*\n"+
+                "  store %struct.ArrayListBool* " + tmp + ", %struct.ArrayListBool** " + varPtr + "\n";
+    }
+
+
+
     private String emitStore(String name, String type, String value) {
         if (type.equals("%String*") || type.equals("%String")) {
             return stringEmitter.emitStore(name, value);
@@ -169,6 +182,9 @@ public class VariableEmitter {
         }
         if (type.equals("%struct.ArrayListDouble*")) {
             return "  store %struct.ArrayListDouble* " + value + ", %struct.ArrayListDouble** %" + name + "\n";
+        }
+        if(type.equals("%struct.ArrayListBool*")){
+            return  "  store %struct.ArrayListBool* " + value + ", %struct.ArrayListBool** %"+ name + "\n";
         }
         return "  store " + type + " " + value + ", " + type + "* %" + name + "\n";
     }

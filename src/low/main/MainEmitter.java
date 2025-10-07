@@ -111,6 +111,15 @@ public class MainEmitter {
                     llvm.append("  call void @arraylist_free_double(%struct.ArrayListDouble* ")
                             .append(tmp).append(")\n");
                 }
+                else if ("boolean".equals(tipoLista)) {
+                    String tmp = tempManager.newTemp();
+                    llvm.append("  ").append(tmp)
+                            .append(" = load %struct.ArrayListBool*, %struct.ArrayListBool** %")
+                            .append(varName).append("\n");
+                    llvm.append("  call void @arraylist_free_bool(%struct.ArrayListBool* ")
+                            .append(tmp).append(")\n");
+                }
+
                 else {
                     String tmp = tempManager.newTemp();
                     String bc  = tempManager.newTemp();
@@ -236,6 +245,18 @@ public class MainEmitter {
                     declare void @arraylist_addAll_String(%ArrayList*, %String**, i64)
                 """);
             }
+            else if (tipo.contains("<boolean>")) {
+                sb.append("""
+                    %struct.ArrayListBool = type { i1*, i64, i64 }
+                    declare %struct.ArrayListBool* @arraylist_create_bool(i64)
+                    declare void @arraylist_add_bool(%struct.ArrayListBool*, i1)
+                    declare void @arraylist_addAll_bool(%struct.ArrayListBool*, i1*, i64)
+                    declare void @arraylist_print_bool(%struct.ArrayListBool*)
+                    declare void @arraylist_clear_bool(%struct.ArrayListBool*)
+                    declare void @arraylist_free_bool(%struct.ArrayListBool*)
+              """);
+            }
+
         }
 
         return sb.toString();

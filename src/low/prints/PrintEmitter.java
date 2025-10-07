@@ -101,6 +101,12 @@ public class PrintEmitter {
             sb.append("  call void @arraylist_print_double(%struct.ArrayListDouble* ").append(tmp).append(")\n");
             return sb.toString();
         }
+        if ("%struct.ArrayListBool*".equals(llvmType)) {
+            // Lista de int tipada
+            sb.append("  ").append(tmp).append(" = load %struct.ArrayListBool*, %struct.ArrayListBool** %").append(varName).append("\n");
+            sb.append("  call void @arraylist_print_bool(%struct.ArrayListBool* ").append(tmp).append(")\n");
+            return sb.toString();
+        }
 
         // Genéricas: i8* -> %ArrayList*
         sb.append("  ").append(tmp).append(" = load i8*, i8** %").append(varName).append("\n");

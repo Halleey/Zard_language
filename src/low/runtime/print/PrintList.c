@@ -46,3 +46,18 @@ void arraylist_print_string(ArrayList* list) {
     }
     printf("]\n");
 }
+void arraylist_print_bool(ArrayListBool* list) {
+    if (!list) {
+        printf("[]\n");
+        return;
+    }
+
+    printf("[");
+    for (size_t i = 0; i < list->length; i++) {
+        printf("%s", list->data[i] ? "true" : "false");
+        if (i < list->length - 1)
+            printf(", ");
+    }
+    printf("]\n");
+}
+

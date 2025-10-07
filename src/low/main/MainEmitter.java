@@ -224,6 +224,7 @@ public class MainEmitter {
                     declare void @arraylist_print_int(%struct.ArrayListInt*)
                     declare void @arraylist_clear_int(%struct.ArrayListInt*)
                     declare void @arraylist_free_int(%struct.ArrayListInt*)
+                    declare i32 @arraylist_get_int(%struct.ArrayListInt*, i64, i32*)
                 """);
             }
             else if (tipo.contains("<double>")) {
@@ -243,6 +244,7 @@ public class MainEmitter {
                     declare void @arraylist_print_string(%ArrayList*)
                     declare void @arraylist_add_String(%ArrayList*, %String*)
                     declare void @arraylist_addAll_String(%ArrayList*, %String**, i64)
+                    declare i8* @getItem(%ArrayList*, i64)
                 """);
             }
             else if (tipo.contains("<boolean>")) {

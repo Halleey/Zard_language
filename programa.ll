@@ -80,13 +80,24 @@ entry:
       declare void @arraylist_print_bool(%struct.ArrayListBool*)
       declare void @arraylist_clear_bool(%struct.ArrayListBool*)
       declare void @arraylist_free_bool(%struct.ArrayListBool*)
+    %struct.ArrayListInt = type { i32*, i64, i64 }
+    declare %struct.ArrayListInt* @arraylist_create_int(i64)
+    declare void @arraylist_add_int(%struct.ArrayListInt*, i32)
+    declare void @arraylist_addAll_int(%struct.ArrayListInt*, i32*, i64)
+    declare void @arraylist_print_int(%struct.ArrayListInt*)
+    declare void @arraylist_clear_int(%struct.ArrayListInt*)
+    declare void @arraylist_free_int(%struct.ArrayListInt*)
+    declare i32 @arraylist_get_int(%struct.ArrayListInt*, i64, i32*)
     declare void @arraylist_add_string(%ArrayList*, i8*)
     declare void @arraylist_addAll_string(%ArrayList*, i8**, i64)
     declare void @arraylist_print_string(%ArrayList*)
     declare void @arraylist_add_String(%ArrayList*, %String*)
     declare void @arraylist_addAll_String(%ArrayList*, %String**, i64)
+    declare i8* @getItem(%ArrayList*, i64)
 
 @.str0 = private constant [21 x i8] c"teste um hello world\00"
+@.str1 = private constant [5 x i8] c"zard\00"
+@.str2 = private constant [5 x i8] c"test\00"
 
 define i32 @main() {
   ; VariableDeclarationNode
@@ -104,9 +115,60 @@ define i32 @main() {
   ; PrintNode
   %t16 = load %struct.ArrayListBool*, %struct.ArrayListBool** %is
   call void @arraylist_print_bool(%struct.ArrayListBool* %t16)
+  ; VariableDeclarationNode
+  %nomes = alloca i8*
+;;VAL:%nomes;;TYPE:i8*
+  %t17 = call i8* @arraylist_create(i64 4)
+  %t18 = bitcast i8* %t17 to %ArrayList*
+  %t19 = bitcast [5 x i8]* @.str1 to i8*
+;;VAL:%t19;;TYPE:i8*
+  call void @arraylist_add_string(%ArrayList* %t18, i8* %t19)
+  %t20 = bitcast [5 x i8]* @.str2 to i8*
+;;VAL:%t20;;TYPE:i8*
+  call void @arraylist_add_string(%ArrayList* %t18, i8* %t20)
+;;VAL:%t17;;TYPE:i8*
+  store i8* %t17, i8** %nomes
+  ; PrintNode
+  %t21 = load i8*, i8** %nomes
+  %t22 = bitcast i8* %t21 to %ArrayList*
+  %t23 = add i32 0, 1
+  %t24 = zext i32 %t23 to i64
+  %t25 = call i8* @getItem(%ArrayList* %t22, i64 %t24)
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t25)
+  ; VariableDeclarationNode
+  %numbers = alloca %struct.ArrayListInt*
+;;VAL:%numbers;;TYPE:%struct.ArrayListInt*
+  %t26 = call %struct.ArrayListInt* @arraylist_create_int(i64 4)
+  %t27 = add i32 0, 3
+;;VAL:%t27;;TYPE:i32
+  call void @arraylist_add_int(%struct.ArrayListInt* %t26, i32 %t27)
+  %t28 = add i32 0, 4
+;;VAL:%t28;;TYPE:i32
+  call void @arraylist_add_int(%struct.ArrayListInt* %t26, i32 %t28)
+  %t29 = add i32 0, 5
+;;VAL:%t29;;TYPE:i32
+  call void @arraylist_add_int(%struct.ArrayListInt* %t26, i32 %t29)
+  %t30 = add i32 0, 6
+;;VAL:%t30;;TYPE:i32
+  call void @arraylist_add_int(%struct.ArrayListInt* %t26, i32 %t30)
+;;VAL:%t26;;TYPE:%struct.ArrayListInt*
+  store %struct.ArrayListInt* %t26, %struct.ArrayListInt** %numbers
+  ; PrintNode
+  %t32 = load %struct.ArrayListInt*, %struct.ArrayListInt** %numbers
+  %t33 = add i32 0, 1
+  %t34 = zext i32 %t33 to i64
+  %t35 = alloca i32
+  %t36 = call i32 @arraylist_get_int(%struct.ArrayListInt* %t32, i64 %t34, i32* %t35)
+  %t37 = load i32, i32* %t35
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t37)
   ; === Free das listas alocadas ===
-  %t17 = load %struct.ArrayListBool*, %struct.ArrayListBool** %is
-  call void @arraylist_free_bool(%struct.ArrayListBool* %t17)
+  %t38 = load i8*, i8** %nomes
+  %t39 = bitcast i8* %t38 to %ArrayList*
+  call void @freeList(%ArrayList* %t39)
+  %t40 = load %struct.ArrayListInt*, %struct.ArrayListInt** %numbers
+  call void @arraylist_free_int(%struct.ArrayListInt* %t40)
+  %t41 = load %struct.ArrayListBool*, %struct.ArrayListBool** %is
+  call void @arraylist_free_bool(%struct.ArrayListBool* %t41)
   call i32 @getchar()
   ret i32 0
 }

@@ -9,8 +9,6 @@ public class ListDoubleClearEmitter {
     public ListDoubleClearEmitter(TempManager tempManager) {
         this.tempManager = tempManager;
     }
-
-
     public String emit(ListClearNode node, LLVMEmitVisitor visitor) {
         StringBuilder llvm = new StringBuilder();
 

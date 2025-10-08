@@ -13,7 +13,7 @@ import low.functions.FunctionCallEmitter;
 import low.functions.FunctionEmitter;
 import low.ifs.IfEmitter;
 import low.imports.ImportEmitter;
-import low.lists.*;
+import low.lists.generics.*;
 import low.main.GlobalStringManager;
 import low.TempManager;
 import low.main.MainEmitter;

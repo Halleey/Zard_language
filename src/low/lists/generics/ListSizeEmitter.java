@@ -1,4 +1,4 @@
-package low.lists;
+package low.lists.generics;
 
 import ast.lists.ListSizeNode;
 import low.TempManager;

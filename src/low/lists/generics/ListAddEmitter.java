@@ -1,4 +1,4 @@
-package low.lists;
+package low.lists.generics;
 
 import ast.lists.ListAddNode;
 import ast.variables.LiteralNode;

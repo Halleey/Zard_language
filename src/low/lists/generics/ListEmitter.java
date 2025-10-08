@@ -1,4 +1,4 @@
-package low.lists;
+package low.lists.generics;
 
 import ast.ASTNode;
 import ast.lists.ListNode;

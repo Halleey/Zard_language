@@ -4,7 +4,7 @@ import ast.lists.ListNode;
 import ast.variables.LiteralNode;
 import low.functions.TypeMapper;
 import low.inputs.InputEmitter;
-import low.lists.ListEmitter;
+import low.lists.generics.ListEmitter;
 import low.lists.bool.ListBoolEmitter;
 import low.lists.doubles.ListDoubleEmitter;
 import low.lists.ints.IntListEmitter;
@@ -33,7 +33,6 @@ public class VariableEmitter {
         return new TypeMapper().toLLVM(type);
     }
 
-    /** Declara uma variável local e faz o alloca correto. */
     public String emitAlloca(VariableDeclarationNode node) {
         String ptr = "%" + node.getName();
         localVars.put(node.getName(), ptr);
@@ -66,13 +65,10 @@ public class VariableEmitter {
             }
         }
     }
-
-    /** Inicializa a variável (literal, input, lista ou string). */
     public String emitInit(VariableDeclarationNode node) {
         String llvmType = varTypes.get(node.getName());
         String varPtr = getVarPtr(node.getName());
 
-        // Variável sem inicializador
         if (node.initializer == null) {
             if (node.getType().startsWith("List")) {
                 return switch (node.getType()) {
@@ -87,7 +83,6 @@ public class VariableEmitter {
             return "";
         }
 
-        // InputNode
         if (node.initializer instanceof InputNode inputNode) {
             InputEmitter inputEmitter = new InputEmitter(temps, visitor.getGlobalStrings());
             String code = inputEmitter.emit(inputNode, llvmType);
@@ -103,40 +98,39 @@ public class VariableEmitter {
 
                 String listLLVM;
                 String tmpList;
-                // Emissão especializada por tipo
-                if (node.getType().equals("List<int>")) {
-                    IntListEmitter listEmitter = new IntListEmitter(temps);
-                    listLLVM = listEmitter.emit(listNode, visitor);
-                    tmpList = extractTemp(listLLVM);
-                    return listLLVM + "  store %struct.ArrayListInt* " + tmpList + ", %struct.ArrayListInt** " + varPtr + "\n";
-                }
-                else if(node.getType().equals("List<boolean>")){
-                    ListBoolEmitter boolEmitter = new ListBoolEmitter(temps);
-                    listLLVM = boolEmitter.emit(listNode, visitor);
-                    tmpList = extractTemp(listLLVM);
-                    return listLLVM+ "  store %struct.ArrayListBool* " + tmpList + ", %struct.ArrayListBool** " + varPtr+ "\n";
-                }
-                else if (node.getType().equals("List<double>")) {
-                    ListDoubleEmitter listEmitter = new ListDoubleEmitter(temps);
-                    listLLVM = listEmitter.emit(listNode, visitor);
-                    tmpList = extractTemp(listLLVM);
-                    return listLLVM + "  store %struct.ArrayListDouble* " + tmpList + ", %struct.ArrayListDouble** " + varPtr + "\n";
-                }
-                else {
-                    ListEmitter listEmitter = new ListEmitter(temps);
-                    listLLVM = listEmitter.emit(listNode, visitor);
-                    tmpList = extractTemp(listLLVM);
-                    return listLLVM + "  store i8* " + tmpList + ", i8** " + varPtr + "\n";
+                switch (node.getType()) {
+                    case "List<int>" -> {
+                        IntListEmitter listEmitter = new IntListEmitter(temps);
+                        listLLVM = listEmitter.emit(listNode, visitor);
+                        tmpList = extractTemp(listLLVM);
+                        return listLLVM + "  store %struct.ArrayListInt* " + tmpList + ", %struct.ArrayListInt** " + varPtr + "\n";
+                    }
+                    case "List<boolean>" -> {
+                        ListBoolEmitter boolEmitter = new ListBoolEmitter(temps);
+                        listLLVM = boolEmitter.emit(listNode, visitor);
+                        tmpList = extractTemp(listLLVM);
+                        return listLLVM + "  store %struct.ArrayListBool* " + tmpList + ", %struct.ArrayListBool** " + varPtr + "\n";
+                    }
+                    case "List<double>" -> {
+                        ListDoubleEmitter listEmitter = new ListDoubleEmitter(temps);
+                        listLLVM = listEmitter.emit(listNode, visitor);
+                        tmpList = extractTemp(listLLVM);
+                        return listLLVM + "  store %struct.ArrayListDouble* " + tmpList + ", %struct.ArrayListDouble** " + varPtr + "\n";
+                    }
+                    default -> {
+                        ListEmitter listEmitter = new ListEmitter(temps);
+                        listLLVM = listEmitter.emit(listNode, visitor);
+                        tmpList = extractTemp(listLLVM);
+                        return listLLVM + "  store i8* " + tmpList + ", i8** " + varPtr + "\n";
+                    }
                 }
             }
         }
 
-        // String literal
         if (node.getType().equals("string") && node.initializer instanceof LiteralNode lit) {
             return stringEmitter.createStringFromLiteral(varPtr, (String) lit.value.getValue());
         }
 
-        // Expressão comum
         String exprLLVM = node.initializer.accept(visitor);
         String temp = extractTemp(exprLLVM);
         return exprLLVM + emitStore(node.getName(), llvmType, temp);

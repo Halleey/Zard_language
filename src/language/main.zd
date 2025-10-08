@@ -2,7 +2,9 @@ import "src/language/stdlib/t.zd" as math;
 main{
 
 List is = (true, false);
-
+string nom;
+nom= "za";
+print(nom);
 print(is);
 List<string> nomes = ("zard", "test");
 print(nomes.get(1));
@@ -12,8 +14,10 @@ print(numbers);
 List<int> tes;
 tes.add(3);
 print(tes);
-int x = 99;
+int x;
+x = input();
 int z = 33;
 numbers.addAll(3,4,5, x, z);
+print(numbers);
 print(numbers.size());
 }

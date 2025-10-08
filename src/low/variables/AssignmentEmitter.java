@@ -6,7 +6,7 @@ import ast.variables.AssignmentNode;
 import ast.variables.LiteralNode;
 import low.TempManager;
 import low.inputs.InputEmitter;
-import low.lists.ListEmitter;
+import low.lists.generics.ListEmitter;
 import low.main.GlobalStringManager;
 import low.module.LLVisitorMain;
 

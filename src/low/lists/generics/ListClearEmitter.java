@@ -2,15 +2,19 @@ package low.lists.generics;
 
 import ast.lists.ListClearNode;
 import low.TempManager;
+import low.lists.doubles.ListDoubleClearEmitter;
 import low.lists.ints.ListIntClearEmitter;
 import low.module.LLVMEmitVisitor;
+
+
 public class ListClearEmitter {
     private final TempManager temps;
     private final ListIntClearEmitter listIntClearEmitter;
-
+    private final ListDoubleClearEmitter doubleClearEmitter;
     public ListClearEmitter(TempManager temps) {
         this.temps = temps;
         this.listIntClearEmitter = new ListIntClearEmitter(temps);
+        this.doubleClearEmitter = new ListDoubleClearEmitter(temps);
     }
 
     public String emit(ListClearNode node, LLVMEmitVisitor visitor) {
@@ -22,9 +26,14 @@ public class ListClearEmitter {
         String listTmp = extractTemp(listCode);
         String valType = extractType(listCode);
 
+
+        System.out.println("--------" + valType);
         // Delegar para o emitter específico se for lista de int
-        if (valType.contains("ArrayListInt") || valType.equals("i32")) {
+        if (valType.contains("ArrayListInt")) {
             return listIntClearEmitter.emit(node, visitor);
+        }
+        if (valType.contains("ArrayListDouble")) {
+            return doubleClearEmitter.emit(node, visitor);
         }
 
         // Caso genérico - outras listas (ex: string, String, etc.)

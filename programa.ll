@@ -166,12 +166,20 @@ while_end_2:
   ; PrintNode
   %t44 = load %struct.ArrayListDouble*, %struct.ArrayListDouble** %list
   call void @arraylist_print_double(%struct.ArrayListDouble* %t44)
-  ; PrintNode
-  %t45 = getelementptr inbounds [20 x i8], [20 x i8]* @.str5, i32 0, i32 0
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t45)
-  ; === Free das listas alocadas ===
+  ; ListClearNode
   %t46 = load %struct.ArrayListDouble*, %struct.ArrayListDouble** %list
-  call void @arraylist_free_double(%struct.ArrayListDouble* %t46)
+;;VAL:%t46;;TYPE:%struct.ArrayListDouble*
+  call void @arraylist_clear_double(%struct.ArrayListDouble* %t46)
+;;VAL:%t46;;TYPE:%struct.ArrayListDouble*
+  ; PrintNode
+  %t47 = load %struct.ArrayListDouble*, %struct.ArrayListDouble** %list
+  call void @arraylist_print_double(%struct.ArrayListDouble* %t47)
+  ; PrintNode
+  %t48 = getelementptr inbounds [20 x i8], [20 x i8]* @.str5, i32 0, i32 0
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t48)
+  ; === Free das listas alocadas ===
+  %t49 = load %struct.ArrayListDouble*, %struct.ArrayListDouble** %list
+  call void @arraylist_free_double(%struct.ArrayListDouble* %t49)
   call i32 @getchar()
   ret i32 0
 }

@@ -3,6 +3,7 @@ package low.lists.generics;
 import ast.lists.ListAddNode;
 import ast.variables.LiteralNode;
 import low.TempManager;
+import low.lists.doubles.ListAddDoubleEmitter;
 import low.lists.ints.ListIntAddEmitter;
 import low.main.GlobalStringManager;
 import low.module.LLVMEmitVisitor;
@@ -12,10 +13,12 @@ public class ListAddEmitter {
     private final TempManager temps;
     private final GlobalStringManager globalStringManager;
     private final ListIntAddEmitter intAddEmitter;
+    private final ListAddDoubleEmitter doubleEmitter;
     public ListAddEmitter(TempManager temps, GlobalStringManager globalStringManager) {
         this.temps = temps;
         this.globalStringManager = globalStringManager;
         this.intAddEmitter = new ListIntAddEmitter(temps);
+        this.doubleEmitter = new ListAddDoubleEmitter(temps);
     }
 
     public String emit(ListAddNode node, LLVMEmitVisitor visitor) {
@@ -30,6 +33,9 @@ public class ListAddEmitter {
         if (valType.equals("i32")) {
             return intAddEmitter.emit(node, visitor);
         }
+        if (valType.equals("double")) {
+            return doubleEmitter.emit(node, visitor);
+        }
 
         String listTmp = extractTemp(listCode);
         // bitcast para %ArrayList* antes da chamada
@@ -40,8 +46,6 @@ public class ListAddEmitter {
         llvm.append(valCode);
         String valTmp = extractTemp(valCode);
         switch (valType) {
-            case "i32" -> llvm.append("  call void @arraylist_add_int(%ArrayList* ").append(listCastTmp)
-                    .append(", i32 ").append(valTmp).append(")\n");
             case "double" -> llvm.append("  call void @arraylist_add_double(%ArrayList* ").append(listCastTmp)
                     .append(", double ").append(valTmp).append(")\n");
             case "%String*" -> {

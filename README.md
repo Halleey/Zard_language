@@ -109,7 +109,7 @@ A linguagem continuará evoluindo para se tornar mais robusta e versátil. Algum
 * ✅ Variáveis tipadas, literais e expressões complexas gerando LLVM IR.
 * ✅ Integração inicial de backend LLVM IR para variáveis, whiles e if's.
 * ✅ Inputs funcionais para armazenar entrada do usuário
-* ✅ Suporte a listas  no compilador via código C + LLVM 
+* ✅ Suporte a listas  no compilador via código C + LLVM
 * ✅ Suporte a instância dinâmicas de lista onde não é necessário especificar o tipo (inferida automaticamente desde que haja argumentos)
 * ✅ **Suporte a importações:** Suporte a importação de módulos externos no back end.
 ---
@@ -120,9 +120,18 @@ A linguagem continuará evoluindo para se tornar mais robusta e versátil. Algum
 ## 📂 Uso
 
 1. Escreva seu código em um arquivo `.zd`.
-2. Utilize o interpretador para executar o código.
-3. Experimente a sintaxe da linguagem e acompanhe as atualizações futuras.
+2. Coloque neste caminho
+```java
 
+  try {
+            // Caminho do arquivo de entrada
+            String filePath = args.length > 0 ? args[0] : "src/language/main.zd";
+            String code = Files.readString(Path.of(filePath));
+
+```
+
+3. Utilize o interpretador para executar o código.
+5. Experimente a sintaxe da linguagem e acompanhe as atualizações futuras.
 ---
 
 ## 🔗 Contribuição

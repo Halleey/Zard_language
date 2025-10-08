@@ -4,6 +4,7 @@ import ast.ASTNode;
 import ast.lists.ListAddAllNode;
 import ast.variables.LiteralNode;
 import low.TempManager;
+import low.lists.doubles.ListAddAllDoubleEmitter;
 import low.lists.ints.ListIntAddAllEmitter;
 import low.main.GlobalStringManager;
 import low.module.LLVMEmitVisitor;
@@ -13,11 +14,12 @@ public class ListAddAllEmitter {
     private final TempManager temps;
     private final GlobalStringManager globalStringManager;
     private final ListIntAddAllEmitter intAddAllEmitter;
-
+    private final ListAddAllDoubleEmitter doubleEmitter;
     public ListAddAllEmitter(TempManager temps, GlobalStringManager globalStringManager) {
         this.temps = temps;
         this.globalStringManager = globalStringManager;
         this.intAddAllEmitter = new ListIntAddAllEmitter(temps);
+        this.doubleEmitter = new ListAddAllDoubleEmitter(temps);
     }
 
     public String emit(ListAddAllNode node, LLVMEmitVisitor visitor) {
@@ -40,37 +42,16 @@ public class ListAddAllEmitter {
             return intAddAllEmitter.emit(node, visitor);
         }
 
+        if (firstType.equals("double")) {
+            return doubleEmitter.emit(node, visitor);
+        }
+
         String listCastTmp = temps.newTemp();
         llvm.append("  ").append(listCastTmp)
                 .append(" = bitcast i8* ").append(listTmp)
                 .append(" to %ArrayList*\n");
 
         switch (firstType) {
-            case "double" -> {
-                String tmpArray = temps.newTemp();
-                llvm.append("  ").append(tmpArray)
-                        .append(" = alloca double, i64 ").append(n).append("\n");
-
-                for (int i = 0; i < n; i++) {
-                    ASTNode valueNode = node.getArgs().get(i);
-                    String valCode = valueNode.accept(visitor);
-                    llvm.append(valCode);
-                    String valTmp = extractTemp(valCode);
-
-                    String gepTmp = temps.newTemp();
-                    llvm.append("  ").append(gepTmp)
-                            .append(" = getelementptr inbounds double, double* ")
-                            .append(tmpArray).append(", i64 ").append(i).append("\n");
-                    llvm.append("  store double ").append(valTmp)
-                            .append(", double* ").append(gepTmp).append("\n");
-                }
-
-                llvm.append("  call void @arraylist_addAll_double(%ArrayList* ")
-                        .append(listCastTmp)
-                        .append(", double* ").append(tmpArray)
-                        .append(", i64 ").append(n).append(")\n");
-            }
-
             case "%String*" -> {
                 String tmpArray = temps.newTemp();
                 llvm.append("  ").append(tmpArray)
@@ -95,7 +76,6 @@ public class ListAddAllEmitter {
                         .append(", %String** ").append(tmpArray)
                         .append(", i64 ").append(n).append(")\n");
             }
-
             case "i8*" -> {
                 String tmpArray = temps.newTemp();
                 llvm.append("  ").append(tmpArray)

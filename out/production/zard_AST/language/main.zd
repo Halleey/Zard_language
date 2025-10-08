@@ -31,6 +31,7 @@ main {
     }
     List list = (3.3);
     list.add(4.3);
+    list.addAll(4.3,4.5);
     print(list);
     print("Fim do loop externo");
 }

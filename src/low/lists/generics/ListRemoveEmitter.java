@@ -2,15 +2,17 @@ package low.lists.generics;
 
 import ast.lists.ListRemoveNode;
 import low.TempManager;
+import low.lists.doubles.ListDoubleRemoveEmitter;
 import low.lists.ints.ListRemoveIntEmitter;
 import low.module.LLVMEmitVisitor;
 public class ListRemoveEmitter {
     private final TempManager temps;
     private final ListRemoveIntEmitter intEmitter; // emitter específico para inteiros
-
+    private final ListDoubleRemoveEmitter doubleRemoveEmitter;
     public ListRemoveEmitter(TempManager temps) {
         this.temps = temps;
         this.intEmitter = new ListRemoveIntEmitter(temps);
+        this.doubleRemoveEmitter = new ListDoubleRemoveEmitter(temps);
     }
 
     public String emit(ListRemoveNode node, LLVMEmitVisitor visitor) {
@@ -23,6 +25,11 @@ public class ListRemoveEmitter {
         if (type.contains("ArrayListInt")) {
             return intEmitter.emit(node, visitor);
         }
+
+        if (type.contains("ArrayListDouble")) {
+            return doubleRemoveEmitter.emit(node, visitor);
+        }
+
 
         // Código e valor do índice
         String posCode = node.getIndexNode().accept(visitor);

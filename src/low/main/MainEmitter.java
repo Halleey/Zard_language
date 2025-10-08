@@ -238,6 +238,7 @@ public class MainEmitter {
                     declare void @arraylist_print_double(%struct.ArrayListDouble*)
                     declare double  @arraylist_get_double(%struct.ArrayListDouble*, i64, double*)
                     declare void @arraylist_clear_double(%struct.ArrayListDouble*)
+                    declare void @arraylist_remove_double(%struct.ArrayListDouble*, i64)
                     declare void @arraylist_free_double(%struct.ArrayListDouble*)
                 """);
             } else if (tipo.contains("<string>")) {

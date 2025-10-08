@@ -19,7 +19,6 @@ public class Executor {
             // Caminho do arquivo de entrada
             String filePath = args.length > 0 ? args[0] : "src/language/main.zd";
             String code = Files.readString(Path.of(filePath));
-
             // Lexer + Parser
             Lexer lexer = new Lexer(code);
             List<Token> tokens = lexer.tokenize();

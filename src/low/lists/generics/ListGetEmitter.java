@@ -2,6 +2,7 @@ package low.lists.generics;
 
 import ast.lists.ListGetNode;
 import low.TempManager;
+import low.lists.doubles.ListGetDoubleEmitter;
 import low.lists.ints.ListGetIntEmitter;
 import low.module.LLVMEmitVisitor;
 
@@ -10,10 +11,11 @@ import low.module.LLVMEmitVisitor;
 public class ListGetEmitter {
     private final TempManager temps;
     private final ListGetIntEmitter intGetEmitter;
-
+    private final ListGetDoubleEmitter doubleEmitter;
     public ListGetEmitter(TempManager temps) {
         this.temps = temps;
         this.intGetEmitter = new ListGetIntEmitter(temps);
+        this.doubleEmitter = new ListGetDoubleEmitter(temps);
     }
 
     public String emit(ListGetNode node, LLVMEmitVisitor visitor) {
@@ -27,7 +29,9 @@ public class ListGetEmitter {
         if (listType.contains("ArrayListInt")) {
             return intGetEmitter.emit(node, visitor);
         }
-
+        if (listType.contains("ArrayListDouble")) {
+            return doubleEmitter.emit(node, visitor);
+        }
         appendCodePrefix(llvm, listCode);
 
         String arrayPtr = temps.newTemp();

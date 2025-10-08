@@ -1,23 +1,26 @@
 import "src/language/stdlib/t.zd" as math;
-main{
 
-List is = (true, false);
-string nom;
-nom= "za";
-print(nom);
-print(is);
-List<string> nomes = ("zard", "test");
-print(nomes.get(1));
-List numbers = (3,4,5,6);
-numbers.remove(1);
-print(numbers);
-List<int> tes;
-tes.add(3);
-print(tes);
-int x;
-x = input();
-int z = 33;
-numbers.addAll(3,4,5, x, z);
-print(numbers);
-print(numbers.size());
+main {
+
+    print(math.sum(3.0, 4.0));
+
+    print(math.sub(10.0, 6.0));
+
+    print(math.mul(2.0, 5.0));
+
+    print(math.div(10.0, 2.0));
+    print(math.div(5.0, 0.0));
+
+    print(math.pow(2.0, 3));
+    print(math.pow(5.0, -1));
+
+    print(math.sqrt(16.0));
+    print(math.sqrt(-4.0));
+
+    print(math.sin(0.5));
+
+    print(math.cos(0.5));
+
+    print(math.factorial(5));
+    print(math.fact(6));
 }

@@ -1,59 +1,574 @@
+; === Função: sum ===
+define double @math_sum(double %a, double %b) {
+entry:
+  %a_addr = alloca double
+  store double %a, double* %a_addr
+;;VAL:%a_addr;;TYPE:double
+  %b_addr = alloca double
+  store double %b, double* %b_addr
+;;VAL:%b_addr;;TYPE:double
+  %t0 = load double, double* %a_addr
+;;VAL:%t0;;TYPE:double
+
+  %t1 = load double, double* %b_addr
+;;VAL:%t1;;TYPE:double
+
+  %t2 = fadd double %t0, %t1
+;;VAL:%t2;;TYPE:double
+  ret double %t2
+}
+
+
+; === Função: sub ===
+define double @math_sub(double %a, double %b) {
+entry:
+  %a_addr = alloca double
+  store double %a, double* %a_addr
+;;VAL:%a_addr;;TYPE:double
+  %b_addr = alloca double
+  store double %b, double* %b_addr
+;;VAL:%b_addr;;TYPE:double
+  %t3 = load double, double* %a_addr
+;;VAL:%t3;;TYPE:double
+
+  %t4 = load double, double* %b_addr
+;;VAL:%t4;;TYPE:double
+
+  %t5 = fsub double %t3, %t4
+;;VAL:%t5;;TYPE:double
+  ret double %t5
+}
+
+
+; === Função: mul ===
+define double @math_mul(double %a, double %b) {
+entry:
+  %a_addr = alloca double
+  store double %a, double* %a_addr
+;;VAL:%a_addr;;TYPE:double
+  %b_addr = alloca double
+  store double %b, double* %b_addr
+;;VAL:%b_addr;;TYPE:double
+  %t6 = load double, double* %a_addr
+;;VAL:%t6;;TYPE:double
+
+  %t7 = load double, double* %b_addr
+;;VAL:%t7;;TYPE:double
+
+  %t8 = fmul double %t6, %t7
+;;VAL:%t8;;TYPE:double
+  ret double %t8
+}
+
+
+; === Função: div ===
+define double @math_div(double %a, double %b) {
+entry:
+  %a_addr = alloca double
+  store double %a, double* %a_addr
+;;VAL:%a_addr;;TYPE:double
+  %b_addr = alloca double
+  store double %b, double* %b_addr
+;;VAL:%b_addr;;TYPE:double
+  %t9 = load double, double* %b_addr
+;;VAL:%t9;;TYPE:double
+
+  %t10 = add i32 0, 0
+;;VAL:%t10;;TYPE:i32
+
+  %t12 = sitofp i32 %t10 to double
+;;VAL:%t12;;TYPE:double
+  %t11 = fcmp oeq double %t9, %t12
+;;VAL:%t11;;TYPE:i1
+
+  br i1 %t11, label %then_0, label %endif_0
+then_0:
+  %t13 = getelementptr inbounds [24 x i8], [24 x i8]* @.str0, i32 0, i32 0
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t13)
+  %t14 = fadd double 0.0, 0.0
+;;VAL:%t14;;TYPE:double
+  ret double %t14
+  br label %endif_0
+endif_0:
+  %t15 = load double, double* %a_addr
+;;VAL:%t15;;TYPE:double
+
+  %t16 = load double, double* %b_addr
+;;VAL:%t16;;TYPE:double
+
+  %t17 = fdiv double %t15, %t16
+;;VAL:%t17;;TYPE:double
+  ret double %t17
+}
+
+
+; === Função: pow ===
+define double @math_pow(double %base, i32 %exp) {
+entry:
+  %base_addr = alloca double
+  store double %base, double* %base_addr
+;;VAL:%base_addr;;TYPE:double
+  %exp_addr = alloca i32
+  store i32 %exp, i32* %exp_addr
+;;VAL:%exp_addr;;TYPE:i32
+  %t18 = load i32, i32* %exp_addr
+;;VAL:%t18;;TYPE:i32
+
+  %t19 = add i32 0, 0
+;;VAL:%t19;;TYPE:i32
+
+  %t20 = icmp slt i32 %t18, %t19
+;;VAL:%t20;;TYPE:i1
+
+  br i1 %t20, label %then_1, label %endif_1
+then_1:
+  %t21 = getelementptr inbounds [53 x i8], [53 x i8]* @.str1, i32 0, i32 0
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t21)
+  %t22 = fadd double 0.0, 0.0
+;;VAL:%t22;;TYPE:double
+  ret double %t22
+  br label %endif_1
+endif_1:
+  %result = alloca double
+;;VAL:%result;;TYPE:double
+  %t23 = fadd double 0.0, 1.0
+;;VAL:%t23;;TYPE:double
+  store double %t23, double* %result
+  %i = alloca i32
+;;VAL:%i;;TYPE:i32
+  %t24 = add i32 0, 0
+;;VAL:%t24;;TYPE:i32
+  store i32 %t24, i32* %i
+  br label %while_cond_0
+while_cond_0:
+  %t25 = load i32, i32* %i
+;;VAL:%t25;;TYPE:i32
+
+  %t26 = load i32, i32* %exp_addr
+;;VAL:%t26;;TYPE:i32
+
+  %t27 = icmp slt i32 %t25, %t26
+;;VAL:%t27;;TYPE:i1
+  br i1 %t27, label %while_body_1, label %while_end_2
+while_body_1:
+  %t28 = load double, double* %result
+;;VAL:%t28;;TYPE:double
+
+  %t29 = load double, double* %base_addr
+;;VAL:%t29;;TYPE:double
+
+  %t30 = fmul double %t28, %t29
+;;VAL:%t30;;TYPE:double
+  store double %t30, double* %result
+  %t31 = load i32, i32* %i
+  %t32 = add i32 %t31, 1
+  store i32 %t32, i32* %i
+;;VAL:%t32;;TYPE:i32
+  br label %while_cond_0
+while_end_2:
+  %t33 = load double, double* %result
+;;VAL:%t33;;TYPE:double
+  ret double %t33
+}
+
+
+; === Função: sqrt ===
+define double @math_sqrt(double %x) {
+entry:
+  %x_addr = alloca double
+  store double %x, double* %x_addr
+;;VAL:%x_addr;;TYPE:double
+  %t34 = load double, double* %x_addr
+;;VAL:%t34;;TYPE:double
+
+  %t35 = add i32 0, 0
+;;VAL:%t35;;TYPE:i32
+
+  %t37 = sitofp i32 %t35 to double
+;;VAL:%t37;;TYPE:double
+  %t36 = fcmp olt double %t34, %t37
+;;VAL:%t36;;TYPE:i1
+
+  br i1 %t36, label %then_2, label %endif_2
+then_2:
+  %t38 = getelementptr inbounds [31 x i8], [31 x i8]* @.str2, i32 0, i32 0
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t38)
+  %t39 = fadd double 0.0, 0.0
+;;VAL:%t39;;TYPE:double
+  ret double %t39
+  br label %endif_2
+endif_2:
+  %guess = alloca double
+;;VAL:%guess;;TYPE:double
+  %t40 = load double, double* %x_addr
+;;VAL:%t40;;TYPE:double
+
+  %t41 = fadd double 0.0, 2.0
+;;VAL:%t41;;TYPE:double
+
+  %t42 = fdiv double %t40, %t41
+;;VAL:%t42;;TYPE:double
+  store double %t42, double* %guess
+  %i = alloca i32
+;;VAL:%i;;TYPE:i32
+  %t43 = add i32 0, 0
+;;VAL:%t43;;TYPE:i32
+  store i32 %t43, i32* %i
+  br label %while_cond_3
+while_cond_3:
+  %t44 = load i32, i32* %i
+;;VAL:%t44;;TYPE:i32
+
+  %t45 = add i32 0, 20
+;;VAL:%t45;;TYPE:i32
+
+  %t46 = icmp slt i32 %t44, %t45
+;;VAL:%t46;;TYPE:i1
+  br i1 %t46, label %while_body_4, label %while_end_5
+while_body_4:
+  %t47 = load double, double* %guess
+;;VAL:%t47;;TYPE:double
+
+  %t48 = load double, double* %x_addr
+;;VAL:%t48;;TYPE:double
+
+  %t49 = load double, double* %guess
+;;VAL:%t49;;TYPE:double
+
+  %t50 = fdiv double %t48, %t49
+;;VAL:%t50;;TYPE:double
+
+  %t51 = fadd double %t47, %t50
+;;VAL:%t51;;TYPE:double
+
+  %t52 = fadd double 0.0, 2.0
+;;VAL:%t52;;TYPE:double
+
+  %t53 = fdiv double %t51, %t52
+;;VAL:%t53;;TYPE:double
+  store double %t53, double* %guess
+  %t54 = load i32, i32* %i
+  %t55 = add i32 %t54, 1
+  store i32 %t55, i32* %i
+;;VAL:%t55;;TYPE:i32
+  br label %while_cond_3
+while_end_5:
+  %t56 = load double, double* %guess
+;;VAL:%t56;;TYPE:double
+  ret double %t56
+}
+
+
+; === Função: sin ===
+define double @math_sin(double %x) {
+entry:
+  %x_addr = alloca double
+  store double %x, double* %x_addr
+;;VAL:%x_addr;;TYPE:double
+  %term = alloca double
+;;VAL:%term;;TYPE:double
+  %t57 = load double, double* %x_addr
+;;VAL:%t57;;TYPE:double
+  store double %t57, double* %term
+  %sum = alloca double
+;;VAL:%sum;;TYPE:double
+  %t58 = load double, double* %term
+;;VAL:%t58;;TYPE:double
+  store double %t58, double* %sum
+  %n = alloca i32
+;;VAL:%n;;TYPE:i32
+  %t59 = add i32 0, 1
+;;VAL:%t59;;TYPE:i32
+  store i32 %t59, i32* %n
+  br label %while_cond_6
+while_cond_6:
+  %t60 = load i32, i32* %n
+;;VAL:%t60;;TYPE:i32
+
+  %t61 = add i32 0, 10
+;;VAL:%t61;;TYPE:i32
+
+  %t62 = icmp slt i32 %t60, %t61
+;;VAL:%t62;;TYPE:i1
+  br i1 %t62, label %while_body_7, label %while_end_8
+while_body_7:
+  %t63 = load double, double* %term
+  %t64 = fsub double 0.0, %t63
+;;VAL:%t64;;TYPE:double
+
+  %t65 = load double, double* %x_addr
+;;VAL:%t65;;TYPE:double
+
+  %t66 = fmul double %t64, %t65
+;;VAL:%t66;;TYPE:double
+
+  %t67 = load double, double* %x_addr
+;;VAL:%t67;;TYPE:double
+
+  %t68 = fmul double %t66, %t67
+;;VAL:%t68;;TYPE:double
+
+  %t69 = add i32 0, 2
+;;VAL:%t69;;TYPE:i32
+
+  %t70 = load i32, i32* %n
+;;VAL:%t70;;TYPE:i32
+
+  %t71 = mul i32 %t69, %t70
+;;VAL:%t71;;TYPE:i32
+
+  %t72 = add i32 0, 2
+;;VAL:%t72;;TYPE:i32
+
+  %t73 = load i32, i32* %n
+;;VAL:%t73;;TYPE:i32
+
+  %t74 = mul i32 %t72, %t73
+;;VAL:%t74;;TYPE:i32
+
+  %t75 = add i32 0, 1
+;;VAL:%t75;;TYPE:i32
+
+  %t76 = add i32 %t74, %t75
+;;VAL:%t76;;TYPE:i32
+
+  %t77 = mul i32 %t71, %t76
+;;VAL:%t77;;TYPE:i32
+
+  %t79 = sitofp i32 %t77 to double
+;;VAL:%t79;;TYPE:double
+  %t78 = fdiv double %t68, %t79
+;;VAL:%t78;;TYPE:double
+  store double %t78, double* %term
+  %t80 = load double, double* %sum
+;;VAL:%t80;;TYPE:double
+
+  %t81 = load double, double* %term
+;;VAL:%t81;;TYPE:double
+
+  %t82 = fadd double %t80, %t81
+;;VAL:%t82;;TYPE:double
+  store double %t82, double* %sum
+  %t83 = load i32, i32* %n
+  %t84 = add i32 %t83, 1
+  store i32 %t84, i32* %n
+;;VAL:%t84;;TYPE:i32
+  br label %while_cond_6
+while_end_8:
+  %t85 = load double, double* %sum
+;;VAL:%t85;;TYPE:double
+  ret double %t85
+}
+
+
+; === Função: cos ===
+define double @math_cos(double %x) {
+entry:
+  %x_addr = alloca double
+  store double %x, double* %x_addr
+;;VAL:%x_addr;;TYPE:double
+  %term = alloca double
+;;VAL:%term;;TYPE:double
+  %t86 = fadd double 0.0, 1.0
+;;VAL:%t86;;TYPE:double
+  store double %t86, double* %term
+  %sum = alloca double
+;;VAL:%sum;;TYPE:double
+  %t87 = load double, double* %term
+;;VAL:%t87;;TYPE:double
+  store double %t87, double* %sum
+  %n = alloca i32
+;;VAL:%n;;TYPE:i32
+  %t88 = add i32 0, 1
+;;VAL:%t88;;TYPE:i32
+  store i32 %t88, i32* %n
+  br label %while_cond_9
+while_cond_9:
+  %t89 = load i32, i32* %n
+;;VAL:%t89;;TYPE:i32
+
+  %t90 = add i32 0, 10
+;;VAL:%t90;;TYPE:i32
+
+  %t91 = icmp slt i32 %t89, %t90
+;;VAL:%t91;;TYPE:i1
+  br i1 %t91, label %while_body_10, label %while_end_11
+while_body_10:
+  %t92 = load double, double* %term
+  %t93 = fsub double 0.0, %t92
+;;VAL:%t93;;TYPE:double
+
+  %t94 = load double, double* %x_addr
+;;VAL:%t94;;TYPE:double
+
+  %t95 = fmul double %t93, %t94
+;;VAL:%t95;;TYPE:double
+
+  %t96 = load double, double* %x_addr
+;;VAL:%t96;;TYPE:double
+
+  %t97 = fmul double %t95, %t96
+;;VAL:%t97;;TYPE:double
+
+  %t98 = add i32 0, 2
+;;VAL:%t98;;TYPE:i32
+
+  %t99 = load i32, i32* %n
+;;VAL:%t99;;TYPE:i32
+
+  %t100 = mul i32 %t98, %t99
+;;VAL:%t100;;TYPE:i32
+
+  %t101 = add i32 0, 1
+;;VAL:%t101;;TYPE:i32
+
+  %t102 = sub i32 %t100, %t101
+;;VAL:%t102;;TYPE:i32
+
+  %t103 = add i32 0, 2
+;;VAL:%t103;;TYPE:i32
+
+  %t104 = load i32, i32* %n
+;;VAL:%t104;;TYPE:i32
+
+  %t105 = mul i32 %t103, %t104
+;;VAL:%t105;;TYPE:i32
+
+  %t106 = mul i32 %t102, %t105
+;;VAL:%t106;;TYPE:i32
+
+  %t108 = sitofp i32 %t106 to double
+;;VAL:%t108;;TYPE:double
+  %t107 = fdiv double %t97, %t108
+;;VAL:%t107;;TYPE:double
+  store double %t107, double* %term
+  %t109 = load double, double* %sum
+;;VAL:%t109;;TYPE:double
+
+  %t110 = load double, double* %term
+;;VAL:%t110;;TYPE:double
+
+  %t111 = fadd double %t109, %t110
+;;VAL:%t111;;TYPE:double
+  store double %t111, double* %sum
+  %t112 = load i32, i32* %n
+  %t113 = add i32 %t112, 1
+  store i32 %t113, i32* %n
+;;VAL:%t113;;TYPE:i32
+  br label %while_cond_9
+while_end_11:
+  %t114 = load double, double* %sum
+;;VAL:%t114;;TYPE:double
+  ret double %t114
+}
+
+
+; === Função: fact ===
+define i32 @math_fact(i32 %n) {
+entry:
+  %n_addr = alloca i32
+  store i32 %n, i32* %n_addr
+;;VAL:%n_addr;;TYPE:i32
+  %t115 = load i32, i32* %n_addr
+;;VAL:%t115;;TYPE:i32
+
+  %t116 = add i32 0, 0
+;;VAL:%t116;;TYPE:i32
+
+  %t117 = icmp slt i32 %t115, %t116
+;;VAL:%t117;;TYPE:i1
+
+  br i1 %t117, label %then_3, label %endif_3
+then_3:
+  %t118 = getelementptr inbounds [36 x i8], [36 x i8]* @.str3, i32 0, i32 0
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t118)
+  %t119 = add i32 0, 0
+;;VAL:%t119;;TYPE:i32
+  ret i32 %t119
+  br label %endif_3
+endif_3:
+  %result = alloca i32
+;;VAL:%result;;TYPE:i32
+  %t120 = add i32 0, 1
+;;VAL:%t120;;TYPE:i32
+  store i32 %t120, i32* %result
+  %i = alloca i32
+;;VAL:%i;;TYPE:i32
+  %t121 = add i32 0, 1
+;;VAL:%t121;;TYPE:i32
+  store i32 %t121, i32* %i
+  br label %while_cond_12
+while_cond_12:
+  %t122 = load i32, i32* %i
+;;VAL:%t122;;TYPE:i32
+
+  %t123 = load i32, i32* %n_addr
+;;VAL:%t123;;TYPE:i32
+
+  %t124 = icmp sle i32 %t122, %t123
+;;VAL:%t124;;TYPE:i1
+  br i1 %t124, label %while_body_13, label %while_end_14
+while_body_13:
+  %t125 = load i32, i32* %result
+;;VAL:%t125;;TYPE:i32
+
+  %t126 = load i32, i32* %i
+;;VAL:%t126;;TYPE:i32
+
+  %t127 = mul i32 %t125, %t126
+;;VAL:%t127;;TYPE:i32
+  store i32 %t127, i32* %result
+  %t128 = load i32, i32* %i
+  %t129 = add i32 %t128, 1
+  store i32 %t129, i32* %i
+;;VAL:%t129;;TYPE:i32
+  br label %while_cond_12
+while_end_14:
+  %t130 = load i32, i32* %result
+;;VAL:%t130;;TYPE:i32
+  ret i32 %t130
+}
+
+
 ; === Função: factorial ===
 define i32 @math_factorial(i32 %n) {
 entry:
   %n_addr = alloca i32
   store i32 %n, i32* %n_addr
 ;;VAL:%n_addr;;TYPE:i32
-  %t0 = load i32, i32* %n_addr
-;;VAL:%t0;;TYPE:i32
+  %t131 = load i32, i32* %n_addr
+;;VAL:%t131;;TYPE:i32
 
-  %t1 = add i32 0, 0
-;;VAL:%t1;;TYPE:i32
+  %t132 = add i32 0, 0
+;;VAL:%t132;;TYPE:i32
 
-  %t2 = icmp eq i32 %t0, %t1
-;;VAL:%t2;;TYPE:i1
+  %t133 = icmp eq i32 %t131, %t132
+;;VAL:%t133;;TYPE:i1
 
-  br i1 %t2, label %then_0, label %endif_0
-then_0:
-  %t3 = add i32 0, 1
-;;VAL:%t3;;TYPE:i32
-  ret i32 %t3
-  br label %endif_0
-endif_0:
-  %t4 = load i32, i32* %n_addr
-;;VAL:%t4;;TYPE:i32
+  br i1 %t133, label %then_4, label %endif_4
+then_4:
+  %t134 = add i32 0, 1
+;;VAL:%t134;;TYPE:i32
+  ret i32 %t134
+  br label %endif_4
+endif_4:
+  %t135 = load i32, i32* %n_addr
+;;VAL:%t135;;TYPE:i32
 
-  %t5 = load i32, i32* %n_addr
-;;VAL:%t5;;TYPE:i32
+  %t136 = load i32, i32* %n_addr
+;;VAL:%t136;;TYPE:i32
 
-  %t6 = add i32 0, 1
-;;VAL:%t6;;TYPE:i32
+  %t137 = add i32 0, 1
+;;VAL:%t137;;TYPE:i32
 
-  %t7 = sub i32 %t5, %t6
-;;VAL:%t7;;TYPE:i32
-  %t8 = call i32 @math_factorial(i32 %t7)
-;;VAL:%t8;;TYPE:i32
+  %t138 = sub i32 %t136, %t137
+;;VAL:%t138;;TYPE:i32
+  %t139 = call i32 @math_factorial(i32 %t138)
+;;VAL:%t139;;TYPE:i32
 
-  %t9 = mul i32 %t4, %t8
-;;VAL:%t9;;TYPE:i32
-  ret i32 %t9
-}
-
-
-; === Função: tes ===
-define void @math_tes(i8* %list) {
-entry:
-  %list_addr = alloca i8*
-  store i8* %list, i8** %list_addr
-;;VAL:%list_addr;;TYPE:i8*
-  %t10 = load i8*, i8** %list_addr
-;;VAL:%t10;;TYPE:i8*
-  %t12 = bitcast i8* %t10 to %ArrayList*
-  %t11 = bitcast [21 x i8]* @.str0 to i8*
-;;VAL:%t11;;TYPE:i8*
-  call void @arraylist_add_string(%ArrayList* %t12, i8* getelementptr ([21 x i8], [21 x i8]* @.str0, i32 0, i32 0))
-;;VAL:%t12;;TYPE:%ArrayList*
-  ret void
+  %t140 = mul i32 %t135, %t139
+;;VAL:%t140;;TYPE:i32
+  ret i32 %t140
 }
 
 
@@ -73,203 +588,92 @@ entry:
 
     %String = type { i8*, i64 }
     %ArrayList = type opaque
-    declare i32 @inputInt(i8*)
-    declare double @inputDouble(i8*)
-    declare i1 @inputBool(i8*)
-    declare i8* @inputString(i8*)
-    declare %String* @createString(i8*)
-      %struct.ArrayListBool = type { i1*, i64, i64 }
-      declare %struct.ArrayListBool* @arraylist_create_bool(i64)
-      declare void @arraylist_add_bool(%struct.ArrayListBool*, i1)
-      declare void @arraylist_addAll_bool(%struct.ArrayListBool*, i1*, i64)
-      declare void @arraylist_print_bool(%struct.ArrayListBool*)
-      declare void @arraylist_clear_bool(%struct.ArrayListBool*)
-      declare void @arraylist_free_bool(%struct.ArrayListBool*)
-    %struct.ArrayListInt = type { i32*, i64, i64 }
-    declare %struct.ArrayListInt* @arraylist_create_int(i64)
-    declare void @arraylist_add_int(%struct.ArrayListInt*, i32)
-    declare void @arraylist_addAll_int(%struct.ArrayListInt*, i32*, i64)
-    declare void @arraylist_print_int(%struct.ArrayListInt*)
-    declare void @arraylist_clear_int(%struct.ArrayListInt*)
-    declare void @arraylist_free_int(%struct.ArrayListInt*)
-    declare i32  @arraylist_get_int(%struct.ArrayListInt*, i64, i32*)
-    declare void @arraylist_remove_int(%struct.ArrayListInt*, i64)
-    declare i32  @arraylist_size_int(%struct.ArrayListInt*)
-    declare void @arraylist_add_string(%ArrayList*, i8*)
-    declare void @arraylist_addAll_string(%ArrayList*, i8**, i64)
-    declare void @arraylist_print_string(%ArrayList*)
-    declare void @arraylist_add_String(%ArrayList*, %String*)
-    declare void @arraylist_addAll_String(%ArrayList*, %String**, i64)
-    declare i8* @getItem(%ArrayList*, i64)
 
-@.str0 = private constant [21 x i8] c"teste um hello world\00"
-@.str1 = private constant [3 x i8] c"za\00"
-@.str2 = private constant [5 x i8] c"zard\00"
-@.str3 = private constant [5 x i8] c"test\00"
-@.str4 = private constant [1 x i8] c"\00"
+@.str0 = private constant [24 x i8] c"Erro: divisao por zero!\00"
+@.str1 = private constant [53 x i8] c"Aviso: expoente negativo nao suportado, retornando 0\00"
+@.str2 = private constant [31 x i8] c"Erro: sqrt de numero negativo!\00"
+@.str3 = private constant [36 x i8] c"Erro: factorial de numero negativo!\00"
 
 define i32 @main() {
-  ; VariableDeclarationNode
-  %is = alloca %struct.ArrayListBool*
-;;VAL:%is;;TYPE:%struct.ArrayListBool*
-  %t13 = call %struct.ArrayListBool* @arraylist_create_bool(i64 4)
-  %t14 = alloca i1, i64 2
-  %t15 = add i1 0, 1
-;;VAL:%t15;;TYPE:i1
-  %t16 = getelementptr inbounds i1, i1* %t14, i64 0
-  store i1 %t15, i1* %t16
-  %t17 = add i1 0, 0
-;;VAL:%t17;;TYPE:i1
-  %t18 = getelementptr inbounds i1, i1* %t14, i64 1
-  store i1 %t17, i1* %t18
-  call void @arraylist_addAll_bool(%struct.ArrayListBool* %t13, i1* %t14, i64 2)
-;;VAL:%t13;;TYPE:%struct.ArrayListBool*
-  store %struct.ArrayListBool* %t13, %struct.ArrayListBool** %is
-  ; VariableDeclarationNode
-  %nom = alloca %String*
-;;VAL:%nom;;TYPE:%String*
-  %t19 = call i8* @malloc(i64 ptrtoint (%String* getelementptr (%String, %String* null, i32 1) to i64))
-  %t20 = bitcast i8* %t19 to %String*
-  %t21 = getelementptr inbounds %String, %String* %t20, i32 0, i32 0
-  store i8* null, i8** %t21
-  %t22 = getelementptr inbounds %String, %String* %t20, i32 0, i32 1
-  store i64 0, i64* %t22
-  store %String* %t20, %String** %nom
-  ; AssignmentNode
-  %t23 = load %String*, %String** %nom
-  call void @setString(%String* %t23, i8* getelementptr ([3 x i8], [3 x i8]* @.str1, i32 0, i32 0))
   ; PrintNode
-  %t24 = load %String*, %String** %nom
-  call void @printString(%String* %t24)
+  %t141 = fadd double 0.0, 3.0
+;;VAL:%t141;;TYPE:double
+  %t142 = fadd double 0.0, 4.0
+;;VAL:%t142;;TYPE:double
+  %t143 = call double @math_sum(double %t141, double %t142)
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double %t143)
   ; PrintNode
-  %t25 = load %struct.ArrayListBool*, %struct.ArrayListBool** %is
-  call void @arraylist_print_bool(%struct.ArrayListBool* %t25)
-  ; VariableDeclarationNode
-  %nomes = alloca i8*
-;;VAL:%nomes;;TYPE:i8*
-  %t26 = call i8* @arraylist_create(i64 4)
-  %t27 = bitcast i8* %t26 to %ArrayList*
-  %t28 = bitcast [5 x i8]* @.str2 to i8*
-;;VAL:%t28;;TYPE:i8*
-  call void @arraylist_add_string(%ArrayList* %t27, i8* %t28)
-  %t29 = bitcast [5 x i8]* @.str3 to i8*
-;;VAL:%t29;;TYPE:i8*
-  call void @arraylist_add_string(%ArrayList* %t27, i8* %t29)
-;;VAL:%t26;;TYPE:i8*
-  store i8* %t26, i8** %nomes
+  %t144 = fadd double 0.0, 10.0
+;;VAL:%t144;;TYPE:double
+  %t145 = fadd double 0.0, 6.0
+;;VAL:%t145;;TYPE:double
+  %t146 = call double @math_sub(double %t144, double %t145)
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double %t146)
   ; PrintNode
-  %t30 = load i8*, i8** %nomes
-  %t31 = bitcast i8* %t30 to %ArrayList*
-  %t32 = add i32 0, 1
-  %t33 = zext i32 %t32 to i64
-  %t34 = call i8* @getItem(%ArrayList* %t31, i64 %t33)
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t34)
-  ; VariableDeclarationNode
-  %numbers = alloca %struct.ArrayListInt*
-;;VAL:%numbers;;TYPE:%struct.ArrayListInt*
-  %t35 = call %struct.ArrayListInt* @arraylist_create_int(i64 4)
-  %t36 = alloca i32, i64 4
-  %t37 = add i32 0, 3
-;;VAL:%t37;;TYPE:i32
-  %t38 = getelementptr inbounds i32, i32* %t36, i64 0
-  store i32 %t37, i32* %t38
-  %t39 = add i32 0, 4
-;;VAL:%t39;;TYPE:i32
-  %t40 = getelementptr inbounds i32, i32* %t36, i64 1
-  store i32 %t39, i32* %t40
-  %t41 = add i32 0, 5
-;;VAL:%t41;;TYPE:i32
-  %t42 = getelementptr inbounds i32, i32* %t36, i64 2
-  store i32 %t41, i32* %t42
-  %t43 = add i32 0, 6
-;;VAL:%t43;;TYPE:i32
-  %t44 = getelementptr inbounds i32, i32* %t36, i64 3
-  store i32 %t43, i32* %t44
-  call void @arraylist_addAll_int(%struct.ArrayListInt* %t35, i32* %t36, i64 4)
-;;VAL:%t35;;TYPE:%struct.ArrayListInt*
-  store %struct.ArrayListInt* %t35, %struct.ArrayListInt** %numbers
-  ; ListRemoveNode
-  %t46 = load %struct.ArrayListInt*, %struct.ArrayListInt** %numbers
-  %t47 = add i32 0, 1
-  %t48 = zext i32 %t47 to i64
-  call void @arraylist_remove_int(%struct.ArrayListInt* %t46, i64 %t48)
+  %t147 = fadd double 0.0, 2.0
+;;VAL:%t147;;TYPE:double
+  %t148 = fadd double 0.0, 5.0
+;;VAL:%t148;;TYPE:double
+  %t149 = call double @math_mul(double %t147, double %t148)
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double %t149)
   ; PrintNode
-  %t49 = load %struct.ArrayListInt*, %struct.ArrayListInt** %numbers
-  call void @arraylist_print_int(%struct.ArrayListInt* %t49)
-  ; VariableDeclarationNode
-  %tes = alloca %struct.ArrayListInt*
-;;VAL:%tes;;TYPE:%struct.ArrayListInt*
-  %t50 = call %struct.ArrayListInt* @arraylist_create_int(i64 4)
-;;VAL:%t50;;TYPE:%struct.ArrayListInt*
-  store %struct.ArrayListInt* %t50, %struct.ArrayListInt** %tes
-  ; ListAddNode
-  %t53 = load %struct.ArrayListInt*, %struct.ArrayListInt** %tes
-;;VAL:%t53;;TYPE:%struct.ArrayListInt*
-  %t54 = add i32 0, 3
-;;VAL:%t54;;TYPE:i32
-  call void @arraylist_add_int(%struct.ArrayListInt* %t53, i32 %t54)
-;;VAL:%t53;;TYPE:%struct.ArrayListInt*
+  %t150 = fadd double 0.0, 10.0
+;;VAL:%t150;;TYPE:double
+  %t151 = fadd double 0.0, 2.0
+;;VAL:%t151;;TYPE:double
+  %t152 = call double @math_div(double %t150, double %t151)
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double %t152)
   ; PrintNode
-  %t55 = load %struct.ArrayListInt*, %struct.ArrayListInt** %tes
-  call void @arraylist_print_int(%struct.ArrayListInt* %t55)
-  ; VariableDeclarationNode
-  %x = alloca i32
-;;VAL:%x;;TYPE:i32
-  ; AssignmentNode
-  %t56 = call i32 @inputInt(i8* null)
-;;VAL:%t56;;TYPE:i32
-  store i32 %t56, i32* %x
-  ; VariableDeclarationNode
-  %z = alloca i32
-;;VAL:%z;;TYPE:i32
-  %t57 = add i32 0, 33
-;;VAL:%t57;;TYPE:i32
-  store i32 %t57, i32* %z
-  ; ListAddAllNode
-  %t60 = load %struct.ArrayListInt*, %struct.ArrayListInt** %numbers
-;;VAL:%t60;;TYPE:%struct.ArrayListInt*
-  %t61 = alloca i32, i64 5
-  %t62 = add i32 0, 3
-;;VAL:%t62;;TYPE:i32
-  %t63 = getelementptr inbounds i32, i32* %t61, i64 0
-  store i32 %t62, i32* %t63
-  %t64 = add i32 0, 4
-;;VAL:%t64;;TYPE:i32
-  %t65 = getelementptr inbounds i32, i32* %t61, i64 1
-  store i32 %t64, i32* %t65
-  %t66 = add i32 0, 5
-;;VAL:%t66;;TYPE:i32
-  %t67 = getelementptr inbounds i32, i32* %t61, i64 2
-  store i32 %t66, i32* %t67
-  %t68 = load i32, i32* %x
-;;VAL:%t68;;TYPE:i32
-  %t69 = getelementptr inbounds i32, i32* %t61, i64 3
-  store i32 %t68, i32* %t69
-  %t70 = load i32, i32* %z
-;;VAL:%t70;;TYPE:i32
-  %t71 = getelementptr inbounds i32, i32* %t61, i64 4
-  store i32 %t70, i32* %t71
-  call void @arraylist_addAll_int(%struct.ArrayListInt* %t60, i32* %t61, i64 5)
-;;VAL:%t60;;TYPE:%struct.ArrayListInt*
+  %t153 = fadd double 0.0, 5.0
+;;VAL:%t153;;TYPE:double
+  %t154 = fadd double 0.0, 0.0
+;;VAL:%t154;;TYPE:double
+  %t155 = call double @math_div(double %t153, double %t154)
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double %t155)
   ; PrintNode
-  %t72 = load %struct.ArrayListInt*, %struct.ArrayListInt** %numbers
-  call void @arraylist_print_int(%struct.ArrayListInt* %t72)
+  %t156 = fadd double 0.0, 2.0
+;;VAL:%t156;;TYPE:double
+  %t157 = add i32 0, 3
+;;VAL:%t157;;TYPE:i32
+  %t158 = call double @math_pow(double %t156, i32 %t157)
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double %t158)
   ; PrintNode
-  %t74 = load %struct.ArrayListInt*, %struct.ArrayListInt** %numbers
-;;VAL:%t74;;TYPE:%struct.ArrayListInt*
-  %t75 = call i32 @arraylist_size_int(%struct.ArrayListInt* %t74)
-  
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t75)
-  ; === Free das listas alocadas ===
-  %t76 = load %struct.ArrayListInt*, %struct.ArrayListInt** %tes
-  call void @arraylist_free_int(%struct.ArrayListInt* %t76)
-  %t77 = load i8*, i8** %nomes
-  %t78 = bitcast i8* %t77 to %ArrayList*
-  call void @freeList(%ArrayList* %t78)
-  %t79 = load %struct.ArrayListInt*, %struct.ArrayListInt** %numbers
-  call void @arraylist_free_int(%struct.ArrayListInt* %t79)
-  %t80 = load %struct.ArrayListBool*, %struct.ArrayListBool** %is
-  call void @arraylist_free_bool(%struct.ArrayListBool* %t80)
+  %t159 = fadd double 0.0, 5.0
+;;VAL:%t159;;TYPE:double
+  %t160 = sub i32 0, 1
+;;VAL:%t160;;TYPE:i32
+  %t161 = call double @math_pow(double %t159, i32 %t160)
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double %t161)
+  ; PrintNode
+  %t162 = fadd double 0.0, 16.0
+;;VAL:%t162;;TYPE:double
+  %t163 = call double @math_sqrt(double %t162)
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double %t163)
+  ; PrintNode
+  %t164 = fsub double 0.0, 4.0
+;;VAL:%t164;;TYPE:double
+  %t165 = call double @math_sqrt(double %t164)
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double %t165)
+  ; PrintNode
+  %t166 = fadd double 0.0, 0.5
+;;VAL:%t166;;TYPE:double
+  %t167 = call double @math_sin(double %t166)
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double %t167)
+  ; PrintNode
+  %t168 = fadd double 0.0, 0.5
+;;VAL:%t168;;TYPE:double
+  %t169 = call double @math_cos(double %t168)
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double %t169)
+  ; PrintNode
+  %t170 = add i32 0, 5
+;;VAL:%t170;;TYPE:i32
+  %t171 = call i32 @math_factorial(i32 %t170)
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t171)
+  ; PrintNode
+  %t172 = add i32 0, 6
+;;VAL:%t172;;TYPE:i32
+  %t173 = call i32 @math_fact(i32 %t172)
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t173)
   call i32 @getchar()
   ret i32 0
 }

@@ -1,4 +1,6 @@
 package low.variables;
+import ast.ASTNode;
+import ast.variables.VariableNode;
 import low.module.LLVisitorMain;
 import low.TempManager;
 import ast.variables.BinaryOpNode;
@@ -12,28 +14,24 @@ public class BinaryOpEmitter {
     }
 
     public String emit(BinaryOpNode node) {
-
+        StringBuilder llvm = new StringBuilder();
 
         // Avalia left e right
-        String leftLLVM = node.left.accept(visitor);
-        String rightLLVM = node.right.accept(visitor);
+        String leftLLVM = evaluateNode(node.left);
+        String rightLLVM = evaluateNode(node.right);
 
+        llvm.append(leftLLVM).append("\n").append(rightLLVM).append("\n");
 
         String leftTemp = extractTemp(leftLLVM);
         String rightTemp = extractTemp(rightLLVM);
 
-
         String leftTypeAST = extractType(leftLLVM);
         String rightTypeAST = extractType(rightLLVM);
-
 
         String leftType = toLLVMType(leftTypeAST);
         String rightType = toLLVMType(rightTypeAST);
 
-
         String resultTemp = temps.newTemp();
-        StringBuilder llvm = new StringBuilder();
-        llvm.append(leftLLVM).append("\n").append(rightLLVM).append("\n");
 
         if (leftType.equals("i32") && rightType.equals("i32")) {
             String op = switch (node.operator) {
@@ -54,6 +52,7 @@ public class BinaryOpEmitter {
                     .append(";;VAL:").append(resultTemp).append(";;TYPE:").append(op.startsWith("icmp") ? "i1" : "i32").append("\n");
         }
         else if (leftType.equals("double") || rightType.equals("double")) {
+            // Converte int para double se necessário
             if (leftType.equals("i32")) {
                 String tmp = temps.newTemp();
                 llvm.append("  ").append(tmp).append(" = sitofp i32 ").append(leftTemp).append(" to double\n;;VAL:").append(tmp).append(";;TYPE:double\n");
@@ -86,12 +85,12 @@ public class BinaryOpEmitter {
                     .append(";;VAL:").append(resultTemp).append(";;TYPE:").append(op.startsWith("fcmp") ? "i1" : "double").append("\n");
         }
         else if (leftType.equals("i8*") && rightType.equals("i8*")) {
-
             if (node.operator.equals("+")) {
                 String tmp = temps.newTemp();
                 llvm.append("  ").append(tmp).append(" = call i8* @concat_strings(i8* ")
                         .append(leftTemp).append(", i8* ").append(rightTemp).append(")\n")
                         .append(";;VAL:").append(tmp).append(";;TYPE:i8*\n");
+                resultTemp = tmp;
             } else if (node.operator.equals("==") || node.operator.equals("!=")) {
                 String tmp = temps.newTemp();
                 llvm.append("  ").append(tmp).append(" = call i1 @strcmp_eq(i8* ")
@@ -112,6 +111,13 @@ public class BinaryOpEmitter {
         }
 
         return llvm.toString();
+    }
+
+    private String evaluateNode(ASTNode node) {
+        if (node instanceof VariableNode varNode) {
+            return visitor.getVariableEmitter().emitLoad(varNode.getName());
+        }
+        return node.accept(visitor);
     }
 
     private String extractTemp(String code) {

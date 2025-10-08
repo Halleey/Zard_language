@@ -35,12 +35,15 @@ public class WhileNode extends ASTNode {
             }
             if (!((Boolean) condVal.getValue())) break;
 
+            // Cria um novo escopo para esta iteração
+            RuntimeContext loopCtx = new RuntimeContext(ctx);
+
             try {
                 for (ASTNode node : body) {
-                    node.evaluate(ctx);
+                    node.evaluate(loopCtx);
                 }
             } catch (BreakLoop ignored) {
-                break; // sai do while, mas continua o programa
+                break;
             }
         }
         return null;

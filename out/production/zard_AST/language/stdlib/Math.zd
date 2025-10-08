@@ -1,29 +1,29 @@
-function sum(double a, double b) {
+function double sum(double a, double b) {
     return a + b;
 }
 
-function sub(double a, double b) {
+function double sub(double a, double b) {
     return a - b;
 }
 
-function mul(double a, double b) {
+function double mul(double a, double b) {
     return a * b;
 }
 
-function div(double a, double b) {
+function double div(double a, double b) {
     if (b == 0) {
-        print("Erro: divisão por zero!");
-        return 0;
+        print("Erro: divisao por zero!");
+        return 0.0;
     }
     return a / b;
 }
 
-function pow(double base, int exp) {
+function double pow(double base, int exp) {
     if (exp < 0) {
-        print("Aviso: expoente negativo não suportado, retornando 0");
-        return 0;
+        print("Aviso: expoente negativo nao suportado, retornando 0");
+        return 0.0;
     }
-    double result = 1;
+    double result = 1.0;
     int i = 0;
     while (i < exp) {
         result = result * base;
@@ -32,22 +32,21 @@ function pow(double base, int exp) {
     return result;
 }
 
-
-function sqrt(double x) {
+function double sqrt(double x) {
     if (x < 0) {
-        print("Erro: sqrt de número negativo!");
-        return 0;
+        print("Erro: sqrt de numero negativo!");
+        return 0.0;
     }
-    double guess = x / 2;
+    double guess = x / 2.0;
     int i = 0;
     while (i < 20) {
-        guess = (guess + x / guess) / 2;
+        guess = (guess + x / guess) / 2.0;
         i++;
     }
     return guess;
 }
 
-function sin(double x) {
+function double sin(double x) {
     double term = x;
     double sum = term;
     int n = 1;
@@ -59,8 +58,8 @@ function sin(double x) {
     return sum;
 }
 
-function cos(double x) {
-    double term = 1;
+function double cos(double x) {
+    double term = 1.0;
     double sum = term;
     int n = 1;
     while (n < 10) {
@@ -71,11 +70,24 @@ function cos(double x) {
     return sum;
 }
 
-function tan(double x) {
-    double c = cos(x);
-    if (c == 0) {
-        print("Erro: tangente indefinida!");
+function int fact(int n) {
+    if (n < 0) {
+        print("Erro: factorial de numero negativo!");
         return 0;
     }
-    return sin(x) / c;
+    int result = 1;
+    int i = 1;
+    while (i <= n) {
+        result = result * i;
+        i++;
+    }
+    return result;
+}
+
+function int factorial(int n )
+{
+    if(n == 0) {
+    return 1;
+   }
+    return n * factorial(n -1 );
 }

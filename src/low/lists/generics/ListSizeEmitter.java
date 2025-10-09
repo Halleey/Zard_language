@@ -2,16 +2,20 @@ package low.lists.generics;
 
 import ast.lists.ListSizeNode;
 import low.TempManager;
+import low.lists.doubles.ListDoubleSizeEmitter;
 import low.lists.ints.ListIntSizeEmitter;
 import low.module.LLVMEmitVisitor;
 
 public class ListSizeEmitter {
     private final TempManager tempManager;
     private final ListIntSizeEmitter intSizeEmitter;
+    private final ListDoubleSizeEmitter doubleSizeEmitter;
+
 
     public ListSizeEmitter(TempManager tempManager) {
         this.intSizeEmitter = new ListIntSizeEmitter(tempManager);
         this.tempManager = tempManager;
+        this.doubleSizeEmitter = new ListDoubleSizeEmitter(tempManager);
     }
 
     public String emit(ListSizeNode node, LLVMEmitVisitor visitor) {
@@ -21,6 +25,12 @@ public class ListSizeEmitter {
         if (type.contains("ArrayListInt")) {
             return intSizeEmitter.emit(node, visitor);
         }
+
+
+        if (type.contains("ArrayListDouble")) {
+            return doubleSizeEmitter.emit(node, visitor);
+        }
+
 
         StringBuilder llvm = new StringBuilder();
         llvm.append(listCode);

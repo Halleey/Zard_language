@@ -240,6 +240,7 @@ public class MainEmitter {
                     declare void @arraylist_clear_double(%struct.ArrayListDouble*)
                     declare void @arraylist_remove_double(%struct.ArrayListDouble*, i64)
                     declare void @arraylist_free_double(%struct.ArrayListDouble*)
+                    declare i32  @arraylist_size_double(%struct.ArrayListDouble*)
                 """);
             } else if (tipo.contains("<string>")) {
                 sb.append("""

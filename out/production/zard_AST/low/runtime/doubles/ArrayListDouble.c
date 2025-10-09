@@ -68,3 +68,6 @@ void arraylist_free_double(ArrayListDouble* list) {
     free(list->data);
     free(list);
 }
+int arraylist_size_double(ArrayListDouble* list) {
+    return list ? list->length : 0;
+}

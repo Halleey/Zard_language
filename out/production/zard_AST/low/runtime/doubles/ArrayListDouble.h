@@ -18,5 +18,5 @@ void arraylist_clear_double(ArrayListDouble* list);
 void arraylist_free_double(ArrayListDouble* list);
 int arraylist_update_double(ArrayListDouble* list, size_t index, double value);
 int arraylist_get_double(ArrayListDouble* list, size_t index, double* out);
-
+int arraylist_size_double(ArrayListDouble* list);
 #endif

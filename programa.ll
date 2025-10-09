@@ -23,6 +23,7 @@
     declare void @arraylist_clear_double(%struct.ArrayListDouble*)
     declare void @arraylist_remove_double(%struct.ArrayListDouble*, i64)
     declare void @arraylist_free_double(%struct.ArrayListDouble*)
+    declare i32  @arraylist_size_double(%struct.ArrayListDouble*)
 
 @.str0 = private constant [4 x i8] c"i :\00"
 @.str1 = private constant [4 x i8] c"j :\00"
@@ -179,14 +180,20 @@ while_end_2:
   %t54 = zext i32 %t53 to i64
   call void @arraylist_remove_double(%struct.ArrayListDouble* %t52, i64 %t54)
   ; PrintNode
-  %t55 = load %struct.ArrayListDouble*, %struct.ArrayListDouble** %list
-  call void @arraylist_print_double(%struct.ArrayListDouble* %t55)
+  %t56 = load %struct.ArrayListDouble*, %struct.ArrayListDouble** %list
+;;VAL:%t56;;TYPE:%struct.ArrayListDouble*
+  %t57 = call i32 @arraylist_size_double(%struct.ArrayListDouble* %t56)
+  
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %t57)
   ; PrintNode
-  %t56 = getelementptr inbounds [20 x i8], [20 x i8]* @.str5, i32 0, i32 0
-  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t56)
+  %t58 = load %struct.ArrayListDouble*, %struct.ArrayListDouble** %list
+  call void @arraylist_print_double(%struct.ArrayListDouble* %t58)
+  ; PrintNode
+  %t59 = getelementptr inbounds [20 x i8], [20 x i8]* @.str5, i32 0, i32 0
+  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* %t59)
   ; === Free das listas alocadas ===
-  %t57 = load %struct.ArrayListDouble*, %struct.ArrayListDouble** %list
-  call void @arraylist_free_double(%struct.ArrayListDouble* %t57)
+  %t60 = load %struct.ArrayListDouble*, %struct.ArrayListDouble** %list
+  call void @arraylist_free_double(%struct.ArrayListDouble* %t60)
   call i32 @getchar()
   ret i32 0
 }

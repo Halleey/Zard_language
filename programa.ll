@@ -20,6 +20,7 @@
       declare void @arraylist_addAll_bool(%struct.ArrayListBool*, i1*, i64)
       declare void @arraylist_print_bool(%struct.ArrayListBool*)
       declare void @arraylist_clear_bool(%struct.ArrayListBool*)
+      declare void @arraylist_remove_bool(%struct.ArrayListBool*, i64)
       declare void @arraylist_free_bool(%struct.ArrayListBool*)
 
 
@@ -48,12 +49,17 @@ define i32 @main() {
   store i1 %t9, i1* %t10
   call void @arraylist_addAll_bool(%struct.ArrayListBool* %t3, i1* %t4, i64 3)
 ;;VAL:%t3;;TYPE:%struct.ArrayListBool*
-  ; PrintNode
-  %t11 = load %struct.ArrayListBool*, %struct.ArrayListBool** %list
-  call void @arraylist_print_bool(%struct.ArrayListBool* %t11)
-  ; === Free das listas alocadas ===
+  ; ListRemoveNode
   %t12 = load %struct.ArrayListBool*, %struct.ArrayListBool** %list
-  call void @arraylist_free_bool(%struct.ArrayListBool* %t12)
+  %t13 = add i32 0, 0
+  %t14 = zext i32 %t13 to i64
+  call void @arraylist_remove_bool(%struct.ArrayListBool* %t12, i64 %t14)
+  ; PrintNode
+  %t15 = load %struct.ArrayListBool*, %struct.ArrayListBool** %list
+  call void @arraylist_print_bool(%struct.ArrayListBool* %t15)
+  ; === Free das listas alocadas ===
+  %t16 = load %struct.ArrayListBool*, %struct.ArrayListBool** %list
+  call void @arraylist_free_bool(%struct.ArrayListBool* %t16)
   call i32 @getchar()
   ret i32 0
 }

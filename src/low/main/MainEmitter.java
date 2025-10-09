@@ -260,6 +260,7 @@ public class MainEmitter {
                     declare void @arraylist_addAll_bool(%struct.ArrayListBool*, i1*, i64)
                     declare void @arraylist_print_bool(%struct.ArrayListBool*)
                     declare void @arraylist_clear_bool(%struct.ArrayListBool*)
+                    declare void @arraylist_remove_bool(%struct.ArrayListBool*, i64)
                     declare void @arraylist_free_bool(%struct.ArrayListBool*)
               """);
             }

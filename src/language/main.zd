@@ -2,5 +2,6 @@
 main {
     List<boolean> list;
     list.addAll(true, false, true);
+    list.remove(0);
     print(list);
 }

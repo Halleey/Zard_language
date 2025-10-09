@@ -1,40 +1,6 @@
 
 main {
-    int i = 0;
-
-    while (i < 5) {
-        int j = 0;
-
-        while (j < 5) {
-            print("i :");
-            print(i);
-            print("j :");
-            print(j);
-
-            if (j == 2) {
-                print("Break do loop interno (j)");
-                break;
-            }
-
-            j = j + 1;
-        }
-
-        print("Fim do loop interno para i = " );
-        print(i);
-
-        if (i == 3) {
-            print("Break do loop externo (i)");
-            break;
-        }
-
-        i = i + 1;
-    }
-    List list = (3.3);
-    list.add(4.0);
-    list.addAll(4.3,4.5);
-    print(list.get(1));
-    list.remove(1);
-    print(list.size());
+    List<boolean> list = (true, false);
+    list.add(true);
     print(list);
-    print("Fim do loop externo");
 }

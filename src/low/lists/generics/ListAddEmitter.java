@@ -3,6 +3,7 @@ package low.lists.generics;
 import ast.lists.ListAddNode;
 import ast.variables.LiteralNode;
 import low.TempManager;
+import low.lists.bool.ListBoolAddEmitter;
 import low.lists.doubles.ListAddDoubleEmitter;
 import low.lists.ints.ListIntAddEmitter;
 import low.main.GlobalStringManager;
@@ -14,11 +15,13 @@ public class ListAddEmitter {
     private final GlobalStringManager globalStringManager;
     private final ListIntAddEmitter intAddEmitter;
     private final ListAddDoubleEmitter doubleEmitter;
+    private final ListBoolAddEmitter boolAddEmitter;
     public ListAddEmitter(TempManager temps, GlobalStringManager globalStringManager) {
         this.temps = temps;
         this.globalStringManager = globalStringManager;
         this.intAddEmitter = new ListIntAddEmitter(temps);
         this.doubleEmitter = new ListAddDoubleEmitter(temps);
+        this.boolAddEmitter = new ListBoolAddEmitter(temps);
     }
 
     public String emit(ListAddNode node, LLVMEmitVisitor visitor) {
@@ -37,6 +40,9 @@ public class ListAddEmitter {
             return doubleEmitter.emit(node, visitor);
         }
 
+        if (valType.equals("i1")) {
+            return boolAddEmitter.emit(node, visitor);
+        }
         String listTmp = extractTemp(listCode);
         // bitcast para %ArrayList* antes da chamada
         String listCastTmp = temps.newTemp();

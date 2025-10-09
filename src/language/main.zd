@@ -1,6 +1,6 @@
 
 main {
-    List<boolean> list = (true, false);
-    list.add(true);
+    List<boolean> list;
+    list.addAll(true, false, true);
     print(list);
 }

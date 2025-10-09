@@ -4,6 +4,7 @@ import ast.ASTNode;
 import ast.lists.ListAddAllNode;
 import ast.variables.LiteralNode;
 import low.TempManager;
+import low.lists.bool.ListBoolAddAllEmitter;
 import low.lists.doubles.ListAddAllDoubleEmitter;
 import low.lists.ints.ListIntAddAllEmitter;
 import low.main.GlobalStringManager;
@@ -15,11 +16,13 @@ public class ListAddAllEmitter {
     private final GlobalStringManager globalStringManager;
     private final ListIntAddAllEmitter intAddAllEmitter;
     private final ListAddAllDoubleEmitter doubleEmitter;
+    private final ListBoolAddAllEmitter boolAddAllEmitter;
     public ListAddAllEmitter(TempManager temps, GlobalStringManager globalStringManager) {
         this.temps = temps;
         this.globalStringManager = globalStringManager;
         this.intAddAllEmitter = new ListIntAddAllEmitter(temps);
         this.doubleEmitter = new ListAddAllDoubleEmitter(temps);
+        this.boolAddAllEmitter = new ListBoolAddAllEmitter(temps);
     }
 
     public String emit(ListAddAllNode node, LLVMEmitVisitor visitor) {
@@ -46,6 +49,9 @@ public class ListAddAllEmitter {
             return doubleEmitter.emit(node, visitor);
         }
 
+        if (firstType.equals("i1")) {
+            return boolAddAllEmitter.emit(node, visitor);
+        }
         String listCastTmp = temps.newTemp();
         llvm.append("  ").append(listCastTmp)
                 .append(" = bitcast i8* ").append(listTmp)

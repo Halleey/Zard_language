@@ -28,31 +28,32 @@ define i32 @main() {
   %list = alloca %struct.ArrayListBool*
 ;;VAL:%list;;TYPE:%struct.ArrayListBool*
   %t0 = call %struct.ArrayListBool* @arraylist_create_bool(i64 4)
-  %t1 = alloca i1, i64 2
-  %t2 = add i1 0, 1
-;;VAL:%t2;;TYPE:i1
-  %t3 = getelementptr inbounds i1, i1* %t1, i64 0
-  store i1 %t2, i1* %t3
-  %t4 = add i1 0, 0
-;;VAL:%t4;;TYPE:i1
-  %t5 = getelementptr inbounds i1, i1* %t1, i64 1
-  store i1 %t4, i1* %t5
-  call void @arraylist_addAll_bool(%struct.ArrayListBool* %t0, i1* %t1, i64 2)
 ;;VAL:%t0;;TYPE:%struct.ArrayListBool*
   store %struct.ArrayListBool* %t0, %struct.ArrayListBool** %list
-  ; ListAddNode
-  %t8 = load %struct.ArrayListBool*, %struct.ArrayListBool** %list
-;;VAL:%t8;;TYPE:%struct.ArrayListBool*
+  ; ListAddAllNode
+  %t3 = load %struct.ArrayListBool*, %struct.ArrayListBool** %list
+;;VAL:%t3;;TYPE:%struct.ArrayListBool*
+  %t4 = alloca i1, i64 3
+  %t5 = add i1 0, 1
+;;VAL:%t5;;TYPE:i1
+  %t6 = getelementptr inbounds i1, i1* %t4, i64 0
+  store i1 %t5, i1* %t6
+  %t7 = add i1 0, 0
+;;VAL:%t7;;TYPE:i1
+  %t8 = getelementptr inbounds i1, i1* %t4, i64 1
+  store i1 %t7, i1* %t8
   %t9 = add i1 0, 1
 ;;VAL:%t9;;TYPE:i1
-  call void @arraylist_add_bool(%struct.ArrayListBool* %t8, i1%t9)
-;;VAL:%t8;;TYPE:struct.ArrayListBool*
+  %t10 = getelementptr inbounds i1, i1* %t4, i64 2
+  store i1 %t9, i1* %t10
+  call void @arraylist_addAll_bool(%struct.ArrayListBool* %t3, i1* %t4, i64 3)
+;;VAL:%t3;;TYPE:%struct.ArrayListBool*
   ; PrintNode
-  %t10 = load %struct.ArrayListBool*, %struct.ArrayListBool** %list
-  call void @arraylist_print_bool(%struct.ArrayListBool* %t10)
-  ; === Free das listas alocadas ===
   %t11 = load %struct.ArrayListBool*, %struct.ArrayListBool** %list
-  call void @arraylist_free_bool(%struct.ArrayListBool* %t11)
+  call void @arraylist_print_bool(%struct.ArrayListBool* %t11)
+  ; === Free das listas alocadas ===
+  %t12 = load %struct.ArrayListBool*, %struct.ArrayListBool** %list
+  call void @arraylist_free_bool(%struct.ArrayListBool* %t12)
   call i32 @getchar()
   ret i32 0
 }

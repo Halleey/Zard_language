@@ -5,6 +5,8 @@ import ast.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
+import java.util.Map;
+
 public class MapNode extends ASTNode {
     private final DynamicMap dynamicMap;
 
@@ -12,7 +14,7 @@ public class MapNode extends ASTNode {
         this.dynamicMap = dynamicMap;
     }
 
-    public DynamicMap getMap() {
+    public DynamicMap getDynamicMap() {
         return dynamicMap;
     }
 
@@ -23,21 +25,22 @@ public class MapNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        return new TypedValue("map", dynamicMap);
+        return new TypedValue("map<" + dynamicMap.getKeyType() + "," + dynamicMap.getValueType() + ">", dynamicMap);
     }
 
     @Override
     public void print(String prefix) {
-        System.out.println(prefix + "Map:");
-        if (dynamicMap.size() == 0) {
+        System.out.println(prefix + "Map<" + dynamicMap.getKeyType() + "," + dynamicMap.getValueType() + ">:");
+
+        Map<TypedValue, TypedValue> evaluated = dynamicMap.evaluate(new RuntimeContext());
+        if (evaluated.isEmpty()) {
             System.out.println(prefix + "  (vazio)");
             return;
         }
 
-        for (TypedValue keyVal : dynamicMap.keys()) {
-            TypedValue valueVal = dynamicMap.get(keyVal);
-            System.out.println(prefix + "  [" + keyVal.getValue() + " (" + keyVal.getType() + ")]: "
-                    + valueVal.getValue() + " (" + valueVal.getType() + ")");
+        for (Map.Entry<TypedValue, TypedValue> e : evaluated.entrySet()) {
+            System.out.println(prefix + "  [" + e.getKey().getValue() + " (" + e.getKey().getType() + ")]: "
+                    + e.getValue().getValue() + " (" + e.getValue().getType() + ")");
         }
     }
 }

@@ -32,7 +32,6 @@ public class ListNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        // aqui já devolvemos o tipo completo
         return new TypedValue(type, list);
     }
 

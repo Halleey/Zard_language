@@ -8,6 +8,7 @@ import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;
+import java.util.Map;
 
 
 public class PrintNode extends ASTNode {
@@ -29,23 +30,37 @@ public class PrintNode extends ASTNode {
         switch (val.getType()) {
             case "List" -> {
                 DynamicList list = (DynamicList) val.getValue();
-                // Avalia cada elemento do DynamicList
                 List<Object> values = list.getElements().stream()
                         .map(node -> node.evaluate(ctx).getValue())
                         .toList();
                 System.out.println(values);
             }
+
             case "Map" -> {
                 DynamicMap map = (DynamicMap) val.getValue();
-                if (map.size() == 0) {
+                Map<TypedValue, TypedValue> evaluated = map.evaluate(ctx);
+
+                if (evaluated.isEmpty()) {
                     System.out.println("{}");
                 } else {
                     System.out.print("{");
                     int i = 0;
-                    for (TypedValue keyVal : map.keys()) {
-                        TypedValue valueVal = map.get(keyVal);
-                        System.out.print(keyVal.getValue() + ": " + valueVal.getValue());
-                        if (i < map.size() - 1) System.out.print(", ");
+                    int size = evaluated.size();
+                    for (Map.Entry<TypedValue, TypedValue> e : evaluated.entrySet()) {
+                        TypedValue key = e.getKey();
+                        TypedValue value = e.getValue();
+
+                        // Formatação segura para strings
+                        String keyStr = key.getType().equals("string")
+                                ? "\"" + key.getValue() + "\""
+                                : String.valueOf(key.getValue());
+
+                        String valStr = value.getType().equals("string")
+                                ? "\"" + value.getValue() + "\""
+                                : String.valueOf(value.getValue());
+
+                        System.out.print(keyStr + ": " + valStr);
+                        if (i < size - 1) System.out.print(", ");
                         i++;
                     }
                     System.out.println("}");

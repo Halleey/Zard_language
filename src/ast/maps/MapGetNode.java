@@ -5,6 +5,7 @@ import ast.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
+import java.util.Map;
 
 public class MapGetNode extends ASTNode {
     private final ASTNode mapVar;
@@ -24,7 +25,16 @@ public class MapGetNode extends ASTNode {
     public TypedValue evaluate(RuntimeContext ctx) {
         DynamicMap map = (DynamicMap) mapVar.evaluate(ctx).getValue();
         TypedValue keyVal = keyNode.evaluate(ctx);
-        return map.get(keyVal);
+
+        // Percorre as entradas avaliando as chaves
+        for (Map.Entry<ASTNode, ASTNode> entry : map.getEntries().entrySet()) {
+            TypedValue k = entry.getKey().evaluate(ctx);
+            if (k.getValue().equals(keyVal.getValue())) {
+                return entry.getValue().evaluate(ctx);
+            }
+        }
+
+        throw new RuntimeException("Chave '" + keyVal.getValue() + "' não encontrada no mapa.");
     }
 
     @Override

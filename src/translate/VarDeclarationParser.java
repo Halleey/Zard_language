@@ -34,18 +34,8 @@ public class VarDeclarationParser {
             return listParser.parse(null); // nome será lido dentro
         }
         else if (type.equals("Map")) {
-            String name = parser.current().getValue();
-            parser.advance(); // consome nome
-            if (parser.current().getValue().equals("=")) {
-                parser.advance();
-                MapParser mapParser = new MapParser(parser);
-                initializer = mapParser.parseMapInitializer();
-            } else {
-                initializer = new MapNode(new DynamicMap());
-            }
-            parser.eat(Token.TokenType.DELIMITER, ";");
-            parser.declareVariableType(name, type);
-            return new VariableDeclarationNode(name, type, initializer);
+            MapParser mapParser = new MapParser(parser);
+            return mapParser.parse(null);
         } else {
             String name = parser.current().getValue();
             parser.advance(); // consome nome

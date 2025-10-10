@@ -1,7 +1,8 @@
 
 main {
-    List<boolean> list;
-    list.addAll(true, false, true);
-    list.remove(0);
+
+    string x = "teste";
+    List list = ("zard");
+    list.add(x);
     print(list);
 }

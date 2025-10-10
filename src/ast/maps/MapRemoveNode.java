@@ -5,6 +5,7 @@ import ast.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
+import java.util.Map;
 
 public class MapRemoveNode extends ASTNode {
     private final ASTNode mapVar;
@@ -24,7 +25,25 @@ public class MapRemoveNode extends ASTNode {
     public TypedValue evaluate(RuntimeContext ctx) {
         DynamicMap map = (DynamicMap) mapVar.evaluate(ctx).getValue();
         TypedValue keyVal = keyNode.evaluate(ctx);
-        return map.remove(keyVal); // Avalia somente quando remove
+
+        ASTNode toRemove = null;
+        TypedValue removedValue = null;
+
+        for (Map.Entry<ASTNode, ASTNode> entry : map.getEntries().entrySet()) {
+            TypedValue k = entry.getKey().evaluate(ctx);
+            if (k.getValue().equals(keyVal.getValue())) {
+                removedValue = entry.getValue().evaluate(ctx);
+                toRemove = entry.getKey();
+                break;
+            }
+        }
+
+        if (toRemove != null) {
+            map.getEntries().remove(toRemove);
+            return removedValue;
+        }
+
+        throw new RuntimeException("Chave '" + keyVal.getValue() + "' não encontrada no mapa para remoção.");
     }
 
     @Override

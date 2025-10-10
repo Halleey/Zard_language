@@ -187,5 +187,4 @@ public class Lexer {
         tokens.add(new Token(Token.TokenType.EOF, ""));
         return tokens;
     }
-
 }

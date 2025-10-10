@@ -9,6 +9,7 @@ public class RuntimeContext {
     private final Map<String, TypedValue> variables = new HashMap<>();
     private final RuntimeContext parent;
 
+
     public RuntimeContext() {
         this.parent = null;
     }

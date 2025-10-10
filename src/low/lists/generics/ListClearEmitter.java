@@ -2,6 +2,7 @@ package low.lists.generics;
 
 import ast.lists.ListClearNode;
 import low.TempManager;
+import low.lists.bool.ListBoolClearEmitter;
 import low.lists.doubles.ListDoubleClearEmitter;
 import low.lists.ints.ListIntClearEmitter;
 import low.module.LLVMEmitVisitor;
@@ -11,15 +12,16 @@ public class ListClearEmitter {
     private final TempManager temps;
     private final ListIntClearEmitter listIntClearEmitter;
     private final ListDoubleClearEmitter doubleClearEmitter;
+    private final ListBoolClearEmitter boolClearEmitter;
     public ListClearEmitter(TempManager temps) {
         this.temps = temps;
         this.listIntClearEmitter = new ListIntClearEmitter(temps);
         this.doubleClearEmitter = new ListDoubleClearEmitter(temps);
+        this.boolClearEmitter = new ListBoolClearEmitter(temps);
     }
 
     public String emit(ListClearNode node, LLVMEmitVisitor visitor) {
         StringBuilder llvm = new StringBuilder();
-
         String listCode = node.getListNode().accept(visitor);
         llvm.append(listCode);
 
@@ -34,6 +36,10 @@ public class ListClearEmitter {
         }
         if (valType.contains("ArrayListDouble")) {
             return doubleClearEmitter.emit(node, visitor);
+        }
+
+        if (valType.contains("ArrayListBool")) {
+            return boolClearEmitter.emit(node, visitor);
         }
 
         // Caso genérico - outras listas (ex: string, String, etc.)

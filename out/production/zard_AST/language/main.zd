@@ -1,8 +1,8 @@
 
 main {
 
-    string x = "teste";
-    List list = ("zard");
-    list.add(x);
+    List list = (true, false);
+    print(list);
+    list.clear();
     print(list);
 }

@@ -7,7 +7,6 @@ import low.module.LLVisitorMain;
 import ast.prints.PrintNode;
 import ast.variables.LiteralNode;
 import ast.variables.VariableNode;
-
 public class PrintEmitter {
     private final GlobalStringManager globalStrings;
     private final TempManager temps;
@@ -56,7 +55,6 @@ public class PrintEmitter {
                 "  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* " + tmp + ")\n";
     }
 
-
     private String emitStringVariable(String varName) {
         String tmpLoad = temps.newTemp();
         StringBuilder sb = new StringBuilder();
@@ -75,11 +73,7 @@ public class PrintEmitter {
         switch (type) {
             case "i32" -> sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 ").append(tmp).append(")\n");
             case "double" -> sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double ").append(tmp).append(")\n");
-            case "i1" -> {
-                String zextTmp = temps.newTemp();
-                sb.append("  ").append(zextTmp).append(" = zext i1 ").append(tmp).append(" to i32\n");
-                sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 ").append(zextTmp).append(")\n");
-            }
+            case "i1" -> emitBoolPrint(sb, tmp);
             default -> throw new RuntimeException("Unsupported primitive type: " + type);
         }
         return sb.toString();
@@ -90,25 +84,21 @@ public class PrintEmitter {
         StringBuilder sb = new StringBuilder();
 
         if ("%struct.ArrayListInt*".equals(llvmType)) {
-            // Lista de int tipada
             sb.append("  ").append(tmp).append(" = load %struct.ArrayListInt*, %struct.ArrayListInt** %").append(varName).append("\n");
             sb.append("  call void @arraylist_print_int(%struct.ArrayListInt* ").append(tmp).append(")\n");
             return sb.toString();
         }
         if ("%struct.ArrayListDouble*".equals(llvmType)) {
-            // Lista de int tipada
             sb.append("  ").append(tmp).append(" = load %struct.ArrayListDouble*, %struct.ArrayListDouble** %").append(varName).append("\n");
             sb.append("  call void @arraylist_print_double(%struct.ArrayListDouble* ").append(tmp).append(")\n");
             return sb.toString();
         }
         if ("%struct.ArrayListBool*".equals(llvmType)) {
-            // Lista de int tipada
             sb.append("  ").append(tmp).append(" = load %struct.ArrayListBool*, %struct.ArrayListBool** %").append(varName).append("\n");
             sb.append("  call void @arraylist_print_bool(%struct.ArrayListBool* ").append(tmp).append(")\n");
             return sb.toString();
         }
 
-        // Genéricas: i8* -> %ArrayList*
         sb.append("  ").append(tmp).append(" = load i8*, i8** %").append(varName).append("\n");
         String tmpCast = temps.newTemp();
         sb.append("  ").append(tmpCast).append(" = bitcast i8* ").append(tmp).append(" to %ArrayList*\n");
@@ -141,11 +131,7 @@ public class PrintEmitter {
         switch (type) {
             case "i32" -> llvm.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 ").append(temp).append(")\n");
             case "double" -> llvm.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double ").append(temp).append(")\n");
-            case "i1" -> {
-                String zextTmp = temps.newTemp();
-                llvm.append("  ").append(zextTmp).append(" = zext i1 ").append(temp).append(" to i32\n");
-                llvm.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 ").append(zextTmp).append(")\n");
-            }
+            case "i1" -> emitBoolPrint(llvm, temp);
             case "%String*" -> llvm.append("  call void @printString(%String* ").append(temp).append(")\n");
             case "i8*" -> llvm.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), i8* ").append(temp).append(")\n");
             default -> throw new RuntimeException("Unsupported type in print: " + type);
@@ -153,6 +139,28 @@ public class PrintEmitter {
 
         return llvm.toString();
     }
+
+    // Helper para impressão de booleanos
+    private void emitBoolPrint(StringBuilder sb, String tmp) {
+        String trueLabel = temps.newLabel("bool_true");
+        String falseLabel = temps.newLabel("bool_false");
+        String endLabel = temps.newLabel("bool_end");
+
+        sb.append("  br i1 ").append(tmp)
+                .append(", label %").append(trueLabel)
+                .append(", label %").append(falseLabel).append("\n");
+
+        sb.append(trueLabel).append(":\n");
+        sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([6 x i8], [6 x i8]* @.strTrue, i32 0, i32 0))\n");
+        sb.append("  br label %").append(endLabel).append("\n");
+
+        sb.append(falseLabel).append(":\n");
+        sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([7 x i8], [7 x i8]* @.strFalse, i32 0, i32 0))\n");
+        sb.append("  br label %").append(endLabel).append("\n");
+
+        sb.append(endLabel).append(":\n");
+    }
+
     private String extractTemp(String valTypePart) {
         int v = valTypePart.indexOf(";;VAL:");
         int t = valTypePart.indexOf(";;TYPE:", v);

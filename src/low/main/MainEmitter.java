@@ -195,7 +195,7 @@ public class MainEmitter {
             @.strInt = private constant [4 x i8] c"%d\\0A\\00"
             @.strDouble = private constant [4 x i8] c"%f\\0A\\00"
             @.strStr = private constant [4 x i8] c"%s\\0A\\00"
-
+            declare %String* @createString(i8*)
             declare i8* @arraylist_create(i64)
             declare void @clearList(%ArrayList*)
             declare void @freeList(%ArrayList*)
@@ -210,7 +210,6 @@ public class MainEmitter {
                 declare double @inputDouble(i8*)
                 declare i1 @inputBool(i8*)
                 declare i8* @inputString(i8*)
-                declare %String* @createString(i8*)
             """);
         }
 
@@ -249,6 +248,7 @@ public class MainEmitter {
                     declare void @arraylist_print_string(%ArrayList*)
                     declare void @arraylist_add_String(%ArrayList*, %String*)
                     declare void @arraylist_addAll_String(%ArrayList*, %String**, i64)
+                    declare void @removeItem(%ArrayList*, i64)
                     declare i8* @getItem(%ArrayList*, i64)
                 """);
             }

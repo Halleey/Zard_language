@@ -9,13 +9,11 @@ import low.lists.doubles.ListDoubleEmitter;
 import low.lists.ints.IntListEmitter;
 import low.module.LLVisitorMain;
 import java.util.List;
-
 public class ListEmitter {
     private final TempManager temps;
     private final IntListEmitter intEmitter;
     private final ListDoubleEmitter doubleEmitter;
     private final ListBoolEmitter boolEmitter;
-
 
     public ListEmitter(TempManager temps) {
         this.temps = temps;
@@ -34,19 +32,19 @@ public class ListEmitter {
         if ("int".equals(elementType)) {
             return intEmitter.emit(node, visitor);
         }
-        if("double".equals(elementType)){
+        if ("double".equals(elementType)) {
             return doubleEmitter.emit(node, visitor);
         }
         if ("boolean".equals(elementType)) {
-
             return boolEmitter.emit(node, visitor);
         }
 
-        // Caso genérico (todos os outros tipos)
+        // Caso genérico (strings e outros)
         StringBuilder llvm = new StringBuilder();
-        List<ASTNode> elements = node.getList().getElements();
+        var elements = node.getList().getElements();
         int n = elements.size();
 
+        // Cria lista genérica
         String listPtr = temps.newTemp();
         llvm.append("  ").append(listPtr)
                 .append(" = call i8* @arraylist_create(i64 ")
@@ -54,7 +52,8 @@ public class ListEmitter {
 
         String listCast = temps.newTemp();
         llvm.append("  ").append(listCast)
-                .append(" = bitcast i8* ").append(listPtr).append(" to %ArrayList*\n");
+                .append(" = bitcast i8* ").append(listPtr)
+                .append(" to %ArrayList*\n");
 
         for (ASTNode element : elements) {
             String elemLLVM = element.accept(visitor);
@@ -63,34 +62,39 @@ public class ListEmitter {
             String temp = extractTemp(elemLLVM);
             String type = extractType(elemLLVM);
 
-            switch (type) {
-                case "%String*" -> {
-                    String tmp = element instanceof VariableNode varNode
-                            ? "%"+varNode.getName()
-                            : temps.newTemp();
-                    if (!(element instanceof VariableNode)) {
-                        llvm.append("  ").append(tmp)
-                                .append(" = call %String* @createString(i8* ").append(temp).append(")\n");
-                    }
-                    llvm.append("  call void @arraylist_add_String(%ArrayList* ")
-                            .append(listCast).append(", %String* ").append(tmp).append(")\n");
-                }
-                case "i8*" -> llvm.append("  call void @arraylist_add_string(%ArrayList* ")
-                        .append(listCast).append(", i8* ").append(temp).append(")\n");
-                default -> {
-                    if (type.matches("\\[\\d+ x i8\\]\\*")) {
-                        String castTmp = temps.newTemp();
-                        llvm.append("  ").append(castTmp)
-                                .append(" = bitcast ").append(type).append(" ").append(temp)
-                                .append(" to i8*\n");
-                        llvm.append("  call void @arraylist_add_string(%ArrayList* ")
-                                .append(listCast).append(", i8* ").append(castTmp).append(")\n");
-                    } else {
-                        throw new RuntimeException("Unsupported list element type: " + type);
-                    }
-                }
+            // 🔥 Unificação de tipo para %String*
+            String strTmp;
+
+            if (type.equals("%String*")) {
+                // já é um objeto String
+                strTmp = temp;
+            } else if (type.equals("i8*")) {
+                // ponteiro de char -> cria %String*
+                strTmp = temps.newTemp();
+                llvm.append("  ").append(strTmp)
+                        .append(" = call %String* @createString(i8* ")
+                        .append(temp).append(")\n");
+            } else if (type.matches("\\[\\d+ x i8\\]\\*")) {
+                // literal [N x i8]* -> converte para i8* -> cria %String*
+                String castTmp = temps.newTemp();
+                llvm.append("  ").append(castTmp)
+                        .append(" = bitcast ").append(type)
+                        .append(" ").append(temp)
+                        .append(" to i8*\n");
+
+                strTmp = temps.newTemp();
+                llvm.append("  ").append(strTmp)
+                        .append(" = call %String* @createString(i8* ")
+                        .append(castTmp).append(")\n");
+            } else {
+                throw new RuntimeException("Unsupported list element type for string list: " + type);
             }
+
+            // adiciona o elemento convertido à lista
+            llvm.append("  call void @arraylist_add_String(%ArrayList* ")
+                    .append(listCast).append(", %String* ").append(strTmp).append(")\n");
         }
+
         llvm.append(";;VAL:").append(listPtr).append(";;TYPE:i8*\n");
         return llvm.toString();
     }

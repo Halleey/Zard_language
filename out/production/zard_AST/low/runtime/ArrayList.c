@@ -52,18 +52,6 @@ void removeItem(ArrayList* list, size_t index) {
     list->data[list->length] = NULL;
 }
 
-int update_int(ArrayList* list, size_t index, int value) {
-    if (index >= list->length) return 0;
-    *(int*)list->data[index] = value;
-    return 1;
-}
-
-int update_double(ArrayList* list, size_t index, double value) {
-    if (index >= list->length) return 0;
-    *(double*)list->data[index] = value;
-    return 1;
-}
-
 int update_string(ArrayList* list, size_t index, char* str) {
     if (index >= list->length) return 0;
     list->data[index] = str;

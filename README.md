@@ -161,4 +161,3 @@ The language will continue to evolve to become more robust and versatile. Upcomi
 ## 🔗 Contributing
 
 If you'd like to suggest improvements or contribute to the project, feel free to open an issue or submit a pull request!
--se à vontade para enviar pull requests ou abrir issues.

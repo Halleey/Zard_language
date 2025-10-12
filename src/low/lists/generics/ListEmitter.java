@@ -62,7 +62,6 @@ public class ListEmitter {
             String temp = extractTemp(elemLLVM);
             String type = extractType(elemLLVM);
 
-            // 🔥 Unificação de tipo para %String*
             String strTmp;
 
             if (type.equals("%String*")) {

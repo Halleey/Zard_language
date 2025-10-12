@@ -1,139 +1,164 @@
-# Zard
+# ⚡ Zard Programming Language
 
-**Zard** é uma linguagem de programação tipada, inspirada em Java, criada para fins de estudo e aprimoramento da lógica de programação, compiladores e ASTs. Seu objetivo é oferecer uma **sintaxe simples, clara e didática**, permitindo explorar conceitos de interpretação e compilação.
+**Zard** is a **typed programming language** inspired by Java, created for studying and improving **programming logic**, **compiler design**, and **AST (Abstract Syntax Tree)** interpretation.
+Its main goal is to offer a **simple, clear, and educational syntax** to explore compiler and interpreter concepts in a practical way.
 
 ---
 
-## ✨ Características Atuais
+## 🧩 Requirements
 
-* **Tipagem Explícita:** Suporte a tipos `int`, `double`, `string`, `list` e `map`.
-* **Declaração e Atribuição:** Variáveis podem ser declaradas com tipo explícito e receber valores imediatamente ou posteriormente.
-* **Funções:** Declaração de funções com parâmetros tipados, suporte a **funções recursivas** e retorno de valores.
-* **Execução via AST:** A linguagem utiliza uma Árvore de Sintaxe Abstrata para interpretar e executar o código.
-* **Controle de Fluxo:** Suporte a `if`, `else` e `while`.
-* **Listas Dinâmicas:** Métodos `add()`, `remove()`, `clear()` e `size()`.
-* **Mapas Dinâmicos:** Criação e manipulação de mapas com funções auxiliares.
-* **Importação de Código:** Suporte a importação de arquivos externos com alias, ex.:
+![JDK Required](https://img.shields.io/badge/Requirement-JDK%2017%2B-blue?style=for-the-badge)
+![Clang Required](https://img.shields.io/badge/Requirement-Clang%20Compiler-orange?style=for-the-badge)
+
+Before running or compiling Zard programs, make sure you have:
+
+* **JDK 17+** installed (required to run the interpreter and compiler)
+* **Clang/LLVM** installed (required to compile the generated C + LLVM code)
+
+---
+
+## ✨ Current Features
+
+* **Explicit Typing:** Supports `int`, `double`, `string`, `list`, and `map` types.
+* **Declaration and Assignment:** Variables can be declared with explicit types and optionally initialized.
+* **Functions:** Typed parameters, **recursive functions**, and value returning are supported.
+* **AST Execution:** The language uses an Abstract Syntax Tree for code interpretation and execution.
+* **Control Flow:** Supports `if`, `else`, and `while` statements.
+* **Dynamic Lists:** Built-in methods such as `add()`, `remove()`, `clear()`, and `size()`.
+* **Dynamic Maps:** Creation and manipulation with helper functions.
+* **Code Importing:** Supports external file imports with aliases, e.g.:
 
   ```zard
   import "src/language/stdlib/Math.zd" as math;
   ```
-* **Funções como Valores:** Variáveis podem armazenar funções e chamá-las dinamicamente.
-* **Bloco Main Obrigatório:** Todo programa deve começar com `main { }`.
-* **Print de Saída:** Suporte ao comando `print()` para exibir resultados no console.
+* **Functions as Values:** Functions can be stored in variables and called dynamically.
+* **Mandatory Main Block:** Every program must start with `main { }`.
+* **Output Printing:** `print()` command for displaying data in the console.
 
 ---
 
-## 📝 Exemplo de Código
+## 🧠 Example Code
 
 ```zard
 import "src/language/stdlib/Math.zd" as math;
-Exemplo no high level(nem todas as funções abaixo estão presentes no llvm)
+
 main {
-    int contador = 0;
-    string mensagem = "Início do programa";
+    int counter = 0;
+    string message = "Program start";
 
-    print(mensagem);
+    print(message);
 
-    map numeros = {"0": 1, "1": 2, "2": 3};
+    map numbers = {"0": 1, "1": 2, "2": 3};
 
-    function dobrar(int valor) {
-        print("Dobro de " + valor + " é " + (valor * 2));
+    function double(int value) {
+        print("Double of " + value + " is " + (value * 2));
     }
 
-    while (contador < 5) {
-        print("Contador: " + contador);
+    while (counter < 5) {
+        print("Counter: " + counter);
 
-        if (contador == 3) {
-            print("Chegou no 3, pulando para próximo");
+        if (counter == 3) {
+            print("Reached 3, skipping to next");
         }
 
-        call dobrar(contador);
-        call math.adicionarMapa(numeros, contador, contador);
+        call double(counter);
+        call math.addToMap(numbers, counter, counter);
 
-        contador++;
+        counter++;
     }
 
-    function fatorial(int n) {
+    function factorial(int n) {
         if (n == 0) {
             return 1;
         } else {
-            return n * fatorial(n - 1);
+            return n * factorial(n - 1);
         }
     }
 
-    int resultado = fatorial(5);
-    print("Fatorial de 5: " + resultado);
+    int result = factorial(5);
+    print("Factorial of 5: " + result);
 }
 ```
 
+---
 
-## Exemplo Para lista
+## 🔍 List Example
+
 ```zard
-
 import "src/language/stdlib/Math.zd" as math;
 
 main {
+    // If no arguments are given, specify the type
+    List<int> numbers;
 
-->se não tiver argumentos, é necessário informar o tipo
-List<int> numeros;
--> Se possui argumentos, infere automaticamente, elimando a necessidade de <type>
-List list = (3,4,5);
+    // If initialized with arguments, the type is inferred automatically
+    List list = (3, 4, 5);
 }
 ```
----
-
-## 🚀 Futuro da Zard
-
-A linguagem continuará evoluindo para se tornar mais robusta e versátil. Algumas metas incluem:
-
-* 🛠 **Compilação para LLVM IR** para execução independente.
-* 🏗 **Criação de um compilador completo**, visando bootstrapping e geração de binários nativos.
-* 🔄 **Expansão da biblioteca padrão** com funções matemáticas, manipulação de strings, listas e mapas.
 
 ---
 
-## 🔄 Melhorias Implementadas
+## 🚀 Future of Zard
 
-* ✅ Criação de `if` e `else` para decisões lógicas.
-* ✅ Implementação de `while` para loops.
-* ✅ Adição de `return` para funções.
-* ✅ Refatoração da AST para melhor análise e execução.
-* ✅ Implementação de listas dinâmicas (`add`, `remove`, `clear`, `size`).
-* ✅ Suporte a funções como valores.
-* ✅ Suporte a funções recursivas.
-* ✅ Implementação de mapas dinâmicos e funções auxiliares.
-* ✅ Suporte a importação de módulos externos.
-* ✅ Suporte a operadores compostos (`==`, `!=`, `<=`, `>=`).
-* ✅ Funções recursivas já são suportadas.
-* ✅ Variáveis tipadas, literais e expressões complexas gerando LLVM IR.
-* ✅ Integração inicial de backend LLVM IR para variáveis, whiles e if's.
-* ✅ Inputs funcionais para armazenar entrada do usuário
-* ✅ Suporte a listas  no compilador via código C + LLVM
-* ✅ Suporte a instância dinâmicas de lista onde não é necessário especificar o tipo (inferida automaticamente desde que haja argumentos)
-* ✅ **Suporte a importações:** Suporte a importação de módulos externos no back end.
----
-## 🔄 Melhorias em Desenvolvimento
-- 🟡 **Suporte a mapas em LLVM:** Gerar LLVM para criação, acesso e modificação de mapas dinâmicos.
-- 🟡 **Suporte a funções como valores em LLVM:** Permitir armazenar funções em variáveis e chamá-las dinamicamente no LLVM IR.
-- 🟡 **Otimização llvm:** Otimizar a geração de LLVM para ter melhor perfomance principalmente nas estruturas de dados.
-## 📂 Uso
+The language will continue to evolve to become more robust and versatile. Upcoming goals include:
 
-1. Escreva seu código em um arquivo `.zd`.
-2. Coloque neste caminho
-```java
+* 🛠 **LLVM IR Compilation** for independent execution.
+* 🏗 **Full Compiler Implementation** to enable bootstrapping and native binary generation.
+* 🔄 **Expanded Standard Library** including mathematical, string, list, and map utilities.
 
-  try {
-            // Caminho do arquivo de entrada
-            String filePath = args.length > 0 ? args[0] : "src/language/main.zd";
-            String code = Files.readString(Path.of(filePath));
-
-```
-
-3. Utilize o interpretador para executar o código.
-5. Experimente a sintaxe da linguagem e acompanhe as atualizações futuras.
 ---
 
-## 🔗 Contribuição
+## 🔄 Implemented Improvements
 
-Se você quiser sugerir melhorias ou contribuir com o projeto, sinta-se à vontade para enviar pull requests ou abrir issues.
+* ✅ Added `if` and `else` logical branching.
+* ✅ Added `while` looping.
+* ✅ Added `return` statements.
+* ✅ Refactored AST for better analysis and execution.
+* ✅ Implemented dynamic lists (`add`, `remove`, `clear`, `size`).
+* ✅ Added function-as-value support.
+* ✅ Recursive functions supported.
+* ✅ Implemented dynamic maps and helper functions.
+* ✅ Added external module import support.
+* ✅ Implemented compound operators (`==`, `!=`, `<=`, `>=`).
+* ✅ Variables, literals, and complex expressions generating LLVM IR.
+* ✅ Initial LLVM IR backend integration for variables, `while`, and `if`.
+* ✅ Functional input system for user data.
+* ✅ Full list support in compiler via C + LLVM.
+* ✅ Support for dynamic list instances with type inference when arguments are provided.
+* ✅ **Import support** in the LLVM backend.
+
+---
+
+## 🔄 Improvements in Progress
+
+* 🟡 **Map Support in LLVM:** Generate LLVM for dynamic map creation, access, and modification.
+* 🟡 **Functions as Values in LLVM:** Store and call functions dynamically via LLVM IR.
+* 🟡 **LLVM Optimization:** Improve LLVM generation performance, especially for data structures.
+
+---
+
+## 📂 How to Use
+
+1. Write your code in a `.zd` file.
+
+2. Place the file in the following directory:
+
+   ```java
+   try {
+       // Input file path
+       String filePath = args.length > 0 ? args[0] : "src/language/main.zd";
+       String code = Files.readString(Path.of(filePath));
+   ```
+
+3. Run the interpreter to execute the code.
+
+4. Experiment with the language syntax and follow future updates.
+
+5. ⚙ **Make sure Clang and JDK 17+ are installed** — they are required for compiling the generated C + LLVM code.
+
+---
+
+## 🔗 Contributing
+
+If you'd like to suggest improvements or contribute to the project, feel free to open an issue or submit a pull request!
+-se à vontade para enviar pull requests ou abrir issues.

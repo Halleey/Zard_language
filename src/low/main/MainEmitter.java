@@ -263,7 +263,7 @@ public class MainEmitter {
                     declare void @arraylist_remove_bool(%struct.ArrayListBool*, i64)
                     declare void @arraylist_free_bool(%struct.ArrayListBool*)
                     declare i1 @arraylist_get_bool(%struct.ArrayListBool*, i64, i1*)
-                    
+                    declare i32  @arraylist_size_bool(%struct.ArrayListBool*)
                     @.strTrue = private constant [6 x i8] c"true\\0A\\00"
                     @.strFalse = private constant [7 x i8] c"false\\0A\\00"
                 """);

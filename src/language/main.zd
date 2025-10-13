@@ -27,6 +27,7 @@ main {
     List bools = (t, f);
     bools.add(true);
     print(bools);
+    print(bools.size());
     print(bools.get(2));
     bools.remove(1);
     print(bools);

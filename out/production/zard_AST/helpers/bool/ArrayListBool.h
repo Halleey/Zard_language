@@ -19,6 +19,6 @@ void arraylist_clear_bool(ArrayListBool* list);
 void arraylist_free_bool(ArrayListBool* list);
 int arraylist_update_bool(ArrayListBool* list, size_t index, bool value);
 int arraylist_get_bool(ArrayListBool* list, size_t index, bool* out);
-
+int arraylist_size_bool(ArrayListBool* list);
 
 #endif

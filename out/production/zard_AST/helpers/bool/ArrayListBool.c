@@ -9,6 +9,9 @@ ArrayListBool* arraylist_create_bool(size_t initial_capacity) {
     list->capacity = initial_capacity;
     return list;
 }
+int arraylist_size_bool(ArrayListBool* list) {
+    return list ? list->length : 0;
+}
 
 static void ensureCapacityBool(ArrayListBool* list) {
     if (list->length == list->capacity) {

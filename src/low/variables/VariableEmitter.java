@@ -168,19 +168,16 @@ public class VariableEmitter {
 
 
     private String emitStore(String name, String type, String value) {
-        if (type.equals("%String*") || type.equals("%String")) {
-            return stringEmitter.emitStore(name, value);
-        }
-        if (type.equals("%struct.ArrayListInt*")) {
-            return "  store %struct.ArrayListInt* " + value + ", %struct.ArrayListInt** %" + name + "\n";
-        }
-        if (type.equals("%struct.ArrayListDouble*")) {
-            return "  store %struct.ArrayListDouble* " + value + ", %struct.ArrayListDouble** %" + name + "\n";
-        }
-        if(type.equals("%struct.ArrayListBool*")){
-            return  "  store %struct.ArrayListBool* " + value + ", %struct.ArrayListBool** %"+ name + "\n";
-        }
-        return "  store " + type + " " + value + ", " + type + "* %" + name + "\n";
+        return switch (type) {
+            case "%String*", "%String" -> stringEmitter.emitStore(name, value);
+            case "%struct.ArrayListInt*" ->
+                    "  store %struct.ArrayListInt* " + value + ", %struct.ArrayListInt** %" + name + "\n";
+            case "%struct.ArrayListDouble*" ->
+                    "  store %struct.ArrayListDouble* " + value + ", %struct.ArrayListDouble** %" + name + "\n";
+            case "%struct.ArrayListBool*" ->
+                    "  store %struct.ArrayListBool* " + value + ", %struct.ArrayListBool** %" + name + "\n";
+            default -> "  store " + type + " " + value + ", " + type + "* %" + name + "\n";
+        };
     }
 
     /** Carrega variável para uso em expressão */

@@ -8,6 +8,7 @@ import ast.ifstatements.IfNode;
 import ast.imports.ImportNode;
 import ast.lists.*;
 import ast.loops.WhileNode;
+import ast.maps.MapNode;
 import low.exceptions.ReturnEmitter;
 import low.functions.FunctionCallEmitter;
 import low.functions.FunctionEmitter;
@@ -72,6 +73,12 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public String visit(ImportNode node) {
         return importEmitter.emit(node);
     }
+
+    @Override
+    public String visit(MapNode node) {
+        return "";
+    }
+
     public void pushLoopEnd(String label) {
         loopEndLabels.push(label);
     }

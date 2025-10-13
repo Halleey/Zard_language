@@ -4,8 +4,8 @@ import ast.ASTNode;
 
 import ast.exceptions.ReturnValue;
 import ast.runtime.RuntimeContext;
-import low.module.LLVMGenerator;
 import ast.prints.ASTPrinter;
+import low.module.LLVMGenerator;
 import tokens.Lexer;
 import tokens.Token;
 import java.nio.file.Files;
@@ -44,22 +44,23 @@ public class Executor {
 
             // Arquivos C do runtime
             List<String> runtimeFiles = List.of(
-                    "src/low/runtime/string/Stringz.c",
-                    "src/low/runtime/inputs/InputUtil.c",
-                    "src/low/runtime/ArrayList.c",
-                    "src/low/runtime/ints/ArrayListInt.c",
-                    "src/low/runtime/bool/ArrayListBool.c",
-                    "src/low/runtime/doubles/ArrayListDouble.c",
-                    "src/low/runtime/print/PrintList.c",
+                    "src/helpers/string/Stringz.c",
+                    "src/helpers/inputs/InputUtil.c",
+                    "src/helpers/ArrayList.c",
+                    "src/helpers/ints/ArrayListInt.c",
+                    "src/helpers/bool/ArrayListBool.c",
+                    "src/helpers/doubles/ArrayListDouble.c",
+                    "src/helpers/print/PrintList.c",
                     ""
             );
 
             // Flags de include para headers
             List<String> includeDirs = List.of(
-                    "-Isrc/low/runtime/string",
-                    "-Isrc/low/runtime/input",
-                    "-Isrc/low/runtime/list",
-                    "-Isrc/low/runtime/print"
+                    "-Isrc/helpers/string",
+                    "-Isrc/helpers/input",
+                    "-Isrc/helpers/list",
+                    "-Isrc/helpers/print",
+                    "-Isrc/helpers/maps"
             );
 
             // Montar comando do clang

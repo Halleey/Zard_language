@@ -1,12 +1,45 @@
 main {
 
+    int x = 10;
+    int y = 20;
+    List ints = (x, y);
+    ints.add(30);
+    print(ints);
+    print(ints.size());
+    print(ints.get(1));
+    ints.remove(0);
+    print(ints);
+
+
+    double a = 1.5;
+    double b = 2.5;
+    List doubles = (a, b);
+    doubles.add(3.14);
+    print(doubles);
+    print(doubles.size());
+    print(doubles.get(0));
+    doubles.remove(1);
+    print(doubles);
+
+
+    boolean t = true;
+    boolean f = false;
+    List bools = (t, f);
+    bools.add(true);
+    print(bools);
+    print(bools.get(2));
+    bools.remove(1);
+    print(bools);
+
     string nome = "halley";
-    string teste;
-    teste = input();
-    List nomes = (nome, "misty");
+    string outro = "misty";
+    string teste = input();
+    List nomes = (nome, outro);
     nomes.add(teste);
     print(nomes);
     print(nomes.get(2));
     nomes.remove(0);
+    print(nomes);
+    nomes.clear();
     print(nomes);
 }

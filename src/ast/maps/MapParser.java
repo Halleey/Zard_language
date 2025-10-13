@@ -88,7 +88,7 @@ public class MapParser {
         return new VariableDeclarationNode(
                 varName,
                 "Map<" + keyType + "," + valueType + ">",
-                new MapNode(dynamicMap)
+                new MapNode(varName, dynamicMap)
         );
     }
 

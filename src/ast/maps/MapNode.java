@@ -6,12 +6,17 @@ import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
 import java.util.Map;
-
 public class MapNode extends ASTNode {
+    private final String name; // nome da variável
     private final DynamicMap dynamicMap;
 
-    public MapNode(DynamicMap dynamicMap) {
+    public MapNode(String name, DynamicMap dynamicMap) {
+        this.name = name;
         this.dynamicMap = dynamicMap;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public DynamicMap getDynamicMap() {
@@ -20,7 +25,7 @@ public class MapNode extends ASTNode {
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
-        return "";
+        return visitor.visit(this);
     }
 
     @Override
@@ -30,14 +35,12 @@ public class MapNode extends ASTNode {
 
     @Override
     public void print(String prefix) {
-        System.out.println(prefix + "Map<" + dynamicMap.getKeyType() + "," + dynamicMap.getValueType() + ">:");
-
+        System.out.println(prefix + "Map<" + dynamicMap.getKeyType() + "," + dynamicMap.getValueType() + "> (" + name + "):");
         Map<TypedValue, TypedValue> evaluated = dynamicMap.evaluate(new RuntimeContext());
         if (evaluated.isEmpty()) {
             System.out.println(prefix + "  (vazio)");
             return;
         }
-
         for (Map.Entry<TypedValue, TypedValue> e : evaluated.entrySet()) {
             System.out.println(prefix + "  [" + e.getKey().getValue() + " (" + e.getKey().getType() + ")]: "
                     + e.getValue().getValue() + " (" + e.getValue().getType() + ")");

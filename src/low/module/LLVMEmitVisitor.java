@@ -10,6 +10,7 @@ import ast.imports.ImportNode;
 import ast.inputs.InputNode;
 import ast.lists.*;
 import ast.loops.WhileNode;
+import ast.maps.MapNode;
 import ast.prints.PrintNode;
 import ast.variables.*;
 
@@ -36,5 +37,6 @@ public interface LLVMEmitVisitor {
     String visit (FunctionCallNode node);
     String visit (ReturnNode node);
     String visit (ImportNode node);
+    String visit (MapNode node);
 }
 

@@ -1,14 +1,18 @@
+
+
     main {
 
+        function string hi(){return "teste";}
+        print(hi());
         string nome = "halley";
         string outro = "misty";
         List nomes = (nome, outro);
 
 
-        if(nome == "hal") {
+        if(nomes.get(0) != "hal") {
         print("pos 0 e igual a halley");
         }
         else {
         print("nao era igual");
-        }
-    }
+       }
+   }

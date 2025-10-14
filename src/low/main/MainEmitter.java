@@ -1,7 +1,7 @@
 package low.main;
 
 import ast.ASTNode;
-
+import ast.exceptions.ReturnNode;
 import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
@@ -147,6 +147,7 @@ public class MainEmitter {
             if (inputNode.getPrompt() != null)
                 globalStrings.getOrCreateString(inputNode.getPrompt());
         }
+
         if (node instanceof PrintNode printNode) {
             ASTNode expr = printNode.expr;
             if (expr instanceof LiteralNode lit && lit.value.getType().equals("string")) {
@@ -157,6 +158,8 @@ public class MainEmitter {
             coletarStringsRecursivo(bin.left);
             coletarStringsRecursivo(bin.right);
         }
+
+
 
         if (node instanceof VariableDeclarationNode varDecl) {
             if (varDecl.getType().startsWith("List")) registrarTipoDeLista(varDecl.getType());
@@ -179,7 +182,9 @@ public class MainEmitter {
             coletarStringsRecursivo(assignNode.valueNode);
         else if (node instanceof ListAddAllNode addAllNode)
             coletarStringsRecursivo(addAllNode.getArgs());
-
+        else if(node instanceof ReturnNode returnNode) {
+            coletarStringsRecursivo(returnNode.expr);
+        }
     }
 
     private void coletarStringsRecursivo(List<ASTNode> nodes) {
@@ -279,10 +284,7 @@ public class MainEmitter {
                     @.strFalse = private constant [7 x i8] c"false\\0A\\00"
                 """);
             }
-
-
         }
-
         return sb.toString();
     }
 }

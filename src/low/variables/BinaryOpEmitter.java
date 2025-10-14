@@ -57,13 +57,11 @@ public class BinaryOpEmitter {
                 String tmp = temps.newTemp();
                 llvm.append("  ").append(tmp).append(" = sitofp i32 ").append(leftTemp).append(" to double\n;;VAL:").append(tmp).append(";;TYPE:double\n");
                 leftTemp = tmp;
-                leftType = "double";
             }
             if (rightType.equals("i32")) {
                 String tmp = temps.newTemp();
                 llvm.append("  ").append(tmp).append(" = sitofp i32 ").append(rightTemp).append(" to double\n;;VAL:").append(tmp).append(";;TYPE:double\n");
                 rightTemp = tmp;
-                rightType = "double";
             }
 
             String op = switch (node.operator) {
@@ -94,7 +92,6 @@ public class BinaryOpEmitter {
                         .append(" = call %String* @createString(i8* ").append(leftTemp).append(")\n")
                         .append(";;VAL:").append(tmp).append(";;TYPE:%String*\n");
                 leftTemp = tmp;
-                leftType = "%String*";
             }
             if (rightType.equals("i8*")) {
                 String tmp = temps.newTemp();
@@ -102,7 +99,6 @@ public class BinaryOpEmitter {
                         .append(" = call %String* @createString(i8* ").append(rightTemp).append(")\n")
                         .append(";;VAL:").append(tmp).append(";;TYPE:%String*\n");
                 rightTemp = tmp;
-                rightType = "%String*";
             }
 
             // Agora ambos são %String* e podemos aplicar o operador
@@ -112,21 +108,18 @@ public class BinaryOpEmitter {
                         .append(" = call i1 @strcmp_eq(%String* ").append(leftTemp)
                         .append(", %String* ").append(rightTemp).append(")\n")
                         .append(";;VAL:").append(tmp).append(";;TYPE:i1\n");
-                resultTemp = tmp;
             } else if (node.operator.equals("!=")) {
                 String tmp = temps.newTemp();
                 llvm.append("  ").append(tmp)
                         .append(" = call i1 @strcmp_neq(%String* ").append(leftTemp)
                         .append(", %String* ").append(rightTemp).append(")\n")
                         .append(";;VAL:").append(tmp).append(";;TYPE:i1\n");
-                resultTemp = tmp;
             } else if (node.operator.equals("+")) {
                 String tmp = temps.newTemp();
                 llvm.append("  ").append(tmp)
                         .append(" = call %String* @concatStrings(%String* ").append(leftTemp)
                         .append(", %String* ").append(rightTemp).append(")\n")
                         .append(";;VAL:").append(tmp).append(";;TYPE:%String*\n");
-                resultTemp = tmp;
             } else {
                 throw new RuntimeException("Operador inválido para %String*: " + node.operator);
             }

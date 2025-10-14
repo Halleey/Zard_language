@@ -178,7 +178,7 @@ public class Lexer {
                 tokens.add(readOperator());
                 continue;
             }
-            if (currentChar == '=' || currentChar == '>' || currentChar == '<') {
+            if (currentChar == '=' || currentChar == '>' || currentChar == '<' || currentChar == '!') {
                 tokens.add(readOperator());
                 continue;
             }

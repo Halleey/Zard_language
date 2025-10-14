@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 ArrayList* arraylist_create(size_t initial_capacity) {
     ArrayList* list = malloc(sizeof(ArrayList));
     if (!list) return NULL;

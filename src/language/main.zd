@@ -1,6 +1,12 @@
 
 
     main {
+        function void listas(List<string> list){
+        list.add("hello guys");
+        }
+        List<string> name;
+        call listas(name);
+        print(name);
 
         function string hi(){return "teste";}
         print(hi());

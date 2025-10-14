@@ -84,29 +84,54 @@ public class BinaryOpEmitter {
                     .append(" double ").append(leftTemp).append(", ").append(rightTemp).append("\n")
                     .append(";;VAL:").append(resultTemp).append(";;TYPE:").append(op.startsWith("fcmp") ? "i1" : "double").append("\n");
         }
-        else if (leftType.equals("i8*") && rightType.equals("i8*")) {
-            if (node.operator.equals("+")) {
+        else if ((leftType.equals("%String*") || leftType.equals("i8*")) &&
+                (rightType.equals("%String*") || rightType.equals("i8*"))) {
+
+            // Converte i8* para %String* se necessário
+            if (leftType.equals("i8*")) {
                 String tmp = temps.newTemp();
-                llvm.append("  ").append(tmp).append(" = call i8* @concat_strings(i8* ")
-                        .append(leftTemp).append(", i8* ").append(rightTemp).append(")\n")
-                        .append(";;VAL:").append(tmp).append(";;TYPE:i8*\n");
-                resultTemp = tmp;
-            } else if (node.operator.equals("==") || node.operator.equals("!=")) {
-                String tmp = temps.newTemp();
-                llvm.append("  ").append(tmp).append(" = call i1 @strcmp_eq(i8* ")
-                        .append(leftTemp).append(", i8* ").append(rightTemp).append(")\n");
-                if (node.operator.equals("!=")) {
-                    String tmpNot = temps.newTemp();
-                    llvm.append("  ").append(tmpNot).append(" = xor i1 ").append(tmp).append(", true\n");
-                    resultTemp = tmpNot;
-                } else {
-                    resultTemp = tmp;
-                }
-                llvm.append(";;VAL:").append(resultTemp).append(";;TYPE:i1\n");
-            } else {
-                throw new RuntimeException("Operador inválido para string: " + node.operator);
+                llvm.append("  ").append(tmp)
+                        .append(" = call %String* @createString(i8* ").append(leftTemp).append(")\n")
+                        .append(";;VAL:").append(tmp).append(";;TYPE:%String*\n");
+                leftTemp = tmp;
+                leftType = "%String*";
             }
-        } else {
+            if (rightType.equals("i8*")) {
+                String tmp = temps.newTemp();
+                llvm.append("  ").append(tmp)
+                        .append(" = call %String* @createString(i8* ").append(rightTemp).append(")\n")
+                        .append(";;VAL:").append(tmp).append(";;TYPE:%String*\n");
+                rightTemp = tmp;
+                rightType = "%String*";
+            }
+
+            // Agora ambos são %String* e podemos aplicar o operador
+            if (node.operator.equals("==")) {
+                String tmp = temps.newTemp();
+                llvm.append("  ").append(tmp)
+                        .append(" = call i1 @strcmp_eq(%String* ").append(leftTemp)
+                        .append(", %String* ").append(rightTemp).append(")\n")
+                        .append(";;VAL:").append(tmp).append(";;TYPE:i1\n");
+                resultTemp = tmp;
+            } else if (node.operator.equals("!=")) {
+                String tmp = temps.newTemp();
+                llvm.append("  ").append(tmp)
+                        .append(" = call i1 @strcmp_neq(%String* ").append(leftTemp)
+                        .append(", %String* ").append(rightTemp).append(")\n")
+                        .append(";;VAL:").append(tmp).append(";;TYPE:i1\n");
+                resultTemp = tmp;
+            } else if (node.operator.equals("+")) {
+                String tmp = temps.newTemp();
+                llvm.append("  ").append(tmp)
+                        .append(" = call %String* @concatStrings(%String* ").append(leftTemp)
+                        .append(", %String* ").append(rightTemp).append(")\n")
+                        .append(";;VAL:").append(tmp).append(";;TYPE:%String*\n");
+                resultTemp = tmp;
+            } else {
+                throw new RuntimeException("Operador inválido para %String*: " + node.operator);
+            }
+        }
+        else {
             throw new RuntimeException("Tipos incompatíveis para operação: " + leftType + " " + node.operator + " " + rightType);
         }
 
@@ -139,7 +164,8 @@ public class BinaryOpEmitter {
             case "int" -> "i32";
             case "double" -> "double";
             case "boolean" -> "i1";
-            case "string", "List" -> "i8*";
+            case "string" -> "%String*";
+            case  "List" -> "i8*";
             default -> type;
         };
     }

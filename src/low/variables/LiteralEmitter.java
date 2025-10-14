@@ -36,15 +36,15 @@ public class LiteralEmitter {
                 llvm.append("  ").append(temp).append(" = add i1 0, ").append(b ? 1 : 0).append("\n");
                 llvm.append(";;VAL:").append(temp).append(";;TYPE:i1\n");
             }
-            case "string" -> {
-                String strName = globalStrings.getOrCreateString((String) value.getValue());
-                int len = ((String) value.getValue()).length() + 1;
-                llvm.append("  ").append(temp)
-                        .append(" = bitcast [").append(len).append(" x i8]* ")
-                        .append(strName).append(" to i8*\n");
-                llvm.append(";;VAL:").append(temp).append(";;TYPE:i8*\n");
-            }
 
+            case "string" -> {
+                String literal = (String) value.getValue();
+                String strName = globalStrings.getOrCreateString(literal); // registrar @str
+                String tmp = temps.newTemp();
+                llvm.append("  ").append(tmp)
+                        .append(" = call %String* @createString(i8* ").append(strName).append(")\n")
+                        .append(";;VAL:").append(tmp).append(";;TYPE:%String*\n");
+            }
             default -> throw new RuntimeException("Literal type not supported: " + value.getType());
         }
 

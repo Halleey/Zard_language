@@ -51,6 +51,7 @@ public class Executor {
                     "src/helpers/bool/ArrayListBool.c",
                     "src/helpers/doubles/ArrayListDouble.c",
                     "src/helpers/print/PrintList.c",
+                    "src/helpers/string/StringComparators.c",
                     ""
             );
 

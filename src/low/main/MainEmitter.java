@@ -13,6 +13,7 @@ import ast.lists.ListNode;
 import ast.loops.WhileNode;
 import ast.prints.PrintNode;
 import ast.variables.AssignmentNode;
+import ast.variables.BinaryOpNode;
 import low.TempManager;
 
 import low.functions.FunctionEmitter;
@@ -152,6 +153,11 @@ public class MainEmitter {
                 globalStrings.getOrCreateString((String) lit.value.getValue());
             }
         }
+        if (node instanceof BinaryOpNode bin) {
+            coletarStringsRecursivo(bin.left);
+            coletarStringsRecursivo(bin.right);
+        }
+
         if (node instanceof VariableDeclarationNode varDecl) {
             if (varDecl.getType().startsWith("List")) registrarTipoDeLista(varDecl.getType());
             if (varDecl.initializer != null) coletarStringsRecursivo(varDecl.initializer);
@@ -173,6 +179,7 @@ public class MainEmitter {
             coletarStringsRecursivo(assignNode.valueNode);
         else if (node instanceof ListAddAllNode addAllNode)
             coletarStringsRecursivo(addAllNode.getArgs());
+
     }
 
     private void coletarStringsRecursivo(List<ASTNode> nodes) {
@@ -199,6 +206,10 @@ public class MainEmitter {
             declare i8* @arraylist_create(i64)
             declare void @clearList(%ArrayList*)
             declare void @freeList(%ArrayList*)
+            declare i1 @strcmp_eq(%String*, %String*)
+            declare i1 @strcmp_neq(%String*, %String*)
+                
+    
 
             %String = type { i8*, i64 }
             %ArrayList = type opaque

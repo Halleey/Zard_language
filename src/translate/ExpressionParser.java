@@ -57,7 +57,7 @@ public class ExpressionParser {
         Token tok = parent.current();
 
         // Unary + ou -
-        if (tok.getValue().equals("+") || tok.getValue().equals("-")) {
+        if (tok.getValue().equals("+") || tok.getValue().equals("-") || tok.getValue().equals("!")) {
             String op = tok.getValue();
             parent.advance();
             ASTNode factor = parseFactor();

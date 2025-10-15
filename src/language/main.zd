@@ -1,4 +1,6 @@
+import "src/language/stdlib/Math.zd" as math;
 main {
+
         function void listas(List<string> list){
         list.add("hello guys");
         }
@@ -6,14 +8,16 @@ main {
         call listas(name);
         print(name);
 
-        function string hi(){return "teste";}
-        print(hi());
+        int x = input();
+        print(x);
+
         string nome = "halley";
         string outro = "misty";
+        print(outro);
         List nomes = (nome, outro);
 
 
-        if(nomes.get(0) == "hal") {
+        if(nomes.get(0) == "halley") {
         print("pos 0 e igual a halley");
         }
         else {

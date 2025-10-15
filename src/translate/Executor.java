@@ -18,14 +18,6 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 import java.io.*;
-import java.io.*;
-import java.nio.file.*;
-import java.util.*;
-
-import java.io.*;
-import java.nio.file.*;
-import java.util.*;
-
 public class Executor {
     public static void main(String[] args) throws Exception {
         // Detectar sistema operacional

@@ -167,20 +167,7 @@ public class Parser {
                 String methodName = current().getValue();
 
                 String varType = getVariableType(name);
-                String baseType = varType.contains("<") ? varType.substring(0, varType.indexOf("<")) : varType;
-
-                ASTNode node;
-                switch (baseType) {
-                    case "List" -> {
-                        ListMethodParser listParser = new ListMethodParser(this);
-                        node = listParser.parseStatementListMethod(name);
-                    }
-                    case "Map" -> {
-                        MapMethodParser mapParser = new MapMethodParser(this);
-                        node = mapParser.parseStatementMapMethod(name);
-                    }
-                    default -> throw new RuntimeException("Tipo " + varType + " não suporta métodos: " + methodName);
-                }
+                ASTNode node = getAstNode(varType, name, methodName);
                 return node;
             }
                 // Caso normal: variável/atribuição/unário
@@ -188,6 +175,24 @@ public class Parser {
             return idParser.parseAsStatement(name);
         }
         throw new RuntimeException("Comando inesperado: " + tok.getValue());
+    }
+
+    private ASTNode getAstNode(String varType, String name, String methodName) {
+        String baseType = varType.contains("<") ? varType.substring(0, varType.indexOf("<")) : varType;
+
+        ASTNode node;
+        switch (baseType) {
+            case "List" -> {
+                ListMethodParser listParser = new ListMethodParser(this);
+                node = listParser.parseStatementListMethod(name);
+            }
+            case "Map" -> {
+                MapMethodParser mapParser = new MapMethodParser(this);
+                node = mapParser.parseStatementMapMethod(name);
+            }
+            default -> throw new RuntimeException("Tipo " + varType + " não suporta métodos: " + methodName);
+        }
+        return node;
     }
 
 

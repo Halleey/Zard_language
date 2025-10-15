@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-
 public class ExpressionParser {
     private final Parser parent;
 
@@ -20,45 +19,72 @@ public class ExpressionParser {
         this.parent = parent;
     }
 
+    // EXPRESSÃO PRINCIPAL
     public ASTNode parseExpression() {
-        ASTNode left = parseTerm();
-        while (parent.current().getValue().equals("+") || parent.current().getValue().equals("-")) {
-            String op = parent.current().getValue();
-            parent.advance();
-            ASTNode right = parseTerm();
-            left = new BinaryOpNode(left, op, right);
-        }
-        return parseComparison(left);
+        System.out.println("[parseExpression] Iniciando - token atual: " + parent.current());
+        ASTNode node = parseComparison();
+        System.out.println("[parseExpression] Finalizou expressão: " + node);
+        return node;
     }
 
-    private ASTNode parseComparison(ASTNode left) {
-        if (parent.current().getType() == Token.TokenType.OPERATOR &&
+    private ASTNode parseComparison() {
+        System.out.println("[parseComparison] Iniciando - token atual: " + parent.current());
+        ASTNode left = parseAddSub();
+
+        while (parent.current().getType() == Token.TokenType.OPERATOR &&
                 List.of("<", ">", "<=", ">=", "==", "!=").contains(parent.current().getValue())) {
             String op = parent.current().getValue();
+            System.out.println("[parseComparison] Operador encontrado: " + op);
+            parent.advance();
+            ASTNode right = parseAddSub();
+            left = new BinaryOpNode(left, op, right);
+        }
+
+        System.out.println("[parseComparison] Retornando: " + left);
+        return left;
+    }
+
+    private ASTNode parseAddSub() {
+        System.out.println("[parseAddSub] Iniciando - token atual: " + parent.current());
+        ASTNode left = parseTerm();
+
+        while (parent.current().getValue().equals("+") || parent.current().getValue().equals("-")) {
+            String op = parent.current().getValue();
+            System.out.println("[parseAddSub] Operador encontrado: " + op);
             parent.advance();
             ASTNode right = parseTerm();
             left = new BinaryOpNode(left, op, right);
         }
+
+        System.out.println("[parseAddSub] Retornando: " + left);
         return left;
     }
 
     private ASTNode parseTerm() {
+        System.out.println("[parseTerm] Iniciando - token atual: " + parent.current());
         ASTNode left = parseFactor();
+
         while (parent.current().getValue().equals("*") || parent.current().getValue().equals("/")) {
             String op = parent.current().getValue();
+            System.out.println("[parseTerm] Operador encontrado: " + op);
             parent.advance();
             ASTNode right = parseFactor();
             left = new BinaryOpNode(left, op, right);
         }
+
+        System.out.println("[parseTerm] Retornando: " + left);
         return left;
     }
 
+    // FATORES (literais, identificadores, chamadas, parênteses, unários)
     private ASTNode parseFactor() {
         Token tok = parent.current();
 
-        // Unary + ou -
-        if (tok.getValue().equals("+") || tok.getValue().equals("-") || tok.getValue().equals("!")) {
+        // Unary +, -, !
+        if (tok.getType() == Token.TokenType.OPERATOR &&
+                (tok.getValue().equals("+") || tok.getValue().equals("-") || tok.getValue().equals("!"))) {
             String op = tok.getValue();
+            System.out.println("[parseFactor] Operador unário: " + op);
             parent.advance();
             ASTNode factor = parseFactor();
             return new UnaryOpNode(op, factor);
@@ -85,6 +111,7 @@ public class ExpressionParser {
             }
             case BOOLEAN -> {
                 parent.advance();
+
                 return new LiteralNode(new TypedValue("boolean", Boolean.parseBoolean(tok.getValue())));
             }
             case KEYWORD -> {
@@ -97,11 +124,12 @@ public class ExpressionParser {
                 String name = tok.getValue();
                 parent.advance();
                 IdentifierParser idParser = new IdentifierParser(parent);
-                return idParser.parseAsExpression(name); // agora com suporte a métodos de lista
+                return idParser.parseAsExpression(name);
             }
         }
 
         if (tok.getValue().equals("(")) {
+
             parent.advance();
             ASTNode expr = parseExpression();
             parent.eat(Token.TokenType.DELIMITER, ")");
@@ -111,9 +139,11 @@ public class ExpressionParser {
         throw new RuntimeException("Fator inesperado: " + tok.getValue());
     }
 
+    // ARGUMENTOS DE CHAMADAS DE FUNÇÃO
     public List<ASTNode> parseArguments() {
         parent.eat(Token.TokenType.DELIMITER, "(");
         List<ASTNode> args = new ArrayList<>();
+
         if (!parent.current().getValue().equals(")")) {
             do {
                 args.add(parseExpression());
@@ -121,6 +151,7 @@ public class ExpressionParser {
                 else break;
             } while (!parent.current().getValue().equals(")"));
         }
+
         parent.eat(Token.TokenType.DELIMITER, ")");
         return args;
     }

@@ -1,6 +1,4 @@
-
-
-    main {
+main {
         function void listas(List<string> list){
         list.add("hello guys");
         }
@@ -15,7 +13,7 @@
         List nomes = (nome, outro);
 
 
-        if(nomes.get(0) != "hal") {
+        if(nomes.get(0) == "hal") {
         print("pos 0 e igual a halley");
         }
         else {

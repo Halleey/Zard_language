@@ -1,93 +1,40 @@
-function double sum(double a, double b) {
-    return a + b;
-}
+main {
+    print("=== Iniciando teste de otimizacao ===");
 
-function double sub(double a, double b) {
-    return a - b;
-}
+    int a = 10;
+    int b = 20;
+    int soma = a + b;
 
-function double mul(double a, double b) {
-    return a * b;
-}
+    if (false) {
+        print("Nunca deve aparecer!");
+        soma = soma * 999;
+    }
 
-function double div(double a, double b) {
-    if (b == 0) {
-        print("Erro: divisao por zero!");
-        return 0.0;
-    }
-    return a / b;
-}
+    print("Soma = ");
+    print(soma);
 
-function double pow(double base, int exp) {
-    if (exp < 0) {
-        print("Aviso: expoente negativo nao suportado, retornando 0");
-        return 0.0;
+    function void inutil() {
+        print("Função inutil chamada!");
     }
-    double result = 1.0;
-    int i = 0;
-    while (i < exp) {
-        result = result * base;
-        i++;
-    }
-    return result;
-}
 
-function double sqrt(double x) {
-    if (x < 0) {
-        print("Erro: sqrt de numero negativo!");
-        return 0.0;
-    }
-    double guess = x / 2.0;
-    int i = 0;
-    while (i < 20) {
-        guess = (guess + x / guess) / 2.0;
-        i++;
-    }
-    return guess;
-}
+    string lixo = "sou lixo";
 
-function double sin(double x) {
-    double term = x;
-    double sum = term;
-    int n = 1;
-    while (n < 10) {
-        term = -term * x * x / ((2 * n) * (2 * n + 1));
-        sum = sum + term;
-        n++;
+    function int interna(int x) {
+        int y = x * 2;
+        return y;
     }
-    return sum;
-}
 
-function double cos(double x) {
-    double term = 1.0;
-    double sum = term;
-    int n = 1;
-    while (n < 10) {
-        term = -term * x * x / ((2 * n - 1) * (2 * n));
-        sum = sum + term;
-        n++;
+    function double quadrado(double x) {
+        return x * x;
     }
-    return sum;
-}
 
-function int fact(int n) {
-    if (n < 0) {
-        print("Erro: factorial de numero negativo!");
-        return 0;
-    }
-    int result = 1;
-    int i = 1;
-    while (i <= n) {
-        result = result * i;
-        i++;
-    }
-    return result;
-}
+    int resultado = interna(5);
+    print("Resultado interno = ");
+    print(resultado);
 
-function int factorial(int n )
-{
-    if(n == 0) {
-    return 1;
-   }
-    return n * factorial(n -1 );
+    while (0 < 0) {
+        print("Nunca roda!");
+    }
+
+    print("=== Fim do teste ===");
 }

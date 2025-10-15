@@ -131,7 +131,7 @@ define i32 @main() {
 
   %t36 = call %String* @createString(i8* %t32)
 ;;VAL:%t36;;TYPE:%String*
-  %t37 = call i1 @strcmp_neq(%String* %t36, %String* %t34)
+  %t37 = call i1 @strcmp_eq(%String* %t36, %String* %t34)
 ;;VAL:%t37;;TYPE:i1
 
   br i1 %t37, label %then_0, label %else_0

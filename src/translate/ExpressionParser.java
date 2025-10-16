@@ -21,58 +21,46 @@ public class ExpressionParser {
 
     // EXPRESSÃO PRINCIPAL
     public ASTNode parseExpression() {
-        System.out.println("[parseExpression] Iniciando - token atual: " + parent.current());
-        ASTNode node = parseComparison();
-        System.out.println("[parseExpression] Finalizou expressão: " + node);
-        return node;
+        return parseComparison();
     }
 
     private ASTNode parseComparison() {
-        System.out.println("[parseComparison] Iniciando - token atual: " + parent.current());
         ASTNode left = parseAddSub();
 
         while (parent.current().getType() == Token.TokenType.OPERATOR &&
                 List.of("<", ">", "<=", ">=", "==", "!=").contains(parent.current().getValue())) {
             String op = parent.current().getValue();
-            System.out.println("[parseComparison] Operador encontrado: " + op);
             parent.advance();
             ASTNode right = parseAddSub();
             left = new BinaryOpNode(left, op, right);
         }
 
-        System.out.println("[parseComparison] Retornando: " + left);
         return left;
     }
 
     private ASTNode parseAddSub() {
-        System.out.println("[parseAddSub] Iniciando - token atual: " + parent.current());
         ASTNode left = parseTerm();
 
         while (parent.current().getValue().equals("+") || parent.current().getValue().equals("-")) {
             String op = parent.current().getValue();
-            System.out.println("[parseAddSub] Operador encontrado: " + op);
             parent.advance();
             ASTNode right = parseTerm();
             left = new BinaryOpNode(left, op, right);
         }
 
-        System.out.println("[parseAddSub] Retornando: " + left);
         return left;
     }
 
     private ASTNode parseTerm() {
-        System.out.println("[parseTerm] Iniciando - token atual: " + parent.current());
         ASTNode left = parseFactor();
 
         while (parent.current().getValue().equals("*") || parent.current().getValue().equals("/")) {
             String op = parent.current().getValue();
-            System.out.println("[parseTerm] Operador encontrado: " + op);
             parent.advance();
             ASTNode right = parseFactor();
             left = new BinaryOpNode(left, op, right);
         }
 
-        System.out.println("[parseTerm] Retornando: " + left);
         return left;
     }
 
@@ -84,7 +72,6 @@ public class ExpressionParser {
         if (tok.getType() == Token.TokenType.OPERATOR &&
                 (tok.getValue().equals("+") || tok.getValue().equals("-") || tok.getValue().equals("!"))) {
             String op = tok.getValue();
-            System.out.println("[parseFactor] Operador unário: " + op);
             parent.advance();
             ASTNode factor = parseFactor();
             return new UnaryOpNode(op, factor);

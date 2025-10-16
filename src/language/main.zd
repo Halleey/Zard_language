@@ -1,26 +1,8 @@
-import "src/language/stdlib/Math.zd" as math;
+
 main {
 
-        function void lists(List<string> list){
-        list.add("hello guys");
-        }
-        List<string> name;
-        call lists(name);
-        print(name);
-
-        int x = input();
-        print(x);
-
-        string nome = "halley";
-        string outro = "misty";
-        print(outro);
-        List nomes = (nome, outro);
-
-
-        if(nomes.get(0) == "halley") {
-        print("pos 0 e igual a halley");
-        }
-        else {
-        print("nao era igual");
-       }
-   }
+string nome = "zard";
+print(nome);
+function string hi() {return "hello world";}
+print(hi());
+}

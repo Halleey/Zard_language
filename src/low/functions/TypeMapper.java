@@ -1,6 +1,7 @@
-package low.functions;public class TypeMapper {
+package low.functions;
 
 
+public class TypeMapper {
     public String toLLVM(String type) {
         if (type == null || type.isEmpty()) {
             throw new RuntimeException("Tipo inválido ou vazio");

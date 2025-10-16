@@ -8,7 +8,6 @@ import low.module.LLVisitorMain;
 
 import java.util.ArrayList;
 import java.util.List;
-
 public class FunctionEmitter {
     private final LLVisitorMain visitor;
     private final TypeMapper typeMapper = new TypeMapper();
@@ -62,22 +61,19 @@ public class FunctionEmitter {
             visitor.putVarType(paramName, paramType);
         }
 
-        // Corpo da função
         for (ASTNode stmt : fn.getBody()) {
-            // Retorno de string literal
-            // dentro do emit(), no loop sobre stmt
+
             if (stmt instanceof ReturnNode ret && ret.expr instanceof LiteralNode lit &&
                     lit.value.getType().equals("string")) {
 
                 String literal = (String) lit.value.getValue();
 
-                // cria global da string e obtém o nome e tamanho exato
                 String strName = visitor.getGlobalStrings().getOrCreateString(literal);
-                int len = visitor.getGlobalStrings().getLength(literal); // tamanho exato do array [N x i8]
+                int len = visitor.getGlobalStrings().getLength(literal);
 
-                // temporários únicos via TempManager
                 String tmpPtr = visitor.getTemps().newTemp();       // ponteiro para literal
-                String tmpStruct = visitor.getTemps().newTemp();    // struct %String
+                String tmpMalloc = visitor.getTemps().newTemp();    // i8* do malloc
+                String tmpStruct = visitor.getTemps().newTemp();    // struct %String (heap)
                 String tmpFieldData = visitor.getTemps().newTemp(); // campo .data
                 String tmpFieldLen = visitor.getTemps().newTemp();  // campo .length
 
@@ -88,8 +84,11 @@ public class FunctionEmitter {
                         .append(" x i8]* ").append(strName)
                         .append(", i32 0, i32 0\n");
 
-                // aloca struct %String
-                sb.append("  ").append(tmpStruct).append(" = alloca %String\n");
+                // aloca struct %String no heap
+                sb.append("  ").append(tmpMalloc)
+                        .append(" = call i8* @malloc(i64 ptrtoint (%String* getelementptr (%String, %String* null, i32 1) to i64))\n");
+                sb.append("  ").append(tmpStruct)
+                        .append(" = bitcast i8* ").append(tmpMalloc).append(" to %String*\n");
 
                 // inicializa campo .data
                 sb.append("  ").append(tmpFieldData)
@@ -103,7 +102,7 @@ public class FunctionEmitter {
                         .append(tmpStruct).append(", i32 0, i32 1\n");
                 sb.append("  store i64 ").append(len - 1).append(", i64* ").append(tmpFieldLen).append("\n");
 
-                // Retorno seguro
+                // Retorno seguro (heap)
                 sb.append("  ret %String* ").append(tmpStruct).append("\n");
             } else {
                 sb.append(stmt.accept(visitor));
@@ -123,5 +122,3 @@ public class FunctionEmitter {
         return fn.getBody().stream().anyMatch(n -> n instanceof ReturnNode);
     }
 }
-
-

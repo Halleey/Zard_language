@@ -1,11 +1,11 @@
 import "src/language/stdlib/Math.zd" as math;
 main {
 
-        function void listas(List<string> list){
+        function void lists(List<string> list){
         list.add("hello guys");
         }
         List<string> name;
-        call listas(name);
+        call lists(name);
         print(name);
 
         int x = input();

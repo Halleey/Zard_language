@@ -615,8 +615,8 @@ endif_4:
 @.str8 = private constant [23 x i8] c"pos 0 e igual a halley\00"
 @.str9 = private constant [14 x i8] c"nao era igual\00"
 
-; === Função: listas ===
-define void @listas(i8* %list) {
+; === Função: lists ===
+define void @lists(i8* %list) {
 entry:
   %list_addr = alloca i8*
   store i8* %list, i8** %list_addr
@@ -642,7 +642,7 @@ define i32 @main() {
   ; FunctionCallNode
   %t147 = load i8*, i8** %name
 ;;VAL:%t147;;TYPE:i8*
-  call void @listas(i8* %t147)
+  call void @lists(i8* %t147)
 ;;VAL:void;;TYPE:void
   ; PrintNode
   %t148 = load i8*, i8** %name

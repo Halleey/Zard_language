@@ -286,7 +286,7 @@ declare void @removeItem(ptr, i64)
 
 declare ptr @getItem(ptr, i64)
 
-define void @listas(ptr %list) {
+define void @lists(ptr %list) {
 entry:
   %t143 = call ptr @createString(ptr nonnull @.str4)
   call void @arraylist_add_String(ptr %list, ptr %t143)
@@ -295,7 +295,7 @@ entry:
 
 define i32 @main() {
   %t145 = call ptr @arraylist_create(i64 4)
-  call void @listas(ptr %t145)
+  call void @lists(ptr %t145)
   call void @arraylist_print_string(ptr %t145)
   %t150 = call i32 @inputInt(ptr null)
   %1 = call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.strInt, i32 %t150)

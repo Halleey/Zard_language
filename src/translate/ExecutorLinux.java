@@ -18,7 +18,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 import java.io.*;
-public class Executor {
+public class ExecutorLinux {
     public static void main(String[] args) throws Exception {
         // Detectar sistema operacional
         String os = System.getProperty("os.name").toLowerCase();

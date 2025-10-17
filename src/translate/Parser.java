@@ -11,6 +11,7 @@ import ast.home.MainParser;
 import ast.ifstatements.IfParser;
 import ast.loops.WhileParser;
 import ast.prints.PrintParser;
+import ast.structs.StructParser;
 import tokens.Token;
 
 import java.util.*;
@@ -104,6 +105,10 @@ public class Parser {
                 case "main" -> {
                     MainParser mainParser = new MainParser(this);
                     return mainParser.parseMain();
+                }
+                case "Struct" -> {
+                    StructParser structParser = new StructParser(this);
+                    return structParser.parseStruct();
                 }
                 case "input" -> {
                     InputParser inputParser = new InputParser(this);

@@ -11,6 +11,7 @@ import low.module.LLVMEmitVisitor;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 public class VariableDeclarationNode extends ASTNode {
     private final String name;
     private final String type;          // Ex.: int, double, string, List<int>, List<string>, Map<int,string>

@@ -1,7 +1,9 @@
 package translate;
 
 import ast.ASTNode;
+import ast.exceptions.ReturnValue;
 import ast.prints.ASTPrinter;
+import ast.runtime.RuntimeContext;
 import low.module.LLVMGenerator;
 import tokens.Lexer;
 import tokens.Token;
@@ -36,6 +38,16 @@ public class ExecutorLinux {
 
         System.out.println("=== AST ===");
         ASTPrinter.printAST(ast);
+
+        RuntimeContext ctx = new RuntimeContext();
+        for (ASTNode node : ast) {
+            try {
+                node.evaluate(ctx);
+            } catch (ReturnValue rv) {
+                break;
+            }
+        }
+
 
         // Gerar LLVM IR
         LLVMGenerator llvmGen = new LLVMGenerator();

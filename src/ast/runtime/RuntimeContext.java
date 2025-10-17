@@ -1,13 +1,17 @@
 package ast.runtime;
 
 import ast.expressions.TypedValue;
+import ast.variables.VariableDeclarationNode;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class RuntimeContext {
     private final Map<String, TypedValue> variables = new HashMap<>();
     private final RuntimeContext parent;
+    private final Map<String, StructDefinition> structTypes = new HashMap<>();
+
 
 
     public RuntimeContext() {
@@ -24,6 +28,21 @@ public class RuntimeContext {
         }
         variables.put(name, value);
     }
+
+
+    public void registerStructType(String name, List<VariableDeclarationNode> fields) {
+        if (structTypes.containsKey(name)) {
+            throw new RuntimeException("Struct já definida: " + name);
+        }
+        structTypes.put(name, new StructDefinition(name, fields));
+    }
+
+    public StructDefinition getStructType(String name) {
+        if (structTypes.containsKey(name)) return structTypes.get(name);
+        if (parent != null) return parent.getStructType(name);
+        throw new RuntimeException("Struct não definida: " + name);
+    }
+
 
     public void setVariable(String name, TypedValue value) {
         if (variables.containsKey(name)) {

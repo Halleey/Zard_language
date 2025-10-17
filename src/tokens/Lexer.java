@@ -81,6 +81,7 @@ public class Lexer {
             case "import":
             case "var":
             case "as":
+            case "Struct":
                 return new Token(Token.TokenType.KEYWORD, identifier);
             case "new":
                 return new Token(Token.TokenType.INSTANCE, identifier);

@@ -1,8 +1,8 @@
 
 main {
+Struct Pessoa {
+    string nome;
+    int idade;
+}
 
-string nome = "zard";
-print(nome);
-function string hi() {return "hello world";}
-print(hi());
 }

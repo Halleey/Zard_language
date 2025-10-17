@@ -1,8 +1,5 @@
-
+import "src/language/stdlib/Math.zd" as P;
 main {
-Struct Pessoa {
-    string nome;
-    int idade;
-}
+
 
 }

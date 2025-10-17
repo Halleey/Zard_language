@@ -36,35 +36,50 @@ public class ImportNode extends ASTNode {
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
         try {
+            System.out.println("[DEBUG] Importando arquivo: " + path);
+
             String code = Files.readString(Path.of(path));
             Lexer lexer = new Lexer(code);
             List<Token> tokens = lexer.tokenize();
             Parser parser = new Parser(tokens);
             List<ASTNode> ast = parser.parse();
 
-            // Contexto isolado para o módulo
             RuntimeContext importCtx = new RuntimeContext();
 
             for (ASTNode node : ast) {
-                if (node instanceof FunctionNode funcNode) {
-                    importCtx.declareVariable(funcNode.getName(), new TypedValue("function", funcNode));
 
-                    // Também registra no contexto global com prefixo: alias.nomeFunc
+                if (node instanceof FunctionNode funcNode) {
                     String qualifiedName = alias + "." + funcNode.getName();
+                    importCtx.declareVariable(funcNode.getName(), new TypedValue("function", funcNode));
                     ctx.declareVariable(qualifiedName, new TypedValue("function", funcNode));
+
+                    System.out.println("[DEBUG] Importou função: " + qualifiedName);
                 }
+
+                else if (node instanceof StructNode structNode) {
+                    String qualifiedName = alias + "." + structNode.getName();
+                    importCtx.declareVariable(structNode.getName(), new TypedValue("struct", structNode));
+                    ctx.declareVariable(qualifiedName, new TypedValue("struct", structNode));
+
+                    System.out.println("[DEBUG] Importou struct: " + qualifiedName);
+                    System.out.println("[DEBUG] Campos da struct " + structNode.getName() + ":");
+                    for (VariableDeclarationNode field : structNode.getFields()) {
+                        System.out.println("         - " + field.getType() + " " + field.getName());
+                    }
+                }
+
                 else if (node instanceof VariableDeclarationNode varNode) {
                     varNode.evaluate(importCtx);
-
-                    // registra variável também com alias.
                     String qualifiedName = alias + "." + varNode.getName();
                     TypedValue val = importCtx.getVariable(varNode.getName());
                     ctx.declareVariable(qualifiedName, val);
+
+                    System.out.println("[DEBUG] Importou variável: " + qualifiedName);
                 }
             }
 
-            // Também guarda o namespace completo, caso o usuário queira usar alias diretamente
             ctx.declareVariable(alias, new TypedValue("namespace", importCtx));
+            System.out.println("[DEBUG] Namespace registrado: " + alias);
 
         } catch (IOException e) {
             throw new RuntimeException("Erro ao importar arquivo: " + path, e);
@@ -72,7 +87,6 @@ public class ImportNode extends ASTNode {
 
         return new TypedValue("null", null);
     }
-
 
 
     @Override

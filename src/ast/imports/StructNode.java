@@ -12,6 +12,14 @@ public class StructNode extends ASTNode {
     private final String name;
     private final List<VariableDeclarationNode> fields;
 
+    public String getName() {
+        return name;
+    }
+
+    public List<VariableDeclarationNode> getFields() {
+        return fields;
+    }
+
     public StructNode(String name, List<VariableDeclarationNode> fields) {
         this.name = name;
         this.fields = fields;

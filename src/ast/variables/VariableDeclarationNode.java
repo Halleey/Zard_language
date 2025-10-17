@@ -6,16 +6,17 @@ import ast.maps.DynamicMap;
 import ast.maps.MapNode;
 import ast.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
+import ast.runtime.StructDefinition;
+import ast.structs.StructInstaceNode;
 import low.module.LLVMEmitVisitor;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
 public class VariableDeclarationNode extends ASTNode {
     private final String name;
-    private final String type;          // Ex.: int, double, string, List<int>, List<string>, Map<int,string>
-    public final ASTNode initializer;  // pode ser null
+    private final String type;
+    public final ASTNode initializer;
 
     public VariableDeclarationNode(String name, String type, ASTNode initializer) {
         this.name = name;
@@ -32,7 +33,13 @@ public class VariableDeclarationNode extends ASTNode {
     public TypedValue evaluate(RuntimeContext ctx) {
         TypedValue value;
 
-        value = createInitialValue();
+        if (ctxHasStruct(ctx, type)) {
+            StructDefinition def = ctx.getStructType(type);
+            value = new StructInstaceNode(type, def.getFields()).evaluate(ctx);
+        } else {
+
+            value = createInitialValue();
+        }
 
         ctx.declareVariable(name, value);
 
@@ -42,13 +49,21 @@ public class VariableDeclarationNode extends ASTNode {
             } else if (initializer instanceof MapNode) {
                 value = evaluateMap(ctx, (MapNode) initializer, (DynamicMap) value.getValue());
             } else {
-
                 value = initializer.evaluate(ctx);
                 ctx.setVariable(name, value);
             }
         }
 
         return value;
+    }
+
+    private boolean ctxHasStruct(RuntimeContext ctx, String typeName) {
+        try {
+            ctx.getStructType(typeName);
+            return true;
+        } catch (RuntimeException e) {
+            return false;
+        }
     }
 
     private TypedValue evaluateList(RuntimeContext ctx, ListNode listNode, DynamicList list) {
@@ -81,12 +96,11 @@ public class VariableDeclarationNode extends ASTNode {
         return new TypedValue(type, map);
     }
 
-    private TypedValue createInitialValue() {
+    public TypedValue createInitialValue() {
         if (type.startsWith("List<")) {
             String elementType = getListElementType(type);
             return new TypedValue(type, new DynamicList(elementType, new ArrayList<>()));
         } else if (type.startsWith("Map<")) {
-            // Inicializa mapa vazio temporário com tipos declarados
             String keyType = type.substring(type.indexOf('<') + 1, type.indexOf(','));
             String valueType = type.substring(type.indexOf(',') + 1, type.length() - 1);
             return new TypedValue(type, new DynamicMap(keyType, valueType, new LinkedHashMap<>()));
@@ -112,10 +126,11 @@ public class VariableDeclarationNode extends ASTNode {
         return listType.substring(5, listType.length() - 1);
     }
 
-
-    @Override public void print(String prefix) {
+    @Override
+    public void print(String prefix) {
         System.out.println(prefix + "VarDecl: " + type + " " + name);
-        if (initializer != null) { System.out.println(prefix + " Initializer:");
+        if (initializer != null) {
+            System.out.println(prefix + " Initializer:");
             initializer.print(prefix + " ");
         }
     }

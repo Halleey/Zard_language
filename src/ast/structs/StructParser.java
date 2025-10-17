@@ -6,6 +6,7 @@ import translate.Parser;
 
 import java.util.ArrayList;
 import java.util.List;
+
 public class StructParser {
     private final Parser parser;
 
@@ -13,12 +14,7 @@ public class StructParser {
         this.parser = parser;
     }
 
-    public StructNode parseStruct() {
-        parser.eat(Token.TokenType.KEYWORD, "Struct");
-
-        String structName = parser.current().getValue();
-        parser.eat(Token.TokenType.IDENTIFIER);
-
+    public StructNode parseStructAfterKeyword(String structName) {
         parser.eat(Token.TokenType.DELIMITER, "{");
 
         List<VariableDeclarationNode> fields = new ArrayList<>();
@@ -27,9 +23,7 @@ public class StructParser {
             String fieldType = parseType();
             String fieldName = parser.current().getValue();
             parser.eat(Token.TokenType.IDENTIFIER);
-
             parser.eat(Token.TokenType.DELIMITER, ";");
-
             fields.add(new VariableDeclarationNode(fieldName, fieldType, null));
         }
 

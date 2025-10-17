@@ -1,0 +1,60 @@
+package ast.structs;
+
+import ast.ASTNode;
+import ast.expressions.TypedValue;
+import ast.runtime.RuntimeContext;
+import low.module.LLVMEmitVisitor;
+
+import java.util.Map;
+
+public class StructFieldAccessNode extends ASTNode {
+    private final ASTNode structInstance;
+    private final String fieldName;
+    private final ASTNode value;
+
+    public StructFieldAccessNode(ASTNode structInstance, String fieldName, ASTNode value) {
+        this.structInstance = structInstance;
+        this.fieldName = fieldName;
+        this.value = value;
+    }
+
+    @Override
+    public String accept(LLVMEmitVisitor visitor) {
+        return "";
+    }
+
+    @Override
+    public TypedValue evaluate(RuntimeContext ctx) {
+        TypedValue structVal = structInstance.evaluate(ctx);
+
+        if (!(structVal.getValue() instanceof Map<?, ?>)) {
+            throw new RuntimeException("Não é uma struct: " + structInstance);
+        }
+
+        @SuppressWarnings("unchecked")
+        Map<String, TypedValue> fields = (Map<String, TypedValue>) structVal.getValue();
+
+        TypedValue val;
+        if (value != null) {
+            val = value.evaluate(ctx);
+            fields.put(fieldName, val);
+        } else {
+            val = fields.get(fieldName);
+            if (val == null) {
+                throw new RuntimeException("Campo não existe: " + fieldName);
+            }
+        }
+        return val;
+    }
+
+    @Override
+    public void print(String prefix) {
+        if (value != null) {
+            System.out.println(prefix + "StructFieldAssignment: " + fieldName);
+            System.out.println(prefix + " Value:");
+            value.print(prefix + "  ");
+        } else {
+            System.out.println(prefix + "StructFieldAccess: " + fieldName);
+        }
+    }
+}

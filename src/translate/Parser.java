@@ -11,6 +11,7 @@ import ast.home.MainParser;
 import ast.ifstatements.IfParser;
 import ast.loops.WhileParser;
 import ast.prints.PrintParser;
+import ast.structs.StructInstanceParser;
 import ast.structs.StructParser;
 import tokens.Token;
 
@@ -107,9 +108,24 @@ public class Parser {
                     return mainParser.parseMain();
                 }
                 case "Struct" -> {
-                    StructParser structParser = new StructParser(this);
-                    return structParser.parseStruct();
+                    eat(Token.TokenType.KEYWORD, "Struct");
+
+                    String structName = current().getValue();
+                    eat(Token.TokenType.IDENTIFIER);
+
+                    Token next = current();
+                    System.out.println("token atual após nome: " + next);
+
+                    if (next.getValue().equals("{")) {
+                        StructParser structParser = new StructParser(this);
+                        return structParser.parseStructAfterKeyword(structName);
+                    } else {
+                        StructInstanceParser instanceParser = new StructInstanceParser(this);
+                        return instanceParser.parseStructInstanceAfterKeyword(structName);
+                    }
                 }
+
+
                 case "input" -> {
                     InputParser inputParser = new InputParser(this);
                     return inputParser.parse();

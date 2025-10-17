@@ -1,8 +1,11 @@
 
 main {
-Struct Pessoa {
+
+Struct  Pessoa {
+List<int> numbers;
+int  idade;
 string nome;
-List<string> tarefa;
-Map <int, string> nam;
+boolean isReal;
 }
+
 }

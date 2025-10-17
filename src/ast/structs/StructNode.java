@@ -1,4 +1,4 @@
-package ast.imports;
+package ast.structs;
 
 import ast.ASTNode;
 import ast.expressions.TypedValue;
@@ -26,7 +26,7 @@ public class StructNode extends ASTNode {
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
-        return "";
+        return visitor.visit(this);
     }
 
     @Override

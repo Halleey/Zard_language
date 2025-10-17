@@ -1,6 +1,5 @@
 package ast.structs;
 
-import ast.imports.StructNode;
 import ast.variables.VariableDeclarationNode;
 import tokens.Token;
 import translate.Parser;

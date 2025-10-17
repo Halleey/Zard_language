@@ -1,4 +1,5 @@
 package low.module;
+import ast.ASTNode;
 import ast.exceptions.BreakNode;
 import ast.exceptions.ReturnNode;
 import ast.functions.FunctionCallNode;
@@ -6,6 +7,7 @@ import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
 import ast.imports.ImportNode;
+import ast.structs.StructNode;
 import ast.lists.*;
 import ast.loops.WhileNode;
 import ast.maps.MapNode;
@@ -19,6 +21,7 @@ import low.main.GlobalStringManager;
 import low.TempManager;
 import low.main.MainEmitter;
 import low.prints.PrintEmitter;
+import low.structs.StructEmitter;
 import low.variables.*;
 import low.whiles.WhileEmitter;
 import ast.prints.PrintNode;
@@ -28,6 +31,7 @@ import java.util.*;
 public class LLVisitorMain implements LLVMEmitVisitor {
     private final Map<String, String> varTypes = new HashMap<>();
     private final TempManager temps = new TempManager();
+    private final List<String> structDefinitions = new ArrayList<>();
     private final GlobalStringManager globalStrings = new GlobalStringManager();
     private final Map<String, String> listElementTypes = new HashMap<>();
     public final VariableEmitter varEmitter = new VariableEmitter(varTypes, temps, this);
@@ -50,8 +54,31 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final Map<String, FunctionNode> functions = new HashMap<>();
     public final Map<String, String> functionTypes = new HashMap<>();
     private final Map<String, FunctionNode> importedFunctions = new HashMap<>();
-    private final Set<String> tiposDeListasUsados = new HashSet<>();
+    public final Set<String> tiposDeListasUsados = new HashSet<>();
     private final ImportEmitter importEmitter = new ImportEmitter(this, this.tiposDeListasUsados);
+    private final StructEmitter structEmitter  = new StructEmitter(this);
+
+
+    public void addStructDefinition(String llvmDef) {
+        structDefinitions.add(llvmDef);
+    }
+
+    public List<String> getStructDefinitions() {
+        return structDefinitions;
+    }
+
+    @Override
+    public String visit(StructNode node) {
+        String llvm = structEmitter.emit(node);
+        addStructDefinition(llvm);
+        return "";
+    }
+
+    @Override
+    public String visit(MainAST node) {
+        MainEmitter mainEmitter = new MainEmitter(globalStrings, temps, tiposDeListasUsados, structDefinitions);
+        return mainEmitter.emit(node, this);
+    }
 
     public void registerImportedFunction(String qualifiedName, FunctionNode func) {
         importedFunctions.put(qualifiedName, func);
@@ -93,13 +120,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         }
         return loopEndLabels.peek();
     }
-
-    @Override
-    public String visit(MainAST node)  {
-        MainEmitter mainEmitter = new MainEmitter(globalStrings, temps, tiposDeListasUsados);
-        return mainEmitter.emit(node, this);
-    }
-
 
     public String visit(VariableDeclarationNode node) {
         return varEmitter.emitAlloca(node) + varEmitter.emitInit(node);
@@ -228,6 +248,16 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public VariableEmitter getVariableEmitter() {
         return varEmitter;
     }
+
+
+    public void registrarStructs(MainAST node) {
+        for (ASTNode stmt : node.body) {
+            if (stmt instanceof StructNode structNode) {
+                structNode.accept(this);
+            }
+        }
+    }
+
 
 
 }

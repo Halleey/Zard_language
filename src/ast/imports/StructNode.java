@@ -11,7 +11,6 @@ import java.util.List;
 public class StructNode extends ASTNode {
     private final String name;
     private final List<VariableDeclarationNode> fields;
-
     public String getName() {
         return name;
     }

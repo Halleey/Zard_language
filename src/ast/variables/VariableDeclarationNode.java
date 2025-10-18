@@ -14,8 +14,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-
 public class VariableDeclarationNode extends ASTNode {
     private final String name;
     private final String type;
@@ -35,23 +33,25 @@ public class VariableDeclarationNode extends ASTNode {
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
         TypedValue value;
-
         if (ctxHasStruct(ctx, type)) {
-            StructDefinition def = ctx.getStructType(type);
-            List<ASTNode> positionalValues = new ArrayList<>();
-            for (VariableDeclarationNode field : def.getFields()) {
-                positionalValues.add(field.initializer);
+            String structName = extractStructName(type);
+
+            StructInstaceNode instanceNode;
+            if (initializer instanceof StructInstaceNode) {
+                instanceNode = (StructInstaceNode) initializer;
+            } else {
+                instanceNode = new StructInstaceNode(structName, null);
             }
-            value = new StructInstaceNode(type, positionalValues).evaluate(ctx);
+
+            value = instanceNode.evaluate(ctx);
 
         } else {
-
             value = createInitialValue();
         }
 
         ctx.declareVariable(name, value);
 
-        if (initializer != null) {
+        if (initializer != null && !(initializer instanceof StructInstaceNode)) {
             if (initializer instanceof ListNode) {
                 value = evaluateList(ctx, (ListNode) initializer, (DynamicList) value.getValue());
             } else if (initializer instanceof MapNode) {
@@ -67,11 +67,21 @@ public class VariableDeclarationNode extends ASTNode {
 
     private boolean ctxHasStruct(RuntimeContext ctx, String typeName) {
         try {
-            ctx.getStructType(typeName);
-            return true;
+            if (typeName.startsWith("Struct<")) {
+                ctx.getStructType(extractStructName(typeName));
+                return true;
+            }
+            return false;
         } catch (RuntimeException e) {
             return false;
         }
+    }
+
+    private String extractStructName(String typeName) {
+        if (typeName.startsWith("Struct<") && typeName.endsWith(">")) {
+            return typeName.substring("Struct<".length(), typeName.length() - 1);
+        }
+        return typeName;
     }
 
     private TypedValue evaluateList(RuntimeContext ctx, ListNode listNode, DynamicList list) {

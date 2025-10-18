@@ -7,6 +7,7 @@ import ast.maps.DynamicMap;
 import ast.maps.MapNode;
 import ast.maps.MapParser;
 import ast.lists.DynamicList;
+import ast.structs.StructInstanceParser;
 import ast.variables.LiteralNode;
 import ast.variables.VariableNode;
 import tokens.Token;
@@ -31,14 +32,42 @@ public class VarDeclarationParser {
 
         if (type.equals("List")) {
             ListDeclarationParser listParser = new ListDeclarationParser(parser);
-            return listParser.parse(null); // nome será lido dentro
+            return listParser.parse(null);
         }
         else if (type.equals("Map")) {
             MapParser mapParser = new MapParser(parser);
             return mapParser.parse(null);
-        } else {
+        }
+        else if (type.equals("Struct")) {
+
+            String structName = parser.current().getValue();
+            parser.eat(Token.TokenType.IDENTIFIER);
+
+            String varName = parser.current().getValue();
+            parser.eat(Token.TokenType.IDENTIFIER);
+
+            if (parser.current().getValue().equals("=")) {
+                parser.advance();
+
+                if (parser.current().getValue().equals("{")) {
+
+                    StructInstanceParser instanceParser = new StructInstanceParser(parser);
+                    VariableDeclarationNode node = instanceParser.parseStructInline(structName, varName);
+                    parser.declareVariableType(varName, "Struct<" + structName + ">");
+                    return node;
+                } else {
+                    initializer = parser.parseExpression();
+                }
+            } else {
+                parser.eat(Token.TokenType.DELIMITER, ";");
+            }
+
+            parser.declareVariableType(varName, "Struct<" + structName + ">");
+            return new VariableDeclarationNode(varName, "Struct<" + structName + ">", initializer);
+        }
+        else {
             String name = parser.current().getValue();
-            parser.advance(); // consome nome
+            parser.advance();
 
             if (!type.equals("var")) {
                 parser.declareVariableType(name, type);

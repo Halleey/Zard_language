@@ -11,6 +11,9 @@ int idade = 10;
     };
 
     Struct Pessoa p1;
+    p1.nome ="angel";
+    p1.idade = 16;
+    print(p1);
     Struct Pessoa p2 = {"Lawliet"};
     print("primeira struct");
     print(p);
@@ -23,13 +26,8 @@ int idade = 10;
 
     print(mensagem);
 
-
     List<int> numeros;
-    numeros.add(1);
-    numeros.add(100);
-    print(numeros);
-    numeros.remove(0);
-    numeros.clear();
+    numeros.add(0);
     function int dobrar(int valor) {
         valor  = valor * 2;
         return valor;
@@ -46,7 +44,6 @@ int idade = 10;
         contador  =  dobrar(contador);
 
         numeros.add(contador);
-
         contador++;
     }
 

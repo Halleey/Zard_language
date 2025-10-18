@@ -179,9 +179,6 @@ public class Parser {
         if (tok.getType() == Token.TokenType.IDENTIFIER) {
             String name = tok.getValue();
             advance(); // consome IDENTIFIER
-            System.out.println(
-                    "-----" + name
-            );
             IdentifierParser idParser = new IdentifierParser(this);
             return idParser.parseAsStatement(name);
         }

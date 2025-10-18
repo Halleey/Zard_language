@@ -7,7 +7,6 @@ import translate.Parser;
 
 import java.util.ArrayList;
 import java.util.List;
-
 public class StructInstanceParser {
     private final Parser parser;
 
@@ -44,6 +43,35 @@ public class StructInstanceParser {
         parser.eat(Token.TokenType.DELIMITER, ";");
 
         StructInstaceNode instanceNode = new StructInstaceNode(structName, positionalValues);
-        return new VariableDeclarationNode(varName, structName, instanceNode);
+
+        parser.declareVariableType(varName, "Struct<" + structName + ">");
+
+        return new VariableDeclarationNode(varName, "Struct<" + structName + ">", instanceNode);
+    }
+
+    public VariableDeclarationNode parseStructInline(String structName, String varName) {
+        List<ASTNode> positionalValues = new ArrayList<>();
+
+        parser.eat(Token.TokenType.DELIMITER, "{");
+
+        while (!parser.current().getValue().equals("}")) {
+            ASTNode value = parser.parseExpression();
+            positionalValues.add(value);
+
+            if (parser.current().getValue().equals(",")) {
+                parser.eat(Token.TokenType.DELIMITER, ",");
+            } else {
+                break;
+            }
+        }
+
+        parser.eat(Token.TokenType.DELIMITER, "}");
+        parser.eat(Token.TokenType.DELIMITER, ";");
+
+        StructInstaceNode instanceNode = new StructInstaceNode(structName, positionalValues);
+
+        parser.declareVariableType(varName, "Struct<" + structName + ">");
+
+        return new VariableDeclarationNode(varName, "Struct<" + structName + ">", instanceNode);
     }
 }

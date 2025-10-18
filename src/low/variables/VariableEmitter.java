@@ -126,17 +126,32 @@ public class VariableEmitter {
                 }
             }
         }
-
         if (node.getType().equals("string") && node.initializer instanceof LiteralNode lit) {
             return stringEmitter.createStringFromLiteral(varPtr, (String) lit.value.getValue());
         }
 
         String exprLLVM = node.initializer.accept(visitor);
         String temp = extractTemp(exprLLVM);
-        return exprLLVM + emitStore(node.getName(), llvmType, temp);
+        String tempType = extractType(exprLLVM);
+
+        String result = exprLLVM;
+        if (!tempType.equals(llvmType)) {
+            String castTmp = temps.newTemp();
+
+            if (tempType.equals("i32") && llvmType.equals("double")) {
+                result += "  " + castTmp + " = sitofp i32 " + temp + " to double\n" +
+                        ";;VAL:" + castTmp + ";;TYPE:double\n";
+                temp = castTmp;
+            } else if (tempType.equals("double") && llvmType.equals("i32")) {
+                result += "  " + castTmp + " = fptosi double " + temp + " to i32\n" +
+                        ";;VAL:" + castTmp + ";;TYPE:i32\n";
+                temp = castTmp;
+            }
+        }
+
+        return result + emitStore(node.getName(), llvmType, temp);
     }
 
-    /** Helpers de criação de listas */
     private String callArrayListCreateAndStore(String varPtr) {
         String tmp = temps.newTemp();
         return "  " + tmp + " = call i8* @arraylist_create(i64 4)\n" +
@@ -200,4 +215,12 @@ public class VariableEmitter {
         int typeIdx = code.indexOf(";;TYPE:", lastValIdx);
         return code.substring(lastValIdx + 6, typeIdx).trim();
     }
+
+    private String extractType(String code) {
+        int lastTypeIdx = code.lastIndexOf(";;TYPE:");
+        if (lastTypeIdx == -1)
+            throw new RuntimeException("Cannot find ;;TYPE: in: " + code);
+        return code.substring(lastTypeIdx + 7).trim();
+    }
+
 }

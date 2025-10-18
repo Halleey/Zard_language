@@ -37,7 +37,6 @@ public class ImportNode extends ASTNode {
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
         try {
-            System.out.println("[DEBUG] Importando arquivo: " + path);
 
             String code = Files.readString(Path.of(path));
             Lexer lexer = new Lexer(code);
@@ -54,7 +53,7 @@ public class ImportNode extends ASTNode {
                     importCtx.declareVariable(funcNode.getName(), new TypedValue("function", funcNode));
                     ctx.declareVariable(qualifiedName, new TypedValue("function", funcNode));
 
-                    System.out.println("[DEBUG] Importou função: " + qualifiedName);
+
                 }
 
                 else if (node instanceof StructNode structNode) {
@@ -75,12 +74,12 @@ public class ImportNode extends ASTNode {
                     TypedValue val = importCtx.getVariable(varNode.getName());
                     ctx.declareVariable(qualifiedName, val);
 
-                    System.out.println("[DEBUG] Importou variável: " + qualifiedName);
+
                 }
             }
 
             ctx.declareVariable(alias, new TypedValue("namespace", importCtx));
-            System.out.println("[DEBUG] Namespace registrado: " + alias);
+
 
         } catch (IOException e) {
             throw new RuntimeException("Erro ao importar arquivo: " + path, e);

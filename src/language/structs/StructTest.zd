@@ -5,24 +5,29 @@ main {
     double b = 3;
     int n = 5;
 
-
+    print("Soma:");
     print(math.sum(a, b));
+
     print(math.sub(a, b));
+
     print(math.mul(a, b));
+
     print(math.div(a, b));
 
-
+    print("Potência:");
     print(math.pow(a, 3));
 
-
+    print("Fatorial recursivo:");
     print(math.factorial(n));
 
+    print("Raiz quadrada:");
     print(math.sqrt(a));
 
-
+    print("Seno:");
     print(math.sin(a));
-    print(math.cos(a));
 
+    print("Cosseno:");
+    print(math.cos(a));
 
     print("Tentando dividir por zero:");
     print(math.div(a, 0));

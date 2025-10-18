@@ -12,7 +12,10 @@ import low.module.LLVMEmitVisitor;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+
+
 public class VariableDeclarationNode extends ASTNode {
     private final String name;
     private final String type;
@@ -35,7 +38,12 @@ public class VariableDeclarationNode extends ASTNode {
 
         if (ctxHasStruct(ctx, type)) {
             StructDefinition def = ctx.getStructType(type);
-            value = new StructInstaceNode(type, def.getFields()).evaluate(ctx);
+            List<ASTNode> positionalValues = new ArrayList<>();
+            for (VariableDeclarationNode field : def.getFields()) {
+                positionalValues.add(field.initializer);
+            }
+            value = new StructInstaceNode(type, positionalValues).evaluate(ctx);
+
         } else {
 
             value = createInitialValue();

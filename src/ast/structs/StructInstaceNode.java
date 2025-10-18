@@ -10,18 +10,17 @@ import low.module.LLVMEmitVisitor;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
 public class StructInstaceNode extends ASTNode {
-    private final String name;
-    private final List<VariableDeclarationNode> fields;
+    private final String structName;
+    private final List<ASTNode> positionalValues;
 
-    public StructInstaceNode(String name, List<VariableDeclarationNode> fields) {
-        this.name = name;
-        this.fields = fields;
+    public StructInstaceNode(String structName, List<ASTNode> positionalValues) {
+        this.structName = structName;
+        this.positionalValues = positionalValues;
     }
 
     public String getName() {
-        return name;
+        return structName;
     }
 
     @Override
@@ -31,25 +30,42 @@ public class StructInstaceNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        StructDefinition def = ctx.getStructType(name);
+        StructDefinition def = ctx.getStructType(structName);
         Map<String, TypedValue> fieldValues = new LinkedHashMap<>();
 
-        for (VariableDeclarationNode field : def.getFields()) {
-            fieldValues.put(field.getName(), field.createInitialValue());
+        List<VariableDeclarationNode> fields = def.getFields();
+
+        for (int i = 0; i < fields.size(); i++) {
+            VariableDeclarationNode field = fields.get(i);
+
+            ASTNode astValue = (positionalValues != null && i < positionalValues.size())
+                    ? positionalValues.get(i)
+                    : null;
+
+            TypedValue value = (astValue != null) ? astValue.evaluate(ctx) : field.createInitialValue();
+
+            fieldValues.put(field.getName(), value);
         }
 
-        return new TypedValue( name, fieldValues);
+        return new TypedValue(structName, fieldValues);
     }
-
 
     @Override
     public void print(String prefix) {
-        System.out.println(prefix + "StructInstance: " + name);
-        if (fields != null) {
-            for (VariableDeclarationNode field : fields) {
-                System.out.println(prefix + "  Field: " + field.getType() + " " + field.getName());
+        System.out.println(prefix + "StructInstance: " + structName);
+
+        if (positionalValues != null && !positionalValues.isEmpty()) {
+            for (int i = 0; i < positionalValues.size(); i++) {
+                System.out.println(prefix + "  FieldValue:");
+                ASTNode astValue = positionalValues.get(i);
+                if (astValue != null) {
+                    astValue.print(prefix + "    ");
+                } else {
+                    System.out.println(prefix + "    <default>");
+                }
             }
+        } else {
+            System.out.println(prefix + "  <no field values>");
         }
     }
-
 }

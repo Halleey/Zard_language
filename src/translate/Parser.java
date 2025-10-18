@@ -114,7 +114,6 @@ public class Parser {
                     eat(Token.TokenType.IDENTIFIER);
 
                     Token next = current();
-                    System.out.println("token atual após nome: " + next);
 
                     if (next.getValue().equals("{")) {
                         StructParser structParser = new StructParser(this);

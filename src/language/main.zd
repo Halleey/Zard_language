@@ -2,12 +2,11 @@
 main {
 
 Struct  Pessoa {
-List<int> numbers;
 int  idade;
 string nome;
 boolean isReal;
 
 }
-Struct Pessoa p;
-
+Struct Pessoa p = {19, "halley", true};
+Struct Pessoa p1;
 }

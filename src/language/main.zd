@@ -1,37 +1,49 @@
-import "src/language/stdlib/Math.zd" as math;
-
 main {
-    double a = 10;
-    double b = 3;
-    int n = 5;
+
+int idade = 10;
+    Struct Pessoa {
+    string nome;
+    int idade;
+    }
+
+    Struct Pessoa p = {
+    "halley", idade
+    };
+
+    Struct Pessoa p1;
+    Struct Pessoa p2 = {"Lawliet"};
+    print("primeira struct");
+    print(p);
+    print("segunda struct");
+    print(p2);
 
 
-    print(math.sum(a, b));
-    print(math.sub(a, b));
-    print(math.mul(a, b));
-    print(math.div(a, b));
+    int contador = 0;
+    string mensagem = "Início do programa";
+
+    print(mensagem);
+
+    List<int> numeros;
+
+    function int dobrar(int valor) {
+        valor  = valor * 2;
+        return valor;
+    }
+
+    while (contador < 5) {
+        print("Contador: ");
+        print(contador);
 
 
-    print(math.pow(a, 3));
+        if (contador == 3) {
+           break;
+        }
+        contador  =  dobrar(contador);
 
+        numeros.add(contador);
 
-    print(math.factorial(n));
+        contador++;
+    }
 
-    print(math.sqrt(a));
-
-
-    print(math.sin(a));
-    print(math.cos(a));
-
-
-    print("Tentando dividir por zero:");
-    print(math.div(a, 0));
-
-    print("Tentando fatorial de número negativo:");
-    print(math.factorial(-3));
-
-    print("Tentando raiz quadrada de número negativo:");
-    print(math.sqrt(-9));
-
-    print("Fim dos testes.");
+    print(numeros);
 }

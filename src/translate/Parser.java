@@ -176,45 +176,17 @@ public class Parser {
 
             }
         }
-
         if (tok.getType() == Token.TokenType.IDENTIFIER) {
             String name = tok.getValue();
             advance(); // consome IDENTIFIER
-
-            // Se o próximo token for '.', cria MethodCallNode genérico
-            if (current().getValue().equals(".")) {
-                advance(); // consome '.'
-                String methodName = current().getValue();
-
-                String varType = getVariableType(name);
-                ASTNode node = getAstNode(varType, name, methodName);
-                return node;
-            }
-                // Caso normal: variável/atribuição/unário
+            System.out.println(
+                    "-----" + name
+            );
             IdentifierParser idParser = new IdentifierParser(this);
             return idParser.parseAsStatement(name);
         }
         throw new RuntimeException("Comando inesperado: " + tok.getValue());
     }
-
-    private ASTNode getAstNode(String varType, String name, String methodName) {
-        String baseType = varType.contains("<") ? varType.substring(0, varType.indexOf("<")) : varType;
-
-        ASTNode node;
-        switch (baseType) {
-            case "List" -> {
-                ListMethodParser listParser = new ListMethodParser(this);
-                node = listParser.parseStatementListMethod(name);
-            }
-            case "Map" -> {
-                MapMethodParser mapParser = new MapMethodParser(this);
-                node = mapParser.parseStatementMapMethod(name);
-            }
-            default -> throw new RuntimeException("Tipo " + varType + " não suporta métodos: " + methodName);
-        }
-        return node;
-    }
-
 
     public ASTNode parseExpression() {
         return new ExpressionParser(this).parseExpression();

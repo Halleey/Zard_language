@@ -19,7 +19,17 @@ public class IdentifierParser {
     }
 
     public ASTNode parseAsStatement(String name) {
+        System.out.println("CURRENT TOKEN ----" + parser.current() );
         String tokenVal = parser.current().getValue();
+
+        if (parser.current().getValue().equals(".")) {
+            parser.advance(); // consome '.'
+            String methodName = parser.current().getValue();
+
+            String varType = parser.getVariableType(name);
+            ASTNode node = getAstNode(varType, name, methodName);
+            return node;
+        }
 
         if ("=".equals(tokenVal)) {
             parser.advance();
@@ -63,7 +73,6 @@ public class IdentifierParser {
                 }
             }
 
-            // Se não é lista nem mapa, assume membro/função
             String memberName = parser.current().getValue();
             parser.advance();
             String fullName = name + "." + memberName;
@@ -76,8 +85,23 @@ public class IdentifierParser {
             }
         }
 
-        // Variável ou import (null safe)
         return new VariableNode(name);
     }
+    private ASTNode getAstNode(String varType, String name, String methodName) {
+        String baseType = varType.contains("<") ? varType.substring(0, varType.indexOf("<")) : varType;
 
+        ASTNode node;
+        switch (baseType) {
+            case "List" -> {
+                ListMethodParser listParser = new ListMethodParser(parser);
+                node = listParser.parseStatementListMethod(name);
+            }
+            case "Map" -> {
+                MapMethodParser mapParser = new MapMethodParser(parser);
+                node = mapParser.parseStatementMapMethod(name);
+            }
+            default -> throw new RuntimeException("Tipo " + varType + " não suporta métodos: " + methodName);
+        }
+        return node;
+    }
 }

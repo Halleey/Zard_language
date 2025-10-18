@@ -1,42 +1,17 @@
-import "src/language/stdlib/Math.zd" as math;
-
 main {
-    double a = 10;
-    double b = 3;
-    int n = 5;
 
-    print("Soma:");
-    print(math.sum(a, b));
+    Struct Pessoa {
+    string nome;
+    int idade;
+    }
 
-    print(math.sub(a, b));
+    Struct Pessoa p = {
+    "halley", 19
+    };
 
-    print(math.mul(a, b));
-
-    print(math.div(a, b));
-
-    print("Potência:");
-    print(math.pow(a, 3));
-
-    print("Fatorial recursivo:");
-    print(math.factorial(n));
-
-    print("Raiz quadrada:");
-    print(math.sqrt(a));
-
-    print("Seno:");
-    print(math.sin(a));
-
-    print("Cosseno:");
-    print(math.cos(a));
-
-    print("Tentando dividir por zero:");
-    print(math.div(a, 0));
-
-    print("Tentando fatorial de número negativo:");
-    print(math.factorial(-3));
-
-    print("Tentando raiz quadrada de número negativo:");
-    print(math.sqrt(-9));
-
-    print("Fim dos testes.");
+    Struct Pessoa p1;
+    Struct Pessoa p2 = {"Lawliet"};
+    print(p);
+    print(p1);
+    print(p2);
 }

@@ -7,6 +7,8 @@ string nome;
 boolean isReal;
 
 }
-Struct Pessoa p = {19, "halley", true};
+Struct Pessoa p = {19, "halley"};
 Struct Pessoa p1;
+print(p);
+print(p1);
 }

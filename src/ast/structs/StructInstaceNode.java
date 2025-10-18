@@ -25,7 +25,7 @@ public class StructInstaceNode extends ASTNode {
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
-        return "";
+        return visitor.visit(this);
     }
 
     @Override
@@ -48,6 +48,10 @@ public class StructInstaceNode extends ASTNode {
         }
 
         return new TypedValue(structName, fieldValues);
+    }
+
+    public List<ASTNode> getPositionalValues() {
+        return positionalValues;
     }
 
     @Override

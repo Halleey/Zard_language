@@ -7,6 +7,7 @@ import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
 import ast.imports.ImportNode;
+import ast.structs.StructInstaceNode;
 import ast.structs.StructNode;
 import ast.lists.*;
 import ast.loops.WhileNode;
@@ -22,6 +23,7 @@ import low.TempManager;
 import low.main.MainEmitter;
 import low.prints.PrintEmitter;
 import low.structs.StructEmitter;
+import low.structs.StructInstanceEmitter;
 import low.variables.*;
 import low.whiles.WhileEmitter;
 import ast.prints.PrintNode;
@@ -30,6 +32,7 @@ import java.util.*;
 
 public class LLVisitorMain implements LLVMEmitVisitor {
     private final Map<String, String> varTypes = new HashMap<>();
+
     private final TempManager temps = new TempManager();
     private final List<String> structDefinitions = new ArrayList<>();
     private final GlobalStringManager globalStrings = new GlobalStringManager();
@@ -57,6 +60,16 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public final Set<String> tiposDeListasUsados = new HashSet<>();
     private final ImportEmitter importEmitter = new ImportEmitter(this, this.tiposDeListasUsados);
     private final StructEmitter structEmitter  = new StructEmitter(this);
+    private final Map<String, StructNode> structNodes = new HashMap<>();
+    private final StructInstanceEmitter instanceEmitter = new StructInstanceEmitter(temps, globalStrings);
+
+    public void registerStructNode(StructNode node) {
+        structNodes.put(node.getName(), node);
+    }
+
+    public StructNode getStructNode(String structName) {
+        return structNodes.get(structName);
+    }
 
 
     public void addStructDefinition(String llvmDef) {
@@ -67,11 +80,28 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return structDefinitions;
     }
 
+    public String getStructDefinition(String structName) {
+        for (String def : structDefinitions) {
+
+            if (def.startsWith("%" + structName + " = type")) {
+                return def;
+            }
+        }
+        return null;
+    }
+
+
     @Override
     public String visit(StructNode node) {
         String llvm = structEmitter.emit(node);
         addStructDefinition(llvm);
+        registerStructNode(node);
         return "";
+    }
+
+    @Override
+    public String visit(StructInstaceNode node) {
+        return instanceEmitter.emit(node, this);
     }
 
     @Override

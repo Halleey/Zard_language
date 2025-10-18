@@ -3,6 +3,7 @@
 #include "Stringz.h"
 
 String* createString(const char *text) {
+    if (text == NULL) text = "";
     String *str = malloc(sizeof(String));
     if (!str) return NULL;
 
@@ -16,8 +17,9 @@ String* createString(const char *text) {
 
 void setString(String *str, const char *data) {
     if (!str) return;
-    free(str->data);
+    if (data == NULL) data = "";
 
+    free(str->data);
     str->length = my_strlen(data);
     str->data = malloc(str->length + 1);
     if (str->data != NULL) {
@@ -27,6 +29,8 @@ void setString(String *str, const char *data) {
 
 void concatString(String *str, const char *nConcat) {
     if (!str) return;
+    if (nConcat == NULL) nConcat = "";
+
     size_t extraLength = my_strlen(nConcat);
     size_t newLength = str->length + extraLength;
     char *data = malloc(newLength + 1);
@@ -79,7 +83,7 @@ int compareString(String *strOne, String *strTwo) {
 }
 
 int startWith(String *str, const char *prefix) {
-    if (!str) return 0;
+    if (!str || prefix == NULL) return 0;
     size_t prefixLength = my_strlen(prefix);
     if (prefixLength > str->length) return 0;
     for (size_t i = 0; i < prefixLength; i++) {
@@ -103,12 +107,17 @@ void freeString(String *str) {
 }
 
 size_t my_strlen(const char *text) {
+    if (text == NULL) return 0;
     size_t length = 0;
     while (text[length] != '\0') length++;
     return length;
 }
 
 size_t my_copyString(const char *origem, char *destino) {
+    if (origem == NULL) {
+        destino[0] = '\0';
+        return 0;
+    }
     size_t length = 0;
     while (origem[length] != '\0') {
         destino[length] = origem[length];

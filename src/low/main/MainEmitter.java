@@ -12,6 +12,7 @@ import ast.lists.ListAddNode;
 import ast.lists.ListNode;
 import ast.loops.WhileNode;
 import ast.prints.PrintNode;
+import ast.structs.StructInstaceNode;
 import ast.structs.StructNode;
 import ast.variables.AssignmentNode;
 import ast.variables.BinaryOpNode;
@@ -191,6 +192,12 @@ public class MainEmitter {
         else if(node instanceof ReturnNode returnNode) {
             coletarStringsRecursivo(returnNode.expr);
         }
+        else if (node instanceof StructInstaceNode structInstance) {
+            for (ASTNode val : structInstance.getPositionalValues()) {
+                coletarStringsRecursivo(val);
+            }
+        }
+
     }
 
     private void coletarStringsRecursivo(List<ASTNode> nodes) {
@@ -209,6 +216,8 @@ public class MainEmitter {
         declare i8* @malloc(i64)
         declare void @setString(%String*, i8*)
 
+        @.strTrue = private constant [6 x i8] c"true\\0A\\00"
+        @.strFalse = private constant [7 x i8] c"false\\0A\\00"
         @.strInt = private constant [4 x i8] c"%d\\0A\\00"
         @.strDouble = private constant [4 x i8] c"%f\\0A\\00"
         @.strStr = private constant [4 x i8] c"%s\\0A\\00"
@@ -287,8 +296,7 @@ public class MainEmitter {
                 declare void @arraylist_free_bool(%struct.ArrayListBool*)
                 declare i1 @arraylist_get_bool(%struct.ArrayListBool*, i64, i1*)
                 declare i32  @arraylist_size_bool(%struct.ArrayListBool*)
-                @.strTrue = private constant [6 x i8] c"true\\0A\\00"
-                @.strFalse = private constant [7 x i8] c"false\\0A\\00"
+             
             """);
             }
         }

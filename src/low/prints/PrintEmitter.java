@@ -19,7 +19,8 @@ public class PrintEmitter {
                 new StringLiteralPrintHandler(globalStrings, temps),
                 new StringVariablePrintHandler(temps),
                 new PrimitivePrintHandler(temps),
-                new ListPrintHandler(temps)
+                new ListPrintHandler(temps),
+                new StructPrintHandler(temps)
         );
         exprHandler = new ExprPrintHandler(temps);
     }

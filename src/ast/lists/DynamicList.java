@@ -43,13 +43,25 @@ public class DynamicList {
         return removedNode.evaluate(ctx);
     }
 
-    // Adiciona um elemento verificando tipo
     public void add(TypedValue value) {
-        if (!value.getType().equals(elementType)) {
-            throw new RuntimeException("Tipo inválido para lista <" + elementType + ">: " + value.getType());
+        String valType = value.getType();
+
+        boolean ok = valType.equals(elementType);
+
+        if (!ok && valType.startsWith("Struct<")) {
+            String inner = valType.substring("Struct<".length(), valType.length() - 1);
+            if (inner.equals(elementType)) {
+                ok = true;
+            }
         }
+
+        if (!ok) {
+            throw new RuntimeException("Tipo inválido para lista <" + elementType + ">: " + valType);
+        }
+
         elements.add(new LiteralNode(value));
     }
+
 
     public int size() {
         return elements.size();

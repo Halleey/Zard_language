@@ -51,7 +51,7 @@ public class StructInstaceNode extends ASTNode {
             fieldValues.put(field.getName(), value);
         }
 
-        return new TypedValue(structName, fieldValues);
+        return new TypedValue("Struct<" + structName + ">", fieldValues);
     }
 
     public List<ASTNode> getPositionalValues() {

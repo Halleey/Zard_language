@@ -136,6 +136,12 @@ public class VariableDeclarationNode extends ASTNode {
     }
 
     private TypedValue createDefaultValue(String type) {
+        if (type.startsWith("Struct<")) {
+            return new TypedValue(type, new LinkedHashMap<String, TypedValue>());
+        }
+        if (type.startsWith("Struct")) {
+            return new TypedValue(type, new LinkedHashMap<String, TypedValue>());
+        }
         return switch (type) {
             case "int" -> new TypedValue("int", 0);
             case "double" -> new TypedValue("double", 0.0);

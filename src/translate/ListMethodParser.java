@@ -2,6 +2,7 @@ package translate;
 
 import ast.ASTNode;
 import ast.lists.*;
+import ast.structs.StructFieldAccessNode;
 import ast.variables.VariableDeclarationNode;
 import tokens.Token;
 import ast.variables.VariableNode;
@@ -17,7 +18,7 @@ public class ListMethodParser {
     }
 
     public ASTNode consumer() {
-        parser.advance(); // consome o nome do método
+        parser.advance();
         parser.eat(Token.TokenType.DELIMITER, "(");
 
         ASTNode arg = null;
@@ -81,9 +82,8 @@ public class ListMethodParser {
     }
 
     public ASTNode parseExpressionListMethod(String name) {
-
         String method = parser.current().getValue();
-        parser.advance(); // consome o nome do método
+        parser.advance();
 
         parser.eat(Token.TokenType.DELIMITER, "(");
 
@@ -95,14 +95,26 @@ public class ListMethodParser {
         parser.eat(Token.TokenType.DELIMITER, ")");
 
         ASTNode listVar = new VariableNode(name);
+        ASTNode node;
 
-        return switch (method) {
-            case "size" -> new ListSizeNode(listVar);
+        switch (method) {
+            case "size" -> node = new ListSizeNode(listVar);
             case "get" -> {
                 if (arg == null) throw new RuntimeException("get requer índice");
-                yield new ListGetNode(listVar, arg);
+                node = new ListGetNode(listVar, arg);
             }
             default -> throw new RuntimeException("Método de lista não permitido em expressão: " + method);
-        };
+        }
+
+        while (parser.current().getValue().equals(".")) {
+            parser.advance();
+            String memberName = parser.current().getValue();
+            parser.advance();
+
+            node = new StructFieldAccessNode(node, memberName, null);
+        }
+
+        return node;
     }
+
 }

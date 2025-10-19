@@ -5,15 +5,15 @@ import ast.functions.FunctionCallNode;
 import ast.functions.FunctionReferenceNode;
 import ast.maps.MapMethodParser;
 import ast.structs.StructFieldAccessNode;
-import ast.structs.StructInstaceNode;
 import ast.structs.StructInstanceParser;
-import ast.variables.VariableDeclarationNode;
 import tokens.Token;
 import ast.variables.AssignmentNode;
 import ast.variables.UnaryOpNode;
 import ast.variables.VariableNode;
 
 import java.util.List;
+
+
 public class IdentifierParser {
     private final Parser parser;
 
@@ -42,7 +42,6 @@ public class IdentifierParser {
                     }
                 }
 
-                // Caso: st.Struct Nome varName [= { ... }];
                 if (memberName.equals("Struct")) {
                     parser.advance();
 
@@ -52,7 +51,6 @@ public class IdentifierParser {
                     String varName = parser.current().getValue();
                     parser.eat(Token.TokenType.IDENTIFIER);
 
-                    // delega para StructInstanceParser com structName qualificado e varName
                     StructInstanceParser structParser = new StructInstanceParser(parser);
                     String qualifiedName = name + "." + structName;
                     return structParser.parseStructInstanceAfterKeyword(qualifiedName, varName);

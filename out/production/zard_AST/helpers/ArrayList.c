@@ -69,10 +69,7 @@ int update_string(ArrayList* list, size_t index, char* str) {
     return 1;
 }
 
-void* getItem(ArrayList* list, size_t index) {
-    if (index >= list->length) return NULL;
-    return list->data[index];
-}
+
 
 int length(ArrayList* list) {
     return list ? list->length : 0;
@@ -93,13 +90,11 @@ void clearList(ArrayList* list) {
     if (!list) return;
 
     for (size_t i = 0; i < list->length; i++) {
-        if (list->data[i]) {
-            free(list->data[i]);
-            list->data[i] = NULL;
-        }
+        list->data[i] = NULL;
     }
     list->length = 0;
 }
+
 
 void arraylist_add_String(ArrayList* list, String* str) {
     if (!str) return;

@@ -2,16 +2,27 @@ import "src/language/structs/StructTest.zd" as st;
 main {
 
 int idade = 10;
+
     Struct Pessoa {
     string nome;
     int idade;
     }
+
     List<Pessoa> pessoas;
+
     Struct Pessoa p1;
     p1.nome ="angel";
     p1.idade = 16;
-    print(p1);
-
     pessoas.add(p1);
-    print(pessoas);
+
+    print("input your name");
+    string name = input();
+    print("input your age");
+    int age = input();
+    Struct Pessoa p2;
+    p2.nome = name;
+    p2.idade = age;
+
+    pessoas.add(p2);
+    print(pessoas.get(0).idade());
 }

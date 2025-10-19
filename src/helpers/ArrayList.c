@@ -69,10 +69,7 @@ int update_string(ArrayList* list, size_t index, char* str) {
     return 1;
 }
 
-void* getItem(ArrayList* list, size_t index) {
-    if (index >= list->length) return NULL;
-    return list->data[index];
-}
+
 
 int length(ArrayList* list) {
     return list ? list->length : 0;

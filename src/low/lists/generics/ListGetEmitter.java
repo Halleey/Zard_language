@@ -6,14 +6,12 @@ import low.lists.bool.ListBoolGetEmitter;
 import low.lists.doubles.ListGetDoubleEmitter;
 import low.lists.ints.ListGetIntEmitter;
 import low.module.LLVMEmitVisitor;
-
-
-
 public class ListGetEmitter {
     private final TempManager temps;
     private final ListGetIntEmitter intGetEmitter;
     private final ListGetDoubleEmitter doubleEmitter;
     private final ListBoolGetEmitter boolGetEmitter;
+
     public ListGetEmitter(TempManager temps) {
         this.temps = temps;
         this.intGetEmitter = new ListGetIntEmitter(temps);
@@ -25,10 +23,10 @@ public class ListGetEmitter {
         StringBuilder llvm = new StringBuilder();
 
         String listCode = node.getListName().accept(visitor);
-
         String listType = extractType(listCode);
         String listTemp = extractTemp(listCode);
 
+        // Casos especializados (listas tipadas nativas)
         if (listType.contains("ArrayListInt")) {
             return intGetEmitter.emit(node, visitor);
         }
@@ -38,6 +36,8 @@ public class ListGetEmitter {
         if (listType.contains("ArrayListBool")) {
             return boolGetEmitter.emit(node, visitor);
         }
+
+        // Caso genérico: listas de ponteiros
         appendCodePrefix(llvm, listCode);
 
         String arrayPtr = temps.newTemp();
@@ -51,20 +51,20 @@ public class ListGetEmitter {
 
         String idx64 = temps.newTemp();
         llvm.append("  ").append(idx64)
-                .append(" = zext i32 ").append(idxTemp)
-                .append(" to i64\n");
+                .append(" = zext i32 ").append(idxTemp).append(" to i64\n");
 
+        // O get retorna i8* (ponteiro genérico para elemento da lista)
         String valTemp = temps.newTemp();
         llvm.append("  ").append(valTemp)
-                .append(" = call i8* @getItem(%ArrayList* ")
+                .append(" = call i8* @arraylist_get_ptr(%ArrayList* ")
                 .append(arrayPtr).append(", i64 ").append(idx64).append(")\n");
 
+        // Agora só marca o valor e tipo, sem imprimir
         llvm.append(";;VAL:").append(valTemp).append("\n");
         llvm.append(";;TYPE:i8*\n");
 
         return llvm.toString();
     }
-
 
     private void appendCodePrefix(StringBuilder llvm, String code) {
         int marker = code.lastIndexOf(";;VAL:");

@@ -6,7 +6,6 @@ import ast.runtime.RuntimeContext;
 import low.module.LLVMEmitVisitor;
 
 import java.util.Map;
-
 public class StructFieldAccessNode extends ASTNode {
     private final ASTNode structInstance;
     private final String fieldName;
@@ -18,9 +17,21 @@ public class StructFieldAccessNode extends ASTNode {
         this.value = value;
     }
 
+    public ASTNode getStructInstance() {
+        return structInstance;
+    }
+
+    public String getFieldName() {
+        return fieldName;
+    }
+
+    public ASTNode getValue() {
+        return value;
+    }
+
     @Override
     public String accept(LLVMEmitVisitor visitor) {
-        return "";
+        return visitor.visit(this);
     }
 
     @Override

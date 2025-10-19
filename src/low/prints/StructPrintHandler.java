@@ -40,11 +40,14 @@ public class StructPrintHandler implements PrintHandler {
             llvm.append(code);
         }
 
-        String structName = type.substring(1, type.length() - 1);
+        String cleanName = type.replace("%", "").replace("*", "");
+        if (cleanName.startsWith("Struct<") && cleanName.endsWith(">")) {
+            cleanName = cleanName.substring(7, cleanName.length() - 1);
+        }
 
-        StructNode def = visitor.getStructNode(structName);
+        StructNode def = visitor.getStructNode(cleanName);
         if (def == null) {
-            throw new RuntimeException("Struct não encontrada: " + structName);
+            throw new RuntimeException("Struct não encontrada: " + cleanName);
         }
 
         int index = 0;
@@ -74,6 +77,7 @@ public class StructPrintHandler implements PrintHandler {
 
         return llvm.toString();
     }
+
 
     private String extractTemp(String code) {
         int v = code.lastIndexOf(";;VAL:");

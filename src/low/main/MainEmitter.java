@@ -12,6 +12,7 @@ import ast.lists.ListAddNode;
 import ast.lists.ListNode;
 import ast.loops.WhileNode;
 import ast.prints.PrintNode;
+import ast.structs.StructFieldAccessNode;
 import ast.structs.StructInstaceNode;
 import ast.structs.StructNode;
 import ast.variables.AssignmentNode;
@@ -191,6 +192,9 @@ public class MainEmitter {
             coletarStringsRecursivo(addAllNode.getArgs());
         else if(node instanceof ReturnNode returnNode) {
             coletarStringsRecursivo(returnNode.expr);
+        }
+        else if(node instanceof StructFieldAccessNode accessNode) {
+                coletarStringsRecursivo(accessNode.getValue());
         }
         else if (node instanceof StructInstaceNode structInstance) {
             for (ASTNode val : structInstance.getPositionalValues()) {

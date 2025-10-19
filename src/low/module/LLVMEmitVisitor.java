@@ -7,6 +7,7 @@ import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
 import ast.imports.ImportNode;
+import ast.structs.StructFieldAccessNode;
 import ast.structs.StructInstaceNode;
 import ast.structs.StructNode;
 import ast.lists.*;
@@ -41,5 +42,6 @@ public interface LLVMEmitVisitor {
     String visit (MapNode node);
     String visit (StructNode node);
     String visit (StructInstaceNode node);
+    String visit (StructFieldAccessNode node);
 }
 

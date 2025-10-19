@@ -10,11 +10,12 @@ source_filename = "programa.ll"
 @.strDouble = private constant [4 x i8] c"%f\0A\00"
 @.strStr = private constant [4 x i8] c"%s\0A\00"
 @.str0 = private constant [7 x i8] c"halley\00"
-@.str1 = private constant [8 x i8] c"Lawliet\00"
-@.str2 = private constant [16 x i8] c"primeira struct\00"
-@.str3 = private constant [15 x i8] c"segunda struct\00"
-@.str4 = private constant [20 x i8] c"In\C3\ADcio do programa\00"
-@.str5 = private constant [11 x i8] c"Contador: \00"
+@.str1 = private constant [6 x i8] c"angel\00"
+@.str2 = private constant [8 x i8] c"Lawliet\00"
+@.str3 = private constant [16 x i8] c"primeira struct\00"
+@.str4 = private constant [15 x i8] c"segunda struct\00"
+@.str5 = private constant [20 x i8] c"In\C3\ADcio do programa\00"
+@.str6 = private constant [11 x i8] c"Contador: \00"
 
 declare i32 @printf(ptr, ...)
 
@@ -69,55 +70,59 @@ define i32 @main() {
   %t10 = getelementptr inbounds %Pessoa, ptr %t5, i64 0, i32 1
   store i32 10, ptr %t10, align 4
   %t12 = call ptr @createString(ptr null)
-  %t15 = alloca %Pessoa, align 8
-  %t17 = call ptr @createString(ptr nonnull @.str1)
-  store ptr %t17, ptr %t15, align 8
-  %t19 = getelementptr inbounds %Pessoa, ptr %t15, i64 0, i32 1
-  store i32 0, ptr %t19, align 4
-  %puts = call i32 @puts(ptr nonnull dereferenceable(1) @.str2)
-  %t23 = load ptr, ptr %t5, align 8
-  call void @printString(ptr %t23)
-  %t24 = getelementptr inbounds %Pessoa, ptr %t5, i64 0, i32 1
-  %t25 = load i32, ptr %t24, align 4
-  %1 = call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.strInt, i32 %t25)
-  %puts1 = call i32 @puts(ptr nonnull dereferenceable(1) @.str3)
-  %t29 = load ptr, ptr %t15, align 8
-  call void @printString(ptr %t29)
-  %t30 = getelementptr inbounds %Pessoa, ptr %t15, i64 0, i32 1
-  %t31 = load i32, ptr %t30, align 4
-  %2 = call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.strInt, i32 %t31)
-  %t33 = call ptr @malloc(i64 16)
-  store ptr @.str4, ptr %t33, align 8
-  %t37 = getelementptr inbounds %String, ptr %t33, i64 0, i32 1
-  store i64 18, ptr %t37, align 4
-  call void @printString(ptr nonnull %t33)
-  %t39 = call ptr @arraylist_create_int(i64 4)
+  %t18 = call ptr @createString(ptr nonnull @.str1)
+  call void @printString(ptr %t18)
+  %1 = call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.strInt, i32 16)
+  %t27 = alloca %Pessoa, align 8
+  %t29 = call ptr @createString(ptr nonnull @.str2)
+  store ptr %t29, ptr %t27, align 8
+  %t31 = getelementptr inbounds %Pessoa, ptr %t27, i64 0, i32 1
+  store i32 0, ptr %t31, align 4
+  %puts = call i32 @puts(ptr nonnull dereferenceable(1) @.str3)
+  %t35 = load ptr, ptr %t5, align 8
+  call void @printString(ptr %t35)
+  %t36 = getelementptr inbounds %Pessoa, ptr %t5, i64 0, i32 1
+  %t37 = load i32, ptr %t36, align 4
+  %2 = call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.strInt, i32 %t37)
+  %puts1 = call i32 @puts(ptr nonnull dereferenceable(1) @.str4)
+  %t41 = load ptr, ptr %t27, align 8
+  call void @printString(ptr %t41)
+  %t42 = getelementptr inbounds %Pessoa, ptr %t27, i64 0, i32 1
+  %t43 = load i32, ptr %t42, align 4
+  %3 = call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.strInt, i32 %t43)
+  %t45 = call ptr @malloc(i64 16)
+  store ptr @.str5, ptr %t45, align 8
+  %t49 = getelementptr inbounds %String, ptr %t45, i64 0, i32 1
+  store i64 18, ptr %t49, align 4
+  call void @printString(ptr nonnull %t45)
+  %t51 = call ptr @arraylist_create_int(i64 4)
+  call void @arraylist_add_int(ptr %t51, i32 0)
   br label %while_cond_0
 
 while_cond_0:                                     ; preds = %endif_0, %0
-  %contador.0 = phi i32 [ 0, %0 ], [ %t55, %endif_0 ]
-  %t42 = icmp slt i32 %contador.0, 5
-  br i1 %t42, label %while_body_1, label %while_end_2
+  %contador.0 = phi i32 [ 0, %0 ], [ %t71, %endif_0 ]
+  %t58 = icmp slt i32 %contador.0, 5
+  br i1 %t58, label %while_body_1, label %while_end_2
 
 while_body_1:                                     ; preds = %while_cond_0
-  %puts2 = call i32 @puts(ptr nonnull dereferenceable(1) @.str5)
-  %3 = call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.strInt, i32 %contador.0)
-  %t47 = icmp eq i32 %contador.0, 3
-  br i1 %t47, label %then_0, label %endif_0
+  %puts2 = call i32 @puts(ptr nonnull dereferenceable(1) @.str6)
+  %4 = call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.strInt, i32 %contador.0)
+  %t63 = icmp eq i32 %contador.0, 3
+  br i1 %t63, label %then_0, label %endif_0
 
 then_0:                                           ; preds = %while_body_1
   br label %while_end_2
 
 endif_0:                                          ; preds = %while_body_1
-  %t49 = call i32 @dobrar(i32 %contador.0)
-  call void @arraylist_add_int(ptr %t39, i32 %t49)
-  %t55 = add i32 %t49, 1
+  %t65 = call i32 @dobrar(i32 %contador.0)
+  call void @arraylist_add_int(ptr %t51, i32 %t65)
+  %t71 = add i32 %t65, 1
   br label %while_cond_0
 
 while_end_2:                                      ; preds = %then_0, %while_cond_0
-  call void @arraylist_print_int(ptr %t39)
-  call void @arraylist_free_int(ptr %t39)
-  %4 = call i32 @getchar()
+  call void @arraylist_print_int(ptr %t51)
+  call void @arraylist_free_int(ptr %t51)
+  %5 = call i32 @getchar()
   ret i32 0
 }
 

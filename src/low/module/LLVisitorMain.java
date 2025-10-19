@@ -7,6 +7,7 @@ import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
 import ast.imports.ImportNode;
+import ast.structs.StructFieldAccessNode;
 import ast.structs.StructInstaceNode;
 import ast.structs.StructNode;
 import ast.lists.*;
@@ -23,6 +24,7 @@ import low.TempManager;
 import low.main.MainEmitter;
 import low.prints.PrintEmitter;
 import low.structs.StructEmitter;
+import low.structs.StructFieldAccessEmitter;
 import low.structs.StructInstanceEmitter;
 import low.variables.*;
 import low.whiles.WhileEmitter;
@@ -62,6 +64,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final StructEmitter structEmitter  = new StructEmitter(this);
     private final Map<String, StructNode> structNodes = new HashMap<>();
     private final StructInstanceEmitter instanceEmitter = new StructInstanceEmitter(temps, globalStrings);
+    private final StructFieldAccessEmitter structFieldAccessEmitter = new StructFieldAccessEmitter(temps);
 
     public void registerStructNode(StructNode node) {
         structNodes.put(node.getName(), node);
@@ -102,6 +105,11 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     @Override
     public String visit(StructInstaceNode node) {
         return instanceEmitter.emit(node, this);
+    }
+
+    @Override
+    public String visit(StructFieldAccessNode node) {
+        return structFieldAccessEmitter.emit(node, this);
     }
 
     @Override

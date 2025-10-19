@@ -1,7 +1,6 @@
 # ⚡ Zard Programming Language
 
-**Zard** is a **typed programming language** inspired by Java, created for studying and improving **programming logic**, **compiler design**, and **AST (Abstract Syntax Tree)** interpretation.
-Its main goal is to offer a **simple, clear, and educational syntax** to explore compiler and interpreter concepts in a practical way.
+**Zard** is a **typed programming language** inspired by Java, designed for learning and improving **programming logic**, **compiler construction**, and **AST (Abstract Syntax Tree)** interpretation. It focuses on a **simple, explicit, and educational syntax** to explore compiler and interpreter concepts in practice.
 
 ---
 
@@ -10,154 +9,145 @@ Its main goal is to offer a **simple, clear, and educational syntax** to explore
 ![JDK Required](https://img.shields.io/badge/Requirement-JDK%2017%2B-blue?style=for-the-badge)
 ![Clang Required](https://img.shields.io/badge/Requirement-Clang%20Compiler-orange?style=for-the-badge)
 
-Before running or compiling Zard programs, make sure you have:
+Before running or compiling Zard programs, ensure you have:
 
-* **JDK 17+** installed (required to run the interpreter and compiler)
-* **Clang/LLVM** installed (required to compile the generated C + LLVM code)
+* **JDK 17+** installed (required for interpreter and compiler)
+* **Clang/LLVM** installed (required to compile the generated LLVM IR)
 
 ---
 
-## ✨ Current Features
+## ✨ Features
 
-* **Explicit Typing:** Supports `int`, `double`, `string`, `list`, and `map` types.
-* **Declaration and Assignment:** Variables can be declared with explicit types and optionally initialized.
-* **Functions:** Typed parameters, **recursive functions**, and value returning are supported.
-* **AST Execution:** The language uses an Abstract Syntax Tree for code interpretation and execution.
-* **Control Flow:** Supports `if`, `else`, and `while` statements.
-* **Dynamic Lists:** Built-in methods such as `add()`, `remove()`, `clear()`, and `size()`.
-* **Dynamic Maps:** Creation and manipulation with helper functions.
-* **Code Importing:** Supports external file imports with aliases, e.g.:
-
-  ```zard
-  import "src/language/stdlib/Math.zd" as math;
-  ```
+* **Explicit Typing:** Built-in `int`, `double`, `string`, `List`, `Map`, and `Struct`.
+* **Structs:** Define and instantiate your own structured types, even across modules.
+* **Functions:** Supports typed parameters, recursion, and return values.
 * **Functions as Values:** Functions can be stored in variables and called dynamically.
-* **Mandatory Main Block:** Every program must start with `main { }`.
-* **Output Printing:** `print()` command for displaying data in the console.
+* **Control Flow:** Includes `if`, `else`, `while`, and `break`.
+* **AST Execution:** Code execution is based on AST interpretation.
+* **Dynamic Lists & Maps:**
+
+  * `add(value)` – append an element.
+  * * `addAll(values...)` – adds all elements.
+  * `remove(index)` – remove element at index.
+  * `get(index)` – retrieve element (only valid inside expressions like `print()`, `if`, etc.).
+  * `size()` – get list length (only valid inside expressions like `print()`, `if`, etc.).
+  * `clear()` – remove all elements.
+* **External Imports:** Import external modules with aliasing.
+* **Mandatory Main Block:** All programs start inside `main { }`.
+* **LLVM Backend:** Generates LLVM IR for native compilation.
 
 ---
 
-## 🧠 Example Code
+## 🔍 Code Examples
+
+### Hello World
 
 ```zard
-import "src/language/stdlib/Math.zd" as math;
+main {
+    print("Hello, Zard!");
+}
+```
+
+### Structs and Imports
+
+```zard
+import "src/language/structs/StructTest.zd" as st;
 
 main {
-    int counter = 0;
-    string message = "Program start";
-
-    print(message);
-
-    map numbers = {"0": 1, "1": 2, "2": 3};
-
-    function double(int value) {
-        print("Double of " + value + " is " + (value * 2));
+    // Local struct definition
+    Struct Pessoa {
+        string nome;
+        int idade;
     }
 
-    while (counter < 5) {
-        print("Counter: " + counter);
+    // Instantiate imported struct with direct arguments
+    st.Struct Nomade n1 = {"zard", 19};
+    print(n1);
 
-        if (counter == 3) {
-            print("Reached 3, skipping to next");
-        }
+    // Instantiate imported struct without initializer
+    st.Struct Nomade n2;
+    n2.nome = "sun";
+    n2.idade = 20;
+    print(n2.nome);
 
-        call double(counter);
-        call math.addToMap(numbers, counter, counter);
+    // Local struct with initializer
+    Struct Pessoa p = {"halley", 18};
+    print(p);
+}
+```
 
-        counter++;
+### Functions and Recursion
+
+```zard
+main {
+    function int factorial(int n) {
+        if (n == 0) return 1;
+        return n * factorial(n - 1);
     }
 
-    function factorial(int n) {
-        if (n == 0) {
-            return 1;
-        } else {
-            return n * factorial(n - 1);
-        }
+    int x = factorial(5);
+    print(x); // prints 120
+}
+```
+
+### Lists
+
+```zard
+main {
+    // Empty list declaration
+    List<int> numeros;
+
+    // Adding elements
+    numeros.add(1);
+    numeros.add(2);
+    numeros.add(3);
+
+    // Access with get() must be inside an expression
+    print(numeros.get(0));
+
+    // Removing an element
+    numeros.remove(1);
+
+    // Getting size (only inside expressions)
+    if (numeros.size() > 1) {
+        print("More than one element");
     }
 
-    int result = factorial(5);
-    print("Factorial of 5: " + result);
+    // Clearing list
+    numeros.clear();
+
+    // Initialized list with ()
+    List<string> nomes = ("Alice", "Bob", "Charlie");
+    print(nomes.size()); // prints 3
 }
 ```
 
 ---
 
-## 🔍 List Example
+## 🚀 Future Roadmap
 
-```zard
-import "src/language/stdlib/Math.zd" as math;
-
-main {
-    // If no arguments are given, specify the type
-    List<int> numbers;
-
-    // If initialized with arguments, the type is inferred automatically
-    List list = (3, 4, 5);
-}
-```
+* 🛠 **LLVM IR Compilation:** More robust native code generation.
+* 🏗 **Bootstrap Compiler:** Write compiler in Zard itself.
+* 🔄 **Expanded Standard Library:** Math, string, list, map, and struct utilities.
+* ⚡ **Optimizations:** LLVM optimization passes for better performance.
 
 ---
 
-## 🚀 Future of Zard
+## 📂 How to Run
 
-The language will continue to evolve to become more robust and versatile. Upcoming goals include:
+1. Write code in a `.zd` file.
+2. add your file path here
+3. Run the interpreter:
 
-* 🛠 **LLVM IR Compilation** for independent execution.
-* 🏗 **Full Compiler Implementation** to enable bootstrapping and native binary generation.
-* 🔄 **Expanded Standard Library** including mathematical, string, list, and map utilities.
-
----
-
-## 🔄 Implemented Improvements
-
-* ✅ Added `if` and `else` logical branching.
-* ✅ Added `while` looping.
-* ✅ Added `return` statements.
-* ✅ Refactored AST for better analysis and execution.
-* ✅ Implemented dynamic lists (`add`, `remove`, `clear`, `size`).
-* ✅ Added function-as-value support.
-* ✅ Recursive functions supported.
-* ✅ Implemented dynamic maps and helper functions.
-* ✅ Added external module import support.
-* ✅ Implemented compound operators (`==`, `!=`, `<=`, `>=`).
-* ✅ Variables, literals, and complex expressions generating LLVM IR.
-* ✅ Initial LLVM IR backend integration for variables, `while`, and `if`.
-* ✅ Functional input system for user data.
-* ✅ Full list support in compiler via C + LLVM.
-* ✅ Support for dynamic list instances with type inference when arguments are provided.
-* ✅ **Import support** in the LLVM backend.
-
----
-
-## 🔄 Improvements in Progress
-
-* 🟡 **Map Support in LLVM:** Generate LLVM for dynamic map creation, access, and modification.
-* 🟡 **Functions as Values in LLVM:** Store and call functions dynamically via LLVM IR.
-* 🟡 **LLVM Optimization:** Improve LLVM generation performance, especially for data structures.
-
----
-
-## 📂 How to Use
-
-1. Write your code in a `.zd` file.
-
-2. Place the file in the following directory:
-
-   ```java
-   try {
-       // Input file path
-       String filePath = args.length > 0 ? args[0] : "src/language/main.zd";
-       String code = Files.readString(Path.of(filePath));
+   ```bash
+        String filePath = args.length > 0 ? args[0] : "src/language/main.zd";
+        String code = Files.readString(Path.of(filePath));
+        
    ```
-
-3. Run the interpreter to execute the code.
-
-4. Experiment with the language syntax and follow future updates.
-
-5. ⚙ **Make sure Clang and JDK 17+ are installed** — they are required for compiling the generated C + LLVM code.
+5. Or compile to LLVM IR and then to native executable using `clang`.
 
 ---
 
 ## 🔗 Contributing
 
-If you'd like to suggest improvements or contribute to the project, feel free to open an issue or submit a pull request!
+Contributions are welcome! Open issues, suggest features, or submit pull requests to help evolve the language.

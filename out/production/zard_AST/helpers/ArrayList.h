@@ -18,6 +18,9 @@ void removeItem(ArrayList* list, size_t index);
 void* getItem(ArrayList* list, size_t index);
 int length(ArrayList* list);
 
+void arraylist_add_ptr(ArrayList* list, void* element);
+void* arraylist_get_ptr(ArrayList* list, size_t index);
+
 void clearList(ArrayList* list);
 void freeList(ArrayList* list);
 

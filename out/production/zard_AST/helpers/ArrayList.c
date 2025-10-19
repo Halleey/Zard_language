@@ -25,6 +25,16 @@ static void ensureCapacity(ArrayList* list) {
 }
 
 
+void arraylist_add_ptr(ArrayList* list, void* element) {
+    ensureCapacity(list);
+    list->data[list->length++] = element;
+}
+
+void* arraylist_get_ptr(ArrayList* list, size_t index) {
+    if (index >= list->length) return NULL;
+    return list->data[index];
+}
+
 void arraylist_add_string(ArrayList* list, char* str) {
     ensureCapacity(list);
     size_t len = strlen(str) + 1;
@@ -70,11 +80,14 @@ int length(ArrayList* list) {
 
 void freeList(ArrayList* list) {
     if (!list) return;
-    for (size_t i = 0; i < list->length; i++)
-        if (list->data[i]) free(list->data[i]); // libera ints e doubles
+    for (size_t i = 0; i < list->length; i++) {
+        if (list->data[i]) {
+        }
+    }
     free(list->data);
     free(list);
 }
+
 
 void clearList(ArrayList* list) {
     if (!list) return;

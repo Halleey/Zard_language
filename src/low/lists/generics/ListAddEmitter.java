@@ -16,6 +16,7 @@ public class ListAddEmitter {
     private final ListIntAddEmitter intAddEmitter;
     private final ListAddDoubleEmitter doubleEmitter;
     private final ListBoolAddEmitter boolAddEmitter;
+
     public ListAddEmitter(TempManager temps, GlobalStringManager globalStringManager) {
         this.temps = temps;
         this.globalStringManager = globalStringManager;
@@ -29,9 +30,9 @@ public class ListAddEmitter {
 
         String listCode = node.getListNode().accept(visitor);
         llvm.append(listCode);
+
         String valCode = node.getValuesNode().accept(visitor);
         String valType = extractType(valCode);
-
 
         if (valType.equals("i32")) {
             return intAddEmitter.emit(node, visitor);
@@ -39,47 +40,55 @@ public class ListAddEmitter {
         if (valType.equals("double")) {
             return doubleEmitter.emit(node, visitor);
         }
-
         if (valType.equals("i1")) {
             return boolAddEmitter.emit(node, visitor);
         }
+
         String listTmp = extractTemp(listCode);
-        // bitcast para %ArrayList* antes da chamada
+
         String listCastTmp = temps.newTemp();
-        llvm.append("  ").append(listCastTmp).append(" = bitcast i8* ").append(listTmp)
+        llvm.append("  ").append(listCastTmp)
+                .append(" = bitcast i8* ").append(listTmp)
                 .append(" to %ArrayList*\n");
 
         llvm.append(valCode);
         String valTmp = extractTemp(valCode);
+
         switch (valType) {
-            case "double" -> llvm.append("  call void @arraylist_add_double(%ArrayList* ").append(listCastTmp)
-                    .append(", double ").append(valTmp).append(")\n");
             case "%String*" -> {
-                // caso especial para o struct String do runtime
-                llvm.append("  call void @arraylist_add_String(%ArrayList* ").append(listCastTmp)
-                        .append(", %String* ").append(valTmp).append(")\n");
+
+                llvm.append("  call void @arraylist_add_String(%ArrayList* ")
+                        .append(listCastTmp).append(", %String* ").append(valTmp).append(")\n");
             }
             case "i8*" -> {
-                if (node.getValuesNode() instanceof LiteralNode lit && lit.value.getType().equals("string")) {
+
+                if (node.getValuesNode() instanceof LiteralNode lit &&
+                        lit.value.getType().equals("string")) {
                     String literal = (String) lit.value.getValue();
                     String strName = globalStringManager.getOrCreateString(literal);
-                    llvm.append("  call void @arraylist_add_string(%ArrayList* ").append(listCastTmp)
-                            .append(", i8* getelementptr ([")
+                    llvm.append("  call void @arraylist_add_string(%ArrayList* ")
+                            .append(listCastTmp).append(", i8* getelementptr ([")
                             .append(literal.length() + 1).append(" x i8], [")
                             .append(literal.length() + 1).append(" x i8]* ")
                             .append(strName).append(", i32 0, i32 0))\n");
                 } else {
-                    llvm.append("  call void @arraylist_add_string(%ArrayList* ").append(listCastTmp)
-                            .append(", i8* ").append(valTmp).append(")\n");
+                    llvm.append("  call void @arraylist_add_string(%ArrayList* ")
+                            .append(listCastTmp).append(", i8* ").append(valTmp).append(")\n");
                 }
-
             }
-            default -> throw new RuntimeException("Tipo não suportado em ListAdd: " + valType);
+            default -> {
+
+                if (valType.startsWith("%struct.") || valType.startsWith("%")) {
+                    llvm.append("  call void @arraylist_add_ptr(%ArrayList* ")
+                            .append(listCastTmp).append(", ").append(valType).append(" ").append(valTmp).append(")\n");
+                } else {
+                    throw new RuntimeException("Tipo não suportado em ListAdd: " + valType);
+                }
+            }
+
         }
 
-
         llvm.append(";;VAL:").append(listCastTmp).append(";;TYPE:%ArrayList*\n");
-
         return llvm.toString();
     }
 

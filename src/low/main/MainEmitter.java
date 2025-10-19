@@ -234,13 +234,16 @@ public class MainEmitter {
 
         if (!tiposDeListasUsados.isEmpty()) {
             sb.append("""
-            declare i8* @arraylist_create(i64)
-            declare void @clearList(%ArrayList*)
-            declare void @freeList(%ArrayList*)
-
-            %ArrayList = type opaque
-        """);
+        declare i8* @arraylist_create(i64)
+        declare void @clearList(%ArrayList*)
+        declare void @freeList(%ArrayList*)
+        declare void @arraylist_add_ptr(%ArrayList*, i8*)
+        declare i8* @arraylist_get_ptr(%ArrayList*, i64)
+        declare void @arraylist_print_ptr(%ArrayList*, void (i8*)*)
+        %ArrayList = type opaque
+    """);
         }
+
 
         if (usesInput) {
             sb.append("""
@@ -280,6 +283,7 @@ public class MainEmitter {
             """);
             } else if (tipo.contains("<string>")) {
                 sb.append("""
+                
                 declare void @arraylist_add_string(%ArrayList*, i8*)
                 declare void @arraylist_addAll_string(%ArrayList*, i8**, i64)
                 declare void @arraylist_print_string(%ArrayList*)

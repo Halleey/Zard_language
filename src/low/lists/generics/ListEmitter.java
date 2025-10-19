@@ -9,6 +9,8 @@ import low.lists.doubles.ListDoubleEmitter;
 import low.lists.ints.IntListEmitter;
 import low.module.LLVisitorMain;
 import java.util.List;
+
+
 public class ListEmitter {
     private final TempManager temps;
     private final IntListEmitter intEmitter;
@@ -23,7 +25,7 @@ public class ListEmitter {
     }
 
     public String emit(ListNode node, LLVisitorMain visitor) {
-        // Detectar tipo dos elementos
+
         String elementType = node.getList().getElementType();
         if (elementType == null || elementType.equals("any")) {
             elementType = visitor.getListElementType(node.getList().getElementType());
@@ -39,12 +41,39 @@ public class ListEmitter {
             return boolEmitter.emit(node, visitor);
         }
 
-        // Caso genérico (strings e outros)
+        if (elementType.startsWith("Struct<")) {
+            StringBuilder llvm = new StringBuilder();
+            var elements = node.getList().getElements();
+            int n = elements.size();
+
+            String listPtr = temps.newTemp();
+            llvm.append("  ").append(listPtr)
+                    .append(" = call i8* @arraylist_create(i64 ").append(Math.max(4, n)).append(")\n");
+
+            String listCast = temps.newTemp();
+            llvm.append("  ").append(listCast)
+                    .append(" = bitcast i8* ").append(listPtr).append(" to %ArrayList*\n");
+
+            for (ASTNode element : elements) {
+                String elemLLVM = element.accept(visitor);
+                llvm.append(elemLLVM);
+
+                String temp = extractTemp(elemLLVM);
+                String type = extractType(elemLLVM);
+
+                llvm.append("  call void @arraylist_add_ptr(%ArrayList* ")
+                        .append(listCast).append(", ").append(type).append(" ").append(temp).append(")\n");
+            }
+
+            llvm.append(";;VAL:").append(listPtr).append(";;TYPE:i8*\n");
+            return llvm.toString();
+        }
+
+
         StringBuilder llvm = new StringBuilder();
         var elements = node.getList().getElements();
         int n = elements.size();
 
-        // Cria lista genérica
         String listPtr = temps.newTemp();
         llvm.append("  ").append(listPtr)
                 .append(" = call i8* @arraylist_create(i64 ")
@@ -67,7 +96,8 @@ public class ListEmitter {
             if (type.equals("%String*")) {
                 // já é um objeto String
                 strTmp = temp;
-            } else if (type.equals("i8*")) {
+            }
+            else if (type.equals("i8*")) {
                 // ponteiro de char -> cria %String*
                 strTmp = temps.newTemp();
                 llvm.append("  ").append(strTmp)

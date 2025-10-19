@@ -61,8 +61,6 @@ public class ImportNode extends ASTNode {
                     importCtx.declareVariable(structNode.getName(), new TypedValue("struct", structNode));
                     ctx.declareVariable(qualifiedName, new TypedValue("struct", structNode));
 
-                    System.out.println("[DEBUG] Importou struct: " + qualifiedName);
-                    System.out.println("[DEBUG] Campos da struct " + structNode.getName() + ":");
                     for (VariableDeclarationNode field : structNode.getFields()) {
                         System.out.println("         - " + field.getType() + " " + field.getName());
                     }

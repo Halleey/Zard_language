@@ -61,3 +61,19 @@ void arraylist_print_bool(ArrayListBool* list) {
     printf("]\n");
 }
 
+void arraylist_print_ptr(ArrayList* list, void (*printFn)(void*)) {
+    if (!list) {
+        printf("[]\n");
+        return;
+    }
+
+    printf("[");
+    for (size_t i = 0; i < list->length; i++) {
+        void* elem = list->data[i];
+        printFn(elem);
+        if (i < list->length - 1)
+            printf(", ");
+    }
+    printf("]\n");
+}
+

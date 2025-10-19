@@ -39,8 +39,15 @@ public class StructPrintHandler implements PrintHandler {
         if (!code.isBlank()) {
             llvm.append(code);
         }
-
         String cleanName = type.replace("%", "").replace("*", "");
+
+        if (cleanName.contains("_")) {
+            String dotName = cleanName.replace("_", ".");
+            if (visitor.getStructNode(dotName) != null) {
+                cleanName = dotName;
+            }
+        }
+
         if (cleanName.startsWith("Struct<") && cleanName.endsWith(">")) {
             cleanName = cleanName.substring(7, cleanName.length() - 1);
         }
@@ -49,6 +56,7 @@ public class StructPrintHandler implements PrintHandler {
         if (def == null) {
             throw new RuntimeException("Struct não encontrada: " + cleanName);
         }
+
 
         int index = 0;
         for (VariableDeclarationNode field : def.getFields()) {

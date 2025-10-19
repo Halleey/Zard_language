@@ -3,9 +3,11 @@ package low.imports;
 import ast.ASTNode;
 import ast.functions.FunctionNode;
 import ast.imports.ImportNode;
+import ast.structs.StructNode;
 import ast.variables.VariableDeclarationNode;
 import low.functions.FunctionEmitter;
 import low.module.LLVisitorMain;
+import low.structs.StructEmitter;
 import tokens.Lexer;
 import tokens.Token;
 import translate.Parser;
@@ -70,6 +72,19 @@ public class ImportEmitter {
                     moduleIR.append(funcIR).append("\n");
 
                 }
+                else if (n instanceof StructNode struct) {
+                    String qualified = alias + "." + struct.getName();
+                    visitor.registerStructNode(qualified, struct);
+
+                    StructEmitter structEmitter = new StructEmitter(visitor);
+                    String llvmDef = structEmitter.emit(struct);
+
+                    llvmDef = llvmDef.replace("%" + struct.getName(),
+                            "%" + qualified.replace('.', '_'));
+
+                    visitor.addStructDefinition(llvmDef);
+                }
+
             }
 
 

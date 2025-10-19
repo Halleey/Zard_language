@@ -5,6 +5,8 @@ import ast.functions.FunctionCallNode;
 import ast.functions.FunctionReferenceNode;
 import ast.maps.MapMethodParser;
 import ast.structs.StructFieldAccessNode;
+import ast.structs.StructInstaceNode;
+import ast.variables.VariableDeclarationNode;
 import tokens.Token;
 import ast.variables.AssignmentNode;
 import ast.variables.UnaryOpNode;
@@ -28,26 +30,49 @@ public class IdentifierParser {
 
                 String memberName = parser.current().getValue();
                 String varType = parser.getVariableType(name);
-
-                if (varType != null && varType.startsWith("Struct")) {
+                if (varType != null && (varType.startsWith("Struct") || varType.contains("."))) {
                     parser.advance();
-
                     if (parser.current().getValue().equals("=")) {
                         parser.advance();
                         ASTNode value = parser.parseExpression();
                         parser.eat(Token.TokenType.DELIMITER, ";");
                         return new StructFieldAccessNode(new VariableNode(name), memberName, value);
                     } else {
-
                         return new StructFieldAccessNode(new VariableNode(name), memberName, null);
                     }
                 }
 
+                if (memberName.equals("Struct")) {
+                    parser.advance();
+
+                    String structName = parser.current().getValue();
+                    parser.eat(Token.TokenType.IDENTIFIER);
+
+                    String varName = parser.current().getValue();
+                    parser.eat(Token.TokenType.IDENTIFIER);
+
+                    parser.eat(Token.TokenType.DELIMITER, ";");
+
+                    String qualifiedName = name + "." + structName;
+                    String normalizedType = "Struct<" + qualifiedName + ">";
+
+                    parser.declareVariable(varName, normalizedType);
+
+                    return new VariableDeclarationNode(
+                            varName,
+                            normalizedType,
+                            new StructInstaceNode(qualifiedName, null)
+                    );
+                }
+
+
+
                 if (varType != null) {
-                    String baseType = varType.contains("<") ? varType.substring(0, varType.indexOf("<")) : varType;
+                    String baseType = varType.contains("<")
+                            ? varType.substring(0, varType.indexOf("<"))
+                            : varType;
                     switch (baseType) {
                         case "List" -> {
-
                             ListMethodParser listParser = new ListMethodParser(parser);
                             return listParser.parseStatementListMethod(name);
                         }
@@ -57,6 +82,7 @@ public class IdentifierParser {
                         }
                     }
                 }
+
                 parser.advance();
                 String fullName = name + "." + memberName;
 
@@ -65,7 +91,6 @@ public class IdentifierParser {
                     parser.eat(Token.TokenType.DELIMITER, ";");
                     return new FunctionCallNode(fullName, args);
                 } else {
-
                     parser.eat(Token.TokenType.DELIMITER, ";");
                     return new FunctionReferenceNode(fullName);
                 }
@@ -95,18 +120,20 @@ public class IdentifierParser {
         }
 
         if (current.getValue().equals(".")) {
-            parser.advance(); // consome '.'
+            parser.advance();
 
             String memberName = parser.current().getValue();
             String varType = parser.getVariableType(name);
 
-            if (varType != null && varType.startsWith("Struct")) {
-                parser.advance(); // consome o nome do campo
+            if (varType != null && (varType.startsWith("Struct") || varType.contains("."))) {
+                parser.advance();
                 return new StructFieldAccessNode(new VariableNode(name), memberName, null);
             }
 
             if (varType != null) {
-                String baseType = varType.contains("<") ? varType.substring(0, varType.indexOf("<")) : varType;
+                String baseType = varType.contains("<")
+                        ? varType.substring(0, varType.indexOf("<"))
+                        : varType;
                 switch (baseType) {
                     case "List" -> {
                         ListMethodParser listParser = new ListMethodParser(parser);

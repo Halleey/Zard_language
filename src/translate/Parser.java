@@ -123,8 +123,6 @@ public class Parser {
                         return instanceParser.parseStructInstanceAfterKeyword(structName);
                     }
                 }
-
-
                 case "input" -> {
                     InputParser inputParser = new InputParser(this);
                     return inputParser.parse();

@@ -5,7 +5,8 @@ import ast.runtime.RuntimeContext;
 
 import java.util.Map;
 
-public class TypedValue {
+public class
+TypedValue {
     private final String type;
     private final Object value;
 

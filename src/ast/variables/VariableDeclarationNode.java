@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+
 public class VariableDeclarationNode extends ASTNode {
     private final String name;
     private final String type;
@@ -122,7 +124,13 @@ public class VariableDeclarationNode extends ASTNode {
             String keyType = type.substring(type.indexOf('<') + 1, type.indexOf(','));
             String valueType = type.substring(type.indexOf(',') + 1, type.length() - 1);
             return new TypedValue(type, new DynamicMap(keyType, valueType, new LinkedHashMap<>()));
-        } else {
+        }
+        else if (type.startsWith("Struct<")) {
+            extractStructName(type);
+            return new TypedValue(type, new LinkedHashMap<String, TypedValue>());
+        }
+
+        else {
             return createDefaultValue(type);
         }
     }

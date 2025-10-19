@@ -10,11 +10,11 @@ import low.main.GlobalStringManager;
 import low.module.LLVisitorMain;
 
 import java.util.List;
-
 public class StructInstanceEmitter {
 
     private final TempManager tempManager;
     private final GlobalStringManager stringManager;
+
     public StructInstanceEmitter(TempManager tempManager, GlobalStringManager stringManager) {
         this.tempManager = tempManager;
         this.stringManager = stringManager;
@@ -24,7 +24,12 @@ public class StructInstanceEmitter {
         StringBuilder llvm = new StringBuilder();
 
         String structName = node.getName();
-        String structLLVMType = "%" + structName;
+        String structLLVMType = new TypeMapper().toLLVM(structName);
+
+        // remove ponteiro, vamos alocar struct por valor
+        if (structLLVMType.endsWith("*")) {
+            structLLVMType = structLLVMType.substring(0, structLLVMType.length() - 1);
+        }
 
         String structPtr = tempManager.newTemp();
         llvm.append("  ")
@@ -49,11 +54,9 @@ public class StructInstanceEmitter {
             String codeBefore = "";
 
             if (providedValue != null) {
-
                 codeBefore = providedValue.accept(visitor);
                 valueTemp = extractTemp(codeBefore);
             } else {
-
                 valueTemp = emitDefaultValue(field.getType(), llvm);
             }
 
@@ -88,7 +91,6 @@ public class StructInstanceEmitter {
         return llvm.toString();
     }
 
-
     private String emitDefaultValue(String type, StringBuilder llvm) {
         switch (type) {
             case "int":
@@ -108,7 +110,7 @@ public class StructInstanceEmitter {
                 return tmp;
             }
         }
-        return "null";
+        return "zeroinitializer";
     }
 
     private String extractTemp(String code) {

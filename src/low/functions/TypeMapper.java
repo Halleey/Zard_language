@@ -1,4 +1,6 @@
 package low.functions;
+
+
 public class TypeMapper {
     public String toLLVM(String type) {
         if (type == null || type.isEmpty()) {
@@ -12,12 +14,18 @@ public class TypeMapper {
         }
 
         if (type.startsWith("%") && type.endsWith("*")) {
-            return type; // já é tipo LLVM válido
+            return type;
         }
 
         if (type.startsWith("Struct<") && type.endsWith(">")) {
             String inner = type.substring(7, type.length() - 1).trim();
-            return "%" + inner + "*";
+            return "%" + inner.replace(".", "_") + "*";
+        }
+
+
+        if (type.contains(".")) {
+            String llvmName = "%" + type.replace(".", "_");
+            return llvmName + "*";
         }
 
         switch (type) {

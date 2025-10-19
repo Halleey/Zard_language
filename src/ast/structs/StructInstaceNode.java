@@ -7,6 +7,7 @@ import ast.runtime.StructDefinition;
 import ast.variables.VariableDeclarationNode;
 import low.module.LLVMEmitVisitor;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,8 +19,9 @@ public class StructInstaceNode extends ASTNode {
 
     public StructInstaceNode(String structName, List<ASTNode> positionalValues) {
         this.structName = structName;
-        this.positionalValues = positionalValues;
+        this.positionalValues = (positionalValues != null) ? positionalValues : new ArrayList<>();
     }
+
 
     public String getName() {
         return structName;

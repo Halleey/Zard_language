@@ -70,9 +70,15 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         structNodes.put(node.getName(), node);
     }
 
-    public StructNode getStructNode(String structName) {
-        return structNodes.get(structName);
+    public void registerStructNode(String qualifiedName, StructNode node) {
+        structNodes.put(qualifiedName, node);
     }
+
+
+    public StructNode getStructNode(String name) {
+        return structNodes.get(name);
+    }
+
 
 
     public void addStructDefinition(String llvmDef) {

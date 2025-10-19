@@ -6,6 +6,8 @@ import ast.runtime.RuntimeContext;
 import low.module.LLVMEmitVisitor;
 
 import java.util.Map;
+
+
 public class StructFieldAccessNode extends ASTNode {
     private final ASTNode structInstance;
     private final String fieldName;

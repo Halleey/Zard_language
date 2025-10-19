@@ -28,6 +28,10 @@ public class StructFieldAccessEmitter {
         String structType = extractType(structCode);
 
         String cleanName = structType.replace("*", "").replace("%", "");
+        if (cleanName.contains("_") && !cleanName.startsWith("Struct<")) {
+            cleanName = cleanName.replace("_", ".");
+        }
+
 
         if (cleanName.startsWith("Struct<") && cleanName.endsWith(">")) {
             cleanName = cleanName.substring(7, cleanName.length() - 1);

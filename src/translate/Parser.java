@@ -119,11 +119,15 @@ public class Parser {
                         StructParser structParser = new StructParser(this);
                         return structParser.parseStructAfterKeyword(structName);
                     } else {
+
+                        String varName = current().getValue();
+                        eat(Token.TokenType.IDENTIFIER);
+
                         StructInstanceParser instanceParser = new StructInstanceParser(this);
-                        return instanceParser.parseStructInstanceAfterKeyword(structName);
+                        return instanceParser.parseStructInstanceAfterKeyword(structName, varName);
                     }
                 }
-                case "input" -> {
+                    case "input" -> {
                     InputParser inputParser = new InputParser(this);
                     return inputParser.parse();
                 }

@@ -6,6 +6,7 @@ import ast.functions.FunctionReferenceNode;
 import ast.maps.MapMethodParser;
 import ast.structs.StructFieldAccessNode;
 import ast.structs.StructInstaceNode;
+import ast.structs.StructInstanceParser;
 import ast.variables.VariableDeclarationNode;
 import tokens.Token;
 import ast.variables.AssignmentNode;
@@ -13,7 +14,6 @@ import ast.variables.UnaryOpNode;
 import ast.variables.VariableNode;
 
 import java.util.List;
-
 public class IdentifierParser {
     private final Parser parser;
 
@@ -42,6 +42,7 @@ public class IdentifierParser {
                     }
                 }
 
+                // Caso: st.Struct Nome varName [= { ... }];
                 if (memberName.equals("Struct")) {
                     parser.advance();
 
@@ -51,21 +52,11 @@ public class IdentifierParser {
                     String varName = parser.current().getValue();
                     parser.eat(Token.TokenType.IDENTIFIER);
 
-                    parser.eat(Token.TokenType.DELIMITER, ";");
-
+                    // delega para StructInstanceParser com structName qualificado e varName
+                    StructInstanceParser structParser = new StructInstanceParser(parser);
                     String qualifiedName = name + "." + structName;
-                    String normalizedType = "Struct<" + qualifiedName + ">";
-
-                    parser.declareVariable(varName, normalizedType);
-
-                    return new VariableDeclarationNode(
-                            varName,
-                            normalizedType,
-                            new StructInstaceNode(qualifiedName, null)
-                    );
+                    return structParser.parseStructInstanceAfterKeyword(qualifiedName, varName);
                 }
-
-
 
                 if (varType != null) {
                     String baseType = varType.contains("<")

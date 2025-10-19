@@ -14,12 +14,11 @@ public class StructInstanceParser {
         this.parser = parser;
     }
 
-    public VariableDeclarationNode parseStructInstanceAfterKeyword(String structName) {
-        String varName = parser.current().getValue();
-        parser.eat(Token.TokenType.IDENTIFIER);
-
+    // Agora recebe também o varName já consumido pelo IdentifierParser
+    public VariableDeclarationNode parseStructInstanceAfterKeyword(String structName, String varName) {
         List<ASTNode> positionalValues = new ArrayList<>();
 
+        // Checa inicialização direta (= { ... })
         if (parser.current().getType() == Token.TokenType.OPERATOR &&
                 parser.current().getValue().equals("=")) {
 
@@ -40,15 +39,18 @@ public class StructInstanceParser {
             parser.eat(Token.TokenType.DELIMITER, "}");
         }
 
+        // Final obrigatório ;
         parser.eat(Token.TokenType.DELIMITER, ";");
 
+        // Cria nó de instância da struct
         StructInstaceNode instanceNode = new StructInstaceNode(structName, positionalValues);
 
-        parser.declareVariableType(varName, "Struct<" + structName + ">");
+        parser.declareVariable(varName, "Struct<" + structName + ">");
 
         return new VariableDeclarationNode(varName, "Struct<" + structName + ">", instanceNode);
     }
 
+    // Mantém suporte a inline { ... } já passando structName e varName
     public VariableDeclarationNode parseStructInline(String structName, String varName) {
         List<ASTNode> positionalValues = new ArrayList<>();
 
@@ -70,7 +72,7 @@ public class StructInstanceParser {
 
         StructInstaceNode instanceNode = new StructInstaceNode(structName, positionalValues);
 
-        parser.declareVariableType(varName, "Struct<" + structName + ">");
+        parser.declareVariable(varName, "Struct<" + structName + ">");
 
         return new VariableDeclarationNode(varName, "Struct<" + structName + ">", instanceNode);
     }

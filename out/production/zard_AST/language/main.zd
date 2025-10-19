@@ -1,7 +1,5 @@
 import "src/language/structs/StructTest.zd" as st;
 main {
-string nome = "zard";
-int age = 1;
 
 int idade = 10;
     Struct Pessoa {
@@ -9,23 +7,71 @@ int idade = 10;
     int idade;
     }
 
+    st.Struct Nomade n2 = {"testando ", 2000};
+    print(n2);
 
-    st.Struct Nomade teste = {"tzao"};
-    teste.nome = nome;
-    teste.idade = age;
-    print("struct import");
-    print(teste);
+    st.Struct Nomade n1;
+    n1.nome = "sun";
+    n1.idade = 20;
+    print(n1.nome);
+
+
+    print(st.somar(3,4));
 
     Struct Pessoa p = {
     "halley", idade
     };
 
     Struct Pessoa p1;
-    print("primeira struct");
     p1.nome ="angel";
     p1.idade = 16;
     print(p1);
     Struct Pessoa p2 = {"Lawliet"};
-    print("segunda struct");
+    print("primeira struct");
     print(p);
+    print("segunda struct");
+    print(p2);
+    print(p2.nome);
+
+    int contador = 0;
+    string mensagem = "Início do programa";
+
+    print(mensagem);
+
+    List<int> numeros;
+    numeros.add(0);
+    function int dobrar(int valor) {
+        valor  = valor * 2;
+        return valor;
+    }
+
+    while (contador < 5) {
+        print("Contador: ");
+        print(contador);
+
+
+        if (contador == 3) {
+           break;
+        }
+        contador  =  dobrar(contador);
+
+        numeros.add(contador);
+        contador++;
+    }
+
+    function int factorial(int n) {
+        if (n < 0) {
+            print("Erro: factorial de numero negativo!");
+            return 0;
+        }
+        if (n == 0) {
+            return 1;
+        }
+        return n * factorial(n - 1);
+    }
+
+    int x = factorial(5);
+    print(x);
+
+    print(numeros);
 }

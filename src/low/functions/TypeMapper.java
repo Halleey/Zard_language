@@ -1,6 +1,5 @@
 package low.functions;
 
-
 public class TypeMapper {
     public String toLLVM(String type) {
         if (type == null || type.isEmpty()) {
@@ -22,6 +21,10 @@ public class TypeMapper {
             return "%" + inner.replace(".", "_") + "*";
         }
 
+        if (type.startsWith("Struct ")) {
+            String inner = type.substring("Struct ".length()).trim();
+            return "%" + inner.replace(".", "_") + "*";
+        }
 
         if (type.contains(".")) {
             String llvmName = "%" + type.replace(".", "_");

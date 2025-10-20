@@ -69,8 +69,6 @@ int update_string(ArrayList* list, size_t index, char* str) {
     return 1;
 }
 
-
-
 int length(ArrayList* list) {
     return list ? list->length : 0;
 }

@@ -48,7 +48,7 @@ public class ListSizeEmitter {
 
         String sizeTmp = tempManager.newTemp();
         llvm.append("  ").append(sizeTmp)
-                .append(" = call i32 @size(%ArrayList* ").append(listCast).append(")\n");
+                .append(" = call i32 @length(%ArrayList* ").append(listCast).append(")\n");
         llvm.append("  ;;VAL:").append(sizeTmp).append(";;TYPE:i32\n");
 
         return llvm.toString();

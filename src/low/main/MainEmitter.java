@@ -238,6 +238,7 @@ public class MainEmitter {
         declare void @clearList(%ArrayList*)
         declare void @freeList(%ArrayList*)
         declare void @arraylist_add_ptr(%ArrayList*, i8*)
+        declare i32 @length(%ArrayList*)
         declare i8* @arraylist_get_ptr(%ArrayList*, i64)
         declare void @arraylist_print_ptr(%ArrayList*, void (i8*)*)
         %ArrayList = type opaque
@@ -290,6 +291,7 @@ public class MainEmitter {
                 declare void @arraylist_addAll_String(%ArrayList*, %String**, i64)
                 declare void @removeItem(%ArrayList*, i64)
                 declare i8* @getItem(%ArrayList*, i64)
+                
             """);
             } else if (tipo.contains("<boolean>")) {
                 sb.append("""

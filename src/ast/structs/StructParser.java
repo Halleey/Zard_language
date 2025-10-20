@@ -13,7 +13,6 @@ public class StructParser {
     public StructParser(Parser parser) {
         this.parser = parser;
     }
-
     public StructNode parseStructAfterKeyword(String structName) {
         parser.eat(Token.TokenType.DELIMITER, "{");
 
@@ -21,8 +20,22 @@ public class StructParser {
 
         while (!parser.current().getValue().equals("}")) {
             String fieldType = parseType();
-            String fieldName = parser.current().getValue();
-            parser.eat(Token.TokenType.IDENTIFIER);
+
+            String fieldName;
+            if (parser.current().getType() == Token.TokenType.IDENTIFIER) {
+                // Caso normal: tem nome explícito
+                fieldName = parser.current().getValue();
+                parser.eat(Token.TokenType.IDENTIFIER);
+            } else {
+                // Se não tem nome explícito → gera automaticamente (apenas para Struct)
+                if (fieldType.startsWith("Struct ")) {
+                    String typeName = fieldType.substring("Struct ".length()).trim();
+                    fieldName = Character.toLowerCase(typeName.charAt(0)) + typeName.substring(1);
+                } else {
+                    throw new RuntimeException("Campo sem nome não suportado para tipo: " + fieldType);
+                }
+            }
+
             parser.eat(Token.TokenType.DELIMITER, ";");
             fields.add(new VariableDeclarationNode(fieldName, fieldType, null));
         }
@@ -36,8 +49,17 @@ public class StructParser {
 
         String baseType = parser.current().getValue();
         parser.eat(Token.TokenType.KEYWORD);
+
         typeBuilder.append(baseType);
 
+        if (baseType.equals("Struct")) {
+            // Suporta "Struct NomeStruct"
+            String structName = parser.current().getValue();
+            parser.eat(Token.TokenType.IDENTIFIER);
+            typeBuilder.append(" ").append(structName);
+        }
+
+        // Suporte para genéricos, ex: List<T>
         if (parser.current().getValue().equals("<")) {
             parser.eat(Token.TokenType.OPERATOR, "<");
             typeBuilder.append("<");
@@ -58,4 +80,5 @@ public class StructParser {
 
         return typeBuilder.toString();
     }
+
 }

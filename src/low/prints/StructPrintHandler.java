@@ -8,8 +8,6 @@ import ast.variables.VariableNode;
 import low.TempManager;
 import low.functions.TypeMapper;
 import low.module.LLVisitorMain;
-
-
 public class StructPrintHandler implements PrintHandler {
     private final TempManager temps;
 
@@ -57,10 +55,10 @@ public class StructPrintHandler implements PrintHandler {
             throw new RuntimeException("Struct não encontrada: " + cleanName);
         }
 
-
         int index = 0;
         for (VariableDeclarationNode field : def.getFields()) {
-            String fieldType = new TypeMapper().toLLVM(field.getType());
+
+            String fieldType = mapFieldTypeForStruct(field.getType());
 
             String fieldPtr = temps.newTemp();
             llvm.append("  ").append(fieldPtr)
@@ -86,6 +84,32 @@ public class StructPrintHandler implements PrintHandler {
         return llvm.toString();
     }
 
+    private String mapFieldTypeForStruct(String langType) {
+        if (langType == null) return "void";
+        langType = langType.trim();
+
+        if (langType.startsWith("List<") && langType.endsWith(">")) {
+            String inner = langType.substring(5, langType.length() - 1).trim();
+            return switch (inner) {
+                case "int"    -> "%struct.ArrayListInt*";
+                case "double" -> "%struct.ArrayListDouble*";
+                case "boolean"-> "%struct.ArrayListBool*";
+                case "string" -> "%ArrayList*";
+                default       -> "%ArrayList*";
+            };
+        }
+
+        if (langType.startsWith("Struct ")) {
+            String inner = langType.substring("Struct ".length()).trim();
+            return "%" + inner + "*";
+        }
+        if (langType.startsWith("Struct<") && langType.endsWith(">")) {
+            String inner = langType.substring(7, langType.length() - 1).trim();
+            return "%" + inner + "*";
+        }
+
+        return new TypeMapper().toLLVM(langType);
+    }
 
     private String extractTemp(String code) {
         int v = code.lastIndexOf(";;VAL:");

@@ -25,7 +25,7 @@ public class ListPrintHandler implements PrintHandler {
     public String emit(ASTNode node, LLVisitorMain visitor) {
         VariableNode varNode = (VariableNode) node;
         String varName = varNode.getName();
-        String elemType = visitor.getListElementType(varName); // pode vir "Pessoa"
+        String elemType = visitor.getListElementType(varName);
         String llvmType = visitor.getVarType(varName);
         String tmp = temps.newTemp();
         StringBuilder sb = new StringBuilder();
@@ -53,22 +53,22 @@ public class ListPrintHandler implements PrintHandler {
                 sb.append("  call void @arraylist_print_bool(%struct.ArrayListBool* ").append(tmp).append(")\n");
             }
             default -> {
-                // Listas genéricas (ArrayList de ponteiros)
-                sb.append("  ").append(tmp).append(" = load i8*, i8** %").append(varName).append("\n");
-                String tmpCast = temps.newTemp();
-                sb.append("  ").append(tmpCast).append(" = bitcast i8* ").append(tmp).append(" to %ArrayList*\n");
+                sb.append("  ").append(tmp)
+                        .append(" = load %ArrayList*, %ArrayList** %").append(varName).append("\n");
 
                 if ("string".equals(normalizedElemType)) {
-                    sb.append("  call void @arraylist_print_string(%ArrayList* ").append(tmpCast).append(")\n");
+                    sb.append("  call void @arraylist_print_ptr(%ArrayList* ").append(tmp)
+                            .append(", void (i8*)* @printString)\n");
                 } else if (normalizedElemType.startsWith("Struct<")) {
                     String structName = normalizedElemType.substring("Struct<".length(), normalizedElemType.length() - 1)
                             .replace('.', '_');
-                    sb.append("  call void @arraylist_print_ptr(%ArrayList* ").append(tmpCast)
+                    sb.append("  call void @arraylist_print_ptr(%ArrayList* ").append(tmp)
                             .append(", void (i8*)* @print_").append(structName).append(")\n");
                 } else {
                     throw new RuntimeException("Unsupported list element type: " + elemType);
                 }
             }
+
         }
         return sb.toString();
     }

@@ -7,6 +7,11 @@ import low.module.LLVisitorMain;
 public class ExprPrintHandler {
     private final TempManager temps;
 
+    /***
+     *
+     *Class will be refactored  and optimized in the future
+     */
+
     public ExprPrintHandler(TempManager temps) {
         this.temps = temps;
     }
@@ -30,6 +35,29 @@ public class ExprPrintHandler {
         }
 
         switch (type) {
+            case "%struct.ArrayListInt*" -> {
+                llvm.append("  call void @arraylist_print_int(%struct.ArrayListInt* ")
+                        .append(temp).append(")\n");
+                return llvm.toString();
+            }
+            case "%struct.ArrayListDouble*" -> {
+                llvm.append("  call void @arraylist_print_double(%struct.ArrayListDouble* ")
+                        .append(temp).append(")\n");
+                return llvm.toString();
+            }
+            case "%struct.ArrayListBool*" -> {
+                llvm.append("  call void @arraylist_print_bool(%struct.ArrayListBool* ")
+                        .append(temp).append(")\n");
+                return llvm.toString();
+            }
+            case "%ArrayList*" -> {
+                llvm.append("  call void @arraylist_print_ptr(%ArrayList* ")
+                        .append(temp).append(", void (i8*)* @printString)\n");
+                return llvm.toString();
+            }
+
+
+
             case "i32" -> {
                 llvm.append("  call i32 (i8*, ...) @printf(")
                         .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), ")

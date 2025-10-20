@@ -48,7 +48,9 @@ public class StructInstanceEmitter {
             VariableDeclarationNode field = fields.get(i);
 
             ASTNode providedValue = (i < provided) ? values.get(i) : null;
-            String fieldLLVMType = new TypeMapper().toLLVM(field.getType());
+
+            // ⚠️ Use o mesmo mapeamento que o StructEmitter usa
+            String fieldLLVMType = mapFieldTypeForStruct(field.getType());
 
             String valueTemp;
             String codeBefore = "";
@@ -57,7 +59,7 @@ public class StructInstanceEmitter {
                 codeBefore = providedValue.accept(visitor);
                 valueTemp = extractTemp(codeBefore);
             } else {
-                valueTemp = emitDefaultValue(field.getType(), llvm);
+                valueTemp = emitDefaultValue(field.getType(), fieldLLVMType, llvm);
             }
 
             if (!codeBefore.isEmpty())
@@ -91,14 +93,33 @@ public class StructInstanceEmitter {
         return llvm.toString();
     }
 
-    private String emitDefaultValue(String type, StringBuilder llvm) {
+    private String mapFieldTypeForStruct(String type) {
+        if (type.startsWith("List<")) {
+            String inner = type.substring(5, type.length() - 1).trim();
+            return switch (inner) {
+                case "int" -> "%struct.ArrayListInt*";
+                case "double" -> "%struct.ArrayListDouble*";
+                case "boolean" -> "%struct.ArrayListBool*";
+                case "string" -> "%ArrayList*";
+                default -> "%ArrayList*";
+            };
+        }
+        if (type.startsWith("Struct ")) {
+            String inner = type.substring("Struct ".length()).trim();
+            return "%" + inner + "*";
+        }
+        if (type.startsWith("Struct<") && type.endsWith(">")) {
+            String inner = type.substring(7, type.length() - 1).trim();
+            return "%" + inner + "*";
+        }
+        return new TypeMapper().toLLVM(type);
+    }
+
+    private String emitDefaultValue(String type, String fieldLLVMType, StringBuilder llvm) {
         switch (type) {
-            case "int":
-                return "0";
-            case "double":
-                return "0.0";
-            case "boolean":
-                return "0";
+            case "int": return "0";
+            case "double": return "0.0";
+            case "boolean": return "0";
             case "string": {
                 String emptyLabel = stringManager.getGlobalName("");
                 String tmp = tempManager.newTemp();
@@ -109,6 +130,41 @@ public class StructInstanceEmitter {
                         .append(")\n");
                 return tmp;
             }
+            default:
+                if (type.startsWith("List<")) {
+                    String inner = type.substring(5, type.length() - 1).trim();
+                    String tmp = tempManager.newTemp();
+                    switch (inner) {
+                        case "int" -> {
+                            llvm.append("  ").append(tmp)
+                                    .append(" = call %struct.ArrayListInt* @arraylist_create_int(i64 10)\n");
+                            return tmp;
+                        }
+                        case "double" -> {
+                            llvm.append("  ").append(tmp)
+                                    .append(" = call %struct.ArrayListDouble* @arraylist_create_double(i64 10)\n");
+                            return tmp;
+                        }
+                        case "boolean" -> {
+                            llvm.append("  ").append(tmp)
+                                    .append(" = call %struct.ArrayListBool* @arraylist_create_bool(i64 10)\n");
+                            return tmp;
+                        }
+                        case "string" -> {
+                            llvm.append("  ").append(tmp)
+                                    .append(" = call i8* @arraylist_create(i64 10)\n");
+                            return tmp;
+                        }
+                        default -> {
+                            llvm.append("  ").append(tmp)
+                                    .append(" = call i8* @arraylist_create(i64 10)\n");
+                            return tmp;
+                        }
+                    }
+                } else if (type.startsWith("Struct")) {
+                    // Para structs aninhadas, inicializa como null
+                    return "null";
+                }
         }
         return "zeroinitializer";
     }

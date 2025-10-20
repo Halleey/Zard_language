@@ -23,11 +23,10 @@ public class StructParser {
 
             String fieldName;
             if (parser.current().getType() == Token.TokenType.IDENTIFIER) {
-                // Caso normal: tem nome explícito
+
                 fieldName = parser.current().getValue();
                 parser.eat(Token.TokenType.IDENTIFIER);
             } else {
-                // Se não tem nome explícito → gera automaticamente (apenas para Struct)
                 if (fieldType.startsWith("Struct ")) {
                     String typeName = fieldType.substring("Struct ".length()).trim();
                     fieldName = Character.toLowerCase(typeName.charAt(0)) + typeName.substring(1);
@@ -43,7 +42,6 @@ public class StructParser {
         parser.eat(Token.TokenType.DELIMITER, "}");
         return new StructNode(structName, fields);
     }
-
     private String parseType() {
         StringBuilder typeBuilder = new StringBuilder();
 
@@ -53,25 +51,39 @@ public class StructParser {
         typeBuilder.append(baseType);
 
         if (baseType.equals("Struct")) {
-            // Suporta "Struct NomeStruct"
             String structName = parser.current().getValue();
             parser.eat(Token.TokenType.IDENTIFIER);
             typeBuilder.append(" ").append(structName);
         }
 
-        // Suporte para genéricos, ex: List<T>
         if (parser.current().getValue().equals("<")) {
             parser.eat(Token.TokenType.OPERATOR, "<");
             typeBuilder.append("<");
 
-            typeBuilder.append(parser.current().getValue());
-            parser.eat(Token.TokenType.KEYWORD);
+            String innerType = parser.current().getValue();
+            if (parser.current().getType() == Token.TokenType.KEYWORD) {
+                parser.eat(Token.TokenType.KEYWORD);
+            } else if (parser.current().getType() == Token.TokenType.IDENTIFIER) {
+                parser.eat(Token.TokenType.IDENTIFIER);
+            } else {
+                throw new RuntimeException("Esperado tipo dentro de List<>, encontrado: " + innerType);
+            }
 
-            if (parser.current().getValue().equals(",")) {
+            typeBuilder.append(innerType);
+
+            while (parser.current().getValue().equals(",")) {
                 parser.eat(Token.TokenType.DELIMITER, ",");
                 typeBuilder.append(",");
-                typeBuilder.append(parser.current().getValue());
-                parser.eat(Token.TokenType.KEYWORD);
+
+                String nextType = parser.current().getValue();
+                if (parser.current().getType() == Token.TokenType.KEYWORD) {
+                    parser.eat(Token.TokenType.KEYWORD);
+                } else if (parser.current().getType() == Token.TokenType.IDENTIFIER) {
+                    parser.eat(Token.TokenType.IDENTIFIER);
+                } else {
+                    throw new RuntimeException("Esperado tipo após vírgula em genérico: " + nextType);
+                }
+                typeBuilder.append(nextType);
             }
 
             parser.eat(Token.TokenType.OPERATOR, ">");
@@ -80,5 +92,6 @@ public class StructParser {
 
         return typeBuilder.toString();
     }
+
 
 }

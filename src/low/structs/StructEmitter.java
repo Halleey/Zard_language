@@ -67,7 +67,6 @@ public class StructEmitter {
                         .append("* %val").append(i).append(" to i8*\n");
                 sb.append("  call void @print_").append(inner).append("(i8* %valcast").append(i).append(")\n");
             }
-            // === Outros tipos (listas, etc) podem ser tratados depois ===
         }
 
         sb.append("  ret void\n}\n\n");

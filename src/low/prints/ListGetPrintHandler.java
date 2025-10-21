@@ -6,7 +6,6 @@ import ast.variables.VariableNode;
 import low.TempManager;
 import low.lists.generics.ListGetEmitter;
 import low.module.LLVisitorMain;
-
 public class ListGetPrintHandler implements PrintHandler {
     private final TempManager temps;
     private final ListGetEmitter listGetEmitter;
@@ -40,16 +39,37 @@ public class ListGetPrintHandler implements PrintHandler {
         StringBuilder sb = new StringBuilder();
         appendCodePrefix(sb, getCode);
 
+        // string
         if ("string".equals(elemType)) {
             sb.append("  call i32 (i8*, ...) @printf(")
                     .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), ")
                     .append("i8* ").append(valTemp).append(")\n");
-        } else if (isPrimitive(elemType)) {
-            throw new RuntimeException("ListGetPrintHandler: primitive via genérico não suportado (use emitters dedicados).");
-        } else {
 
+            // int
+        } else if ("int".equals(elemType)) {
+            sb.append("  call i32 (i8*, ...) @printf(")
+                    .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), ")
+                    .append("i32 ").append(valTemp).append(")\n");
+
+            // double
+        } else if ("double".equals(elemType)) {
+            sb.append("  call i32 (i8*, ...) @printf(")
+                    .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), ")
+                    .append("double ").append(valTemp).append(")\n");
+
+            // boolean
+        } else if ("boolean".equals(elemType)) {
+            // imprime como 0/1
+            sb.append("  %tbool = zext i1 ").append(valTemp).append(" to i32\n");
+            sb.append("  call i32 (i8*, ...) @printf(")
+                    .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), ")
+                    .append("i32 %tbool)\n");
+
+            // structs
+        } else {
             String structName = normalizeStructName(elemType);
-            sb.append("  call void @print_").append(structName).append("(i8* ").append(valTemp).append(")\n");
+            sb.append("  call void @print_").append(structName)
+                    .append("(i8* ").append(valTemp).append(")\n");
         }
 
         return sb.toString();
@@ -68,10 +88,6 @@ public class ListGetPrintHandler implements PrintHandler {
         int v = code.indexOf(";;VAL:");
         int t = code.indexOf(";;TYPE:", v);
         return (v == -1 || t == -1) ? "" : code.substring(v + 6, t).trim();
-    }
-
-    private boolean isPrimitive(String elemType) {
-        return "int".equals(elemType) || "double".equals(elemType) || "boolean".equals(elemType);
     }
 
     private String normalizeStructName(String elemType) {

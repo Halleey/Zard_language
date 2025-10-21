@@ -1,0 +1,19 @@
+import "src/language/structs/StructTest.zd" as st;
+
+main {
+
+   Struct Pessoa {
+      string nome;
+      int idade;
+      }
+
+
+st.Struct Nomade n;
+Struct Pessoa p;
+p.nome = "zard";
+n.nome = "zard";
+
+print(n);
+print(p.nome);
+
+}

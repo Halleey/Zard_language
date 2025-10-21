@@ -73,32 +73,13 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public void registerStructNode(String qualifiedName, StructNode node) {
         structNodes.put(qualifiedName, node);
     }
-
-
     public StructNode getStructNode(String name) {
         return structNodes.get(name);
     }
 
-
-
     public void addStructDefinition(String llvmDef) {
         structDefinitions.add(llvmDef);
     }
-
-    public List<String> getStructDefinitions() {
-        return structDefinitions;
-    }
-
-    public String getStructDefinition(String structName) {
-        for (String def : structDefinitions) {
-
-            if (def.startsWith("%" + structName + " = type")) {
-                return def;
-            }
-        }
-        return null;
-    }
-
 
     @Override
     public String visit(StructNode node) {

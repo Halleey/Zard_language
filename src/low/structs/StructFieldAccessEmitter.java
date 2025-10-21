@@ -24,13 +24,20 @@ public class StructFieldAccessEmitter {
     public String emit(StructFieldAccessNode node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
 
+        System.out.println("[DEBUG] Entrando em StructFieldAccessEmitter.emit para campo: " + node.getFieldName());
+
         String structCode = node.getStructInstance().accept(visitor);
         llvm.append(structCode);
 
         String structVal = extractTemp(structCode);
         String structLLVMType = extractType(structCode).trim();
+
+        System.out.println("[DEBUG] structCode gerado:\n" + structCode);
+        System.out.println("[DEBUG] structVal=" + structVal + " | structLLVMType=" + structLLVMType);
+
         // se veio **, faz um load para obter %Pessoa*
         if (structLLVMType.endsWith("**")) {
+            System.out.println("[DEBUG] structLLVMType termina com **, aplicando load...");
             String base = structLLVMType.substring(0, structLLVMType.length() - 1); // tira 1 '*'
             String tmp = temps.newTemp();
             llvm.append("  ").append(tmp).append(" = load ")
@@ -38,18 +45,24 @@ public class StructFieldAccessEmitter {
             llvm.append(";;VAL:").append(tmp).append(";;TYPE:").append(base).append("\n");
             structVal = tmp;
             structLLVMType = base;
+            System.out.println("[DEBUG] Após load: structVal=" + structVal + " | structLLVMType=" + structLLVMType);
         }
 
         //  dona (nome da struct) e definição
         String ownerType = resolveOwnerType(node.getStructInstance(), structLLVMType, visitor);
+        System.out.println("[DEBUG] ownerType resolvido: " + ownerType);
+
         if (ownerType == null) {
             throw new RuntimeException("Não foi possível resolver struct dona de " + node.getFieldName() +
                     " (LLVMType=" + structLLVMType + ")");
         }
         StructNode def = visitor.getStructNode(ownerType);
         if (def == null) {
+            System.out.println("[DEBUG] getStructNode(" + ownerType + ") retornou null!");
             throw new RuntimeException("Acesso de campo em algo que não é struct: " + structLLVMType);
         }
+
+        System.out.println("[DEBUG] StructNode encontrado: " + def.getName() + " com " + def.getFields().size() + " campos");
 
         int fieldIndex = -1;
         VariableDeclarationNode fieldDecl = null;
@@ -61,13 +74,15 @@ public class StructFieldAccessEmitter {
                 break;
             }
         }
+        System.out.println("[DEBUG] fieldIndex=" + fieldIndex);
+
         if (fieldIndex == -1) {
             throw new RuntimeException("Campo não encontrado: " + node.getFieldName());
         }
 
         //gep até o ponteiro do campo
         if (structLLVMType.equals("i8*")) {
-            // dif se veio como i8*, faz bitcast para %Owner*
+            System.out.println("[DEBUG] structLLVMType é i8*, aplicando bitcast para %" + ownerType + "*");
             String realTy = "%" + ownerType + "*";
             String casted = temps.newTemp();
             llvm.append("  ").append(casted)
@@ -78,6 +93,8 @@ public class StructFieldAccessEmitter {
             structLLVMType = realTy;
         }
 
+        System.out.println("[DEBUG] Preparando GEP: structLLVMType=" + structLLVMType + " | fieldIndex=" + fieldIndex);
+
         String fieldPtr = temps.newTemp();
         String structTyNoPtr = structLLVMType.replace("*", "");
         llvm.append("  ").append(fieldPtr).append(" = getelementptr inbounds ")
@@ -85,75 +102,82 @@ public class StructFieldAccessEmitter {
                 .append(", i32 0, i32 ").append(fieldIndex).append("\n");
 
         final String fieldLangType = fieldDecl.getType();
-        final String fieldLLType = mapFieldTypeForStruct(fieldLangType); // tipo LLVM correto do CAMPO
+        final String fieldLLType = mapFieldTypeForStruct(fieldLangType); // tipo LLVM do CAMPO (não do ponteiro ao campo)
 
-        if (node.getValue() != null) {
-            String valCode = node.getValue().accept(visitor);
-            llvm.append(valCode);
-            String val = extractTemp(valCode);
-            String valType = extractType(valCode).trim();
+        System.out.println("[DEBUG] Campo " + node.getFieldName() + " tipoLang=" + fieldLangType + " | tipoLLVM=" + fieldLLType);
 
-            // Se o campo é LISTA
-            if (isListType(fieldLangType)) {
-                String inner = getListInner(fieldLangType);
+        boolean isWrite = (node.getValue() != null);
+        if (isWrite) {
+            System.out.println("[DEBUG] Emitindo atribuição para campo " + node.getFieldName() + ")");
+            // Avalia RHS
+            String rhsCode = node.getValue().accept(visitor);
+            llvm.append(rhsCode);
+            String rhsVal = extractTemp(rhsCode);
+            String rhsTy = extractType(rhsCode).trim();
 
+            // Ajusta tipo do valor para o tipo do campo
+            String storeVal = rhsVal;
+            String storeTy = rhsTy;
 
-                if (isListLLVMType(valType)) {
+            if (!storeTy.equals(fieldLLType)) {
+                // Casos comuns de conversão
+                if ("i8*".equals(storeTy) && fieldLLType.startsWith("%")) {
+                    // i8* -> %Algo*
+                    String cast = temps.newTemp();
+                    llvm.append("  ").append(cast).append(" = bitcast i8* ").append(storeVal)
+                            .append(" to ").append(fieldLLType).append("\n");
+                    storeVal = cast;
+                    storeTy = fieldLLType;
+                } else if (storeTy.startsWith("%") && "i8*".equals(fieldLLType)) {
 
-                    if (inner.equals("int") && valType.equals("%struct.ArrayListInt*")) {
-                        llvm.append("  store %struct.ArrayListInt* ").append(val)
-                                .append(", %struct.ArrayListInt** ").append(fieldPtr).append("\n");
-                        llvm.append(";;VAL:").append(val).append(";;TYPE:%struct.ArrayListInt*\n");
-                        return llvm.toString();
-                    } else if (inner.equals("double") && valType.equals("%struct.ArrayListDouble*")) {
-                        llvm.append("  store %struct.ArrayListDouble* ").append(val)
-                                .append(", %struct.ArrayListDouble** ").append(fieldPtr).append("\n");
-                        llvm.append(";;VAL:").append(val).append(";;TYPE:%struct.ArrayListDouble*\n");
-                        return llvm.toString();
-                    } else if (inner.equals("boolean") && valType.equals("%struct.ArrayListBool*")) {
-                        llvm.append("  store %struct.ArrayListBool* ").append(val)
-                                .append(", %struct.ArrayListBool** ").append(fieldPtr).append("\n");
-                        llvm.append(";;VAL:").append(val).append(";;TYPE:%struct.ArrayListBool*\n");
-                        return llvm.toString();
+                    String cast = temps.newTemp();
+                    llvm.append("  ").append(cast).append(" = bitcast ").append(storeTy).append(" ").append(storeVal)
+                            .append(" to i8*\n");
+                    storeVal = cast;
+
+                } else if ("i32".equals(storeTy) && "double".equals(fieldLLType)) {
+                    String conv = temps.newTemp();
+                    llvm.append("  ").append(conv).append(" = sitofp i32 ").append(storeVal).append(" to double\n");
+                    storeVal = conv;
+                    storeTy = "double";
+                } else if ("double".equals(storeTy) && "i32".equals(fieldLLType)) {
+                    String conv = temps.newTemp();
+                    llvm.append("  ").append(conv).append(" = fptosi double ").append(storeVal).append(" to i32\n");
+                    storeVal = conv;
+
+                } else if (!storeTy.equals(fieldLLType)) {
+                    // fallback seguro para ponteiros compatíveis
+                    if ((storeTy.endsWith("*") && fieldLLType.endsWith("*"))) {
+                        String cast = temps.newTemp();
+                        llvm.append("  ").append(cast).append(" = bitcast ").append(storeTy).append(" ").append(storeVal)
+                                .append(" to ").append(fieldLLType).append("\n");
+                        storeVal = cast;
                     } else {
-                        if (valType.equals("%ArrayList*")) {
-                            llvm.append("  store %ArrayList* ").append(val)
-                                    .append(", %ArrayList** ").append(fieldPtr).append("\n");
-                            llvm.append(";;VAL:").append(val).append(";;TYPE:%ArrayList*\n");
-                            return llvm.toString();
-                        } else if (valType.equals("i8*")) {
-                            // bitcast i8* -> %ArrayList*
-                            String bc = temps.newTemp();
-                            llvm.append("  ").append(bc).append(" = bitcast i8* ").append(val).append(" to %ArrayList*\n");
-                            llvm.append("  store %ArrayList* ").append(bc).append(", %ArrayList** ").append(fieldPtr).append("\n");
-                            llvm.append(";;VAL:").append(bc).append(";;TYPE:%ArrayList*\n");
-                            return llvm.toString();
-                        }
+                        throw new RuntimeException("Tipo incompatível para store em campo " + node.getFieldName() +
+                                ": RHS=" + storeTy + " -> Field=" + fieldLLType);
                     }
                 }
-
-                ensureListAllocated(llvm, fieldPtr, inner);
-                addToList(llvm, fieldPtr, inner, val, valType);
-                String listNow = temps.newTemp();
-                String listTy = listLLVMPtrType(inner);
-                llvm.append("  ").append(listNow)
-                        .append(" = load ").append(listTy).append(", ").append(listTy)
-                        .append("* ").append(fieldPtr).append("\n");
-                llvm.append(";;VAL:").append(listNow).append(";;TYPE:").append(listTy).append("\n");
-                return llvm.toString();
             }
 
-            llvm.append("  store ").append(fieldLLType).append(" ").append(val)
+            // fieldPtr é ponteiro para o campo => tipo é fieldLLType*
+            llvm.append("  store ").append(fieldLLType).append(" ").append(storeVal)
                     .append(", ").append(fieldLLType).append("* ").append(fieldPtr).append("\n");
-            llvm.append(";;VAL:").append(val).append(";;TYPE:").append(fieldLLType).append("\n");
-            return llvm.toString();
+
+            // Para encadeamento após uma atribuição (ex. a.b = c e depois usa a.b), devolvemos o valor armazenado
+            String retAlias = temps.newTemp();
+            llvm.append("  ").append(retAlias).append(" = load ").append(fieldLLType)
+                    .append(", ").append(fieldLLType).append("* ").append(fieldPtr).append("\n");
+            llvm.append(";;VAL:").append(retAlias).append(";;TYPE:").append(fieldLLType).append("\n");
+
+        } else {
+            System.out.println("[DEBUG] Emitindo leitura para campo " + node.getFieldName() + ")");
+            // fieldPtr é *para o campo*; precisamos carregar o valor do campo para poder encadear
+            String loaded = temps.newTemp();
+            llvm.append("  ").append(loaded).append(" = load ").append(fieldLLType)
+                    .append(", ").append(fieldLLType).append("* ").append(fieldPtr).append("\n");
+            llvm.append(";;VAL:").append(loaded).append(";;TYPE:").append(fieldLLType).append("\n");
         }
 
-
-        String tmp = temps.newTemp();
-        llvm.append("  ").append(tmp).append(" = load ")
-                .append(fieldLLType).append(", ").append(fieldLLType).append("* ").append(fieldPtr).append("\n");
-        llvm.append(";;VAL:").append(tmp).append(";;TYPE:").append(fieldLLType).append("\n");
         return llvm.toString();
     }
 
@@ -192,15 +216,6 @@ public class StructFieldAccessEmitter {
         return t.substring(5, t.length() - 1).trim();
     }
 
-    private boolean isListLLVMType(String ty) {
-        // reconhece todos os ponteiros de listas possíveis
-        return "%struct.ArrayListInt*".equals(ty)
-                || "%struct.ArrayListDouble*".equals(ty)
-                || "%struct.ArrayListBool*".equals(ty)
-                || "%ArrayList*".equals(ty)
-                || "i8*".equals(ty); // criador genérico pode retornar i8* antes de bitcast
-    }
-
     private String listLLVMPtrType(String inner) {
         return switch (inner) {
             case "int" -> "%struct.ArrayListInt*";
@@ -208,109 +223,6 @@ public class StructFieldAccessEmitter {
             case "boolean" -> "%struct.ArrayListBool*";
             default -> "%ArrayList*"; // string/struct/ptr
         };
-    }
-
-    private void ensureListAllocated(StringBuilder llvm, String fieldPtr, String inner) {
-        // carrega ptr da lista
-        String listTy = listLLVMPtrType(inner);
-        String cur = temps.newTemp();
-        llvm.append("  ").append(cur)
-                .append(" = load ").append(listTy).append(", ").append(listTy)
-                .append("* ").append(fieldPtr).append("\n");
-
-        String isNull = temps.newTemp();
-        String thenLbl = "init_list_" + safeSuffix(cur);
-        String endLbl = thenLbl + "_end";
-
-        llvm.append("  ").append(isNull).append(" = icmp eq ").append(listTy).append(" ")
-                .append(cur).append(", null\n");
-        llvm.append("  br i1 ").append(isNull).append(", label %").append(thenLbl)
-                .append(", label %").append(endLbl).append("\n");
-
-        // init: cria lista correta
-        llvm.append(thenLbl).append(":\n");
-        String created = temps.newTemp();
-        if (inner.equals("int")) {
-            llvm.append("  ").append(created)
-                    .append(" = call %struct.ArrayListInt* @arraylist_create_int(i64 10)\n");
-            llvm.append("  store %struct.ArrayListInt* ").append(created)
-                    .append(", %struct.ArrayListInt** ").append(fieldPtr).append("\n");
-        } else if (inner.equals("double")) {
-            llvm.append("  ").append(created)
-                    .append(" = call %struct.ArrayListDouble* @arraylist_create_double(i64 10)\n");
-            llvm.append("  store %struct.ArrayListDouble* ").append(created)
-                    .append(", %struct.ArrayListDouble** ").append(fieldPtr).append("\n");
-        } else if (inner.equals("boolean")) {
-            llvm.append("  ").append(created)
-                    .append(" = call %struct.ArrayListBool* @arraylist_create_bool(i64 10)\n");
-            llvm.append("  store %struct.ArrayListBool* ").append(created)
-                    .append(", %struct.ArrayListBool** ").append(fieldPtr).append("\n");
-        } else {
-            // genérico/ptr (string, structs, etc.) — criador retorna i8*
-            String raw = temps.newTemp();
-            llvm.append("  ").append(raw)
-                    .append(" = call i8* @arraylist_create(i64 10)\n");
-            String casted = temps.newTemp();
-            llvm.append("  ").append(casted)
-                    .append(" = bitcast i8* ").append(raw).append(" to %ArrayList*\n");
-            llvm.append("  store %ArrayList* ").append(casted)
-                    .append(", %ArrayList** ").append(fieldPtr).append("\n");
-        }
-        llvm.append("  br label %").append(endLbl).append("\n");
-        llvm.append(endLbl).append(":\n");
-    }
-
-    private void addToList(StringBuilder llvm, String fieldPtr, String inner, String val, String valType) {
-        if (inner.equals("int")) {
-            String list = temps.newTemp();
-            llvm.append("  ").append(list)
-                    .append(" = load %struct.ArrayListInt*, %struct.ArrayListInt** ").append(fieldPtr).append("\n");
-            // se o valor veio como i32, ótimo; senão, faça cast se necessário
-            llvm.append("  call void @arraylist_add_int(%struct.ArrayListInt* ").append(list)
-                    .append(", i32 ").append(val).append(")\n");
-        } else if (inner.equals("double")) {
-            String list = temps.newTemp();
-            llvm.append("  ").append(list)
-                    .append(" = load %struct.ArrayListDouble*, %struct.ArrayListDouble** ").append(fieldPtr).append("\n");
-            // garanta que é double; se valType for i32, pode zext/sitofp, mas mantive simples:
-            if (!"double".equals(valType)) {
-                // cast para double se necessário
-                String d = temps.newTemp();
-                llvm.append("  ").append(d).append(" = sitofp i32 ").append(val).append(" to double\n");
-                val = d;
-            }
-            llvm.append("  call void @arraylist_add_double(%struct.ArrayListDouble* ").append(list)
-                    .append(", double ").append(val).append(")\n");
-        } else if (inner.equals("boolean")) {
-            String list = temps.newTemp();
-            llvm.append("  ").append(list)
-                    .append(" = load %struct.ArrayListBool*, %struct.ArrayListBool** ").append(fieldPtr).append("\n");
-            // normalize para i1
-            if (!"i1".equals(valType)) {
-                // qualquer não-zero vira true se for i32, compare com 0
-                String b = temps.newTemp();
-                llvm.append("  ").append(b).append(" = icmp ne ").append(valType).append(" ")
-                        .append(val).append(", 0\n");
-                val = b;
-            }
-            llvm.append("  call void @arraylist_add_bool(%struct.ArrayListBool* ").append(list)
-                    .append(", i1 ").append(val).append(")\n");
-        } else {
-            // genérico/ptr: string (%String*) e structs (%Tipo*) entram como i8*
-            String list = temps.newTemp();
-            llvm.append("  ").append(list)
-                    .append(" = load %ArrayList*, %ArrayList** ").append(fieldPtr).append("\n");
-
-            // Se valor não é i8*, fazemos bitcast
-            if (!"i8*".equals(valType)) {
-                String cast = temps.newTemp();
-                llvm.append("  ").append(cast).append(" = bitcast ").append(valType)
-                        .append(" ").append(val).append(" to i8*\n");
-                val = cast;
-            }
-            llvm.append("  call void @arraylist_add_ptr(%ArrayList* ").append(list)
-                    .append(", i8* ").append(val).append(")\n");
-        }
     }
 
     private String normalizeOwnerName(String t) {
@@ -321,8 +233,12 @@ public class StructFieldAccessEmitter {
         if (u.startsWith("%")) u = u.substring(1).trim();
         if (u.startsWith("Struct.")) u = u.substring("Struct.".length()).trim();
         if (u.startsWith("Struct ")) u = u.substring("Struct ".length()).trim();
+        if (u.contains(".")) {
+            u = u.substring(u.lastIndexOf('.') + 1);
+        }
         return u;
     }
+
 
     private String resolveOwnerType(ASTNode instance, String structTypeLLVM, LLVisitorMain visitor) {
         if (instance instanceof VariableNode varNode) {

@@ -25,9 +25,12 @@ import ast.lists.ListAddAllNode;
 import ast.lists.ListAddNode;
 import ast.lists.ListNode;
 import ast.loops.WhileNode;
+
+
+
 public class ImportEmitter {
     private final LLVisitorMain visitor;
-    private final Set<String> tiposDeListasUsados; // ⚡ compartilhado com MainEmitter
+    private final Set<String> tiposDeListasUsados; // compartilhado com MainEmitter
 
     public ImportEmitter(LLVisitorMain visitor, Set<String> tiposDeListasUsados) {
         this.visitor = visitor;
@@ -43,20 +46,16 @@ public class ImportEmitter {
             String path = node.path();
             String alias = node.alias();
 
-
             String code = Files.readString(Path.of(path));
             Lexer lexer = new Lexer(code);
             List<Token> tokens = lexer.tokenize();
             Parser parser = new Parser(tokens);
             List<ASTNode> ast = parser.parse();
 
-
             for (ASTNode n : ast) coletarListas(n);
-
 
             StringBuilder moduleIR = new StringBuilder();
             FunctionEmitter fnEmitter = new FunctionEmitter(visitor);
-
 
             for (ASTNode n : ast) {
                 if (n instanceof FunctionNode func) {
@@ -64,17 +63,18 @@ public class ImportEmitter {
                     String llvmName = qualified.replace('.', '_');
 
                     visitor.registerImportedFunction(qualified, func);
-                    visitor.registerFunctionType(qualified, func.getReturnType());
+                    visitor.registerFunctionType(qualified, func.getReturnType( ));
 
                     String funcIR = fnEmitter.emit(func)
                             .replace("@" + func.getName() + "(", "@" + llvmName + "(");
 
                     moduleIR.append(funcIR).append("\n");
 
-                }
-                else if (n instanceof StructNode struct) {
+                } else if (n instanceof StructNode struct) {
                     String qualified = alias + "." + struct.getName();
                     visitor.registerStructNode(qualified, struct);
+                    String llvmKey = qualified.replace('.', '_');
+                    visitor.registerStructNode(llvmKey, struct);
 
                     StructEmitter structEmitter = new StructEmitter(visitor);
                     String llvmDef = structEmitter.emit(struct);
@@ -84,9 +84,7 @@ public class ImportEmitter {
 
                     visitor.addStructDefinition(llvmDef);
                 }
-
             }
-
 
             return moduleIR.toString();
 
@@ -98,11 +96,9 @@ public class ImportEmitter {
     private void coletarListas(ASTNode node) {
         if (node == null) return;
 
-
         if (node instanceof VariableDeclarationNode varDecl) {
             if (varDecl.getType() != null && varDecl.getType().startsWith("List")) {
                 tiposDeListasUsados.add(varDecl.getType());
-
             }
             if (varDecl.initializer != null) coletarListas(varDecl.initializer);
         } else if (node instanceof ListNode listNode) {
@@ -111,12 +107,10 @@ public class ImportEmitter {
 
             listNode.getList().getElements().forEach(this::coletarListas);
         } else if (node instanceof FunctionNode func) {
-
             for (int i = 0; i < func.getParams().size(); i++) {
                 String tipo = func.getParamTypes().get(i);
                 if (tipo != null && tipo.startsWith("List")) {
                     tiposDeListasUsados.add(tipo);
-
                 }
             }
             func.getBody().forEach(this::coletarListas);

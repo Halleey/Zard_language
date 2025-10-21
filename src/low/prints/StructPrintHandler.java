@@ -3,12 +3,10 @@ package low.prints;
 import ast.ASTNode;
 import ast.structs.StructInstaceNode;
 import ast.structs.StructNode;
-import ast.variables.VariableDeclarationNode;
+
 import ast.variables.VariableNode;
 import low.TempManager;
-import low.functions.TypeMapper;
 import low.module.LLVisitorMain;
-
 
 public class StructPrintHandler implements PrintHandler {
     private final TempManager temps;
@@ -26,91 +24,86 @@ public class StructPrintHandler implements PrintHandler {
         if (node instanceof StructInstaceNode) {
             type = "%" + ((StructInstaceNode) node).getName() + "*";
         }
+
         return type != null && type.startsWith("%") && type.endsWith("*") && !type.equals("%String*");
     }
 
     @Override
     public String emit(ASTNode node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
-        String code = node.accept(visitor);
-        String temp = extractTemp(code);
-        String type = extractType(code);
 
+        String code = node.accept(visitor);
         if (!code.isBlank()) {
             llvm.append(code);
         }
-        String cleanName = type.replace("%", "").replace("*", "");
 
-        if (cleanName.contains("_")) {
-            String dotName = cleanName.replace("_", ".");
-            if (visitor.getStructNode(dotName) != null) {
-                cleanName = dotName;
-            }
+        String temp = extractTemp(code);
+        String type = extractType(code).trim();
+
+        if (type.endsWith("**")) {
+            String base = type.substring(0, type.length() - 1);
+            String t = temps.newTemp();
+            llvm.append("  ").append(t).append(" = load ").append(base).append(", ").append(base).append("* ").append(temp).append("\n");
+            llvm.append(";;VAL:").append(t).append(";;TYPE:").append(base).append("\n");
+            temp = t;
+            type = base;
         }
 
-        if (cleanName.startsWith("Struct<") && cleanName.endsWith(">")) {
-            cleanName = cleanName.substring(7, cleanName.length() - 1);
-        }
-
-        StructNode def = visitor.getStructNode(cleanName);
+        String key = normalizeKeyFromLLVMPtr(type);      // ex: %st_Nomade* -> st_Nomade
+        StructNode def = resolveStructNode(key, visitor);
         if (def == null) {
-            throw new RuntimeException("Struct não encontrada: " + cleanName);
+            throw new RuntimeException("Struct não encontrada para impressão: " + key + " (type=" + type + ")");
+        }
+        String shortName = def.getName();
+        String printFn = "@" + ("print_" + shortName);
+
+        String asRaw;
+        if ("i8*".equals(type)) {
+            asRaw = temp;
+        } else {
+            asRaw = temps.newTemp();
+            llvm.append("  ").append(asRaw).append(" = bitcast ").append(type).append(" ").append(temp).append(" to i8*\n");
         }
 
-        int index = 0;
-        for (VariableDeclarationNode field : def.getFields()) {
+        llvm.append("  call void ").append(printFn).append("(i8* ").append(asRaw).append(")\n");
 
-            String fieldType = mapFieldTypeForStruct(field.getType());
-
-            String fieldPtr = temps.newTemp();
-            llvm.append("  ").append(fieldPtr)
-                    .append(" = getelementptr inbounds ")
-                    .append(type.replace("*", "")).append(", ")
-                    .append(type).append(" ").append(temp)
-                    .append(", i32 0, i32 ").append(index).append("\n");
-
-            String fieldVal = temps.newTemp();
-            llvm.append("  ").append(fieldVal)
-                    .append(" = load ").append(fieldType)
-                    .append(", ").append(fieldType)
-                    .append("* ").append(fieldPtr)
-                    .append("\n;;VAL:").append(fieldVal)
-                    .append(";;TYPE:").append(fieldType).append("\n");
-
-            String marker = ";;VAL:" + fieldVal + ";;TYPE:" + fieldType + "\n";
-            llvm.append(new ExprPrintHandler(temps).emitExprOrElement(marker, visitor, node));
-
-            index++;
-        }
+        llvm.append(";;VAL:").append(asRaw).append(";;TYPE:i8*\n");
 
         return llvm.toString();
     }
 
-    private String mapFieldTypeForStruct(String langType) {
-        if (langType == null) return "void";
-        langType = langType.trim();
 
-        if (langType.startsWith("List<") && langType.endsWith(">")) {
-            String inner = langType.substring(5, langType.length() - 1).trim();
-            return switch (inner) {
-                case "int"    -> "%struct.ArrayListInt*";
-                case "double" -> "%struct.ArrayListDouble*";
-                case "boolean"-> "%struct.ArrayListBool*";
-                case "string" -> "%ArrayList*";
-                default       -> "%ArrayList*";
-            };
+
+    private StructNode resolveStructNode(String key, LLVisitorMain visitor) {
+        // Tenta direto
+        StructNode n = visitor.getStructNode(key);
+        if (n != null) return n;
+
+        // Tenta trocar '_' por '.'
+        String withDots = key.replace('_', '.');
+        n = visitor.getStructNode(withDots);
+        if (n != null) return n;
+
+        int idx = key.indexOf('_');
+        if (idx >= 0 && idx + 1 < key.length()) {
+            String shortOnly = key.substring(idx + 1);
+            n = visitor.getStructNode(shortOnly);
+            if (n != null) return n;
         }
 
-        if (langType.startsWith("Struct ")) {
-            String inner = langType.substring("Struct ".length()).trim();
-            return "%" + inner + "*";
-        }
-        if (langType.startsWith("Struct<") && langType.endsWith(">")) {
-            String inner = langType.substring(7, langType.length() - 1).trim();
-            return "%" + inner + "*";
-        }
+        String asGeneric = "Struct<" + withDots + ">";
+        n = visitor.getStructNode(asGeneric);
+        if (n != null) return n;
 
-        return new TypeMapper().toLLVM(langType);
+        return null;
+    }
+
+    private String normalizeKeyFromLLVMPtr(String llvmPtrType) {
+        // %st_Nomade* -> st_Nomade ;  %Pessoa* -> Pessoa ; i8* -> i8 (não deve chegar aqui)
+        String t = llvmPtrType.trim();
+        if (t.startsWith("%")) t = t.substring(1);
+        while (t.endsWith("*")) t = t.substring(0, t.length() - 1);
+        return t;
     }
 
     private String extractTemp(String code) {

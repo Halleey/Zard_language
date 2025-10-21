@@ -11,10 +11,6 @@ import low.module.LLVisitorMain;
 public class ExprPrintHandler {
     private final TempManager temps;
 
-    /***
-     *
-     *Class will be refactored  and optimized in the future
-     */
 
     public ExprPrintHandler(TempManager temps) {
         this.temps = temps;

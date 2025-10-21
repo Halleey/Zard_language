@@ -2,61 +2,27 @@ import "src/language/structs/StructTest.zd" as st;
 
 main {
 
-    Struct Endereco {
-        string rua;
-        string cidade;
-    }
+   Struct Pessoa {
+      string nome;
+      int idade;
+      }
 
-    Struct Pessoa {
-        string nome;
-        int idade;
-        Struct Endereco endereco;
-    }
+int x = 999;
+string name = "blom";
+st.Struct Nomade n;
+Struct Pessoa p;
+p.nome = "deoxys";
+n.nome = name;
+p.idade = x;
+n.idade = 333;
 
-    List<Pessoa> pessoas;
+print("struct completa");
+print(n);
+print("apenas nome");
+print(n.nome);
+print("apenas idade");
+print(n.idade);
+print("apenas nome");
+print(p.nome);
 
-    Struct Pessoa p1;
-    p1.nome = "Alice";
-    p1.idade = 25;
-    Struct Endereco e1;
-    e1.rua = "Rua A";
-    e1.cidade = "São Paulo";
-    p1.endereco = e1;
-
-    Struct Pessoa p2;
-    p2.nome = "Bob";
-    p2.idade = 17;
-    Struct Endereco e2;
-    e2.rua = "Av. Central";
-    e2.cidade = "Rio de Janeiro";
-    p2.endereco = e2;
-
-    pessoas.add(p1);
-    pessoas.add(p2);
-
-    print(pessoas.get(0).nome);
-    print(pessoas.get(0).endereco.rua);
-    print(pessoas.get(0).endereco.cidade);
-
-    print(pessoas.get(1).nome);
-    print(pessoas.get(1).endereco.rua);
-    print(pessoas.get(1).endereco.cidade);
-
-    if (pessoas.get(0).endereco.cidade == "São Paulo") {
-        print("A primeira pessoa mora em São Paulo");
-    }
-
-    if (pessoas.get(1).idade < 18) {
-        print(pessoas.get(1).nome);
-        print(" é menor de idade");
-    }
-
-    int i = 0;
-    while (i < pessoas.size()) {
-        print("Pessoa:");
-        print(pessoas.get(i).nome);
-        print(pessoas.get(i).endereco.rua);
-        print(pessoas.get(i).endereco.cidade);
-        i = i + 1;
-    }
 }

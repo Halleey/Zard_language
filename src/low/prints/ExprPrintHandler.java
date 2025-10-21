@@ -1,6 +1,9 @@
 package low.prints;
 
+import ast.ASTNode;
+import ast.lists.ListGetNode;
 import low.TempManager;
+import low.lists.generics.ListGetEmitter;
 import low.module.LLVisitorMain;
 
 
@@ -15,11 +18,9 @@ public class ExprPrintHandler {
     public ExprPrintHandler(TempManager temps) {
         this.temps = temps;
     }
-
-    public String emitExprOrElement(String exprLLVM, LLVisitorMain visitor) {
+    public String emitExprOrElement(String exprLLVM, LLVisitorMain visitor, ASTNode node) {
         int markerIdx = exprLLVM.lastIndexOf(";;VAL:");
         if (markerIdx == -1) {
-
             return exprLLVM;
         }
 
@@ -36,27 +37,29 @@ public class ExprPrintHandler {
 
         switch (type) {
             case "%struct.ArrayListInt*" -> {
+                // imprime a lista inteira de int
                 llvm.append("  call void @arraylist_print_int(%struct.ArrayListInt* ")
                         .append(temp).append(")\n");
                 return llvm.toString();
             }
             case "%struct.ArrayListDouble*" -> {
+                // imprime a lista inteira de double
                 llvm.append("  call void @arraylist_print_double(%struct.ArrayListDouble* ")
                         .append(temp).append(")\n");
                 return llvm.toString();
             }
             case "%struct.ArrayListBool*" -> {
+                // imprime a lista inteira de boolean
                 llvm.append("  call void @arraylist_print_bool(%struct.ArrayListBool* ")
                         .append(temp).append(")\n");
                 return llvm.toString();
             }
             case "%ArrayList*" -> {
+                // imprime lista genérica de ponteiros (ex.: structs)
                 llvm.append("  call void @arraylist_print_ptr(%ArrayList* ")
                         .append(temp).append(", void (i8*)* @printString)\n");
                 return llvm.toString();
             }
-
-
 
             case "i32" -> {
                 llvm.append("  call i32 (i8*, ...) @printf(")
@@ -85,8 +88,14 @@ public class ExprPrintHandler {
                 return llvm.toString();
             }
             default -> {
-                if (isStructLLVMType(type)) {
 
+                if (node instanceof ListGetNode) {
+                    ListGetPrintHandler handler =
+                            new ListGetPrintHandler(temps, new ListGetEmitter(temps));
+                    return handler.emit(node, visitor);
+                }
+
+                if (isStructLLVMType(type)) {
                     String structName = toStructName(type);
                     String structNameSym = structName.replace('.', '_').replace(' ', '_');
 
@@ -110,6 +119,7 @@ public class ExprPrintHandler {
             }
         }
     }
+
 
     private String extractTemp(String valTypePart) {
         int v = valTypePart.indexOf(";;VAL:");

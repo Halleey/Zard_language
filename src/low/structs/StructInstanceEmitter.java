@@ -49,7 +49,6 @@ public class StructInstanceEmitter {
 
             ASTNode providedValue = (i < provided) ? values.get(i) : null;
 
-            // ⚠️ Use o mesmo mapeamento que o StructEmitter usa
             String fieldLLVMType = mapFieldTypeForStruct(field.getType());
 
             String valueTemp;

@@ -8,6 +8,8 @@ import ast.variables.VariableNode;
 import low.TempManager;
 import low.functions.TypeMapper;
 import low.module.LLVisitorMain;
+
+
 public class StructPrintHandler implements PrintHandler {
     private final TempManager temps;
 
@@ -76,7 +78,7 @@ public class StructPrintHandler implements PrintHandler {
                     .append(";;TYPE:").append(fieldType).append("\n");
 
             String marker = ";;VAL:" + fieldVal + ";;TYPE:" + fieldType + "\n";
-            llvm.append(new ExprPrintHandler(temps).emitExprOrElement(marker, visitor));
+            llvm.append(new ExprPrintHandler(temps).emitExprOrElement(marker, visitor, node));
 
             index++;
         }

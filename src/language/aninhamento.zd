@@ -1,17 +1,5 @@
 import "src/language/structs/StructTest.zd" as st;
 
- Struct Endereco {
-        string rua;
-        string cidade;
-    }
-
-    Struct Pessoa {
-        string nome;
-        int idade;
-        Struct Endereco endereco;
-    }
-
-
 main {
 
     Struct Endereco {

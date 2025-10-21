@@ -37,6 +37,6 @@ public class PrintEmitter {
         }
         // fallback para expressões complexas
         String exprLLVM = node.expr.accept(visitor);
-        return exprHandler.emitExprOrElement(exprLLVM, visitor);
+        return exprHandler.emitExprOrElement(exprLLVM, visitor, node.expr);
     }
 }

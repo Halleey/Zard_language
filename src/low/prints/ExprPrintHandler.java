@@ -2,6 +2,7 @@ package low.prints;
 
 import ast.ASTNode;
 import ast.lists.ListGetNode;
+import ast.lists.ListNode;
 import low.TempManager;
 import low.lists.generics.ListGetEmitter;
 import low.module.LLVisitorMain;
@@ -36,30 +37,6 @@ public class ExprPrintHandler {
         }
 
         switch (type) {
-            case "%struct.ArrayListInt*" -> {
-                // imprime a lista inteira de int
-                llvm.append("  call void @arraylist_print_int(%struct.ArrayListInt* ")
-                        .append(temp).append(")\n");
-                return llvm.toString();
-            }
-            case "%struct.ArrayListDouble*" -> {
-                // imprime a lista inteira de double
-                llvm.append("  call void @arraylist_print_double(%struct.ArrayListDouble* ")
-                        .append(temp).append(")\n");
-                return llvm.toString();
-            }
-            case "%struct.ArrayListBool*" -> {
-                // imprime a lista inteira de boolean
-                llvm.append("  call void @arraylist_print_bool(%struct.ArrayListBool* ")
-                        .append(temp).append(")\n");
-                return llvm.toString();
-            }
-            case "%ArrayList*" -> {
-                // imprime lista genérica de ponteiros (ex.: structs)
-                llvm.append("  call void @arraylist_print_ptr(%ArrayList* ")
-                        .append(temp).append(", void (i8*)* @printString)\n");
-                return llvm.toString();
-            }
 
             case "i32" -> {
                 llvm.append("  call i32 (i8*, ...) @printf(")
@@ -92,6 +69,10 @@ public class ExprPrintHandler {
                 if (node instanceof ListGetNode) {
                     ListGetPrintHandler handler =
                             new ListGetPrintHandler(temps, new ListGetEmitter(temps));
+                    return handler.emit(node, visitor);
+                }
+                if(node instanceof ListNode) {
+                    ListPrintHandler handler = new ListPrintHandler(temps);
                     return handler.emit(node, visitor);
                 }
 

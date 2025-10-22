@@ -284,5 +284,36 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     }
 
 
+    public String getStructFieldType(StructFieldAccessNode node) {
+        // pega o tipo do receiver
+        String receiverType;
+        if (node.getStructInstance() instanceof VariableNode varNode) {
+            receiverType = getVarType(varNode.getName());
+        } else if (node.getStructInstance() instanceof StructFieldAccessNode nested) {
+            receiverType = getStructFieldType(nested);
+        } else {
+            throw new RuntimeException("Unsupported receiver in struct field access");
+        }
+
+        if (receiverType == null) {
+            throw new RuntimeException("Unknown receiver type for struct field access: " + node);
+        }
+
+        // normaliza o nome, ex: %Pessoa* → Pessoa
+        String structName = receiverType.replace("%", "").replace("*", "");
+
+        StructNode structNode = structNodes.get(structName);
+        if (structNode == null) {
+            throw new RuntimeException("Struct not found: " + structName);
+        }
+
+        for (VariableDeclarationNode field : structNode.getFields()) {
+            if (field.getName().equals(node.getFieldName())) {
+                return field.getType();
+            }
+        }
+
+        throw new RuntimeException("Field not found: " + node.getFieldName() + " in struct " + structName);
+    }
 
 }

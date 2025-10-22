@@ -119,8 +119,7 @@ public class StructFieldAccessEmitter {
                     String conv = temps.newTemp();
                     llvm.append("  ").append(conv).append(" = fptosi double ").append(storeVal).append(" to i32\n");
                     storeVal = conv;
-                } else if (!storeTy.equals(fieldLLType) &&
-                        (storeTy.endsWith("*") && fieldLLType.endsWith("*"))) {
+                } else if (storeTy.endsWith("*") && fieldLLType.endsWith("*")) {
                     String cast = temps.newTemp();
                     llvm.append("  ").append(cast).append(" = bitcast ")
                             .append(storeTy).append(" ").append(storeVal).append(" to ").append(fieldLLType).append("\n");
@@ -258,10 +257,4 @@ public class StructFieldAccessEmitter {
         return code.substring(lastTypeIdx + 7).trim();
     }
 
-    private String safeSuffix(String s) {
-        // gera sufixo simples para labels
-        String k = s.replace("%", "").replace(".", "_");
-        if (k.isEmpty()) k = "x";
-        return k;
-    }
 }

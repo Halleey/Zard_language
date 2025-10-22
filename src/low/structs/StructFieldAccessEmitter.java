@@ -24,7 +24,6 @@ public class StructFieldAccessEmitter {
     public String emit(StructFieldAccessNode node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
 
-        System.out.println("[DEBUG] Entrando em StructFieldAccessEmitter.emit para campo: " + node.getFieldName());
 
         String structCode = node.getStructInstance().accept(visitor);
         llvm.append(structCode);
@@ -32,12 +31,9 @@ public class StructFieldAccessEmitter {
         String structVal = extractTemp(structCode);
         String structLLVMType = extractType(structCode).trim();
 
-        System.out.println("[DEBUG] structCode gerado:\n" + structCode);
-        System.out.println("[DEBUG] structVal=" + structVal + " | structLLVMType=" + structLLVMType);
 
         // se veio **, faz um load para obter %Pessoa*
         if (structLLVMType.endsWith("**")) {
-            System.out.println("[DEBUG] structLLVMType termina com **, aplicando load...");
             String base = structLLVMType.substring(0, structLLVMType.length() - 1); // tira 1 '*'
             String tmp = temps.newTemp();
             llvm.append("  ").append(tmp).append(" = load ")
@@ -45,12 +41,10 @@ public class StructFieldAccessEmitter {
             llvm.append(";;VAL:").append(tmp).append(";;TYPE:").append(base).append("\n");
             structVal = tmp;
             structLLVMType = base;
-            System.out.println("[DEBUG] Após load: structVal=" + structVal + " | structLLVMType=" + structLLVMType);
         }
 
         //  dona (nome da struct) e definição
         String ownerType = resolveOwnerType(node.getStructInstance(), structLLVMType, visitor);
-        System.out.println("[DEBUG] ownerType resolvido: " + ownerType);
 
         if (ownerType == null) {
             throw new RuntimeException("Não foi possível resolver struct dona de " + node.getFieldName() +
@@ -58,11 +52,9 @@ public class StructFieldAccessEmitter {
         }
         StructNode def = visitor.getStructNode(ownerType);
         if (def == null) {
-            System.out.println("[DEBUG] getStructNode(" + ownerType + ") retornou null!");
             throw new RuntimeException("Acesso de campo em algo que não é struct: " + structLLVMType);
         }
 
-        System.out.println("[DEBUG] StructNode encontrado: " + def.getName() + " com " + def.getFields().size() + " campos");
 
         int fieldIndex = -1;
         VariableDeclarationNode fieldDecl = null;
@@ -74,7 +66,6 @@ public class StructFieldAccessEmitter {
                 break;
             }
         }
-        System.out.println("[DEBUG] fieldIndex=" + fieldIndex);
 
         if (fieldIndex == -1) {
             throw new RuntimeException("Campo não encontrado: " + node.getFieldName());
@@ -82,7 +73,6 @@ public class StructFieldAccessEmitter {
 
         //gep até o ponteiro do campo
         if (structLLVMType.equals("i8*")) {
-            System.out.println("[DEBUG] structLLVMType é i8*, aplicando bitcast para %" + ownerType + "*");
             String realTy = "%" + ownerType + "*";
             String casted = temps.newTemp();
             llvm.append("  ").append(casted)
@@ -93,7 +83,6 @@ public class StructFieldAccessEmitter {
             structLLVMType = realTy;
         }
 
-        System.out.println("[DEBUG] Preparando GEP: structLLVMType=" + structLLVMType + " | fieldIndex=" + fieldIndex);
 
         String fieldPtr = temps.newTemp();
         String structTyNoPtr = structLLVMType.replace("*", "");
@@ -104,7 +93,6 @@ public class StructFieldAccessEmitter {
         final String fieldLangType = fieldDecl.getType();
         final String fieldLLType = mapFieldTypeForStruct(fieldLangType); // tipo LLVM do CAMPO (não do ponteiro ao campo)
 
-        System.out.println("[DEBUG] Campo " + node.getFieldName() + " tipoLang=" + fieldLangType + " | tipoLLVM=" + fieldLLType);
 
         boolean isWrite = (node.getValue() != null);
         if (isWrite) {
@@ -127,7 +115,6 @@ public class StructFieldAccessEmitter {
                     llvm.append("  ").append(cast).append(" = bitcast i8* ").append(storeVal)
                             .append(" to ").append(fieldLLType).append("\n");
                     storeVal = cast;
-                    storeTy = fieldLLType;
                 } else if (storeTy.startsWith("%") && "i8*".equals(fieldLLType)) {
 
                     String cast = temps.newTemp();
@@ -139,7 +126,7 @@ public class StructFieldAccessEmitter {
                     String conv = temps.newTemp();
                     llvm.append("  ").append(conv).append(" = sitofp i32 ").append(storeVal).append(" to double\n");
                     storeVal = conv;
-                    storeTy = "double";
+
                 } else if ("double".equals(storeTy) && "i32".equals(fieldLLType)) {
                     String conv = temps.newTemp();
                     llvm.append("  ").append(conv).append(" = fptosi double ").append(storeVal).append(" to i32\n");
@@ -159,11 +146,9 @@ public class StructFieldAccessEmitter {
                 }
             }
 
-            // fieldPtr é ponteiro para o campo => tipo é fieldLLType*
             llvm.append("  store ").append(fieldLLType).append(" ").append(storeVal)
                     .append(", ").append(fieldLLType).append("* ").append(fieldPtr).append("\n");
 
-            // Para encadeamento após uma atribuição (ex. a.b = c e depois usa a.b), devolvemos o valor armazenado
             String retAlias = temps.newTemp();
             llvm.append("  ").append(retAlias).append(" = load ").append(fieldLLType)
                     .append(", ").append(fieldLLType).append("* ").append(fieldPtr).append("\n");
@@ -171,7 +156,6 @@ public class StructFieldAccessEmitter {
 
         } else {
             System.out.println("[DEBUG] Emitindo leitura para campo " + node.getFieldName() + ")");
-            // fieldPtr é *para o campo*; precisamos carregar o valor do campo para poder encadear
             String loaded = temps.newTemp();
             llvm.append("  ").append(loaded).append(" = load ").append(fieldLLType)
                     .append(", ").append(fieldLLType).append("* ").append(fieldPtr).append("\n");
@@ -216,14 +200,6 @@ public class StructFieldAccessEmitter {
         return t.substring(5, t.length() - 1).trim();
     }
 
-    private String listLLVMPtrType(String inner) {
-        return switch (inner) {
-            case "int" -> "%struct.ArrayListInt*";
-            case "double" -> "%struct.ArrayListDouble*";
-            case "boolean" -> "%struct.ArrayListBool*";
-            default -> "%ArrayList*"; // string/struct/ptr
-        };
-    }
 
     private String normalizeOwnerName(String t) {
         if (t == null) return null;

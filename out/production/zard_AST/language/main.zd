@@ -1,10 +1,11 @@
 import "src/language/structs/StructTest.zd" as st;
 
 main {
-
+    print(st.somar(3,2));
    Struct Pessoa {
       string nome;
       int idade;
+      List<string> nomes;
       }
 
 int x = 999;
@@ -13,6 +14,8 @@ st.Struct Nomade n;
 Struct Pessoa p;
 p.nome = "deoxys";
 n.nome = name;
+p.nomes.add("txt");
+p.nomes.remove(0);
 p.idade = x;
 n.idade = 333;
 
@@ -24,5 +27,7 @@ print("apenas idade");
 print(n.idade);
 print("apenas nome");
 print(p.nome);
+print("geral ");
+print(p);
 
 }

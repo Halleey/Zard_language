@@ -5,7 +5,9 @@ import tokens.Token;
 import translate.Parser;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class StructParser {
     private final Parser parser;
@@ -13,17 +15,18 @@ public class StructParser {
     public StructParser(Parser parser) {
         this.parser = parser;
     }
+
     public StructNode parseStructAfterKeyword(String structName) {
         parser.eat(Token.TokenType.DELIMITER, "{");
 
         List<VariableDeclarationNode> fields = new ArrayList<>();
+        Map<String, String> fieldTypes = new HashMap<>();
 
         while (!parser.current().getValue().equals("}")) {
             String fieldType = parseType();
 
             String fieldName;
             if (parser.current().getType() == Token.TokenType.IDENTIFIER) {
-
                 fieldName = parser.current().getValue();
                 parser.eat(Token.TokenType.IDENTIFIER);
             } else {
@@ -31,17 +34,23 @@ public class StructParser {
                     String typeName = fieldType.substring("Struct ".length()).trim();
                     fieldName = Character.toLowerCase(typeName.charAt(0)) + typeName.substring(1);
                 } else {
-                    throw new RuntimeException("Campo sem nome não suportado para tipo: " + fieldType);
+                    throw new RuntimeException("Campo sem nome não suportado: " + fieldType);
                 }
             }
 
             parser.eat(Token.TokenType.DELIMITER, ";");
             fields.add(new VariableDeclarationNode(fieldName, fieldType, null));
+            fieldTypes.put(fieldName, fieldType);
         }
 
         parser.eat(Token.TokenType.DELIMITER, "}");
+
+        // registra no parser
+        parser.declareStruct(structName, fieldTypes);
+
         return new StructNode(structName, fields);
     }
+
     private String parseType() {
         StringBuilder typeBuilder = new StringBuilder();
 
@@ -53,7 +62,7 @@ public class StructParser {
         if (baseType.equals("Struct")) {
             String structName = parser.current().getValue();
             parser.eat(Token.TokenType.IDENTIFIER);
-            typeBuilder.append(" ").append(structName);
+            typeBuilder.append("<").append(structName).append(">");
         }
 
         if (parser.current().getValue().equals("<")) {
@@ -66,22 +75,20 @@ public class StructParser {
             } else if (parser.current().getType() == Token.TokenType.IDENTIFIER) {
                 parser.eat(Token.TokenType.IDENTIFIER);
             } else {
-                throw new RuntimeException("Esperado tipo dentro de List<>, encontrado: " + innerType);
+                throw new RuntimeException("Esperado tipo em genérico: " + innerType);
             }
-
             typeBuilder.append(innerType);
 
             while (parser.current().getValue().equals(",")) {
                 parser.eat(Token.TokenType.DELIMITER, ",");
                 typeBuilder.append(",");
-
                 String nextType = parser.current().getValue();
                 if (parser.current().getType() == Token.TokenType.KEYWORD) {
                     parser.eat(Token.TokenType.KEYWORD);
                 } else if (parser.current().getType() == Token.TokenType.IDENTIFIER) {
                     parser.eat(Token.TokenType.IDENTIFIER);
                 } else {
-                    throw new RuntimeException("Esperado tipo após vírgula em genérico: " + nextType);
+                    throw new RuntimeException("Esperado tipo após vírgula: " + nextType);
                 }
                 typeBuilder.append(nextType);
             }
@@ -92,6 +99,4 @@ public class StructParser {
 
         return typeBuilder.toString();
     }
-
-
 }

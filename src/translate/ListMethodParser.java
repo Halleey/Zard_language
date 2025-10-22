@@ -9,7 +9,6 @@ import ast.variables.VariableNode;
 
 
 import java.util.List;
-
 public class ListMethodParser {
     private final Parser parser;
 
@@ -17,8 +16,8 @@ public class ListMethodParser {
         this.parser = parser;
     }
 
-    public ASTNode consumer() {
-        parser.advance();
+    private ASTNode consumeArg() {
+        parser.advance(); // consome nome do método já lido
         parser.eat(Token.TokenType.DELIMITER, "(");
 
         ASTNode arg = null;
@@ -30,61 +29,60 @@ public class ListMethodParser {
         return arg;
     }
 
-
-    public ASTNode parseStatementListMethod(String name) {
-        String method = parser.current().getValue();
-        ASTNode listVar = new VariableNode(name);
+    // === Statements ===
+    public ASTNode parseStatementListMethod(ASTNode receiver, String method) {
         ASTNode arg;
 
         return switch (method) {
             case "add" -> {
-                arg = consumer();
+                arg = consumeArg();
                 if (arg == null) throw new RuntimeException("Método add requer argumento");
 
+                // resolve tipo do elemento
                 String elementType = "unknown";
-                String listType = parser.getVariableType(name);
+                String listType = parser.getExpressionType(receiver);
                 if (listType != null && listType.startsWith("List<") && listType.endsWith(">")) {
-                    elementType = listType.substring(5, listType.length() - 1); // extrai "string"
+                    elementType = listType.substring(5, listType.length() - 1);
                 }
 
-                ASTNode node = new ListAddNode(listVar, arg, elementType);
+                ASTNode node = new ListAddNode(receiver, arg, elementType);
                 parser.eat(Token.TokenType.DELIMITER, ";");
                 yield node;
             }
-
 
             case "addAll" -> {
-                parser.advance();
+                parser.advance(); // consome método
                 ExpressionParser exprParser = new ExpressionParser(parser);
                 List<ASTNode> argsList = exprParser.parseArguments();
-                ASTNode node = new ListAddAllNode(listVar, argsList);
+                ASTNode node = new ListAddAllNode(receiver, argsList);
                 parser.eat(Token.TokenType.DELIMITER, ";");
                 yield node;
             }
+
             case "remove" -> {
-                arg = consumer();
+                arg = consumeArg();
                 if (arg == null) throw new RuntimeException("Método remove requer argumento");
-                ASTNode node = new ListRemoveNode(listVar, arg);
+                ASTNode node = new ListRemoveNode(receiver, arg);
                 parser.eat(Token.TokenType.DELIMITER, ";");
                 yield node;
             }
+
             case "clear" -> {
-                parser.advance(); // consome '('
-                System.out.println("token atual " + parser.current());
+                parser.advance(); // consome método
                 parser.eat(Token.TokenType.DELIMITER, "(");
-                ASTNode node = new ListClearNode(listVar);
+                ASTNode node = new ListClearNode(receiver);
                 parser.eat(Token.TokenType.DELIMITER, ")");
                 parser.eat(Token.TokenType.DELIMITER, ";");
                 yield node;
             }
+
             default -> throw new RuntimeException("Método de lista inválido em statement: " + method);
         };
     }
 
-    public ASTNode parseExpressionListMethod(String name) {
-        String method = parser.current().getValue();
-        parser.advance();
-
+    // === Expressions ===
+    public ASTNode parseExpressionListMethod(ASTNode receiver, String method) {
+        parser.advance(); // consome nome do método
         parser.eat(Token.TokenType.DELIMITER, "(");
 
         ASTNode arg = null;
@@ -94,18 +92,17 @@ public class ListMethodParser {
 
         parser.eat(Token.TokenType.DELIMITER, ")");
 
-        ASTNode listVar = new VariableNode(name);
         ASTNode node;
-
         switch (method) {
-            case "size" -> node = new ListSizeNode(listVar);
+            case "size" -> node = new ListSizeNode(receiver);
             case "get" -> {
                 if (arg == null) throw new RuntimeException("get requer índice");
-                node = new ListGetNode(listVar, arg);
+                node = new ListGetNode(receiver, arg);
             }
             default -> throw new RuntimeException("Método de lista não permitido em expressão: " + method);
         }
 
+        // suporte a encadeamento: ex. lista.get(0).campo
         while (parser.current().getValue().equals(".")) {
             parser.advance();
             String memberName = parser.current().getValue();
@@ -116,5 +113,4 @@ public class ListMethodParser {
 
         return node;
     }
-
 }

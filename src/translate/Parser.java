@@ -11,8 +11,10 @@ import ast.home.MainParser;
 import ast.ifstatements.IfParser;
 import ast.loops.WhileParser;
 import ast.prints.PrintParser;
+import ast.structs.StructFieldAccessNode;
 import ast.structs.StructInstanceParser;
 import ast.structs.StructParser;
+import ast.variables.VariableNode;
 import tokens.Token;
 
 import java.util.*;
@@ -22,6 +24,19 @@ public class Parser {
     private int pos = 0;
     private final Map<String, String> variableTypes = new HashMap<>();
     private final Deque<Map<String, String>> variableStack = new ArrayDeque<>();
+    private final Map<String, Map<String, String>> structDefinitions = new HashMap<>();
+
+    public void declareStruct(String name, Map<String, String> fields) {
+        structDefinitions.put(name, fields);
+    }
+
+    public String getStructFieldType(String structName, String field) {
+        Map<String, String> fields = structDefinitions.get(structName);
+        if (fields != null) return fields.get(field);
+        return null;
+    }
+
+
 
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
@@ -209,6 +224,20 @@ public class Parser {
         }
         eat(Token.TokenType.DELIMITER, "}");
         return nodes;
+    }
+
+
+    public String getExpressionType(ASTNode node) {
+        if (node instanceof VariableNode v) {
+            return getVariableType(v.getName());
+        } else if (node instanceof StructFieldAccessNode f) {
+            String structType = getExpressionType(f.getStructInstance());
+            if (structType.startsWith("Struct<")) {
+                String structName = structType.substring("Struct<".length(), structType.length()-1);
+                return getStructFieldType(structName, f.getFieldName());
+            }
+        }
+        return null;
     }
 
 

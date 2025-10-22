@@ -9,11 +9,20 @@ public class ListGetNode extends ASTNode {
 
     private final ASTNode listName;
     private final ASTNode indexNode;
+    private  String elementType;
+
+    public ListGetNode(ASTNode listName, ASTNode indexNode, String elementType) {
+        this.listName = listName;
+        this.indexNode = indexNode;
+        this.elementType = elementType;
+    }
 
     public ListGetNode(ASTNode listName, ASTNode indexNode) {
         this.listName = listName;
         this.indexNode = indexNode;
     }
+
+
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
@@ -40,5 +49,9 @@ public class ListGetNode extends ASTNode {
 
     public ASTNode getIndexNode() {
         return indexNode;
+    }
+
+    public String getElementType() {
+        return elementType;
     }
 }

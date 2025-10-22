@@ -12,8 +12,6 @@ import ast.variables.UnaryOpNode;
 import ast.variables.VariableNode;
 
 import java.util.List;
-
-
 public class IdentifierParser {
     private final Parser parser;
 
@@ -22,29 +20,57 @@ public class IdentifierParser {
     }
 
     public ASTNode parseAsStatement(String name) {
+        ASTNode receiver = new VariableNode(name);
         String tokenVal = parser.current().getValue();
 
         switch (tokenVal) {
             case "." -> {
                 parser.advance();
-
                 String memberName = parser.current().getValue();
-                String varType = parser.getVariableType(name);
-                if (varType != null && (varType.startsWith("Struct") || varType.contains("."))) {
+
+                String receiverType = parser.getExpressionType(receiver);
+
+                if (receiverType != null && receiverType.startsWith("Struct")) {
                     parser.advance();
+                    ASTNode node;
                     if (parser.current().getValue().equals("=")) {
                         parser.advance();
                         ASTNode value = parser.parseExpression();
                         parser.eat(Token.TokenType.DELIMITER, ";");
-                        return new StructFieldAccessNode(new VariableNode(name), memberName, value);
+                        node = new StructFieldAccessNode(receiver, memberName, value);
+                        return node;
                     } else {
-                        return new StructFieldAccessNode(new VariableNode(name), memberName, null);
+                        node = new StructFieldAccessNode(receiver, memberName, null);
                     }
+
+                    while (parser.current().getValue().equals(".")) {
+                        parser.advance();
+                        String nextMember = parser.current().getValue();
+                        String type = parser.getExpressionType(node);
+
+                        if (type != null) {
+                            String baseType = type.contains("<")
+                                    ? type.substring(0, type.indexOf("<"))
+                                    : type;
+
+                            switch (baseType) {
+                                case "List" -> {
+                                    ListMethodParser listParser = new ListMethodParser(parser);
+                                    return listParser.parseStatementListMethod(node, nextMember);
+                                }
+
+                            }
+                        }
+
+                        parser.advance();
+                        node = new StructFieldAccessNode(node, nextMember, null);
+                    }
+
+                    return node;
                 }
 
                 if (memberName.equals("Struct")) {
                     parser.advance();
-
                     String structName = parser.current().getValue();
                     parser.eat(Token.TokenType.IDENTIFIER);
 
@@ -56,25 +82,21 @@ public class IdentifierParser {
                     return structParser.parseStructInstanceAfterKeyword(qualifiedName, varName);
                 }
 
-                if (varType != null) {
-                    String baseType = varType.contains("<")
-                            ? varType.substring(0, varType.indexOf("<"))
-                            : varType;
+                if (receiverType != null) {
+                    String baseType = receiverType.contains("<")
+                            ? receiverType.substring(0, receiverType.indexOf("<"))
+                            : receiverType;
                     switch (baseType) {
                         case "List" -> {
                             ListMethodParser listParser = new ListMethodParser(parser);
-                            return listParser.parseStatementListMethod(name);
+                            return listParser.parseStatementListMethod(receiver, memberName);
                         }
-                        case "Map" -> {
-                            MapMethodParser mapParser = new MapMethodParser(parser);
-                            return mapParser.parseStatementMapMethod(name);
-                        }
+
                     }
                 }
 
                 parser.advance();
                 String fullName = name + "." + memberName;
-
                 if (parser.current().getValue().equals("(")) {
                     List<ASTNode> args = parser.parseArguments();
                     parser.eat(Token.TokenType.DELIMITER, ";");
@@ -84,23 +106,26 @@ public class IdentifierParser {
                     return new FunctionReferenceNode(fullName);
                 }
             }
+
             case "=" -> {
                 parser.advance();
                 ASTNode value = parser.parseExpression();
                 parser.eat(Token.TokenType.DELIMITER, ";");
                 return new AssignmentNode(name, value);
             }
+
             case "++", "--" -> {
                 parser.advance();
                 parser.eat(Token.TokenType.DELIMITER, ";");
-                return new UnaryOpNode(tokenVal, new VariableNode(name));
+                return new UnaryOpNode(tokenVal, receiver);
             }
         }
 
-        return new VariableNode(name);
+        return receiver;
     }
 
     public ASTNode parseAsExpression(String name) {
+        ASTNode receiver = new VariableNode(name);
         Token current = parser.current();
 
         if (current.getValue().equals("(")) {
@@ -110,34 +135,55 @@ public class IdentifierParser {
 
         if (current.getValue().equals(".")) {
             parser.advance();
-
             String memberName = parser.current().getValue();
-            String varType = parser.getVariableType(name);
 
-            if (varType != null && (varType.startsWith("Struct") || varType.contains("."))) {
+            String receiverType = parser.getExpressionType(receiver);
+
+            if (receiverType != null && receiverType.startsWith("Struct")) {
                 parser.advance();
-                return new StructFieldAccessNode(new VariableNode(name), memberName, null);
+                ASTNode node = new StructFieldAccessNode(receiver, memberName, null);
+
+                while (parser.current().getValue().equals(".")) {
+                    parser.advance();
+                    String nextMember = parser.current().getValue();
+                    String type = parser.getExpressionType(node);
+
+                    if (type != null) {
+                        String baseType = type.contains("<")
+                                ? type.substring(0, type.indexOf("<"))
+                                : type;
+
+                        switch (baseType) {
+                            case "List" -> {
+                                ListMethodParser listParser = new ListMethodParser(parser);
+                                return listParser.parseExpressionListMethod(node, nextMember);
+                            }
+
+                        }
+                    }
+
+                    parser.advance();
+                    node = new StructFieldAccessNode(node, nextMember, null);
+                }
+
+                return node;
             }
 
-            if (varType != null) {
-                String baseType = varType.contains("<")
-                        ? varType.substring(0, varType.indexOf("<"))
-                        : varType;
+            if (receiverType != null) {
+                String baseType = receiverType.contains("<")
+                        ? receiverType.substring(0, receiverType.indexOf("<"))
+                        : receiverType;
                 switch (baseType) {
                     case "List" -> {
                         ListMethodParser listParser = new ListMethodParser(parser);
-                        return listParser.parseExpressionListMethod(name);
+                        return listParser.parseExpressionListMethod(receiver, memberName);
                     }
-                    case "Map" -> {
-                        MapMethodParser mapParser = new MapMethodParser(parser);
-                        return mapParser.parseExpressionMapMethod(name);
-                    }
+
                 }
             }
 
             parser.advance();
             String fullName = name + "." + memberName;
-
             if (parser.current().getValue().equals("(")) {
                 List<ASTNode> args = parser.parseArguments();
                 return new FunctionCallNode(fullName, args);
@@ -146,6 +192,6 @@ public class IdentifierParser {
             }
         }
 
-        return new VariableNode(name);
+        return receiver;
     }
 }

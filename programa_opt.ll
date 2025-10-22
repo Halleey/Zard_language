@@ -2,7 +2,7 @@
 source_filename = "programa.ll"
 
 %st_Nomade = type { ptr, i32 }
-%Pessoa = type { ptr, i32 }
+%Pessoa = type { ptr, i32, ptr }
 %String = type { ptr, i64 }
 
 @.strTrue = private constant [6 x i8] c"true\0A\00"
@@ -15,6 +15,7 @@ source_filename = "programa.ll"
 @.str2 = private constant [16 x i8] c"struct completa\00"
 @.str3 = private constant [12 x i8] c"apenas nome\00"
 @.str4 = private constant [13 x i8] c"apenas idade\00"
+@.str5 = private constant [7 x i8] c"geral \00"
 
 define i32 @st_somar(i32 %a, i32 %b) {
 entry:
@@ -37,6 +38,34 @@ declare ptr @createString(ptr)
 declare i1 @strcmp_eq(ptr, ptr)
 
 declare i1 @strcmp_neq(ptr, ptr)
+
+declare ptr @arraylist_create(i64)
+
+declare void @clearList(ptr)
+
+declare void @freeList(ptr)
+
+declare void @arraylist_add_ptr(ptr, ptr)
+
+declare i32 @length(ptr)
+
+declare ptr @arraylist_get_ptr(ptr, i64)
+
+declare void @arraylist_print_ptr(ptr, ptr)
+
+declare void @arraylist_add_string(ptr, ptr)
+
+declare void @arraylist_addAll_string(ptr, ptr, i64)
+
+declare void @arraylist_print_string(ptr)
+
+declare void @arraylist_add_String(ptr, ptr)
+
+declare void @arraylist_addAll_String(ptr, ptr, i64)
+
+declare void @removeItem(ptr, i64)
+
+declare ptr @getItem(ptr, i64)
 
 define void @print_Nomade(ptr %raw) {
 entry:
@@ -73,25 +102,30 @@ define i32 @main() {
   store ptr %t14, ptr %t13, align 8
   %t16 = getelementptr inbounds %Pessoa, ptr %t13, i64 0, i32 1
   store i32 0, ptr %t16, align 4
-  %t20 = call ptr @createString(ptr nonnull @.str1)
-  store ptr %t20, ptr %t13, align 8
+  %t17 = call ptr @arraylist_create(i64 10)
+  %t18 = getelementptr inbounds %Pessoa, ptr %t13, i64 0, i32 2
+  store ptr %t17, ptr %t18, align 8
+  %t22 = call ptr @createString(ptr nonnull @.str1)
+  store ptr %t22, ptr %t13, align 8
   store ptr %t4, ptr %t9, align 8
-  %t27 = getelementptr inbounds %Pessoa, ptr %t13, i64 0, i32 1
-  store i32 999, ptr %t27, align 4
-  %t31 = getelementptr inbounds %st_Nomade, ptr %t9, i64 0, i32 1
-  store i32 333, ptr %t31, align 4
+  %t29 = getelementptr inbounds %Pessoa, ptr %t13, i64 0, i32 1
+  store i32 999, ptr %t29, align 4
+  %t33 = getelementptr inbounds %st_Nomade, ptr %t9, i64 0, i32 1
+  store i32 333, ptr %t33, align 4
   %puts = call i32 @puts(ptr nonnull dereferenceable(1) @.str2)
   call void @print_Nomade(ptr %t9)
   %puts2 = call i32 @puts(ptr nonnull dereferenceable(1) @.str3)
-  %t40 = load ptr, ptr %t9, align 8
-  call void @printString(ptr %t40)
+  %t42 = load ptr, ptr %t9, align 8
+  call void @printString(ptr %t42)
   %puts3 = call i32 @puts(ptr nonnull dereferenceable(1) @.str4)
-  %t43 = getelementptr inbounds %st_Nomade, ptr %t9, i64 0, i32 1
-  %t44 = load i32, ptr %t43, align 4
-  %1 = call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.strInt, i32 %t44)
+  %t45 = getelementptr inbounds %st_Nomade, ptr %t9, i64 0, i32 1
+  %t46 = load i32, ptr %t45, align 4
+  %1 = call i32 (ptr, ...) @printf(ptr noundef nonnull dereferenceable(1) @.strInt, i32 %t46)
   %puts4 = call i32 @puts(ptr nonnull dereferenceable(1) @.str3)
-  %t48 = load ptr, ptr %t13, align 8
-  call void @printString(ptr %t48)
+  %t50 = load ptr, ptr %t13, align 8
+  call void @printString(ptr %t50)
+  %puts5 = call i32 @puts(ptr nonnull dereferenceable(1) @.str5)
+  call void @print_Pessoa(ptr nonnull %t13)
   %2 = call i32 @getchar()
   ret i32 0
 }

@@ -3,8 +3,10 @@ package low.prints;
 import ast.ASTNode;
 import ast.lists.ListGetNode;
 import ast.lists.ListNode;
+import ast.lists.ListSizeNode;
 import low.TempManager;
 import low.lists.generics.ListGetEmitter;
+import low.lists.generics.ListSizeEmitter;
 import low.module.LLVisitorMain;
 
 
@@ -61,6 +63,19 @@ public class ExprPrintHandler {
                 return llvm.toString();
             }
             default -> {
+
+                if (node instanceof ListSizeNode) {
+                    ListSizePrintHandler handler =
+                            new ListSizePrintHandler(temps, new ListSizeEmitter(temps));
+                    return handler.emit(node, visitor);
+                }
+
+
+
+                if(type.startsWith("%struct.ArrayList")) {
+                    ListPrintHandler handler = new ListPrintHandler(temps);
+                    return handler.emit(node, visitor);
+                }
 
                 if (node instanceof ListGetNode) {
                     ListGetPrintHandler handler =

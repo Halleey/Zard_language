@@ -66,6 +66,26 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final StructInstanceEmitter instanceEmitter = new StructInstanceEmitter(temps, globalStrings);
     private final StructFieldAccessEmitter structFieldAccessEmitter = new StructFieldAccessEmitter(temps);
 
+
+    public String inferListElementType(ASTNode node) {
+        if (node instanceof ast.variables.VariableNode v) {
+            return getListElementType(v.getName());
+        }
+        if (node instanceof ast.structs.StructFieldAccessNode sfa) {
+
+            String fieldType = getStructFieldType(sfa); // ex.: "List<int>", "Struct Endereco", etc.
+            if (fieldType != null && fieldType.startsWith("List<") && fieldType.endsWith(">")) {
+                return fieldType.substring(5, fieldType.length() - 1).trim(); // "int"
+            }
+            return null;
+        }
+        if (node instanceof ListGetNode lg) {
+            return inferListElementType(lg.getListName());
+        }
+        return null;
+    }
+
+
     public void registerStructNode(StructNode node) {
         structNodes.put(node.getName(), node);
     }
@@ -283,24 +303,41 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         }
     }
 
-
     public String getStructFieldType(StructFieldAccessNode node) {
-        // pega o tipo do receiver
-        String receiverType;
+        String structName = null;
+
         if (node.getStructInstance() instanceof VariableNode varNode) {
-            receiverType = getVarType(varNode.getName());
-        } else if (node.getStructInstance() instanceof StructFieldAccessNode nested) {
-            receiverType = getStructFieldType(nested);
-        } else {
+            String receiverType = getVarType(varNode.getName());
+            if (receiverType == null) {
+                throw new RuntimeException("Unknown receiver type for struct field access: " + node);
+            }
+
+            structName = receiverType.replace("%", "").replace("*", "");
+        }
+        else if (node.getStructInstance() instanceof StructFieldAccessNode nested) {
+
+            String receiverType = getStructFieldType(nested);
+
+            if (receiverType.startsWith("Struct<") && receiverType.endsWith(">")) {
+                structName = receiverType.substring("Struct<".length(), receiverType.length() - 1);
+            } else {
+                structName = receiverType.replace("%", "").replace("*", "");
+            }
+        }
+        else if (node.getStructInstance() instanceof ListGetNode lg) {
+            String elem = inferListElementType(lg.getListName());
+            if (elem == null) {
+                throw new RuntimeException("Cannot infer element type from ListGet receiver: " + lg);
+            }
+            if (elem.startsWith("Struct<") && elem.endsWith(">")) {
+                structName = elem.substring("Struct<".length(), elem.length() - 1);
+            } else {
+                structName = elem;
+            }
+        }
+        else {
             throw new RuntimeException("Unsupported receiver in struct field access");
         }
-
-        if (receiverType == null) {
-            throw new RuntimeException("Unknown receiver type for struct field access: " + node);
-        }
-
-        // normaliza o nome, ex: %Pessoa* → Pessoa
-        String structName = receiverType.replace("%", "").replace("*", "");
 
         StructNode structNode = structNodes.get(structName);
         if (structNode == null) {
@@ -315,5 +352,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
         throw new RuntimeException("Field not found: " + node.getFieldName() + " in struct " + structName);
     }
+
 
 }

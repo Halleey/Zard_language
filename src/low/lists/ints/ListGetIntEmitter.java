@@ -59,9 +59,10 @@ public class ListGetIntEmitter {
     }
 
     private String extractTemp(String code) {
-        int v = code.indexOf(";;VAL:");
+        int v = code.lastIndexOf(";;VAL:");
+        if (v == -1) return "";
         int t = code.indexOf(";;TYPE:", v);
-        if (v == -1 || t == -1) return "";
-        return code.substring(v + 6, t).trim();
+        return (t == -1) ? "" : code.substring(v + 6, t).trim();
     }
+
 }

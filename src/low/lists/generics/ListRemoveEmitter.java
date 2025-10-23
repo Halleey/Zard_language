@@ -8,7 +8,7 @@ import low.lists.ints.ListRemoveIntEmitter;
 import low.module.LLVMEmitVisitor;
 public class ListRemoveEmitter {
     private final TempManager temps;
-    private final ListRemoveIntEmitter intEmitter; // emitter específico para inteiros
+    private final ListRemoveIntEmitter intEmitter;
     private final ListDoubleRemoveEmitter doubleRemoveEmitter;
     private final ListBoolRemoveEmitter boolRemoveEmitter;
 
@@ -23,10 +23,8 @@ public class ListRemoveEmitter {
         StringBuilder llvm = new StringBuilder();
 
         String listCode = node.getListNode().accept(visitor);
-        String type = extractType(listCode);
-        String listVal = extractValue(listCode);
-
-        System.out.println(listCode);
+        String type = extractLastType(listCode);
+        String listVal = extractLastVal(listCode);
 
         if (type.contains("ArrayListInt")) {
             return intEmitter.emit(node, visitor);
@@ -38,55 +36,43 @@ public class ListRemoveEmitter {
             return boolRemoveEmitter.emit(node, visitor);
         }
 
-        // gera código do índice
+        // genérico (listas de ponteiros)
         String posCode = node.getIndexNode().accept(visitor);
         llvm.append(listCode);
         llvm.append(posCode);
-        String posVal = extractValue(posCode);
+        String posVal = extractLastVal(posCode);
 
-
-        // converte índice para i64
         String posCast = temps.newTemp();
         llvm.append("  ").append(posCast)
-                .append(" = sext i32 ").append(posVal).append(" to i64\n");
+                .append(" = zext i32 ").append(posVal).append(" to i64\n");
 
         if (type.contains("ArrayList")) {
             llvm.append("  call void @removeItem(%ArrayList* ")
                     .append(listVal).append(", i64 ").append(posCast).append(")\n");
         } else {
-            System.out.println("[DEBUG-REMOVE] Lista veio como i8*, aplicando bitcast para %ArrayList*.");
+            // listVal é i8* -> bitcast para %ArrayList*
             String listCast = temps.newTemp();
             llvm.append("  ").append(listCast)
-                    .append(" = bitcast i8* ").append(listVal)
-                    .append(" to %ArrayList*\n");
+                    .append(" = bitcast i8* ").append(listVal).append(" to %ArrayList*\n");
             llvm.append("  call void @removeItem(%ArrayList* ")
                     .append(listCast).append(", i64 ").append(posCast).append(")\n");
         }
 
         return llvm.toString();
     }
-    private String extractValue(String code) {
-        String last = null;
-        for (String line : code.split("\n")) {
-            if (line.contains(";;VAL:")) {
-                String val = line.split(";;VAL:")[1].trim();
-                if (val.contains(";;TYPE")) {
-                    val = val.split(";;TYPE")[0].trim();
-                }
-                last = val;
-            }
-        }
-        return last;
+
+    private String extractLastVal(String code) {
+        int v = code.lastIndexOf(";;VAL:");
+        if (v == -1) return "";
+        int t = code.indexOf(";;TYPE:", v);
+        return (t == -1) ? "" : code.substring(v + 6, t).trim();
     }
 
-    private String extractType(String code) {
-        String last = null;
-        for (String line : code.split("\n")) {
-            if (line.contains(";;TYPE:")) {
-                last = line.split(";;TYPE:")[1].trim();
-            }
-        }
-        return last;
+    private String extractLastType(String code) {
+        int t = code.lastIndexOf(";;TYPE:");
+        if (t == -1) return "";
+        int end = code.indexOf("\n", t);
+        if (end == -1) end = code.length();
+        return code.substring(t + 7, end).trim();
     }
-
 }

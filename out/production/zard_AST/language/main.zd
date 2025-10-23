@@ -1,9 +1,6 @@
-
-
 main {
-    string nome = "zard";
-    List  nomes = (nome);
-    if(nomes.get(0) == "zard") {print("era igual");
-    }
-    print(nomes);
+
+   List nomes = ("zard");
+   print(nomes);
+   print(nomes.size());
 }

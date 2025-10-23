@@ -84,9 +84,10 @@ public class ListGetEmitter {
     }
 
     private String extractType(String code) {
-        int t = code.indexOf(";;TYPE:");
+        int t = code.lastIndexOf(";;TYPE:");
         if (t == -1) return "";
         int end = code.indexOf("\n", t);
         return code.substring(t + 7, (end == -1 ? code.length() : end)).trim();
     }
+
 }

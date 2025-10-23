@@ -3,7 +3,6 @@ package low.lists.ints;
 import ast.lists.ListRemoveNode;
 import low.TempManager;
 import low.module.LLVMEmitVisitor;
-
 public class ListRemoveIntEmitter {
     private final TempManager temps;
 
@@ -16,11 +15,11 @@ public class ListRemoveIntEmitter {
 
         String listCode = node.getListNode().accept(visitor);
         appendCodePrefix(llvm, listCode);
-        String listVal = extractValue(listCode);
+        String listVal = extractLastVal(listCode); // ÚLTIMO ;;VAL:
 
         String idxCode = node.getIndexNode().accept(visitor);
         appendCodePrefix(llvm, idxCode);
-        String idxVal = extractValue(idxCode);
+        String idxVal = extractLastVal(idxCode); // ÚLTIMO ;;VAL:
 
         // Cast do índice para i64
         String idx64 = temps.newTemp();
@@ -42,16 +41,10 @@ public class ListRemoveIntEmitter {
         }
     }
 
-    private String extractValue(String code) {
-        for (String line : code.split("\n")) {
-            if (line.contains(";;VAL:")) {
-                String val = line.split(";;VAL:")[1].trim();
-                if (val.contains(";;TYPE")) {
-                    val = val.split(";;TYPE")[0].trim();
-                }
-                return val;
-            }
-        }
-        return null;
+    private String extractLastVal(String code) {
+        int v = code.lastIndexOf(";;VAL:");
+        if (v == -1) return "";
+        int t = code.indexOf(";;TYPE:", v);
+        return (t == -1) ? "" : code.substring(v + 6, t).trim();
     }
 }

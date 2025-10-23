@@ -6,6 +6,8 @@ import ast.variables.VariableNode;
 import low.TempManager;
 import low.lists.generics.ListGetEmitter;
 import low.module.LLVisitorMain;
+
+
 public class ListGetPrintHandler implements PrintHandler {
     private final TempManager temps;
     private final ListGetEmitter listGetEmitter;
@@ -23,50 +25,42 @@ public class ListGetPrintHandler implements PrintHandler {
     @Override
     public String emit(ASTNode node, LLVisitorMain visitor) {
         ListGetNode getNode = (ListGetNode) node;
-
         ASTNode listRef = getNode.getListName();
-        String listName;
-        if (listRef instanceof VariableNode vn) {
-            listName = vn.getName();
-        } else {
-            throw new RuntimeException("ListGetPrintHandler: list reference is not a VariableNode");
-        }
 
-        String elemType = visitor.getListElementType(listName);
+        // Pega o tipo do elemento da lista com inferência
+        String elemType = visitor.inferListElementType(listRef);
+
+        // Gera o IR do acesso (já inclui ;;VAL: e ;;TYPE:)
         String getCode = listGetEmitter.emit(getNode, visitor);
         String valTemp = extractTemp(getCode);
 
         StringBuilder sb = new StringBuilder();
         appendCodePrefix(sb, getCode);
 
-        // string
         if ("string".equals(elemType)) {
             sb.append("  call i32 (i8*, ...) @printf(")
                     .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), ")
                     .append("i8* ").append(valTemp).append(")\n");
 
-            // int
         } else if ("int".equals(elemType)) {
             sb.append("  call i32 (i8*, ...) @printf(")
                     .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), ")
                     .append("i32 ").append(valTemp).append(")\n");
 
-            // double
         } else if ("double".equals(elemType)) {
             sb.append("  call i32 (i8*, ...) @printf(")
                     .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), ")
                     .append("double ").append(valTemp).append(")\n");
 
-            // boolean
         } else if ("boolean".equals(elemType)) {
-            // imprime como 0/1
-            sb.append("  %tbool = zext i1 ").append(valTemp).append(" to i32\n");
+            String boolTmp = temps.newTemp();
+            sb.append("  ").append(boolTmp).append(" = zext i1 ").append(valTemp).append(" to i32\n");
             sb.append("  call i32 (i8*, ...) @printf(")
                     .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), ")
-                    .append("i32 %tbool)\n");
+                    .append("i32 ").append(boolTmp).append(")\n");
 
-            // structs
         } else {
+            // structs
             String structName = normalizeStructName(elemType);
             sb.append("  call void @print_").append(structName)
                     .append("(i8* ").append(valTemp).append(")\n");
@@ -74,6 +68,7 @@ public class ListGetPrintHandler implements PrintHandler {
 
         return sb.toString();
     }
+
 
     private void appendCodePrefix(StringBuilder llvm, String code) {
         int marker = code.lastIndexOf(";;VAL:");
@@ -85,9 +80,10 @@ public class ListGetPrintHandler implements PrintHandler {
     }
 
     private String extractTemp(String code) {
-        int v = code.indexOf(";;VAL:");
+        int v = code.lastIndexOf(";;VAL:");
+        if (v == -1) return "";
         int t = code.indexOf(";;TYPE:", v);
-        return (v == -1 || t == -1) ? "" : code.substring(v + 6, t).trim();
+        return (t == -1) ? "" : code.substring(v + 6, t).trim();
     }
 
     private String normalizeStructName(String elemType) {

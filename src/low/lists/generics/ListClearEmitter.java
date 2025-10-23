@@ -13,6 +13,8 @@ public class ListClearEmitter {
     private final ListIntClearEmitter listIntClearEmitter;
     private final ListDoubleClearEmitter doubleClearEmitter;
     private final ListBoolClearEmitter boolClearEmitter;
+
+
     public ListClearEmitter(TempManager temps) {
         this.temps = temps;
         this.listIntClearEmitter = new ListIntClearEmitter(temps);
@@ -28,32 +30,32 @@ public class ListClearEmitter {
         String listTmp = extractTemp(listCode);
         String valType = extractType(listCode);
 
+        // 🔍 Debugs
+        System.out.println("==== DEBUG ListClearEmitter ====");
+        System.out.println("LLVM recebido:\n" + listCode);
+        System.out.println("Temp extraído: " + listTmp);
+        System.out.println("Tipo extraído: " + valType);
+        System.out.println("===============================");
 
-        System.out.println("--------" + valType);
-        // Delegar para o emitter específico se for lista de int
         if (valType.contains("ArrayListInt")) {
             return listIntClearEmitter.emit(node, visitor);
         }
         if (valType.contains("ArrayListDouble")) {
             return doubleClearEmitter.emit(node, visitor);
         }
-
         if (valType.contains("ArrayListBool")) {
             return boolClearEmitter.emit(node, visitor);
         }
 
-        // Caso genérico - outras listas (ex: string, String, etc.)
         String listCastTmp = temps.newTemp();
         llvm.append("  ").append(listCastTmp)
                 .append(" = bitcast ").append(valType).append(" ").append(listTmp)
                 .append(" to %ArrayList*\n");
-
-        llvm.append("  call void @clearList(%ArrayList* ").append(listCastTmp).append(")\n");
-
         llvm.append(";;VAL:").append(listCastTmp).append(";;TYPE:%ArrayList*\n");
 
         return llvm.toString();
     }
+
 
     private String extractTemp(String code) {
         int lastValIdx = code.lastIndexOf(";;VAL:");
@@ -62,8 +64,9 @@ public class ListClearEmitter {
     }
 
     private String extractType(String code) {
-        int typeIdx = code.indexOf(";;TYPE:");
-        int endIdx = code.indexOf("\n", typeIdx);
-        return code.substring(typeIdx + 7, endIdx == -1 ? code.length() : endIdx).trim();
+        int lastTypeIdx = code.lastIndexOf(";;TYPE:");
+        int endIdx = code.indexOf("\n", lastTypeIdx);
+        return code.substring(lastTypeIdx + 7, endIdx == -1 ? code.length() : endIdx).trim();
     }
+
 }

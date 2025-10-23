@@ -6,7 +6,10 @@ import tokens.Token;
 import translate.Parser;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+
 public class StructInstanceParser {
     private final Parser parser;
 
@@ -14,51 +17,63 @@ public class StructInstanceParser {
         this.parser = parser;
     }
 
-    // Agora recebe também o varName já consumido pelo IdentifierParser
     public VariableDeclarationNode parseStructInstanceAfterKeyword(String structName, String varName) {
-        List<ASTNode> positionalValues = new ArrayList<>();
+        List<ASTNode> positionalValues = null;
+        Map<String, ASTNode> namedValues = null;
 
-        // Checa inicialização direta (= { ... })
         if (parser.current().getType() == Token.TokenType.OPERATOR &&
                 parser.current().getValue().equals("=")) {
 
             parser.eat(Token.TokenType.OPERATOR, "=");
             parser.eat(Token.TokenType.DELIMITER, "{");
 
-            while (!parser.current().getValue().equals("}")) {
-                ASTNode value = parser.parseExpression();
-                positionalValues.add(value);
+            // Decisão: se próximo token é IDENTIFIER seguido de ":" -> nomeado
+            if (parser.current().getType() == Token.TokenType.IDENTIFIER &&
+                    parser.peekValue(1).equals(":")) {
 
-                if (parser.current().getValue().equals(",")) {
-                    parser.eat(Token.TokenType.DELIMITER, ",");
-                } else {
-                    break;
-                }
+                namedValues = parseNamedInitializers(structName);
+
+            } else {
+                positionalValues = parsePositionalInitializers();
             }
 
             parser.eat(Token.TokenType.DELIMITER, "}");
         }
 
-        // Final obrigatório ;
         parser.eat(Token.TokenType.DELIMITER, ";");
 
-        // Cria nó de instância da struct
-        StructInstaceNode instanceNode = new StructInstaceNode(structName, positionalValues);
+        StructInstaceNode instanceNode = new StructInstaceNode(structName, positionalValues, namedValues);
 
         parser.declareVariable(varName, "Struct<" + structName + ">");
-
         return new VariableDeclarationNode(varName, "Struct<" + structName + ">", instanceNode);
     }
 
-    // Mantém suporte a inline { ... } já passando structName e varName
     public VariableDeclarationNode parseStructInline(String structName, String varName) {
-        List<ASTNode> positionalValues = new ArrayList<>();
-
         parser.eat(Token.TokenType.DELIMITER, "{");
 
+        List<ASTNode> positionalValues = null;
+        Map<String, ASTNode> namedValues = null;
+
+        if (parser.current().getType() == Token.TokenType.IDENTIFIER &&
+                parser.peekValue(1).equals(":")) {
+            namedValues = parseNamedInitializers(structName);
+        } else {
+            positionalValues = parsePositionalInitializers();
+        }
+
+        parser.eat(Token.TokenType.DELIMITER, "}");
+        parser.eat(Token.TokenType.DELIMITER, ";");
+
+        StructInstaceNode instanceNode = new StructInstaceNode(structName, positionalValues, namedValues);
+        parser.declareVariable(varName, "Struct<" + structName + ">");
+        return new VariableDeclarationNode(varName, "Struct<" + structName + ">", instanceNode);
+    }
+
+    private List<ASTNode> parsePositionalInitializers() {
+        List<ASTNode> values = new ArrayList<>();
         while (!parser.current().getValue().equals("}")) {
             ASTNode value = parser.parseExpression();
-            positionalValues.add(value);
+            values.add(value);
 
             if (parser.current().getValue().equals(",")) {
                 parser.eat(Token.TokenType.DELIMITER, ",");
@@ -66,14 +81,50 @@ public class StructInstanceParser {
                 break;
             }
         }
+        return values;
+    }
 
-        parser.eat(Token.TokenType.DELIMITER, "}");
-        parser.eat(Token.TokenType.DELIMITER, ";");
+    private Map<String, ASTNode> parseNamedInitializers(String structName) {
+        Map<String, ASTNode> map = new LinkedHashMap<>();
 
-        StructInstaceNode instanceNode = new StructInstaceNode(structName, positionalValues);
+        // mapa de tipos declarados da struct (para checar primitivos)
+        Map<String, String> fields = parser.lookupStruct(structName);
 
-        parser.declareVariable(varName, "Struct<" + structName + ">");
+        while (!parser.current().getValue().equals("}")) {
+            String fieldName = parser.current().getValue();
+            parser.eat(Token.TokenType.IDENTIFIER);
+            parser.eat(Token.TokenType.DELIMITER, ":");
 
-        return new VariableDeclarationNode(varName, "Struct<" + structName + ">", instanceNode);
+            String expectedType = fields.get(fieldName);
+            if (expectedType == null) {
+                throw new RuntimeException("Campo desconhecido na inicialização de " + structName + ": " + fieldName);
+            }
+
+            // **Restrição por enquanto**: só tipos primitivos (int, double, bool, string)
+            if (!isPrimitiveType(expectedType)) {
+                throw new RuntimeException("Inicialização nomeada ainda não suporta tipo não-primitivo para o campo '"
+                        + fieldName + "' (tipo: " + expectedType + ").");
+            }
+
+            ASTNode expr = parser.parseExpression();
+
+            if (map.containsKey(fieldName)) {
+                throw new RuntimeException("Campo duplicado na inicialização: " + fieldName);
+            }
+            map.put(fieldName, expr);
+
+            if (parser.current().getValue().equals(",")) {
+                parser.eat(Token.TokenType.DELIMITER, ",");
+            } else {
+                break;
+            }
+        }
+        return map;
+    }
+
+    private boolean isPrimitiveType(String t) {
+        String s = t.trim().toLowerCase();
+        return s.equals("int") || s.equals("double") || s.equals("bool") ||
+                s.equals("string") || s.equals("%string") || s.equals("String");
     }
 }

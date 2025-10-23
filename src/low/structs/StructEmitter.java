@@ -29,10 +29,9 @@ public class StructEmitter {
         sb.append(String.join(", ", fieldLLVMTypes));
         sb.append(" }\n\n");
 
-        // ==== Função de impressão ====
+        // ==== Função de impressão (TIPADA) ====
         sb.append("define void @print_").append(node.getName())
-                .append("(i8* %raw) {\nentry:\n");
-        sb.append("  %p = bitcast i8* %raw to %").append(node.getName()).append("*\n");
+                .append("(%").append(node.getName()).append("* %p) {\nentry:\n");
 
         for (int i = 0; i < node.getFields().size(); i++) {
             VariableDeclarationNode field = node.getFields().get(i);
@@ -42,35 +41,27 @@ public class StructEmitter {
                     .append(node.getName()).append(", %").append(node.getName())
                     .append("* %p, i32 0, i32 ").append(i).append("\n");
 
-            // === Tipos primitivos ===
             if (type.equals("int")) {
                 sb.append("  %val").append(i).append(" = load i32, i32* %f").append(i).append("\n");
-                sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr "
-                        + "([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %val").append(i).append(")\n");
+                sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %val").append(i).append(")\n");
             } else if (type.equals("string")) {
                 sb.append("  %val").append(i).append(" = load %String*, %String** %f").append(i).append("\n");
                 sb.append("  call void @printString(%String* %val").append(i).append(")\n");
             }
-            // === Structs aninhadas ===
+            // Struct aninhada: chame diretamente a função tipada
             else if (type.startsWith("Struct ")) {
                 String inner = type.substring("Struct ".length()).trim();
-                sb.append("  %val").append(i).append(" = load %").append(inner).append("*, %")
-                        .append(inner).append("** %f").append(i).append("\n");
-                sb.append("  %valcast").append(i).append(" = bitcast %").append(inner)
-                        .append("* %val").append(i).append(" to i8*\n");
-                sb.append("  call void @print_").append(inner).append("(i8* %valcast").append(i).append(")\n");
+                sb.append("  %val").append(i).append(" = load %").append(inner).append("*, %").append(inner).append("** %f").append(i).append("\n");
+                sb.append("  call void @print_").append(inner).append("(%").append(inner).append("* %val").append(i).append(")\n");
             } else if (type.startsWith("Struct<") && type.endsWith(">")) {
                 String inner = type.substring(7, type.length() - 1).trim();
-                sb.append("  %val").append(i).append(" = load %").append(inner).append("*, %")
-                        .append(inner).append("** %f").append(i).append("\n");
-                sb.append("  %valcast").append(i).append(" = bitcast %").append(inner)
-                        .append("* %val").append(i).append(" to i8*\n");
-                sb.append("  call void @print_").append(inner).append("(i8* %valcast").append(i).append(")\n");
+                sb.append("  %val").append(i).append(" = load %").append(inner).append("*, %").append(inner).append("** %f").append(i).append("\n");
+                sb.append("  call void @print_").append(inner).append("(%").append(inner).append("* %val").append(i).append(")\n");
             }
+            // Se quiser, aqui você pode tratar listas etc. (opcional)
         }
 
         sb.append("  ret void\n}\n\n");
-
         return sb.toString();
     }
 
@@ -100,17 +91,14 @@ public class StructEmitter {
                 }
             }
         }
-
-        // Corrige caso seja Struct
         if (type.startsWith("Struct ")) {
             String inner = type.substring("Struct ".length()).trim();
-            return "%" + inner + "*"; // Ex: %Endereco*
+            return "%" + inner + "*";
         }
         if (type.startsWith("Struct<") && type.endsWith(">")) {
             String inner = type.substring(7, type.length() - 1).trim();
-            return "%" + inner + "*"; // Ex: %Pessoa*
+            return "%" + inner + "*";
         }
-
         return typeMapper.toLLVM(type);
     }
 }

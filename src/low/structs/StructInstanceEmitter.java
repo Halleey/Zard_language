@@ -10,6 +10,9 @@ import low.main.GlobalStringManager;
 import low.module.LLVisitorMain;
 
 import java.util.List;
+import java.util.Map;
+
+
 public class StructInstanceEmitter {
 
     private final TempManager tempManager;
@@ -41,13 +44,22 @@ public class StructInstanceEmitter {
         StructNode def = visitor.getStructNode(structName);
         List<VariableDeclarationNode> fields = def.getFields();
 
-        List<ASTNode> values = node.getPositionalValues();
-        int provided = (values == null) ? 0 : values.size();
+        List<ASTNode> posValues = node.getPositionalValues();
+        Map<String, ASTNode> namedValues = node.getNamedValues();
+
+        int providedPos = (posValues == null) ? 0 : posValues.size();
 
         for (int i = 0; i < fields.size(); i++) {
             VariableDeclarationNode field = fields.get(i);
+            String fname = field.getName();
 
-            ASTNode providedValue = (i < provided) ? values.get(i) : null;
+            ASTNode providedValue = null;
+
+            if (!namedValues.isEmpty() && namedValues.containsKey(fname)) {
+                providedValue = namedValues.get(fname);
+            } else if (posValues != null && i < providedPos) {
+                providedValue = posValues.get(i);
+            }
 
             String fieldLLVMType = mapFieldTypeForStruct(field.getType());
 
@@ -91,6 +103,7 @@ public class StructInstanceEmitter {
         llvm.append(";;VAL:").append(structPtr).append(";;TYPE:").append(structLLVMType).append("*\n");
         return llvm.toString();
     }
+
 
     private String mapFieldTypeForStruct(String type) {
         if (type.startsWith("List<")) {

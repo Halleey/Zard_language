@@ -1,37 +1,62 @@
-import "src/language/stdlib/Math.zd" as math;
+import "src/language/structs/StructTest.zd" as st;
 
 main {
-    double a = 10;
-    double b = 3;
-    int n = 5;
 
+    Struct Endereco {
+        string rua;
+        string cidade;
+    }
 
-    print(math.sum(a, b));
-    print(math.sub(a, b));
-    print(math.mul(a, b));
-    print(math.div(a, b));
+    Struct Pessoa {
+        string nome;
+        int idade;
+        Struct Endereco endereco;
+    }
 
+    List<Pessoa> pessoas;
 
-    print(math.pow(a, 3));
+    Struct Pessoa p1;
+    p1.nome = "Alice";
+    p1.idade = 25;
+    Struct Endereco e1;
+    e1.rua = "Rua A";
+    e1.cidade = "São Paulo";
+    p1.endereco = e1;
 
+    Struct Pessoa p2;
+    p2.nome = "Bob";
+    p2.idade = 17;
+    Struct Endereco e2;
+    e2.rua = "Av. Central";
+    e2.cidade = "Rio de Janeiro";
+    p2.endereco = e2;
 
-    print(math.factorial(n));
+    pessoas.add(p1);
+    pessoas.add(p2);
 
-    print(math.sqrt(a));
+    print(pessoas.get(0).nome);
+    print(pessoas.get(0).endereco.rua);
+    print(pessoas.get(0).endereco.cidade);
 
+    print(pessoas.get(1).nome);
+    print(pessoas.get(1).endereco.rua);
+    print(pessoas.get(1).endereco.cidade);
 
-    print(math.sin(a));
-    print(math.cos(a));
+    if (pessoas.get(0).endereco.cidade == "São Paulo") {
+        print("A primeira pessoa mora em São Paulo");
+    }
 
+    if (pessoas.get(1).idade < 18) {
+        print(pessoas.get(1).nome);
+        print(" é menor de idade");
+    }
 
-    print("Tentando dividir por zero:");
-    print(math.div(a, 0));
-
-    print("Tentando fatorial de número negativo:");
-    print(math.factorial(-3));
-
-    print("Tentando raiz quadrada de número negativo:");
-    print(math.sqrt(-9));
-
-    print("Fim dos testes.");
+    int i = 0;
+    while (i < pessoas.size()) {
+        print("Pessoa:");
+        print(pessoas.get(i).nome);
+        print(pessoas.get(i).endereco.rua);
+        print(pessoas.get(i).endereco.cidade);
+        i = i + 1;
+    }
 }

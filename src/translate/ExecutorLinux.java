@@ -1,7 +1,9 @@
 package translate;
 
 import ast.ASTNode;
+import ast.exceptions.ReturnValue;
 import ast.prints.ASTPrinter;
+import ast.runtime.RuntimeContext;
 import low.module.LLVMGenerator;
 import tokens.Lexer;
 import tokens.Token;
@@ -52,10 +54,16 @@ public class ExecutorLinux {
 
         Path optimizedLL = Path.of("programa_opt.ll");
 
-        System.out.println("Executando otimizador LLVM (opt -passes=dce)...");
+        System.out.println("Executando otimizador LLVM...");
+
+// Escolha qual pipeline usar (comente/descomente)
+        String passes = "mem2reg,dce";          // mais seguro, só promove variáveis e remove código morto
+// String passes = "default<O1>";       // otimização leve (equivale ao -O1 do clang)
+// String passes = "default<O2>";       // otimização mais agressiva (-O2), mas ainda estável
+
         List<String> optCmd = new ArrayList<>();
         optCmd.add("opt");
-        optCmd.add("-passes=dce,instcombine,mem2reg");
+        optCmd.add("-passes=" + passes);
         optCmd.add(llPath.toString());
         optCmd.add("-S");
         optCmd.add("-o");
@@ -68,6 +76,8 @@ public class ExecutorLinux {
         if (exitOpt != 0) {
             throw new RuntimeException("Falha ao rodar otimizador LLVM (opt)");
         }
+
+        System.out.println("Arquivo otimizado salvo em " + optimizedLL);
 
         System.out.println("Arquivo otimizado salvo em " + optimizedLL);
 
@@ -127,4 +137,4 @@ public class ExecutorLinux {
 //                break;
 //            }
         }
-}
+    }

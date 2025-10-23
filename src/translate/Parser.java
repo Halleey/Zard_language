@@ -241,6 +241,25 @@ public class Parser {
     }
 
 
+    public Map<String, String> lookupStruct(String name) {
+        Map<String, String> fields = structDefinitions.get(name);
+        return (fields != null) ? fields : Collections.emptyMap();
+    }
+
+    public boolean hasStruct(String name) {
+        return structDefinitions.containsKey(name);
+    }
+
+    public Token peek(int k) {
+        int idx = pos + k;
+        if (idx < tokens.size()) return tokens.get(idx);
+        return new Token(Token.TokenType.EOF, "");
+    }
+
+    public String peekValue(int k) {
+        return peek(k).getValue();
+    }
+
     public void declareVariableType(String name, String type) {
         variableTypes.put(name, type);
     }

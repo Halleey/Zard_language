@@ -42,7 +42,7 @@ public class VariableDeclarationNode extends ASTNode {
             if (initializer instanceof StructInstaceNode) {
                 instanceNode = (StructInstaceNode) initializer;
             } else {
-                instanceNode = new StructInstaceNode(structName, null);
+                instanceNode = new StructInstaceNode(structName, null, null);
             }
 
             value = instanceNode.evaluate(ctx);

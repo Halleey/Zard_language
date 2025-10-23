@@ -7,7 +7,6 @@ import ast.structs.StructNode;
 import ast.variables.VariableNode;
 import low.TempManager;
 import low.module.LLVisitorMain;
-
 public class StructPrintHandler implements PrintHandler {
     private final TempManager temps;
 
@@ -32,6 +31,7 @@ public class StructPrintHandler implements PrintHandler {
     public String emit(ASTNode node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
 
+        // gera o código do nó (pode ser um load ou instância de struct)
         String code = node.accept(visitor);
         if (!code.isBlank()) {
             llvm.append(code);
@@ -40,6 +40,7 @@ public class StructPrintHandler implements PrintHandler {
         String temp = extractTemp(code);
         String type = extractType(code).trim();
 
+        // Se for um ponteiro duplo (ex: %Pessoa**), faz load
         if (type.endsWith("**")) {
             String base = type.substring(0, type.length() - 1);
             String t = temps.newTemp();
@@ -49,30 +50,24 @@ public class StructPrintHandler implements PrintHandler {
             type = base;
         }
 
-        String key = normalizeKeyFromLLVMPtr(type);      // ex: %st_Nomade* -> st_Nomade
+        // resolve a definição da struct para saber o nome curto
+        String key = normalizeKeyFromLLVMPtr(type);      // ex: %Pessoa* -> Pessoa
         StructNode def = resolveStructNode(key, visitor);
         if (def == null) {
             throw new RuntimeException("Struct não encontrada para impressão: " + key + " (type=" + type + ")");
         }
+
         String shortName = def.getName();
         String printFn = "@" + ("print_" + shortName);
 
-        String asRaw;
-        if ("i8*".equals(type)) {
-            asRaw = temp;
-        } else {
-            asRaw = temps.newTemp();
-            llvm.append("  ").append(asRaw).append(" = bitcast ").append(type).append(" ").append(temp).append(" to i8*\n");
-        }
+        // chamada direta, sem bitcast para i8*
+        llvm.append("  call void ").append(printFn)
+                .append("(").append(type).append(" ").append(temp).append(")\n");
 
-        llvm.append("  call void ").append(printFn).append("(i8* ").append(asRaw).append(")\n");
-
-        llvm.append(";;VAL:").append(asRaw).append(";;TYPE:i8*\n");
+        llvm.append(";;VAL:").append(temp).append(";;TYPE:").append(type).append("\n");
 
         return llvm.toString();
     }
-
-
 
     private StructNode resolveStructNode(String key, LLVisitorMain visitor) {
         // Tenta direto
@@ -99,7 +94,7 @@ public class StructPrintHandler implements PrintHandler {
     }
 
     private String normalizeKeyFromLLVMPtr(String llvmPtrType) {
-        // %st_Nomade* -> st_Nomade ;  %Pessoa* -> Pessoa ; i8* -> i8 (não deve chegar aqui)
+        // %Pessoa* -> Pessoa ; %st_Nomade* -> st_Nomade
         String t = llvmPtrType.trim();
         if (t.startsWith("%")) t = t.substring(1);
         while (t.endsWith("*")) t = t.substring(0, t.length() - 1);

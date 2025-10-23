@@ -1,16 +1,16 @@
 main {
 
     Struct Set {
-        List<int> data;
+        List<string> data;
     }
 
     # Cria uma instância do Set
     Struct Set s;
 
     # Adiciona elementos na lista interna
-    s.data.add(10);
-    s.data.add(20);
-    s.data.add(30);
+    s.data.add("teste");
+    s.data.add("hello");
+    s.data.add("30");
 
     print("Elementos do Set:");
     print(s.data);    # deve imprimir [10, 20, 30]

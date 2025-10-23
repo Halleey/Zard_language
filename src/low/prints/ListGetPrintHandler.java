@@ -38,11 +38,9 @@ public class ListGetPrintHandler implements PrintHandler {
         appendCodePrefix(sb, getCode);
 
         if ("string".equals(elemType)) {
-            sb.append("  call i32 (i8*, ...) @printf(")
-                    .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), ")
-                    .append("i8* ").append(valTemp).append(")\n");
-
-        } else if ("int".equals(elemType)) {
+            sb.append("  call void @printString(%String* ").append(valTemp).append(")\n");
+        }
+        else if ("int".equals(elemType)) {
             sb.append("  call i32 (i8*, ...) @printf(")
                     .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), ")
                     .append("i32 ").append(valTemp).append(")\n");

@@ -1,6 +1,31 @@
 main {
 
-   List nomes = ("zard");
-   print(nomes);
-   print(nomes.size());
+    Struct Set {
+        List<string> data;
+    }
+
+    # Cria uma instância do Set
+    Struct Set s;
+
+    # Adiciona elementos na lista interna
+    s.data.add("teste");
+    s.data.add("hello");
+    s.data.add("30");
+
+    print("Elementos do Set:");
+    print(s.data);
+
+    # Usando size()
+    print("Tamanho:");
+    print(s.data.size());
+
+    # Pegando valores com get()
+    print("Primeiro elemento:");
+    print(s.data.get(0));
+
+    # Removendo o segundo elemento
+    s.data.remove(1);
+
+    print("Após remover índice 1:");
+    print(s.data);
 }

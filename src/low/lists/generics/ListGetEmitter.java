@@ -6,8 +6,6 @@ import low.lists.bool.ListBoolGetEmitter;
 import low.lists.doubles.ListGetDoubleEmitter;
 import low.lists.ints.ListGetIntEmitter;
 import low.module.LLVMEmitVisitor;
-
-
 public class ListGetEmitter {
     private final TempManager temps;
     private final ListGetIntEmitter intGetEmitter;
@@ -24,11 +22,14 @@ public class ListGetEmitter {
     public String emit(ListGetNode node, LLVMEmitVisitor visitor) {
         StringBuilder llvm = new StringBuilder();
 
+        // gera o código da lista
         String listCode = node.getListName().accept(visitor);
+        appendCodePrefix(llvm, listCode);
+
         String listType = extractType(listCode);
         String listTemp = extractTemp(listCode);
 
-        // Casos especializados (listas tipadas nativas)
+        // casos especializados
         if (listType.contains("ArrayListInt")) {
             return intGetEmitter.emit(node, visitor);
         }
@@ -39,31 +40,47 @@ public class ListGetEmitter {
             return boolGetEmitter.emit(node, visitor);
         }
 
-        // Caso genérico: listas de ponteiros
-        appendCodePrefix(llvm, listCode);
+        // --- fix para struct ---
+        String arrayPtr;
+        if (listType.startsWith("%") && listType.contains("Set")) {
+            String tmpGep = temps.newTemp();
+            llvm.append("  ").append(tmpGep)
+                    .append(" = getelementptr inbounds ").append(listType)
+                    .append(", ").append(listType).append("* ").append(listTemp)
+                    .append(", i32 0, i32 0\n");
 
-        String arrayPtr = temps.newTemp();
-        llvm.append("  ").append(arrayPtr)
-                .append(" = bitcast i8* ").append(listTemp)
-                .append(" to %ArrayList*\n");
+            String tmpLoad = temps.newTemp();
+            llvm.append("  ").append(tmpLoad)
+                    .append(" = load %ArrayList*, %ArrayList** ").append(tmpGep).append("\n");
 
+            arrayPtr = tmpLoad;
+        } else {
+            arrayPtr = listTemp;
+        }
+
+        // índice
         String idxCode = node.getIndexNode().accept(visitor);
-        String idxTemp = extractTemp(idxCode);
         appendCodePrefix(llvm, idxCode);
+        String idxTemp = extractTemp(idxCode);
 
         String idx64 = temps.newTemp();
         llvm.append("  ").append(idx64)
                 .append(" = zext i32 ").append(idxTemp).append(" to i64\n");
 
-        // O get retorna i8* (ponteiro genérico para elemento da lista)
-        String valTemp = temps.newTemp();
-        llvm.append("  ").append(valTemp)
+        // chamada runtime
+        String rawTemp = temps.newTemp();
+        llvm.append("  ").append(rawTemp)
                 .append(" = call i8* @arraylist_get_ptr(%ArrayList* ")
                 .append(arrayPtr).append(", i64 ").append(idx64).append(")\n");
 
-        // Agora só marca o valor e tipo, sem imprimir
-        llvm.append(";;VAL:").append(valTemp).append("\n");
-        llvm.append(";;TYPE:i8*\n");
+        // --- fix para string ---
+        String castTemp = temps.newTemp();
+        llvm.append("  ").append(castTemp)
+                .append(" = bitcast i8* ").append(rawTemp).append(" to %String*\n");
+
+        // markers finais
+        llvm.append(";;VAL:").append(castTemp).append("\n");
+        llvm.append(";;TYPE:%String*\n");
 
         return llvm.toString();
     }
@@ -89,5 +106,4 @@ public class ListGetEmitter {
         int end = code.indexOf("\n", t);
         return code.substring(t + 7, (end == -1 ? code.length() : end)).trim();
     }
-
 }

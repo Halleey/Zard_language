@@ -56,9 +56,9 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final ListGetEmitter getEmitter = new ListGetEmitter(temps);
     private final ListAddAllEmitter allEmitter = new ListAddAllEmitter(temps, globalStrings);
     private final FunctionCallEmitter callEmiter = new FunctionCallEmitter(temps);
-    private final Map<String, FunctionNode> functions = new HashMap<>();
+    public final Map<String, FunctionNode> functions = new HashMap<>();
     public final Map<String, String> functionTypes = new HashMap<>();
-    private final Map<String, FunctionNode> importedFunctions = new HashMap<>();
+    public final Map<String, FunctionNode> importedFunctions = new HashMap<>();
     public final Set<String> tiposDeListasUsados = new HashSet<>();
     private final ImportEmitter importEmitter = new ImportEmitter(this, this.tiposDeListasUsados);
     private final StructEmitter structEmitter  = new StructEmitter(this);

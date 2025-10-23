@@ -1,34 +1,37 @@
+import "src/language/stdlib/Math.zd" as math;
+
 main {
-
-    Struct Set {
-        List<boolean> data;
-    }
-
-    # Cria uma instância do Set
-    Struct Set s;
+    double a = 10;
+    double b = 3;
+    int n = 5;
 
 
-    # Adiciona elementos na lista interna
-    s.data.addAll(true, false, false);
-    print("Elementos do Set:");
-    print(s.data);
+    print(math.sum(a, b));
+    print(math.sub(a, b));
+    print(math.mul(a, b));
+    print(math.div(a, b));
 
-    # Usando size()
-    print("Tamanho:");
-    print(s.data.size());
 
-    #Usando get
-    print("get");
-    print(s.data.get(0));
+    print(math.pow(a, 3));
 
-    #Usando remove
-    print("remove");
-    s.data.remove(0);
-    print(s.data);
 
-    #limpa lista
-    print("apos limpeza");
-    s.data.clear();
-    print(s.data);
+    print(math.factorial(n));
 
+    print(math.sqrt(a));
+
+
+    print(math.sin(a));
+    print(math.cos(a));
+
+
+    print("Tentando dividir por zero:");
+    print(math.div(a, 0));
+
+    print("Tentando fatorial de número negativo:");
+    print(math.factorial(-3));
+
+    print("Tentando raiz quadrada de número negativo:");
+    print(math.sqrt(-9));
+
+    print("Fim dos testes.");
 }

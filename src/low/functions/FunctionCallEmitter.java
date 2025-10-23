@@ -2,6 +2,7 @@ package low.functions;
 
 import ast.ASTNode;
 import ast.functions.FunctionCallNode;
+import ast.functions.FunctionNode;
 import low.TempManager;
 import low.module.LLVisitorMain;
 
@@ -36,41 +37,59 @@ public class FunctionCallEmitter {
         List<String> llvmArgs = new ArrayList<>();
         TypeMapper typeMapper = new TypeMapper();
 
-        for (ASTNode arg : node.getArgs()) {
+        FunctionNode targetFn = visitor.functions.get(node.getName());
+        if (targetFn == null) {
+            targetFn = visitor.importedFunctions.get(node.getName());
+        }
+        List<String> expectedParams = targetFn != null ? targetFn.getParamTypes() : null;
+
+        for (int i = 0; i < node.getArgs().size(); i++) {
+            ASTNode arg = node.getArgs().get(i);
             String argLLVM = arg.accept(visitor);
             String temp = extractTemp(argLLVM);
-            String type = typeMapper.toLLVM(extractType(argLLVM));
+            String argType = typeMapper.toLLVM(extractType(argLLVM));
 
-            if ("string".equals(type)) type = "%String*";
+            if ("string".equals(argType)) argType = "%String*";
 
-            llvmArgs.add(type + " " + temp);
             sb.append(argLLVM);
+
+            String expectedType = null;
+            if (expectedParams != null && i < expectedParams.size()) {
+                expectedType = typeMapper.toLLVM(expectedParams.get(i));
+                if ("string".equals(expectedType)) expectedType = "%String*";
+            }
+
+            if (expectedType != null && !expectedType.equals(argType)) {
+                if (argType.equals("i32") && expectedType.equals("double")) {
+                    String conv = visitor.getTemps().newTemp();
+                    sb.append("  ").append(conv).append(" = sitofp i32 ")
+                            .append(temp).append(" to double\n")
+                            .append(";;VAL:").append(conv).append(";;TYPE:double\n");
+                    temp = conv;
+                    argType = "double";
+                }
+            }
+
+            llvmArgs.add(argType + " " + temp);
         }
 
-        String funcName = node.getName();                  // e.g. "math.factorial" or "factorial"
-        String llvmFuncName = funcName.replace('.', '_');  // símbolo LLVM usado nas chamadas
+        String funcName = node.getName();
+        String llvmFuncName = funcName.replace('.', '_');
 
-        // --- RESILIENT LOOKUP: tenta múltiplas chaves ---
-        String retType = null;
-        // 1) exato: "math.factorial"
-        retType = visitor.getFunctionType(funcName);
-        // 2) com underline: "math_factorial"
+        String retType = visitor.getFunctionType(funcName);
         if (retType == null) retType = visitor.getFunctionType(funcName.replace('.', '_'));
-        // 3) simples: "factorial"
         if (retType == null && funcName.contains(".")) {
             String simpleName = funcName.substring(funcName.indexOf('.') + 1);
             retType = visitor.getFunctionType(simpleName);
-            // 3b) simples com underscore (salvo por segurança)
             if (retType == null) retType = visitor.getFunctionType(simpleName.replace('.', '_'));
         }
-        // 4) fallback final: try name with '.' replaced by '_' again just in case
         if (retType == null) retType = visitor.getFunctionType(funcName.replace('.', '_'));
 
         if (retType == null)
             throw new RuntimeException("Função não registrada: " + funcName);
 
         if ("any".equals(retType) && beingDeduced.contains(funcName)) {
-            retType = "i32";
+            retType = "i32"; // fallback
         }
 
         retType = typeMapper.toLLVM(retType);
@@ -79,16 +98,14 @@ public class FunctionCallEmitter {
         if ("void".equals(retType)) {
             sb.append("  call void @")
                     .append(llvmFuncName)
-                    .append("(")
-                    .append(String.join(", ", llvmArgs))
-                    .append(")\n")
+                    .append("(").append(String.join(", ", llvmArgs)).append(")\n")
                     .append(";;VAL:void;;TYPE:void\n");
         } else {
             String retTemp = temps.newTemp();
             sb.append("  ").append(retTemp)
-                    .append(" = call ").append(retType)
-                    .append(" @").append(llvmFuncName)
-                    .append("(").append(String.join(", ", llvmArgs)).append(")\n")
+                    .append(" = call ").append(retType).append(" @")
+                    .append(llvmFuncName).append("(")
+                    .append(String.join(", ", llvmArgs)).append(")\n")
                     .append(";;VAL:").append(retTemp)
                     .append(";;TYPE:").append(retType).append("\n");
         }

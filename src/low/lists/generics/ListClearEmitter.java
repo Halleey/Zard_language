@@ -6,14 +6,11 @@ import low.lists.bool.ListBoolClearEmitter;
 import low.lists.doubles.ListDoubleClearEmitter;
 import low.lists.ints.ListIntClearEmitter;
 import low.module.LLVMEmitVisitor;
-
-
 public class ListClearEmitter {
     private final TempManager temps;
     private final ListIntClearEmitter listIntClearEmitter;
     private final ListDoubleClearEmitter doubleClearEmitter;
     private final ListBoolClearEmitter boolClearEmitter;
-
 
     public ListClearEmitter(TempManager temps) {
         this.temps = temps;
@@ -24,13 +21,13 @@ public class ListClearEmitter {
 
     public String emit(ListClearNode node, LLVMEmitVisitor visitor) {
         StringBuilder llvm = new StringBuilder();
+
         String listCode = node.getListNode().accept(visitor);
         llvm.append(listCode);
 
         String listTmp = extractTemp(listCode);
         String valType = extractType(listCode);
 
-        // 🔍 Debugs
         System.out.println("==== DEBUG ListClearEmitter ====");
         System.out.println("LLVM recebido:\n" + listCode);
         System.out.println("Temp extraído: " + listTmp);
@@ -47,15 +44,19 @@ public class ListClearEmitter {
             return boolClearEmitter.emit(node, visitor);
         }
 
-        String listCastTmp = temps.newTemp();
-        llvm.append("  ").append(listCastTmp)
-                .append(" = bitcast ").append(valType).append(" ").append(listTmp)
-                .append(" to %ArrayList*\n");
-        llvm.append(";;VAL:").append(listCastTmp).append(";;TYPE:%ArrayList*\n");
+        String arrTmp = listTmp;
+        if (!valType.equals("%ArrayList*")) {
+            arrTmp = temps.newTemp();
+            llvm.append("  ").append(arrTmp)
+                    .append(" = bitcast ").append(valType).append(" ").append(listTmp)
+                    .append(" to %ArrayList*\n");
+        }
+
+        llvm.append("  call void @clearList(%ArrayList* ").append(arrTmp).append(")\n");
+        llvm.append(";;VAL:").append(arrTmp).append(";;TYPE:%ArrayList*\n");
 
         return llvm.toString();
     }
-
 
     private String extractTemp(String code) {
         int lastValIdx = code.lastIndexOf(";;VAL:");
@@ -68,5 +69,4 @@ public class ListClearEmitter {
         int endIdx = code.indexOf("\n", lastTypeIdx);
         return code.substring(lastTypeIdx + 7, endIdx == -1 ? code.length() : endIdx).trim();
     }
-
 }

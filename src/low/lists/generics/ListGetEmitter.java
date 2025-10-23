@@ -6,6 +6,8 @@ import low.lists.bool.ListBoolGetEmitter;
 import low.lists.doubles.ListGetDoubleEmitter;
 import low.lists.ints.ListGetIntEmitter;
 import low.module.LLVMEmitVisitor;
+import low.module.LLVisitorMain;
+
 public class ListGetEmitter {
     private final TempManager temps;
     private final ListGetIntEmitter intGetEmitter;
@@ -19,7 +21,7 @@ public class ListGetEmitter {
         this.boolGetEmitter = new ListBoolGetEmitter(temps);
     }
 
-    public String emit(ListGetNode node, LLVMEmitVisitor visitor) {
+    public String emit(ListGetNode node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
 
         // gera o código da lista
@@ -29,7 +31,6 @@ public class ListGetEmitter {
         String listType = extractType(listCode);
         String listTemp = extractTemp(listCode);
 
-        // casos especializados
         if (listType.contains("ArrayListInt")) {
             return intGetEmitter.emit(node, visitor);
         }
@@ -40,25 +41,6 @@ public class ListGetEmitter {
             return boolGetEmitter.emit(node, visitor);
         }
 
-        // --- fix para struct ---
-        String arrayPtr;
-        if (listType.startsWith("%") && listType.contains("Set")) {
-            String tmpGep = temps.newTemp();
-            llvm.append("  ").append(tmpGep)
-                    .append(" = getelementptr inbounds ").append(listType)
-                    .append(", ").append(listType).append("* ").append(listTemp)
-                    .append(", i32 0, i32 0\n");
-
-            String tmpLoad = temps.newTemp();
-            llvm.append("  ").append(tmpLoad)
-                    .append(" = load %ArrayList*, %ArrayList** ").append(tmpGep).append("\n");
-
-            arrayPtr = tmpLoad;
-        } else {
-            arrayPtr = listTemp;
-        }
-
-        // índice
         String idxCode = node.getIndexNode().accept(visitor);
         appendCodePrefix(llvm, idxCode);
         String idxTemp = extractTemp(idxCode);
@@ -67,23 +49,72 @@ public class ListGetEmitter {
         llvm.append("  ").append(idx64)
                 .append(" = zext i32 ").append(idxTemp).append(" to i64\n");
 
-        // chamada runtime
         String rawTemp = temps.newTemp();
         llvm.append("  ").append(rawTemp)
                 .append(" = call i8* @arraylist_get_ptr(%ArrayList* ")
-                .append(arrayPtr).append(", i64 ").append(idx64).append(")\n");
+                .append(listTemp).append(", i64 ").append(idx64).append(")\n");
 
-        // --- fix para string ---
+        String elemType = visitor.inferListElementType(node.getListName());
+
         String castTemp = temps.newTemp();
-        llvm.append("  ").append(castTemp)
-                .append(" = bitcast i8* ").append(rawTemp).append(" to %String*\n");
+        if ("string".equals(elemType)) {
+            llvm.append("  ").append(castTemp)
+                    .append(" = bitcast i8* ").append(rawTemp).append(" to %String*\n");
+            llvm.append(";;VAL:").append(castTemp).append("\n");
+            llvm.append(";;TYPE:%String*\n");
 
-        // markers finais
-        llvm.append(";;VAL:").append(castTemp).append("\n");
-        llvm.append(";;TYPE:%String*\n");
+        } else if ("int".equals(elemType)) {
+            // load direto do valor int
+            String intPtr = temps.newTemp();
+            llvm.append("  ").append(intPtr)
+                    .append(" = bitcast i8* ").append(rawTemp).append(" to i32*\n");
+            String intVal = temps.newTemp();
+            llvm.append("  ").append(intVal)
+                    .append(" = load i32, i32* ").append(intPtr).append("\n");
+            llvm.append(";;VAL:").append(intVal).append("\n");
+            llvm.append(";;TYPE:i32\n");
+
+        } else if ("double".equals(elemType)) {
+            String dblPtr = temps.newTemp();
+            llvm.append("  ").append(dblPtr)
+                    .append(" = bitcast i8* ").append(rawTemp).append(" to double*\n");
+            String dblVal = temps.newTemp();
+            llvm.append("  ").append(dblVal)
+                    .append(" = load double, double* ").append(dblPtr).append("\n");
+            llvm.append(";;VAL:").append(dblVal).append("\n");
+            llvm.append(";;TYPE:double\n");
+
+        } else if ("boolean".equals(elemType)) {
+            String boolPtr = temps.newTemp();
+            llvm.append("  ").append(boolPtr)
+                    .append(" = bitcast i8* ").append(rawTemp).append(" to i1*\n");
+            String boolVal = temps.newTemp();
+            llvm.append("  ").append(boolVal)
+                    .append(" = load i1, i1* ").append(boolPtr).append("\n");
+            llvm.append(";;VAL:").append(boolVal).append("\n");
+            llvm.append(";;TYPE:i1\n");
+
+        } else {
+            // structs genéricas
+            String structName = normalizeStructName(elemType);
+            llvm.append("  ").append(castTemp)
+                    .append(" = bitcast i8* ").append(rawTemp).append(" to %")
+                    .append(structName).append("*\n");
+            llvm.append(";;VAL:").append(castTemp).append("\n");
+            llvm.append(";;TYPE:%").append(structName).append("*\n");
+        }
 
         return llvm.toString();
     }
+
+    private String normalizeStructName(String elemType) {
+        String s = elemType.trim();
+        if (s.startsWith("Struct<") && s.endsWith(">")) {
+            s = s.substring("Struct<".length(), s.length() - 1);
+        }
+        return s.replace('.', '_');
+    }
+
 
     private void appendCodePrefix(StringBuilder llvm, String code) {
         int marker = code.lastIndexOf(";;VAL:");

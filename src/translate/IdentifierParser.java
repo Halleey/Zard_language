@@ -3,7 +3,6 @@ package translate;
 import ast.ASTNode;
 import ast.functions.FunctionCallNode;
 import ast.functions.FunctionReferenceNode;
-import ast.maps.MapMethodParser;
 import ast.structs.StructFieldAccessNode;
 import ast.structs.StructInstanceParser;
 import tokens.Token;

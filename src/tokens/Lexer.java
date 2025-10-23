@@ -100,25 +100,22 @@ public class Lexer {
         result.append(currentChar);
         advance();
 
-        if (result.toString().equals("+") || result.toString().equals("-")) {
-            if (currentChar == '+') {
-                result.append(currentChar);
-                advance();
-                return new Token(Token.TokenType.OPERATOR, result.toString());
-            } else if (currentChar == '-') {
-                result.append(currentChar);
-                advance();
-                return new Token(Token.TokenType.OPERATOR, result.toString());
-            }
-        } else if ((result.toString().equals("=") && currentChar == '=') ||
+        if ((result.toString().equals("+") && currentChar == '+') ||
+                (result.toString().equals("-") && currentChar == '-') ||
+                (result.toString().equals("=") && currentChar == '=') ||
                 (result.toString().equals("!") && currentChar == '=') ||
                 (result.toString().equals("<") && (currentChar == '=' || currentChar == '>')) ||
-                (result.toString().equals(">") && currentChar == '=')) {
+                (result.toString().equals(">") && currentChar == '=') ||
+                (result.toString().equals("&") && currentChar == '&') ||
+                (result.toString().equals("|") && currentChar == '|')) {
+
             result.append(currentChar);
             advance();
         }
+
         return new Token(Token.TokenType.OPERATOR, result.toString());
     }
+
 
 
     private Token readNumber() {
@@ -157,9 +154,9 @@ public class Lexer {
                 skipWhitespace();
                 continue;
             }
-            if (currentChar == '(' || currentChar == ')' || currentChar ==  '.' || currentChar == ':' ||
+            if (currentChar == '(' || currentChar == ')' || currentChar == '.' || currentChar == ':' ||
                     currentChar == '[' || currentChar == ']' ||
-                    currentChar == '{' || currentChar == '}' || currentChar == ';' || currentChar ==  ',') {
+                    currentChar == '{' || currentChar == '}' || currentChar == ';' || currentChar == ',') {
                 tokens.add(new Token(Token.TokenType.DELIMITER, Character.toString(currentChar)));
                 advance();
                 continue;
@@ -176,7 +173,8 @@ public class Lexer {
                 tokens.add(readNumber());
                 continue;
             }
-            if (currentChar == '+' || currentChar == '-' || currentChar == '*' || currentChar == '/' || currentChar == '%') {
+            if (currentChar == '+' || currentChar == '-' || currentChar == '*' || currentChar == '/' || currentChar == '%' ||
+                    currentChar == '&' || currentChar == '|') {
                 tokens.add(readOperator());
                 continue;
             }
@@ -189,4 +187,5 @@ public class Lexer {
 
         return tokens;
     }
+
 }

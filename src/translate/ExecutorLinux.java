@@ -20,6 +20,8 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 import java.io.*;
+
+
 public class ExecutorLinux {
     public static void main(String[] args) throws Exception {
         // Detectar sistema operacional
@@ -56,10 +58,7 @@ public class ExecutorLinux {
 
         System.out.println("Executando otimizador LLVM...");
 
-// Escolha qual pipeline usar (comente/descomente)
-        String passes = "mem2reg,dce";          // mais seguro, só promove variáveis e remove código morto
-// String passes = "default<O1>";       // otimização leve (equivale ao -O1 do clang)
-// String passes = "default<O2>";       // otimização mais agressiva (-O2), mas ainda estável
+        String passes = "mem2reg,dce";
 
         List<String> optCmd = new ArrayList<>();
         optCmd.add("opt");
@@ -136,5 +135,6 @@ public class ExecutorLinux {
 //            } catch (ReturnValue rv) {
 //                break;
 //            }
-        }
+//        }
     }
+}

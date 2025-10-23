@@ -10,8 +10,6 @@ import ast.variables.UnaryOpNode;
 
 import java.util.ArrayList;
 import java.util.List;
-
-
 public class ExpressionParser {
     private final Parser parent;
 
@@ -19,9 +17,36 @@ public class ExpressionParser {
         this.parent = parent;
     }
 
-    // EXPRESSÃO PRINCIPAL
     public ASTNode parseExpression() {
-        return parseComparison();
+        return parseLogicalOr();
+    }
+
+    private ASTNode parseLogicalOr() {
+        ASTNode left = parseLogicalAnd();
+
+        while (parent.current().getType() == Token.TokenType.OPERATOR &&
+                parent.current().getValue().equals("||")) {
+            String op = parent.current().getValue();
+            parent.advance();
+            ASTNode right = parseLogicalAnd();
+            left = new BinaryOpNode(left, op, right);
+        }
+
+        return left;
+    }
+
+    private ASTNode parseLogicalAnd() {
+        ASTNode left = parseComparison();
+
+        while (parent.current().getType() == Token.TokenType.OPERATOR &&
+                parent.current().getValue().equals("&&")) {
+            String op = parent.current().getValue();
+            parent.advance();
+            ASTNode right = parseComparison();
+            left = new BinaryOpNode(left, op, right);
+        }
+
+        return left;
     }
 
     private ASTNode parseComparison() {
@@ -64,11 +89,9 @@ public class ExpressionParser {
         return left;
     }
 
-    // FATORES (literais, identificadores, chamadas, parênteses, unários)
     private ASTNode parseFactor() {
         Token tok = parent.current();
 
-        // Unary +, -, !
         if (tok.getType() == Token.TokenType.OPERATOR &&
                 (tok.getValue().equals("+") || tok.getValue().equals("-") || tok.getValue().equals("!"))) {
             String op = tok.getValue();
@@ -77,7 +100,6 @@ public class ExpressionParser {
             return new UnaryOpNode(op, factor);
         }
 
-        // Proibição de listas vazias sem tipo
         if (tok.getValue().equals("(") && parent.peek().getValue().equals(")")) {
             throw new RuntimeException(
                     "Listas vazias devem ter tipo especificado, ex: List<int> x; nada de ()"
@@ -98,7 +120,6 @@ public class ExpressionParser {
             }
             case BOOLEAN -> {
                 parent.advance();
-
                 return new LiteralNode(new TypedValue("boolean", Boolean.parseBoolean(tok.getValue())));
             }
             case KEYWORD -> {
@@ -116,7 +137,6 @@ public class ExpressionParser {
         }
 
         if (tok.getValue().equals("(")) {
-
             parent.advance();
             ASTNode expr = parseExpression();
             parent.eat(Token.TokenType.DELIMITER, ")");
@@ -126,7 +146,6 @@ public class ExpressionParser {
         throw new RuntimeException("Fator inesperado: " + tok.getValue());
     }
 
-    // ARGUMENTOS DE CHAMADAS DE FUNÇÃO
     public List<ASTNode> parseArguments() {
         parent.eat(Token.TokenType.DELIMITER, "(");
         List<ASTNode> args = new ArrayList<>();

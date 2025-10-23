@@ -39,7 +39,7 @@ public class IfParser {
             parser.advance();
 
             if (parser.current().getType() == Token.TokenType.KEYWORD && parser.current().getValue().equals("if")) {
-                // else if → recursão
+                // else if recursão
                 elseBranch = List.of(parseIf());
             } else {
                 // else normal

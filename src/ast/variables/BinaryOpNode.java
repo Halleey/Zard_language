@@ -26,8 +26,18 @@ public class BinaryOpNode extends ASTNode {
         Object l = unwrap(left.evaluate(ctx));
         Object r = unwrap(right.evaluate(ctx));
 
+        if (l instanceof Boolean lb && r instanceof Boolean rb) {
+            return switch (operator) {
+                case "&&" -> new TypedValue("boolean", lb && rb);
+                case "||" -> new TypedValue("boolean", lb || rb);
+                case "==" -> new TypedValue("boolean", lb == rb);
+                case "!=" -> new TypedValue("boolean", lb != rb);
+                default -> throw new RuntimeException("Operador inválido para boolean: " + operator);
+            };
+        }
+
         if (l instanceof Number ln && r instanceof Number rn) {
-            // int + int → int
+            // int + int  int
             if (ln instanceof Integer && rn instanceof Integer) {
                 int li = ln.intValue();
                 int ri = rn.intValue();
@@ -35,7 +45,7 @@ public class BinaryOpNode extends ASTNode {
                     case "+" -> new TypedValue("int", li + ri);
                     case "-" -> new TypedValue("int", li - ri);
                     case "*" -> new TypedValue("int", li * ri);
-                    case "/" -> new TypedValue("int", li / ri); // cuidado: divisão inteira
+                    case "/" -> new TypedValue("int", li / ri);
                     case ">" -> new TypedValue("boolean", li > ri);
                     case "<" -> new TypedValue("boolean", li < ri);
                     case ">=" -> new TypedValue("boolean", li >= ri);
@@ -46,7 +56,6 @@ public class BinaryOpNode extends ASTNode {
                 };
             }
 
-            // fallback → usa double
             double lv = ln.doubleValue();
             double rv = rn.doubleValue();
             return switch (operator) {
@@ -64,7 +73,6 @@ public class BinaryOpNode extends ASTNode {
             };
         }
 
-        // concatenação e comparações de string/objetos
         return switch (operator) {
             case "+" -> new TypedValue("string", l.toString() + r.toString());
             case "==" -> new TypedValue("boolean", l.equals(r));
@@ -72,6 +80,7 @@ public class BinaryOpNode extends ASTNode {
             default -> throw new RuntimeException("Tipos incompatíveis para operador: " + operator);
         };
     }
+
 
 
     @Override

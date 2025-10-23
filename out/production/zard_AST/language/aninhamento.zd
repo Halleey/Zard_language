@@ -1,5 +1,3 @@
-import "src/language/structs/StructTest.zd" as st;
-
 main {
 
     Struct Endereco {

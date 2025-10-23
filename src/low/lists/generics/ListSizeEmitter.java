@@ -22,7 +22,6 @@ public class ListSizeEmitter {
     public String emit(ListSizeNode node, LLVMEmitVisitor visitor) {
         String listCode = node.getNome().accept(visitor);
 
-        // agora usamos extractType de verdade
         String listType = extractType(listCode);
 
         if (listType.contains("ArrayListInt")) {

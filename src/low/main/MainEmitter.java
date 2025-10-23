@@ -298,7 +298,7 @@ public class MainEmitter {
                 %struct.ArrayListBool = type { i1*, i64, i64 }
                 declare %struct.ArrayListBool* @arraylist_create_bool(i64)
                 declare void @arraylist_add_bool(%struct.ArrayListBool*, i1)
-                declare void @arraylist_addAll_bool(%struct.ArrayListBool*, i1*, i64)
+                declare void @arraylist_addAll_bool(%struct.ArrayListBool*, i8*, i64)
                 declare void @arraylist_print_bool(%struct.ArrayListBool*)
                 declare void @arraylist_clear_bool(%struct.ArrayListBool*)
                 declare void @arraylist_remove_bool(%struct.ArrayListBool*, i64)

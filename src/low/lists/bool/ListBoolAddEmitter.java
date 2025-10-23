@@ -22,22 +22,17 @@ public class ListBoolAddEmitter {
 
 
         llvm.append("  call void @arraylist_add_bool(%struct.ArrayListBool* ").append(listTemp)
-                .append(", i1").append(valTmp).append(")\n");
+                .append(", i1 ").append(valTmp).append(")\n");
 
         llvm.append(";;VAL:").append(listTemp).append(";;TYPE:struct.ArrayListBool*\n");
         return llvm.toString();
     }
 
     private String extractTemp(String code) {
-        int lastValIdx = code.lastIndexOf(";;VAL:");
-        int typeIdx = code.indexOf(";;TYPE:", lastValIdx);
-        return code.substring(lastValIdx + 6, typeIdx).trim();
-    }
-
-    private String extractType(String code) {
-        int typeIdx = code.indexOf(";;TYPE:");
-        int endIdx = code.indexOf("\n", typeIdx);
-        return code.substring(typeIdx + 7, endIdx == -1 ? code.length() : endIdx).trim();
+        int idx = code.lastIndexOf(";;VAL:");
+        if (idx == -1) throw new RuntimeException("Não encontrou ;;VAL:");
+        int end = code.indexOf(";;TYPE:", idx);
+        return code.substring(idx + 6, end);
     }
 
 

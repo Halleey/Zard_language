@@ -14,7 +14,6 @@ public class ListBoolGetEmitter {
     public String emit(ListGetNode node, LLVMEmitVisitor visitor) {
         StringBuilder llvm = new StringBuilder();
 
-        // Gera código da lista
         String listCode = node.getListName().accept(visitor);
         String listTemp = extractTemp(listCode);
         appendCodePrefix(llvm, listCode);
@@ -58,9 +57,10 @@ public class ListBoolGetEmitter {
     }
 
     private String extractTemp(String code) {
-        int v = code.indexOf(";;VAL:");
+        int v = code.lastIndexOf(";;VAL:");
+        if (v == -1) return "";
         int t = code.indexOf(";;TYPE:", v);
-        if (v == -1 || t == -1) return "";
-        return code.substring(v + 6, t).trim();
+        return (t == -1) ? "" : code.substring(v + 6, t).trim();
     }
+
 }

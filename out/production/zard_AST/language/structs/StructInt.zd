@@ -1,7 +1,7 @@
 main {
 
     Struct Set {
-        List<boolean> data;
+        List<int> data;
     }
 
     # Cria uma instância do Set
@@ -9,8 +9,11 @@ main {
 
 
     # Adiciona elementos na lista interna
-    s.data.addAll(true, false, false);
-    print("Elementos do Set:");
+    s.data.add(1);
+    s.data.add(22);
+    s.data.add(99);
+    s.data.addAll(3,0,4);
+    print("Elementos do Set");
     print(s.data);
 
     # Usando size()

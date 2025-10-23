@@ -9,7 +9,10 @@ main {
 
 
     # Adiciona elementos na lista interna
-    s.data.addAll(true, false, false);
+    s.data.add(true);
+    s.data.add(false);
+    s.data.add(true);
+
     print("Elementos do Set:");
     print(s.data);
 

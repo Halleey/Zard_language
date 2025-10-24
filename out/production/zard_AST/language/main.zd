@@ -1,17 +1,17 @@
 main {
 
     Struct Set {
-        List<string> data;
+        List<double> data;
     }
 
     # Cria uma instância do Set
     Struct Set s;
 
-    print("digite seu nome");
-    string nome = input();
-    string x = "zhum";
+    print("digite um numero");
+    double nome = input();
+    double x = 3.14;
     # Adiciona elementos na lista interna
-    s.data.add("1");
+    s.data.add(1.0);
     s.data.add(nome);
     s.data.add(x);
 

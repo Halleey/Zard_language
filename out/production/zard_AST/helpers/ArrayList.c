@@ -31,9 +31,18 @@ void arraylist_add_ptr(ArrayList* list, void* element) {
 }
 
 void* arraylist_get_ptr(ArrayList* list, size_t index) {
-    if (index >= list->length) return NULL;
+    if (!list) {
+        fprintf(stderr, "[ArrayList] Erro: lista nula.\n");
+        abort();
+    }
+    if (index >= list->length) {
+        fprintf(stderr, "[ArrayList] Erro: acesso inválido no índice %zu (tamanho = %zu)\n",
+                index, list->length);
+        abort(); 
+    }
     return list->data[index];
 }
+
 
 void arraylist_add_string(ArrayList* list, char* str) {
     ensureCapacity(list);
@@ -73,25 +82,25 @@ int length(ArrayList* list) {
     return list ? list->length : 0;
 }
 
-
 void freeList(ArrayList* list) {
     if (!list) return;
     for (size_t i = 0; i < list->length; i++) {
-        free(list->data[i]); // libera a cópia feita em add_string/add_String
+        if (list->data[i]) {
+        }
     }
     free(list->data);
     free(list);
 }
 
+
 void clearList(ArrayList* list) {
     if (!list) return;
+
     for (size_t i = 0; i < list->length; i++) {
-        free(list->data[i]);
         list->data[i] = NULL;
     }
     list->length = 0;
 }
-
 
 
 void arraylist_add_String(ArrayList* list, String* str) {

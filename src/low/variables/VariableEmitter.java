@@ -127,7 +127,7 @@ public class VariableEmitter {
             }
         }
         if (node.getType().equals("string") && node.initializer instanceof LiteralNode lit) {
-            return stringEmitter.createStringFromLiteral(varPtr, (String) lit.value.getValue());
+            return stringEmitter.createStringFromLiteral(varPtr, (String) lit.value.value());
         }
 
         String exprLLVM = node.initializer.accept(visitor);

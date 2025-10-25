@@ -25,10 +25,10 @@ public class MapPutNode extends ASTNode {
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
         TypedValue mapValue = mapNode.evaluate(ctx);
-        if (!mapValue.getType().equals("map"))
+        if (!mapValue.type().equals("map"))
             throw new RuntimeException("This value is not a map");
 
-        DynamicMap dynamicMap = (DynamicMap) mapValue.getValue();
+        DynamicMap dynamicMap = (DynamicMap) mapValue.value();
         TypedValue keyVal = keyNode.evaluate(ctx);
         TypedValue valueVal = valueNode.evaluate(ctx);
         dynamicMap.put(keyVal, valueVal);

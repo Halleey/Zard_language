@@ -5,26 +5,14 @@ import ast.runtime.RuntimeContext;
 
 import java.util.Map;
 
-public class
-TypedValue {
-    private final String type;
-    private final Object value;
-
-    public TypedValue(String type, Object value) {
-        this.type = type;
-        this.value = value;
-    }
-
-    public String getType() { return type; }
-
-    public Object getValue() { return value; }
+public record
+TypedValue(String type, Object value) {
 
     @Override
     public String toString() {
         return value != null ? value.toString() : "null";
     }
 
-    // --- Helpers para namespaces e funções ---
     public boolean isFunction() {
         return "function".equals(type);
     }

@@ -31,8 +31,8 @@ public class ListGetNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        DynamicList list = (DynamicList) listName.evaluate(ctx).getValue();
-        int index = ((Number) indexNode.evaluate(ctx).getValue()).intValue();
+        DynamicList list = (DynamicList) listName.evaluate(ctx).value();
+        int index = ((Number) indexNode.evaluate(ctx).value()).intValue();
         return list.get(index, ctx);
     }
 

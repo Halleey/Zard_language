@@ -91,8 +91,8 @@ public class ListAddAllEmitter {
                     ASTNode valueNode = node.getArgs().get(i);
                     String valTmp;
 
-                    if (valueNode instanceof LiteralNode lit && lit.value.getType().equals("string")) {
-                        String literal = (String) lit.value.getValue();
+                    if (valueNode instanceof LiteralNode lit && lit.value.type().equals("string")) {
+                        String literal = (String) lit.value.value();
                         String strName = globalStringManager.getOrCreateString(literal);
                         valTmp = temps.newTemp();
                         llvm.append("  ").append(valTmp)

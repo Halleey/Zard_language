@@ -22,8 +22,8 @@ public class ListRemoveNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        DynamicList list = (DynamicList) listNode.evaluate(ctx).getValue();
-        int index = ((Number) indexNode.evaluate(ctx).getValue()).intValue();
+        DynamicList list = (DynamicList) listNode.evaluate(ctx).value();
+        int index = ((Number) indexNode.evaluate(ctx).value()).intValue();
         return list.removeByIndex(index, ctx); // usa método novo
     }
 

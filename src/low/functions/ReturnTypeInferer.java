@@ -64,7 +64,7 @@ public class ReturnTypeInferer {
 
     public String inferType(ASTNode node, Map<String, String> localVars) {
         if (node instanceof LiteralNode lit) {
-            return lit.value.getType();
+            return lit.value.type();
         } else if (node instanceof VariableNode var) {
             String type = localVars.getOrDefault(var.getName(), visitor.getVarType(var.getName()));
             if (type == null) throw new RuntimeException("Variável não declarada: " + var.getName());

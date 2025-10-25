@@ -23,18 +23,18 @@ public class MapGetNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        DynamicMap map = (DynamicMap) mapVar.evaluate(ctx).getValue();
+        DynamicMap map = (DynamicMap) mapVar.evaluate(ctx).value();
         TypedValue keyVal = keyNode.evaluate(ctx);
 
         // Percorre as entradas avaliando as chaves
         for (Map.Entry<ASTNode, ASTNode> entry : map.getEntries().entrySet()) {
             TypedValue k = entry.getKey().evaluate(ctx);
-            if (k.getValue().equals(keyVal.getValue())) {
+            if (k.value().equals(keyVal.value())) {
                 return entry.getValue().evaluate(ctx);
             }
         }
 
-        throw new RuntimeException("Chave '" + keyVal.getValue() + "' não encontrada no mapa.");
+        throw new RuntimeException("Chave '" + keyVal.value() + "' não encontrada no mapa.");
     }
 
     @Override

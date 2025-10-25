@@ -91,6 +91,6 @@ public class BinaryOpNode extends ASTNode {
     }
 
     private Object unwrap(TypedValue tv) {
-        return tv.getValue();
+        return tv.value();
     }
 }

@@ -42,8 +42,8 @@ public class MapNode extends ASTNode {
             return;
         }
         for (Map.Entry<TypedValue, TypedValue> e : evaluated.entrySet()) {
-            System.out.println(prefix + "  [" + e.getKey().getValue() + " (" + e.getKey().getType() + ")]: "
-                    + e.getValue().getValue() + " (" + e.getValue().getType() + ")");
+            System.out.println(prefix + "  [" + e.getKey().value() + " (" + e.getKey().type() + ")]: "
+                    + e.getValue().value() + " (" + e.getValue().type() + ")");
         }
     }
 }

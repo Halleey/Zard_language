@@ -22,7 +22,7 @@ public class UnaryOpNode extends ASTNode {
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
         TypedValue val = expr.evaluate(ctx);
-        Object value = val.getValue();
+        Object value = val.value();
 
         // Suporte a incremento/decremento
         if (operator.equals("++") || operator.equals("--")) {

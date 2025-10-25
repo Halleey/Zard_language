@@ -23,7 +23,7 @@ public class MapRemoveNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        DynamicMap map = (DynamicMap) mapVar.evaluate(ctx).getValue();
+        DynamicMap map = (DynamicMap) mapVar.evaluate(ctx).value();
         TypedValue keyVal = keyNode.evaluate(ctx);
 
         ASTNode toRemove = null;
@@ -31,7 +31,7 @@ public class MapRemoveNode extends ASTNode {
 
         for (Map.Entry<ASTNode, ASTNode> entry : map.getEntries().entrySet()) {
             TypedValue k = entry.getKey().evaluate(ctx);
-            if (k.getValue().equals(keyVal.getValue())) {
+            if (k.value().equals(keyVal.value())) {
                 removedValue = entry.getValue().evaluate(ctx);
                 toRemove = entry.getKey();
                 break;
@@ -43,7 +43,7 @@ public class MapRemoveNode extends ASTNode {
             return removedValue;
         }
 
-        throw new RuntimeException("Chave '" + keyVal.getValue() + "' não encontrada no mapa para remoção.");
+        throw new RuntimeException("Chave '" + keyVal.value() + "' não encontrada no mapa para remoção.");
     }
 
     @Override

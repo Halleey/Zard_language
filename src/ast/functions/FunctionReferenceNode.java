@@ -24,15 +24,15 @@ public class FunctionReferenceNode extends ASTNode {
         String[] parts = namespacePath.split("\\.");
         for (int i = 0; i < parts.length - 1; i++) {
             TypedValue nsVal = currentCtx.getVariable(parts[i]);
-            if (!nsVal.getType().equals("namespace")) {
+            if (!nsVal.type().equals("namespace")) {
                 throw new RuntimeException(parts[i] + " não é um namespace");
             }
-            currentCtx = (RuntimeContext) nsVal.getValue();
+            currentCtx = (RuntimeContext) nsVal.value();
         }
 
         String funcName = parts[parts.length - 1];
         TypedValue funcVal = currentCtx.getVariable(funcName);
-        if (!funcVal.getType().equals("function")) {
+        if (!funcVal.type().equals("function")) {
             throw new RuntimeException(funcName + " não é uma função");
         }
 

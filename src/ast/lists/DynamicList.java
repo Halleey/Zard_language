@@ -44,7 +44,7 @@ public class DynamicList {
     }
 
     public void add(TypedValue value) {
-        String valType = value.getType();
+        String valType = value.type();
 
         boolean ok = valType.equals(elementType);
 

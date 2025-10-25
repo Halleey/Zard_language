@@ -148,8 +148,8 @@ public class MainEmitter {
 
 
     private void coletarStringsRecursivo(ASTNode node) {
-        if (node instanceof LiteralNode lit && lit.value.getType().equals("string"))
-            globalStrings.getOrCreateString((String) lit.value.getValue());
+        if (node instanceof LiteralNode lit && lit.value.type().equals("string"))
+            globalStrings.getOrCreateString((String) lit.value.value());
         if (node instanceof InputNode inputNode) {
             usesInput = true;
             if (inputNode.getPrompt() != null)
@@ -158,8 +158,8 @@ public class MainEmitter {
 
         if (node instanceof PrintNode printNode) {
             ASTNode expr = printNode.expr;
-            if (expr instanceof LiteralNode lit && lit.value.getType().equals("string")) {
-                globalStrings.getOrCreateString((String) lit.value.getValue());
+            if (expr instanceof LiteralNode lit && lit.value.type().equals("string")) {
+                globalStrings.getOrCreateString((String) lit.value.value());
             }
         }
         if (node instanceof BinaryOpNode bin) {

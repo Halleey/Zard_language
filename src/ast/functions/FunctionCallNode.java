@@ -32,19 +32,19 @@ public class FunctionCallNode extends ASTNode {
         for (int i = 0; i < parts.length - 1; i++) {
             String nsName = parts[i];
             TypedValue nsVal = currentCtx.getVariable(nsName);
-            if (!nsVal.getType().equals("namespace")) {
+            if (!nsVal.type().equals("namespace")) {
                 throw new RuntimeException(nsName + " não é um namespace");
             }
-            currentCtx = (RuntimeContext) nsVal.getValue();
+            currentCtx = (RuntimeContext) nsVal.value();
         }
 
         String funcShortName = parts[parts.length - 1];
         TypedValue funcVal = currentCtx.getVariable(funcShortName);
-        if (!funcVal.getType().equals("function")) {
+        if (!funcVal.type().equals("function")) {
             throw new RuntimeException(funcShortName + " não é uma função");
         }
 
-        FunctionNode func = (FunctionNode) funcVal.getValue();
+        FunctionNode func = (FunctionNode) funcVal.value();
 
         RuntimeContext localCtx = new RuntimeContext(currentCtx);
         for (int i = 0; i < func.getParams().size(); i++) {
@@ -74,16 +74,16 @@ public class FunctionCallNode extends ASTNode {
     private TypedValue promoteTypeIfNeeded(TypedValue value, String targetType) {
         if (value == null) return null;
 
-        String valueType = value.getType();
+        String valueType = value.type();
 
         if (valueType.equals(targetType)) return value;
 
         if (targetType.equals("double") && valueType.equals("int")) {
-            return new TypedValue("double", ((Integer)value.getValue()).doubleValue());
+            return new TypedValue("double", ((Integer)value.value()).doubleValue());
         }
 
         if (targetType.startsWith("List<") && valueType.equals("List")) {
-            return new TypedValue(targetType, value.getValue());
+            return new TypedValue(targetType, value.value());
         }
 
         throw new RuntimeException("Não é possível converter " + valueType + " para " + targetType);

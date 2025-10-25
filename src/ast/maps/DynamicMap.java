@@ -5,7 +5,6 @@ import ast.runtime.RuntimeContext;
 import ast.variables.LiteralNode;
 
 import java.util.*;
-import java.util.*;
 
 public class DynamicMap {
     private final Map<ASTNode, ASTNode> entries;
@@ -45,11 +44,11 @@ public class DynamicMap {
     }
 
     public void put(TypedValue key, TypedValue value) {
-        if (!key.getType().equals(keyType)) {
-            throw new RuntimeException("Invalid key type for Map<" + keyType + "," + valueType + ">: " + key.getType());
+        if (!key.type().equals(keyType)) {
+            throw new RuntimeException("Invalid key type for Map<" + keyType + "," + valueType + ">: " + key.type());
         }
-        if (!value.getType().equals(valueType)) {
-            throw new RuntimeException("Invalid value type for Map<" + keyType + "," + valueType + ">: " + value.getType());
+        if (!value.type().equals(valueType)) {
+            throw new RuntimeException("Invalid value type for Map<" + keyType + "," + valueType + ">: " + value.type());
         }
         entries.put(new LiteralNode(key), new LiteralNode(value));
     }

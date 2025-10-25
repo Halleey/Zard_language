@@ -63,8 +63,8 @@ public class ListAddEmitter {
             case "i8*" -> {
 
                 if (node.getValuesNode() instanceof LiteralNode lit &&
-                        lit.value.getType().equals("string")) {
-                    String literal = (String) lit.value.getValue();
+                        lit.value.type().equals("string")) {
+                    String literal = (String) lit.value.value();
                     String strName = globalStringManager.getOrCreateString(literal);
                     llvm.append("  call void @arraylist_add_string(%ArrayList* ")
                             .append(listCastTmp).append(", i8* getelementptr ([")

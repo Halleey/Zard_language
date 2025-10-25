@@ -24,7 +24,7 @@ public class ListAddNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        DynamicList list = (DynamicList) listNode.evaluate(ctx).getValue();
+        DynamicList list = (DynamicList) listNode.evaluate(ctx).value();
         TypedValue values = valuesNode.evaluate(ctx);
         list.add(values);
         return values;

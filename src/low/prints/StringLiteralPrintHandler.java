@@ -17,14 +17,14 @@ public class StringLiteralPrintHandler implements  PrintHandler{
 
     @Override
     public boolean canHandle(ASTNode node, LLVisitorMain visitorMain) {
-        return node instanceof LiteralNode lit && "string".equals(lit.value.getType());
+        return node instanceof LiteralNode lit && "string".equals(lit.value.type());
     }
 
     @Override
     public String emit(ASTNode node, LLVisitorMain visitorMain) {
 
         LiteralNode lit = (LiteralNode) node;
-        String value = (String) lit.value.getValue();
+        String value = (String) lit.value.value();
         String strName = stringManager.getOrCreateString(value);
         int len = value.length() + 1;
         String tmp = tempManager.newTemp();

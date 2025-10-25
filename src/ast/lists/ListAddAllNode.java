@@ -32,14 +32,14 @@ public class ListAddAllNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        DynamicList target = (DynamicList) targetListNode.evaluate(ctx).getValue();
+        DynamicList target = (DynamicList) targetListNode.evaluate(ctx).value();
 
         for (ASTNode argNode : args) {
             TypedValue val = argNode.evaluate(ctx);
 
-            if (val.getType().equals("List")) {
+            if (val.type().equals("List")) {
                 // Se for uma lista, adiciona cada elemento
-                DynamicList other = (DynamicList) val.getValue();
+                DynamicList other = (DynamicList) val.value();
                 for (ASTNode elemNode : other.getElements()) {
                     target.add(elemNode.evaluate(ctx));
                 }

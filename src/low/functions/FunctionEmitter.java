@@ -66,9 +66,9 @@ public class FunctionEmitter {
         for (ASTNode stmt : fn.getBody()) {
 
             if (stmt instanceof ReturnNode ret && ret.expr instanceof LiteralNode lit &&
-                    lit.value.getType().equals("string")) {
+                    lit.value.type().equals("string")) {
 
-                String literal = (String) lit.value.getValue();
+                String literal = (String) lit.value.value();
 
                 String strName = visitor.getGlobalStrings().getOrCreateString(literal);
                 int len = visitor.getGlobalStrings().getLength(literal);

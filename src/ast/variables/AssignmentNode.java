@@ -28,10 +28,10 @@ public class AssignmentNode extends ASTNode {
 
         TypedValue value = valueNode.evaluate(ctx);
 
-        String existingType = ctx.getVariable(name).getType();
-        if (!existingType.equals(value.getType())) {
+        String existingType = ctx.getVariable(name).type();
+        if (!existingType.equals(value.type())) {
             throw new RuntimeException(
-                    "Erro de tipo: esperado " + existingType + " mas encontrado " + value.getType()
+                    "Erro de tipo: esperado " + existingType + " mas encontrado " + value.type()
             );
         }
         ctx.setVariable(name, value);

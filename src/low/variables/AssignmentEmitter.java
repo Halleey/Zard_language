@@ -39,7 +39,7 @@ public class AssignmentEmitter {
 
         // === LiteralNode ===
         if (assignNode.valueNode instanceof LiteralNode lit) {
-            Object val = lit.value.getValue();
+            Object val = lit.value.value();
             if ("double".equals(llvmType) && val instanceof Integer i) val = i.doubleValue();
 
             switch (llvmType) {

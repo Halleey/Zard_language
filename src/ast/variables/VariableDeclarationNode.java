@@ -6,13 +6,11 @@ import ast.maps.DynamicMap;
 import ast.maps.MapNode;
 import ast.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
-import ast.runtime.StructDefinition;
 import ast.structs.StructInstaceNode;
 import low.module.LLVMEmitVisitor;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 
@@ -55,9 +53,9 @@ public class VariableDeclarationNode extends ASTNode {
 
         if (initializer != null && !(initializer instanceof StructInstaceNode)) {
             if (initializer instanceof ListNode) {
-                value = evaluateList(ctx, (ListNode) initializer, (DynamicList) value.getValue());
+                value = evaluateList(ctx, (ListNode) initializer, (DynamicList) value.value());
             } else if (initializer instanceof MapNode) {
-                value = evaluateMap(ctx, (MapNode) initializer, (DynamicMap) value.getValue());
+                value = evaluateMap(ctx, (MapNode) initializer, (DynamicMap) value.value());
             } else {
                 value = initializer.evaluate(ctx);
                 ctx.setVariable(name, value);
@@ -102,13 +100,13 @@ public class VariableDeclarationNode extends ASTNode {
             String keyType = declaredType.substring(declaredType.indexOf('<') + 1, declaredType.indexOf(','));
             String valueType = declaredType.substring(declaredType.indexOf(',') + 1, declaredType.length() - 1);
 
-            if (!keyVal.getType().equals(keyType)) {
+            if (!keyVal.type().equals(keyType)) {
                 throw new RuntimeException("Tipo da chave incompatível na variável " + name +
-                        ": esperado " + keyType + ", encontrado " + keyVal.getType());
+                        ": esperado " + keyType + ", encontrado " + keyVal.type());
             }
-            if (!valueVal.getType().equals(valueType)) {
+            if (!valueVal.type().equals(valueType)) {
                 throw new RuntimeException("Tipo do valor incompatível na variável " + name +
-                        ": esperado " + valueType + ", encontrado " + valueVal.getType());
+                        ": esperado " + valueType + ", encontrado " + valueVal.type());
             }
 
             map.put(keyVal, valueVal);

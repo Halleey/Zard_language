@@ -40,12 +40,12 @@ public class StructFieldAccessNode extends ASTNode {
     public TypedValue evaluate(RuntimeContext ctx) {
         TypedValue structVal = structInstance.evaluate(ctx);
 
-        if (!(structVal.getValue() instanceof Map<?, ?>)) {
+        if (!(structVal.value() instanceof Map<?, ?>)) {
             throw new RuntimeException("Não é uma struct: " + structInstance);
         }
 
         @SuppressWarnings("unchecked")
-        Map<String, TypedValue> fields = (Map<String, TypedValue>) structVal.getValue();
+        Map<String, TypedValue> fields = (Map<String, TypedValue>) structVal.value();
 
         TypedValue val;
         if (value != null) {

@@ -23,11 +23,11 @@ public class ListSizeNode extends ASTNode {
         // Avalia o ASTNode para obter o valor
         TypedValue listVal = nome.evaluate(ctx);
 
-        if (!listVal.getType().startsWith("List")) {
+        if (!listVal.type().startsWith("List")) {
             throw new RuntimeException("O valor avaliado não é uma lista");
         }
 
-        DynamicList dynamicList = (DynamicList) listVal.getValue();
+        DynamicList dynamicList = (DynamicList) listVal.value();
         int size = dynamicList.size();
 
         return new TypedValue("int", size);

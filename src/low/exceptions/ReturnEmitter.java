@@ -1,15 +1,9 @@
 package low.exceptions;
 
 import ast.exceptions.ReturnNode;
-import ast.functions.FunctionCallNode;
 import ast.variables.LiteralNode;
 import low.TempManager;
-import low.functions.ReturnTypeInferer;
-import low.functions.TypeMapper;
 import low.module.LLVisitorMain;
-
-import java.util.ArrayList;
-import java.util.HashMap;
 
 
 public class ReturnEmitter {
@@ -45,9 +39,9 @@ public class ReturnEmitter {
 
         // caso 2: expressão é literal string com i8* temp
         // detectamos literal se node.expr instanceof LiteralNode e tipo i8* ou i8*
-        if (node.expr instanceof LiteralNode lit && "string".equals(lit.value.getType())) {
+        if (node.expr instanceof LiteralNode lit && "string".equals(lit.value.type())) {
             // temp provavelmente contém um getelementptr ... (i8*)
-            int len = ((String) lit.value.getValue()).length();
+            int len = ((String) lit.value.value()).length();
 
             // monta struct %String na stack
             String sAlloca = temps.newTemp();

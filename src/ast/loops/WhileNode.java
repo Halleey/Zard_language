@@ -30,10 +30,10 @@ public class WhileNode extends ASTNode {
     public TypedValue evaluate(RuntimeContext ctx) {
         while (true) {
             TypedValue condVal = condition.evaluate(ctx);
-            if (!(condVal.getValue() instanceof Boolean)) {
+            if (!(condVal.value() instanceof Boolean)) {
                 throw new RuntimeException("Condição do while deve ser boolean");
             }
-            if (!((Boolean) condVal.getValue())) break;
+            if (!((Boolean) condVal.value())) break;
 
             // Cria um novo escopo para esta iteração
             RuntimeContext loopCtx = new RuntimeContext(ctx);

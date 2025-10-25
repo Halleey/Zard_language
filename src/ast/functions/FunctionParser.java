@@ -14,17 +14,42 @@ public class FunctionParser {
         this.parser = parser;
     }
 
-    public FunctionNode parseFunction() {
-        parser.advance(); // consome 'function'
+    private String parseType() {
+        StringBuilder typeBuilder = new StringBuilder();
+        int angleBrackets = 0;
+        do {
+            String val = parser.current().getValue();
+            typeBuilder.append(val);
 
-        // Lê tipo de retorno (opcional)
-        String returnType = "void";
-        if (parser.current().getType() == Token.TokenType.KEYWORD || parser.current().getType() == Token.TokenType.IDENTIFIER) {
-            returnType = parser.current().getValue();
+            if (val.equals("<")) angleBrackets++;
+            if (val.equals(">")) angleBrackets--;
+
             parser.advance();
+
+            if (angleBrackets == 0) {
+                if (parser.current().getType() == Token.TokenType.IDENTIFIER
+                        || parser.current().getType() == Token.TokenType.DELIMITER) {
+                    break;
+                }
+            }
+        } while (true);
+
+        return typeBuilder.toString();
+    }
+
+
+
+    public FunctionNode parseFunction() {
+        parser.advance();
+
+        String returnType = "void";
+        if (parser.current().getType() == Token.TokenType.KEYWORD ||
+                parser.current().getType() == Token.TokenType.IDENTIFIER) {
+
+            returnType = parseType();
+            System.out.println("Return type --- " + returnType);
         }
 
-        // Agora lê o nome da função
         String funcName = parser.current().getValue();
         parser.advance();
 
@@ -33,7 +58,6 @@ public class FunctionParser {
         List<String> paramTypes = new ArrayList<>();
 
         while (!parser.current().getValue().equals(")")) {
-            // --- Parse do tipo ---
             StringBuilder typeBuilder = new StringBuilder();
             int angleBrackets = 0;
 
@@ -48,14 +72,12 @@ public class FunctionParser {
 
             String type = typeBuilder.toString();
 
-            // --- Nome do parâmetro ---
             String name = parser.current().getValue();
             parser.advance();
 
             paramTypes.add(type);
             paramNames.add(name);
 
-            // Se tiver vírgula, consome
             if (parser.current().getValue().equals(",")) {
                 parser.advance();
             }

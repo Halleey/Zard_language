@@ -36,10 +36,10 @@ public class UnaryOpEmitter {
             String llvmType;
             String valueStr;
 
-            switch (val.getType()) {
-                case "int" -> { llvmType = "i32"; valueStr = val.getValue().toString(); }
-                case "double" -> { llvmType = "double"; valueStr = val.getValue().toString(); }
-                default -> throw new RuntimeException("Unário " + operator + " não suportado para " + val.getType());
+            switch (val.type()) {
+                case "int" -> { llvmType = "i32"; valueStr = val.value().toString(); }
+                case "double" -> { llvmType = "double"; valueStr = val.value().toString(); }
+                default -> throw new RuntimeException("Unário " + operator + " não suportado para " + val.type());
             }
 
             String temp = temps.newTemp();

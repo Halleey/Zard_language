@@ -27,17 +27,17 @@ public class PrintNode extends ASTNode {
     public TypedValue evaluate(RuntimeContext ctx) {
         TypedValue val = expr.evaluate(ctx);
 
-        switch (val.getType()) {
+        switch (val.type()) {
             case "List" -> {
-                DynamicList list = (DynamicList) val.getValue();
+                DynamicList list = (DynamicList) val.value();
                 List<Object> values = list.getElements().stream()
-                        .map(node -> node.evaluate(ctx).getValue())
+                        .map(node -> node.evaluate(ctx).value())
                         .toList();
                 System.out.println(values);
             }
 
             case "Map" -> {
-                DynamicMap map = (DynamicMap) val.getValue();
+                DynamicMap map = (DynamicMap) val.value();
                 Map<TypedValue, TypedValue> evaluated = map.evaluate(ctx);
 
                 if (evaluated.isEmpty()) {
@@ -51,13 +51,13 @@ public class PrintNode extends ASTNode {
                         TypedValue value = e.getValue();
 
                         // Formatação segura para strings
-                        String keyStr = key.getType().equals("string")
-                                ? "\"" + key.getValue() + "\""
-                                : String.valueOf(key.getValue());
+                        String keyStr = key.type().equals("string")
+                                ? "\"" + key.value() + "\""
+                                : String.valueOf(key.value());
 
-                        String valStr = value.getType().equals("string")
-                                ? "\"" + value.getValue() + "\""
-                                : String.valueOf(value.getValue());
+                        String valStr = value.type().equals("string")
+                                ? "\"" + value.value() + "\""
+                                : String.valueOf(value.value());
 
                         System.out.print(keyStr + ": " + valStr);
                         if (i < size - 1) System.out.print(", ");
@@ -67,7 +67,7 @@ public class PrintNode extends ASTNode {
                 }
             }
 
-            default -> System.out.println(val.getValue());
+            default -> System.out.println(val.value());
         }
 
         return val;

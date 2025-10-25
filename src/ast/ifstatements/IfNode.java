@@ -39,11 +39,11 @@ public class IfNode extends ASTNode {
     public TypedValue evaluate(RuntimeContext ctx) {
         TypedValue condVal = condition.evaluate(ctx);
 
-        if (!(condVal.getValue() instanceof Boolean)) {
+        if (!(condVal.value() instanceof Boolean)) {
             throw new RuntimeException("Condição do if deve ser boolean");
         }
 
-        if ((Boolean) condVal.getValue()) {
+        if ((Boolean) condVal.value()) {
             for (ASTNode node : thenBranch) {
                 node.evaluate(ctx);
             }

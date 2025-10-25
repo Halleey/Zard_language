@@ -118,25 +118,6 @@ main {
     print(media);
 }
 ```
-
-### Functions Returning Lists
-
-```zard
-main {
-    function List<int> buildNumbers() {
-        List<int> nums;
-        nums.add(1);
-        nums.add(2);
-        nums.add(3);
-        return nums;
-    }
-
-    List<int> lista = buildNumbers();
-    print("Tamanho da lista:");
-    print(lista.size());
-}
-```
-
 ### Math Library Import
 
 ```zard

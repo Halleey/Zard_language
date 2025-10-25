@@ -35,7 +35,6 @@ public class ListPrintHandler implements PrintHandler {
         String llvmType;
         String tmp = temps.newTemp();
 
-        // Caso 1: variável simples
         if (node instanceof VariableNode varNode) {
             String varName = varNode.getName();
             elemType = visitor.getListElementType(varName);
@@ -111,7 +110,6 @@ public class ListPrintHandler implements PrintHandler {
         return sb.toString();
     }
 
-    // Agora cobre int, double, boolean, string e structs
     private void handleGeneric(String elemType, StringBuilder sb, String tmp) {
         if (elemType == null) {
             throw new RuntimeException("ListPrintHandler: elemType nulo");
@@ -123,16 +121,17 @@ public class ListPrintHandler implements PrintHandler {
             case "boolean" -> sb.append("  call void @arraylist_print_bool(%struct.ArrayListBool* ").append(tmp).append(")\n");
             case "string" -> sb.append("  call void @arraylist_print_string(%ArrayList* ").append(tmp).append(")\n");
             default -> {
+                String structName;
                 if (elemType.startsWith("Struct<")) {
-                    String structName = elemType
+                    structName = elemType
                             .substring("Struct<".length(), elemType.length() - 1)
                             .replace('.', '_');
-                    sb.append("  call void @arraylist_print_ptr(%ArrayList* ")
-                            .append(tmp)
-                            .append(", void (i8*)* @print_").append(structName).append(")\n");
                 } else {
-                    throw new RuntimeException("Unsupported list element type: " + elemType);
+                    structName = elemType.replace('.', '_');
                 }
+                sb.append("  call void @arraylist_print_ptr(%ArrayList* ")
+                        .append(tmp)
+                        .append(", void (i8*)* @print_").append(structName).append(")\n");
             }
         }
     }

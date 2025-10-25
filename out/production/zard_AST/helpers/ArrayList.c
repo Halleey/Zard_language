@@ -38,7 +38,7 @@ void* arraylist_get_ptr(ArrayList* list, size_t index) {
     if (index >= list->length) {
         fprintf(stderr, "[ArrayList] Erro: acesso inválido no índice %zu (tamanho = %zu)\n",
                 index, list->length);
-        abort(); 
+        abort();
     }
     return list->data[index];
 }

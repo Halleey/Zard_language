@@ -277,15 +277,9 @@ while_body_1:                                     ; preds = %while_cond_0
   br label %while_cond_0
 
 while_end_2:                                      ; preds = %while_cond_0
-  %t191 = bitcast ptr %t0 to ptr
-  call void @clearList(ptr %t191)
-  %t193 = add i32 0, 0
-  %t194 = zext i32 %t193 to i64
-  %t195 = call ptr @arraylist_get_ptr(ptr %t0, i64 %t194)
-  %t196 = bitcast ptr %t195 to ptr
-  call void @print_Pessoa(ptr %t196)
-  %t198 = bitcast ptr %t0 to ptr
-  call void @freeList(ptr %t198)
+  call void @arraylist_print_ptr(ptr %t0, ptr @print_Pessoa)
+  %t192 = bitcast ptr %t0 to ptr
+  call void @freeList(ptr %t192)
   %4 = call i32 @getchar()
   ret i32 0
 }

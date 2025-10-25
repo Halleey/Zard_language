@@ -57,6 +57,7 @@ main {
         print(pessoas.get(i).endereco.cidade);
         i = i + 1;
     }
-    pessoas.clear();
-    print(pessoas.get(0));
+
+    print(pessoas);
+
 }

@@ -1,35 +1,103 @@
 main {
 
-    Struct People {
-    string name;
-    int age;
+    Struct Pais {
+        string nome;
     }
 
-
-    #functions that carry Struct as type need fixes at AST levels
-    #function People teste(People p) {
-    #p.name = "zard";
-    #return p;
-    #}
-
-    function int printNumber(int x){
-        return x;
+    Struct Endereco {
+        string rua;
+        string cidade;
+        Struct Pais pais;
     }
-    function List<string> addPeople(List<string> nomes) {
-        nomes.addAll("zard", "testando", "trying", "miss");
-        return nomes;
+
+    Struct Pessoa {
+        string nome;
+        int idade;
+        Struct Endereco endereco;
     }
-       function List<int> addNum(List<int> numeros) {
-            numeros.addAll(3, 4,2);
-            return numeros;
+
+    List<Pessoa> pessoas;
+
+    # ---- Criação dos países ----
+    Struct Pais brasil;
+    brasil.nome = "Brasil";
+
+    Struct Pais argentina;
+    argentina.nome = "Argentina";
+
+    # ---- Pessoa 1 ----
+    Struct Pessoa p1;
+    p1.nome = "Alice";
+    p1.idade = 25;
+    Struct Endereco e1;
+    e1.rua = "Rua A";
+    e1.cidade = "São Paulo";
+    e1.pais = brasil;
+    p1.endereco = e1;
+
+    # ---- Pessoa 2 ----
+    Struct Pessoa p2;
+    p2.nome = "Bob";
+    p2.idade = 17;
+    Struct Endereco e2;
+    e2.rua = "Av. Central";
+    e2.cidade = "Rio de Janeiro";
+    e2.pais = brasil;
+    p2.endereco = e2;
+
+    # ---- Pessoa 3 ----
+    Struct Pessoa p3;
+    p3.nome = "Carlos";
+    p3.idade = 32;
+    Struct Endereco e3;
+    e3.rua = "Calle 9";
+    e3.cidade = "Buenos Aires";
+    e3.pais = argentina;
+    p3.endereco = e3;
+
+    pessoas.add(p1);
+    pessoas.add(p2);
+    pessoas.add(p3);
+
+    # ---- Busca por todos que moram no Brasil ----
+    print("=== Pessoas que moram no Brasil ===");
+    int i = 0;
+    while (i < pessoas.size()) {
+        if (pessoas.get(i).endereco.pais.nome == "Brasil") {
+            print(pessoas.get(i).nome);
+            print(pessoas.get(i).endereco.cidade);
         }
+        i = i + 1;
+    }
+
+    # ---- Calcular idade média ----
+    int soma = 0;
+    i = 0;
+    while (i < pessoas.size()) {
+        soma = soma + pessoas.get(i).idade;
+        i = i + 1;
+    }
+    int media = soma / pessoas.size();
+    print("Idade média:");
+    print(media);
+
+    # ---- Verificação complexa ----
+    if (pessoas.get(2).endereco.pais.nome == "Argentina" && pessoas.get(2).idade > 30) {
+        print(pessoas.get(2).nome);
+        print(" é argentino e tem mais de 30 anos");
+    }
 
 
-    List<string> nomes;
-    List<int> nu;
-    call addPeople(nomes);
-    call addNum(nu);
-    print(nu);
-    print(printNumber(15));
-    print(nomes);
+    # Loop 2: soma idades
+    soma = 0;
+    i = 0;
+    while (i < pessoas.size()) {
+        soma = soma + pessoas.get(i).idade;
+        i = i + 1;
+    }
+    media = soma / pessoas.size();
+    print("Idade média:");
+    print(media);
+
+
 }

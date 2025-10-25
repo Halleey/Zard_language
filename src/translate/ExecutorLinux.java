@@ -59,7 +59,7 @@ public class ExecutorLinux {
 
         System.out.println("Executando otimizador LLVM...");
 
-        String passes = "mem2reg,dce";
+        String passes = "mem2reg,sroa,early-cse,gvn-hoist,dce,adce,reassociate,loop-simplify,loop-rotate,loop-unroll,loop-vectorize";
 
         List<String> optCmd = new ArrayList<>();
         optCmd.add("opt");

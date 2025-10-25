@@ -9,8 +9,16 @@ public class TypeMapper {
         type = type.trim();
 
         if (type.startsWith("List<") && type.endsWith(">")) {
-            return "i8*";
+            String inner = type.substring(5, type.length() - 1).trim();
+
+            return switch (inner) {
+                case "int"    -> "%struct.ArrayListInt*";
+                case "double" -> "%struct.ArrayListDouble*";
+                case "boolean"-> "%struct.ArrayListBool*";
+                default       -> "i8*";
+            };
         }
+
 
         if (type.startsWith("%") && type.endsWith("*")) {
             return type;

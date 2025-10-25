@@ -19,9 +19,17 @@ main {
         nomes.addAll("zard", "testando", "trying", "miss");
         return nomes;
     }
+       function List<int> addNum(List<int> numeros) {
+            numeros.addAll(3, 4,2);
+            return numeros;
+        }
+
 
     List<string> nomes;
+    List<int> nu;
     call addPeople(nomes);
+    call addNum(nu);
+    print(nu);
     print(printNumber(15));
     print(nomes);
 }

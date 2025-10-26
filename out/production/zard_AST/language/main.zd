@@ -1,3 +1,5 @@
+import "src/language/list/List.zd" as f;
+
 main {
 
     Struct Pessoa {
@@ -8,7 +10,6 @@ main {
     Struct Pessoa p = {age : 19};
 
     p.name = input();
-
 
     function Pessoa addPeople(Pessoa p){
        return p;

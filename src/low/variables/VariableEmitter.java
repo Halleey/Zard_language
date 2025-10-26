@@ -176,7 +176,7 @@ public class VariableEmitter {
     private String callArrayListCreateBoolAndStore(String varPtr){
         String tmp = temps.newTemp();
         return "  " + tmp + " = call %struct.ArrayListBool* @arraylist_create_bool(i64 4)\n"+
-                ";;VAL: "+ tmp + ";;TYPE:struct.ArrayListBool*\n"+
+                ";;VAL: "+ tmp + ";;TYPE:%struct.ArrayListBool*\n"+
                 "  store %struct.ArrayListBool* " + tmp + ", %struct.ArrayListBool** " + varPtr + "\n";
     }
 

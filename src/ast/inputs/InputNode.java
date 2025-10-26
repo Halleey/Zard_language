@@ -32,7 +32,6 @@ public class InputNode extends ASTNode {
 
         String input = scanner.nextLine().trim();
 
-        // tenta converter para os tipos suportados
         try {
             int intValue = Integer.parseInt(input);
             return new TypedValue("int", intValue);

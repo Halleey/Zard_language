@@ -5,8 +5,9 @@ main {
     int age;
     }
 
-    Struct Pessoa p = {age : 19, name : "zard"};
+    Struct Pessoa p = {age : 19};
 
+    p.name = input();
 
 
     function Pessoa addPeople(Pessoa p){

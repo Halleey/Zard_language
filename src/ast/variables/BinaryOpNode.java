@@ -85,10 +85,13 @@ public class BinaryOpNode extends ASTNode {
 
     @Override
     public void print(String prefix) {
-        System.out.println(prefix + "BinaryOp: " + operator);
-        left.print(prefix + "  ");
-        right.print(prefix + "  ");
+        System.out.println(prefix + "BinaryOp (" + operator + "):");
+        System.out.println(prefix + "  Left:");
+        left.print(prefix + "    ");
+        System.out.println(prefix + "  Right:");
+        right.print(prefix + "    ");
     }
+
 
     private Object unwrap(TypedValue tv) {
         return tv.value();

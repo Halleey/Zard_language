@@ -1,6 +1,7 @@
 package low.structs;
 
 import ast.ASTNode;
+import ast.inputs.InputNode;
 import ast.lists.ListGetNode;
 import ast.structs.StructFieldAccessNode;
 import ast.structs.StructInstaceNode;
@@ -9,6 +10,7 @@ import ast.variables.VariableDeclarationNode;
 import ast.variables.VariableNode;
 import low.TempManager;
 import low.functions.TypeMapper;
+import low.inputs.InputEmitter;
 import low.module.LLVisitorMain;
 
 import java.util.List;
@@ -67,7 +69,7 @@ public class StructFieldAccessEmitter {
             throw new RuntimeException("Campo não encontrado: " + node.getFieldName());
         }
 
-        // se structVal for i8* → cast para o tipo real
+        // se structVal for i8*  cast para o tipo real
         if (structLLVMType.equals("i8*")) {
             String realTy = "%" + ownerType + "*";
             String casted = temps.newTemp();
@@ -91,14 +93,21 @@ public class StructFieldAccessEmitter {
 
         boolean isWrite = (node.getValue() != null);
         if (isWrite) {
-            // atribuição em campo de struct
-            String rhsCode = node.getValue().accept(visitor);
+            String rhsCode;
+            if (node.getValue() instanceof InputNode in) {
+                InputEmitter inEmitter = new InputEmitter(temps, visitor.getGlobalStrings());
+                rhsCode = inEmitter.emit(in, fieldLLType);
+            } else {
+                rhsCode = node.getValue().accept(visitor);
+            }
+
             llvm.append(rhsCode);
+
             String rhsVal = extractTemp(rhsCode);
-            String rhsTy = extractType(rhsCode).trim();
+            String rhsTy  = extractType(rhsCode).trim();
 
             String storeVal = rhsVal;
-            String storeTy = rhsTy;
+            String storeTy  = rhsTy;
 
             if (!storeTy.equals(fieldLLType)) {
                 if ("i8*".equals(storeTy) && fieldLLType.endsWith("*")) {
@@ -129,19 +138,20 @@ public class StructFieldAccessEmitter {
                             + node.getFieldName() + ": RHS=" + storeTy + " -> Field=" + fieldLLType);
                 }
             }
-
+            // faz o store no campo
             llvm.append("  store ").append(fieldLLType).append(" ").append(storeVal)
                     .append(", ").append(fieldLLType).append("* ").append(fieldPtr).append("\n");
 
+            // recarrega o valor para deixar ;;VAL/;;TYPE atualizado
             String retAlias = temps.newTemp();
             llvm.append("  ").append(retAlias).append(" = load ")
                     .append(fieldLLType).append(", ").append(fieldLLType).append("* ").append(fieldPtr).append("\n");
             llvm.append(";;VAL:").append(retAlias).append(";;TYPE:").append(fieldLLType).append("\n");
-
-        } else {
+        }
+        else {
             // leitura
             if (isListType(fieldLangType)) {
-                // campo é lista → carrega o ponteiro da lista
+                // campo é lista  carrega o ponteiro da lista
                 String loaded = temps.newTemp();
                 llvm.append("  ").append(loaded).append(" = load ")
                         .append(fieldLLType).append(", ").append(fieldLLType)
@@ -249,8 +259,12 @@ public class StructFieldAccessEmitter {
     private String extractTemp(String code) {
         int lastValIdx = code.lastIndexOf(";;VAL:");
         int typeIdx = code.indexOf(";;TYPE:", lastValIdx);
+        if (lastValIdx == -1 || typeIdx == -1) {
+            throw new RuntimeException("extractTemp falhou. Código não contém ;;VAL/;;TYPE:\n" + code);
+        }
         return code.substring(lastValIdx + 6, typeIdx).trim();
     }
+
 
     private String extractType(String code) {
         int lastTypeIdx = code.lastIndexOf(";;TYPE:");

@@ -53,11 +53,10 @@ public class FunctionNode extends ASTNode {
         System.out.println(sig);
 
         if (!body.isEmpty()) {
-            System.out.println(prefix + "  Body {");
+            System.out.println(prefix + "  Body ");
             for (ASTNode stmt : body) {
                 stmt.print(prefix + "    ");
             }
-            System.out.println(prefix + "  }");
         }
     }
 

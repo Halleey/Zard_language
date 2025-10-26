@@ -9,7 +9,7 @@ source_filename = "programa.ll"
 @.strDouble = private constant [4 x i8] c"%f\0A\00"
 @.strStr = private constant [4 x i8] c"%s\0A\00"
 @.strEmpty = private constant [1 x i8] zeroinitializer
-@.str0 = private constant [5 x i8] c"zard\00"
+@.str0 = private constant [1 x i8] zeroinitializer
 
 declare i32 @printf(ptr, ...)
 
@@ -26,6 +26,14 @@ declare ptr @createString(ptr)
 declare i1 @strcmp_eq(ptr, ptr)
 
 declare i1 @strcmp_neq(ptr, ptr)
+
+declare i32 @inputInt(ptr)
+
+declare double @inputDouble(ptr)
+
+declare i1 @inputBool(ptr)
+
+declare ptr @inputString(ptr)
 
 define void @print_Pessoa(ptr %p) {
 entry:
@@ -44,12 +52,15 @@ entry:
 
 define i32 @main() {
   %t1 = alloca %Pessoa, align 8
-  %t3 = call ptr @createString(ptr @.str0)
-  store ptr %t3, ptr %t1, align 8
-  %t6 = getelementptr inbounds %Pessoa, ptr %t1, i32 0, i32 1
-  store i32 19, ptr %t6, align 4
-  %t8 = call ptr @addPeople(ptr %t1)
-  call void @print_Pessoa(ptr %t8)
+  %t2 = call ptr @createString(ptr @.str0)
+  store ptr %t2, ptr %t1, align 8
+  %t5 = getelementptr inbounds %Pessoa, ptr %t1, i32 0, i32 1
+  store i32 19, ptr %t5, align 4
+  %t9 = call ptr @inputString(ptr null)
+  %t10 = call ptr @createString(ptr %t9)
+  store ptr %t10, ptr %t1, align 8
+  %t13 = call ptr @addPeople(ptr %t1)
+  call void @print_Pessoa(ptr %t13)
   %1 = call i32 @getchar()
   ret i32 0
 }

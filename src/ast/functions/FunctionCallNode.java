@@ -91,11 +91,11 @@ public class FunctionCallNode extends ASTNode {
         System.out.println(prefix + "FunctionCall " + name);
 
         if (!args.isEmpty()) {
-            System.out.println(prefix + "  Args {");
+            System.out.println(prefix + "  Args ");
             for (ASTNode arg : args) {
                 arg.print(prefix + "    ");
             }
-            System.out.println(prefix + "  }");
+            System.out.println(prefix + "  ");
         } else {
             System.out.println(prefix + "  <no args>");
         }

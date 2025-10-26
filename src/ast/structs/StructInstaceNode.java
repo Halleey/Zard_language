@@ -64,7 +64,7 @@ public class StructInstaceNode extends ASTNode {
 
     @Override
     public void print(String prefix) {
-        System.out.println(prefix + "StructInstance " + structName + " {");
+        System.out.println(prefix + "StructInstance " + structName );
 
         if (!namedValues.isEmpty()) {
             for (Map.Entry<String, ASTNode> e : namedValues.entrySet()) {
@@ -82,7 +82,6 @@ public class StructInstaceNode extends ASTNode {
             System.out.println(prefix + "  <no field values>");
         }
 
-        System.out.println(prefix + "}");
     }
 
 }

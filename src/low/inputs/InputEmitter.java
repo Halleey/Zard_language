@@ -49,7 +49,7 @@ public class InputEmitter {
                 sb.append("  ").append(tmpStruct)
                         .append(" = call %String* @createString(i8* ").append(tmpStr).append(")\n");
 
-                sb.append(";;VAL:").append(tmpStruct).append(";;TYPE:%String\n");
+                sb.append(";;VAL:").append(tmpStruct).append(";;TYPE:%String*\n");
             }
             default -> throw new RuntimeException("Tipo desconhecido para input: " + llvmType);
         }

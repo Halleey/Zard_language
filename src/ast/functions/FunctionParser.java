@@ -47,7 +47,6 @@ public class FunctionParser {
                 parser.current().getType() == Token.TokenType.IDENTIFIER) {
 
             returnType = parseType();
-            System.out.println("Return type --- " + returnType);
         }
 
         String funcName = parser.current().getValue();

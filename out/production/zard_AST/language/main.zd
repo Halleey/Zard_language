@@ -11,6 +11,7 @@ main {
 
     p.name = input();
 
+
     function Pessoa addPeople(Pessoa p){
        return p;
     }

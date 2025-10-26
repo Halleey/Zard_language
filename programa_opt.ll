@@ -95,10 +95,8 @@ define i32 @main() {
   %t14 = call ptr @inputString(ptr null)
   %t15 = call ptr @createString(ptr %t14)
   store ptr %t15, ptr %t6, align 8
-  %t17 = call ptr @arraylist_create(i64 4)
-  %t20 = call ptr @addPeople(ptr %t6)
-  call void @print_Pessoa(ptr %t20)
-  call void @freeList(ptr %t17)
+  %t18 = call ptr @addPeople(ptr %t6)
+  call void @print_Pessoa(ptr %t18)
   %1 = call i32 @getchar()
   ret i32 0
 }

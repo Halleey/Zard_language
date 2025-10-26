@@ -52,15 +52,32 @@ public class MainEmitter {
         StringBuilder llvm = new StringBuilder();
         ImportEmitter importEmitter = new ImportEmitter(visitor, this.tiposDeListasUsados);
 
+        // 1) Coletar strings do próprio main (isso pode ficar)
         for (ASTNode stmt : node.body) {
             if (!(stmt instanceof ImportNode)) {
                 coletarStringsRecursivo(stmt);
             }
         }
 
+        // 2) Primeiro, processe os imports e acumule o IR deles
+        StringBuilder importsIR = new StringBuilder();
+        for (ASTNode stmt : node.body) {
+            if (stmt instanceof ImportNode importNode) {
+                // isso já vai popular tiposDeListasUsados
+                importsIR.append(";; ==== Import module: ")
+                        .append(importNode.path())
+                        .append(" as ")
+                        .append(importNode.alias())
+                        .append(" ====\n");
+                importsIR.append(importEmitter.emit(importNode)).append("\n");
+            }
+        }
+
+        // 3) Agora sim, com tiposDeListasUsados cheio, emita o header
         llvm.append(emitHeader()).append("\n");
         llvm.append(globalStrings.getGlobalStrings()).append("\n");
 
+        // 4) Struct definitions (já inclui as vindas dos imports)
         if (!structDefinitions.isEmpty()) {
             llvm.append(";; ==== Struct Definitions ====\n");
             for (String structDef : structDefinitions) {
@@ -69,17 +86,10 @@ public class MainEmitter {
             llvm.append("\n");
         }
 
-        for (ASTNode stmt : node.body) {
-            if (stmt instanceof ImportNode importNode) {
-                llvm.append(";; ==== Import module: ")
-                        .append(importNode.path())
-                        .append(" as ")
-                        .append(importNode.alias())
-                        .append(" ====\n");
-                llvm.append(importEmitter.emit(importNode)).append("\n");
-            }
-        }
+        // 5) Emita o IR dos imports depois do header (ordem segura)
+        llvm.append(importsIR);
 
+        // 6) Emita funções declaradas no arquivo principal
         FunctionEmitter fnEmitter = new FunctionEmitter(visitor);
         for (ASTNode stmt : node.body) {
             if (stmt instanceof FunctionNode fn) {
@@ -87,9 +97,9 @@ public class MainEmitter {
             }
         }
 
+        // 7) Emita o corpo do main como você já fazia
         llvm.append("define i32 @main() {\n");
         for (ASTNode stmt : node.body) {
-
             if (stmt instanceof FunctionNode || stmt instanceof ImportNode || stmt instanceof StructNode)
                 continue;
 
@@ -110,23 +120,17 @@ public class MainEmitter {
             for (String varName : listasAlocadas) {
                 String tipoLista = visitor.getListElementType(varName);
                 String tmp = tempManager.newTemp();
-
                 switch (tipoLista) {
                     case "int" -> {
-                        llvm.append("  ").append(tmp).append(" = load %struct.ArrayListInt*, %struct.ArrayListInt** %")
-                                .append(varName).append("\n");
+                        llvm.append("  ").append(tmp).append(" = load %struct.ArrayListInt*, %struct.ArrayListInt** %").append(varName).append("\n");
                         llvm.append("  call void @arraylist_free_int(%struct.ArrayListInt* ").append(tmp).append(")\n");
                     }
                     case "double" -> {
-                        llvm.append("  ").append(tmp)
-                                .append(" = load %struct.ArrayListDouble*, %struct.ArrayListDouble** %")
-                                .append(varName).append("\n");
+                        llvm.append("  ").append(tmp).append(" = load %struct.ArrayListDouble*, %struct.ArrayListDouble** %").append(varName).append("\n");
                         llvm.append("  call void @arraylist_free_double(%struct.ArrayListDouble* ").append(tmp).append(")\n");
                     }
                     case "boolean" -> {
-                        llvm.append("  ").append(tmp)
-                                .append(" = load %struct.ArrayListBool*, %struct.ArrayListBool** %")
-                                .append(varName).append("\n");
+                        llvm.append("  ").append(tmp).append(" = load %struct.ArrayListBool*, %struct.ArrayListBool** %").append(varName).append("\n");
                         llvm.append("  call void @arraylist_free_bool(%struct.ArrayListBool* ").append(tmp).append(")\n");
                     }
                     default -> {
@@ -138,14 +142,12 @@ public class MainEmitter {
                 }
             }
         }
+
         llvm.append("  call i32 @getchar()\n");
         llvm.append("  ret i32 0\n}\n");
 
         return llvm.toString();
     }
-
-
-
 
     private void coletarStringsRecursivo(ASTNode node) {
         if (node instanceof LiteralNode lit && lit.value.type().equals("string"))
@@ -155,6 +157,23 @@ public class MainEmitter {
             if (inputNode.getPrompt() != null)
                 globalStrings.getOrCreateString(inputNode.getPrompt());
         }
+
+
+
+        else if (node instanceof FunctionNode func) {
+            String retType = func.getReturnType();
+            if (retType.startsWith("List<") && retType.endsWith(">")) {
+                registrarTipoDeLista(retType);
+            }
+            for (String paramType : func.getParamTypes()) {
+                if (paramType.startsWith("List<") && paramType.endsWith(">")) {
+                    registrarTipoDeLista(paramType);
+                }
+            }
+            func.getBody().forEach(this::coletarStringsRecursivo);
+        }
+
+
 
         if (node instanceof PrintNode printNode) {
             ASTNode expr = printNode.expr;
@@ -291,6 +310,7 @@ public class MainEmitter {
                 declare i32  @arraylist_size_double(%struct.ArrayListDouble*)
             """);
             } else if (tipo.contains("<string>")) {
+
                 sb.append("""
                 declare void @arraylist_add_string(%ArrayList*, i8*)
                 declare void @arraylist_addAll_string(%ArrayList*, i8**, i64)

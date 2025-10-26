@@ -11,7 +11,7 @@ main {
 
     p.name = input();
 
-    List<string> name;
+
     function Pessoa addPeople(Pessoa p){
        return p;
     }

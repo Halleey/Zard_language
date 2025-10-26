@@ -96,6 +96,20 @@ public class ImportEmitter {
     private void coletarListas(ASTNode node) {
         if (node == null) return;
 
+        else if (node instanceof FunctionNode func) {
+            String retType = func.getReturnType();
+            if (retType.startsWith("List<") && retType.endsWith(">")) {
+                tiposDeListasUsados.add(retType);
+            }
+            for (String paramType : func.getParamTypes()) {
+                if (paramType.startsWith("List<") && paramType.endsWith(">")) {
+                    tiposDeListasUsados.add(paramType);
+                }
+            }
+            func.getBody().forEach(this::coletarListas);
+        }
+
+
         if (node instanceof VariableDeclarationNode varDecl) {
             if (varDecl.getType() != null && varDecl.getType().startsWith("List")) {
                 tiposDeListasUsados.add(varDecl.getType());

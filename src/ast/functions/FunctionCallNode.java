@@ -27,7 +27,6 @@ public class FunctionCallNode extends ASTNode {
     public TypedValue evaluate(RuntimeContext ctx) {
         RuntimeContext currentCtx = ctx;
 
-        // Resolve namespaces
         String[] parts = name.split("\\.");
         for (int i = 0; i < parts.length - 1; i++) {
             String nsName = parts[i];
@@ -51,7 +50,6 @@ public class FunctionCallNode extends ASTNode {
             String paramName = func.getParams().get(i);
             TypedValue argVal = args.get(i).evaluate(ctx);
 
-            // Conversão implícita se necessário: int → double
             String paramType = func.getParamTypes().get(i);
             argVal = promoteTypeIfNeeded(argVal, paramType);
 
@@ -67,7 +65,6 @@ public class FunctionCallNode extends ASTNode {
             return promoteTypeIfNeeded(retVal, func.getReturnType());
         }
 
-        // void
         return null;
     }
 
@@ -91,12 +88,16 @@ public class FunctionCallNode extends ASTNode {
 
     @Override
     public void print(String prefix) {
-        System.out.println(prefix + "FunctionCall: " + name);
+        System.out.println(prefix + "FunctionCall " + name);
+
         if (!args.isEmpty()) {
-            System.out.println(prefix + "  └─ Args:");
+            System.out.println(prefix + "  Args {");
             for (ASTNode arg : args) {
-                arg.print(prefix + "      ");
+                arg.print(prefix + "    ");
             }
+            System.out.println(prefix + "  }");
+        } else {
+            System.out.println(prefix + "  <no args>");
         }
     }
 

@@ -49,10 +49,9 @@ public class StructInstaceNode extends ASTNode {
 
             ASTNode astValue = null;
 
-            // Prioridade: nomeado > posicional > default
             if (!namedValues.isEmpty() && namedValues.containsKey(fname)) {
                 astValue = namedValues.get(fname);
-            } else if (positionalValues != null && i < positionalValues.size()) {
+            } else if (i < positionalValues.size()) {
                 astValue = positionalValues.get(i);
             }
 
@@ -65,15 +64,16 @@ public class StructInstaceNode extends ASTNode {
 
     @Override
     public void print(String prefix) {
-        System.out.println(prefix + "StructInstance: " + structName);
+        System.out.println(prefix + "StructInstance " + structName + " {");
+
         if (!namedValues.isEmpty()) {
             for (Map.Entry<String, ASTNode> e : namedValues.entrySet()) {
-                System.out.println(prefix + "  FieldNamed: " + e.getKey());
+                System.out.println(prefix + "  " + e.getKey() + " =");
                 e.getValue().print(prefix + "    ");
             }
         } else if (positionalValues != null && !positionalValues.isEmpty()) {
             for (int i = 0; i < positionalValues.size(); i++) {
-                System.out.println(prefix + "  FieldValue:");
+                System.out.println(prefix + "  field[" + i + "] =");
                 ASTNode astValue = positionalValues.get(i);
                 if (astValue != null) astValue.print(prefix + "    ");
                 else System.out.println(prefix + "    <default>");
@@ -81,5 +81,8 @@ public class StructInstaceNode extends ASTNode {
         } else {
             System.out.println(prefix + "  <no field values>");
         }
+
+        System.out.println(prefix + "}");
     }
+
 }

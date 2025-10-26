@@ -42,21 +42,24 @@ public class FunctionNode extends ASTNode {
     }
     @Override
     public void print(String prefix) {
-        System.out.println(prefix + "Function: " + name + " return : " + returnType);
 
-        if (!params.isEmpty()) {
-            System.out.println(prefix + "  └─ Parameters:");
-            for (int i = 0; i < params.size(); i++) {
-                System.out.println(prefix + "      " + params.get(i) + " : " + paramTypes.get(i));
-            }
+        StringBuilder sig = new StringBuilder();
+        sig.append(prefix).append("Function ").append(name).append("(");
+        for (int i = 0; i < params.size(); i++) {
+            sig.append(params.get(i)).append(": ").append(paramTypes.get(i));
+            if (i < params.size() - 1) sig.append(", ");
         }
+        sig.append(") -> ").append(returnType);
+        System.out.println(sig);
 
         if (!body.isEmpty()) {
-            System.out.println(prefix + "  └─ Body:");
+            System.out.println(prefix + "  Body {");
             for (ASTNode stmt : body) {
-                stmt.print(prefix + "      ");
+                stmt.print(prefix + "    ");
             }
+            System.out.println(prefix + "  }");
         }
     }
+
 
 }

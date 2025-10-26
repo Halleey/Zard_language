@@ -38,10 +38,12 @@ public class StructNode extends ASTNode {
 
     @Override
     public void print(String prefix) {
-        System.out.println(prefix + "Struct: " + name);
+        System.out.println(prefix + "Struct " + name + " {");
         for (VariableDeclarationNode f : fields) {
-            System.out.println(prefix + "  Field: " + f.getType() + " " + f.getName());
+            System.out.println(prefix + "  " + f.getName() + " : " + f.getType());
         }
+        System.out.println(prefix + "}");
     }
+
 
 }

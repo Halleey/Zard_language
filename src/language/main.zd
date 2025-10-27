@@ -2,5 +2,7 @@
 
 main {
 
+ char teste = 'c';
 
+    print(teste);
 }

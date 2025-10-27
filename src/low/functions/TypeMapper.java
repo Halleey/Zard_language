@@ -51,6 +51,7 @@ public class TypeMapper {
             case "string" -> "%String*";
             case "void" -> "void";
             case "List" -> "i8*";
+            case "char" -> "i8";
             default -> {
                 if (Character.isUpperCase(type.charAt(0))) {
                     yield "%" + type + "*";

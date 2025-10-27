@@ -118,6 +118,10 @@ public class ExpressionParser {
                 parent.advance();
                 return new LiteralNode(new TypedValue("string", tok.getValue()));
             }
+            case CHAR -> {
+                parent.advance();
+                return new LiteralNode(new TypedValue("char", tok.getValue()));
+            }
             case BOOLEAN -> {
                 parent.advance();
                 return new LiteralNode(new TypedValue("boolean", Boolean.parseBoolean(tok.getValue())));

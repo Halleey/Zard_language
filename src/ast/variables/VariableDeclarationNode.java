@@ -145,6 +145,7 @@ public class VariableDeclarationNode extends ASTNode {
             case "double" -> new TypedValue("double", 0.0);
             case "string" -> new TypedValue("string", "");
             case "boolean" -> new TypedValue("boolean", false);
+            case "char" -> new TypedValue("char", '\0');
             default -> throw new RuntimeException("Tipo desconhecido: " + type);
         };
     }

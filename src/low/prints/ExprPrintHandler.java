@@ -56,6 +56,17 @@ public class ExprPrintHandler {
                 llvm.append("  call void @printString(%String* ").append(temp).append(")\n");
                 return llvm.toString();
             }
+            case "i8" -> {
+                String castTmp = temps.newTemp();
+                llvm.append("  ").append(castTmp).append(" = sext i8 ").append(temp).append(" to i32\n");
+                llvm.append("  call i32 (i8*, ...) @printf(")
+                        .append("i8* getelementptr ([3 x i8], [3 x i8]* @.strChar, i32 0, i32 0), ")
+                        .append("i32 ").append(castTmp).append(")\n");
+                return llvm.toString();
+            }
+
+
+
             case "i8*" -> {
                 llvm.append("  call i32 (i8*, ...) @printf(")
                         .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), ")

@@ -42,6 +42,10 @@ public class VariableEmitter {
                 varTypes.put(node.getName(), "%String*");
                 return "  " + ptr + " = alloca %String*\n;;VAL:" + ptr + ";;TYPE:%String*\n";
             }
+            case "char" -> {
+                varTypes.put(node.getName(), "i8");
+                return "  " + ptr + " = alloca i8\n;;VAL:" + ptr + ";;TYPE:i8\n";
+            }
             case "List<int>" -> {
                 varTypes.put(node.getName(), "%struct.ArrayListInt*");
                 return "  " + ptr + " = alloca %struct.ArrayListInt*\n;;VAL:" + ptr + ";;TYPE:%struct.ArrayListInt*\n";
@@ -54,6 +58,7 @@ public class VariableEmitter {
                 varTypes.put(node.getName(), "%struct.ArrayListBool*");
                 return "  " + ptr + " = alloca %struct.ArrayListBool*\n;;VAL:" + ptr + ";;TYPE:%struct.ArrayListBool*\n";
             }
+
             default -> {
                 if (node.getType().startsWith("List")) {
                     varTypes.put(node.getName(), "i8*");
@@ -80,6 +85,8 @@ public class VariableEmitter {
             }
             if (node.getType().equals("string"))
                 return stringEmitter.createEmptyString(varPtr);
+            if (node.getType().equals("char"))
+                return "  store i8 0, i8* " + varPtr + "\n";
             return "";
         }
 

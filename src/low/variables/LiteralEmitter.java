@@ -36,7 +36,15 @@ public class LiteralEmitter {
                 llvm.append("  ").append(temp).append(" = add i1 0, ").append(b ? 1 : 0).append("\n");
                 llvm.append(";;VAL:").append(temp).append(";;TYPE:i1\n");
             }
-
+            case "char" -> {
+                String str = (String) value.value();
+                if (str.length() != 1) {
+                    throw new RuntimeException("Invalid char literal: " + str);
+                }
+                int ascii = str.charAt(0);
+                llvm.append("  ").append(temp).append(" = add i8 0, ").append(ascii).append("\n")
+                        .append(";;VAL:").append(temp).append(";;TYPE:i8\n");
+            }
             case "string" -> {
                 String literal = (String) value.value();
                 String strName = globalStrings.getOrCreateString(literal); // registrar @str

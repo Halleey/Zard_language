@@ -58,7 +58,6 @@ public class StructEmitter {
                 sb.append("  %val").append(i).append(" = load %").append(inner).append("*, %").append(inner).append("** %f").append(i).append("\n");
                 sb.append("  call void @print_").append(inner).append("(%").append(inner).append("* %val").append(i).append(")\n");
             }
-            // Se quiser, aqui você pode tratar listas etc. (opcional)
         }
 
         sb.append("  ret void\n}\n\n");
@@ -80,10 +79,6 @@ public class StructEmitter {
                 case "boolean" -> {
                     visitorMain.tiposDeListasUsados.add(type);
                     return "%struct.ArrayListBool*";
-                }
-                case "string" -> {
-                    visitorMain.tiposDeListasUsados.add(type);
-                    return "%ArrayList*";
                 }
                 default -> {
                     visitorMain.tiposDeListasUsados.add(type);

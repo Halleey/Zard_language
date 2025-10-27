@@ -60,38 +60,16 @@ public class Lexer {
         }
         String identifier = result.toString();
 
-        switch (identifier) {
-            case "int":
-            case "string":
-            case "double":
-            case "print":
-            case "if":
-            case "else":
-            case "else if":
-            case "input":
-            case "function":
-            case "return":
-            case "main":
-            case "while":
-            case "call":
-            case "List":
-            case "Map":
-            case "boolean":
-            case "break":
-            case "import":
-            case "var":
-            case "as":
-            case "Struct":
-                return new Token(Token.TokenType.KEYWORD, identifier);
-            case "new":
-                return new Token(Token.TokenType.INSTANCE, identifier);
-            case "true":
-            case "false":
-                return new Token(Token.TokenType.BOOLEAN, identifier); // true e false como BOOLEAN
-            default:
+        return switch (identifier) {
+            case "int", "string", "double", "char", "print", "if", "else", "else if", "input", "function", "return",
+                 "main", "while", "call", "List", "Map", "boolean", "break", "import", "var", "as", "Struct" ->
+                    new Token(Token.TokenType.KEYWORD, identifier);
+            case "new" -> new Token(Token.TokenType.INSTANCE, identifier);
+            case "true", "false" -> new Token(Token.TokenType.BOOLEAN, identifier); // true e false como BOOLEAN
+            default ->
                 // Todos os métodos de lista agora entram aqui como IDENTIFIER
-                return new Token(Token.TokenType.IDENTIFIER, identifier);
-        }
+                    new Token(Token.TokenType.IDENTIFIER, identifier);
+        };
     }
 
 
@@ -147,6 +125,25 @@ public class Lexer {
     }
 
 
+    private Token readChar() {
+        advance();
+
+        if (currentChar == '\0' || currentChar == '\'') {
+            throw new RuntimeException("Empty char literal");
+        }
+
+        char value = currentChar;
+        advance();
+
+        if (currentChar != '\'') {
+            throw new RuntimeException("Char literal deve terminar com aspas simples");
+        }
+
+        advance();
+
+        return new Token(Token.TokenType.CHAR, String.valueOf(value));
+    }
+
     public List<Token> tokenize() {
         List<Token> tokens = new ArrayList<>();
         while (currentChar != '\0') {
@@ -182,10 +179,14 @@ public class Lexer {
                 tokens.add(readOperator());
                 continue;
             }
+            if (currentChar == '\'') {
+                tokens.add(readChar());
+                continue;
+            }
             error();
         }
-
         return tokens;
     }
+
 
 }

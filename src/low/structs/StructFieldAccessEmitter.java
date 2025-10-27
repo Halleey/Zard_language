@@ -181,7 +181,6 @@ public class StructFieldAccessEmitter {
                 case "int" -> "%struct.ArrayListInt*";
                 case "double" -> "%struct.ArrayListDouble*";
                 case "boolean" -> "%struct.ArrayListBool*";
-                case "string" -> "%ArrayList*";
                 default -> "%ArrayList*";
             };
         }

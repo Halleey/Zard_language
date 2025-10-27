@@ -162,11 +162,6 @@ public class StructInstanceEmitter {
                                     .append(" = call %struct.ArrayListBool* @arraylist_create_bool(i64 10)\n");
                             return tmp;
                         }
-                        case "string" -> {
-                            llvm.append("  ").append(tmp)
-                                    .append(" = call i8* @arraylist_create(i64 10)\n");
-                            return tmp;
-                        }
                         default -> {
                             llvm.append("  ").append(tmp)
                                     .append(" = call i8* @arraylist_create(i64 10)\n");

@@ -245,8 +245,7 @@ public class MainEmitter {
         declare void @printString(%String*)
         declare i8* @malloc(i64)
         declare void @setString(%String*, i8*)
-        @.strChar = private constant [3 x i8] c"%c\\00"
-                
+        @.strChar = private constant [3 x i8] c"%c\\00"         
         @.strTrue = private constant [6 x i8] c"true\\0A\\00"
         @.strFalse = private constant [7 x i8] c"false\\0A\\00"
         @.strInt = private constant [4 x i8] c"%d\\0A\\00"
@@ -277,6 +276,7 @@ public class MainEmitter {
         if (usesInput) {
             sb.append("""
             declare i32 @inputInt(i8*)
+            declare i8 @inputChar(i8)
             declare double @inputDouble(i8*)
             declare i1 @inputBool(i8*)
             declare i8* @inputString(i8*)

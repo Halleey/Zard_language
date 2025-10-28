@@ -40,6 +40,11 @@ public class InputEmitter {
                 sb.append("  ").append(tmp).append(" = call i1 @inputBool(i8* ").append(argOperand).append(")\n");
                 sb.append(";;VAL:").append(tmp).append(";;TYPE:i1\n");
             }
+            case "i8" -> {
+                sb.append("  ").append(tmp).append(" = call i8 @inputChar(i8* ").append(argOperand).append(")\n");
+                sb.append(";;VAL:").append(tmp).append(";;TYPE:i8\n");
+            }
+
             case "%String*" -> {
                 String tmpStr = tempManager.newTemp();
                 sb.append("  ").append(tmpStr)

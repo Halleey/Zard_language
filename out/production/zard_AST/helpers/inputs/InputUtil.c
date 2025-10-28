@@ -33,3 +33,11 @@ char* inputString(const char* prompt) {
     buffer[strcspn(buffer, "\n")] = 0;
     return buffer;
 }
+
+
+char inputChar(const char* prompt) {
+    char buffer[256];
+    if (prompt && strlen(prompt) > 0) printf("%s: ", prompt);
+    if (!fgets(buffer, sizeof(buffer), stdin)) return '\0';
+    return buffer[0];
+}

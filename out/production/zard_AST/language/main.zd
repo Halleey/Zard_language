@@ -2,7 +2,9 @@
 
 main {
 
- char teste = 'c';
+ char teste;
 
-    print(teste);
+ teste = input();
+
+ print(teste);
 }

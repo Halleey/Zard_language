@@ -8,6 +8,7 @@ source_filename = "programa.ll"
 @.strDouble = private constant [4 x i8] c"%f\0A\00"
 @.strStr = private constant [4 x i8] c"%s\0A\00"
 @.strEmpty = private constant [1 x i8] zeroinitializer
+@.str0 = private constant [1 x i8] zeroinitializer
 
 declare i32 @printf(ptr, ...)
 
@@ -25,8 +26,20 @@ declare i1 @strcmp_eq(ptr, ptr)
 
 declare i1 @strcmp_neq(ptr, ptr)
 
+declare i32 @inputInt(ptr)
+
+declare i8 @inputChar(i8)
+
+declare double @inputDouble(ptr)
+
+declare i1 @inputBool(ptr)
+
+declare ptr @inputString(ptr)
+
 define i32 @main() {
-  %1 = call i32 (ptr, ...) @printf(ptr @.strChar, i32 99)
+  %t0 = call i8 @inputChar(ptr null)
+  %t2 = sext i8 %t0 to i32
+  %1 = call i32 (ptr, ...) @printf(ptr @.strChar, i32 %t2)
   %2 = call i32 @getchar()
   ret i32 0
 }

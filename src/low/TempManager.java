@@ -22,6 +22,6 @@ public class TempManager {
     }
 
     public String newLabel(String prefix) {
-        return "%" + prefix + "_" + (labelCount++);
+        return prefix + "_" + (labelCount++);
     }
 }

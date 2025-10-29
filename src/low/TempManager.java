@@ -1,19 +1,18 @@
 package low;
-
 public class TempManager {
     private int tempCount = 0;
     private int labelCount = 0;
     private String lastTemp; // guarda o último temp gerado
 
     public String newTemp() {
-        lastTemp = "%t" + (tempCount++);
+        lastTemp = "%tmp" + (tempCount++);
         return lastTemp;
     }
 
     public String newTempWithPrefix(String prefix) {
-        return prefix + (tempCount++);
+        lastTemp = "%" + prefix + (tempCount++);
+        return lastTemp;
     }
-
 
     public String getLastTemp() {
         if (lastTemp == null) {
@@ -23,7 +22,6 @@ public class TempManager {
     }
 
     public String newLabel(String prefix) {
-        return prefix + "_" + (labelCount++);
+        return "%" + prefix + "_" + (labelCount++);
     }
 }
-

@@ -1,4 +1,4 @@
-import "src/language/list/List.zd" as l;
+
 main {
 
 char t = 'a';

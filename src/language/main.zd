@@ -1,10 +1,13 @@
-
-
+import "src/language/list/List.zd" as l;
 main {
 
- char teste;
+char t = 'a';
+char t1  = 'a';
+if(t1 == t) {
+print("é igual");
+}
+else {
+    print("não era igual");
+}
 
- teste = input();
-
- print(teste);
 }

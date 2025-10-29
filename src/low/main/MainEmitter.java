@@ -276,7 +276,7 @@ public class MainEmitter {
         if (usesInput) {
             sb.append("""
             declare i32 @inputInt(i8*)
-            declare i8 @inputChar(i8)
+            declare i8 @inputChar(i8)   
             declare double @inputDouble(i8*)
             declare i1 @inputBool(i8*)
             declare i8* @inputString(i8*)

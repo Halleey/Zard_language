@@ -51,6 +51,21 @@ public class BinaryOpEmitter {
             return llvm.toString();
         }
 
+        if (leftType.equals("i8") && rightType.equals("i8")) {
+            String bop = switch (op) {
+                case "==" -> "icmp eq";
+                case "!=" -> "icmp ne";
+                case ">" -> "icmp sgt";
+                case "<" -> "icmp slt";
+                case ">=" -> "icmp sge";
+                case "<=" -> "icmp sle";
+                default -> throw new RuntimeException("Operador inválido para char (i8): " + op);
+            };
+            llvm.append("  ").append(resultTemp).append(" = ").append(bop)
+                    .append(" i8 ").append(leftTemp).append(", ").append(rightTemp).append("\n")
+                    .append(";;VAL:").append(resultTemp).append(";;TYPE:i1\n");
+            return llvm.toString();
+        }
         if (leftType.equals("i32") && rightType.equals("i32")) {
             String bop = switch (op) {
                 case "+" -> "add";

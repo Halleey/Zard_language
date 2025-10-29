@@ -14,6 +14,12 @@ public class ExprPrintHandler {
     private final TempManager temps;
 
 
+    /*
+    need fix -> list print emitter
+     if -> flag for Struct -> true
+     condition will be evaluated in i8 *
+     */
+
     public ExprPrintHandler(TempManager temps) {
         this.temps = temps;
     }
@@ -53,6 +59,7 @@ public class ExprPrintHandler {
                 return llvm.toString();
             }
             case "%String*" -> {
+
                 llvm.append("  call void @printString(%String* ").append(temp).append(")\n");
                 return llvm.toString();
             }
@@ -65,8 +72,6 @@ public class ExprPrintHandler {
                 return llvm.toString();
             }
 
-
-
             case "i8*" -> {
                 llvm.append("  call i32 (i8*, ...) @printf(")
                         .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), ")
@@ -74,16 +79,14 @@ public class ExprPrintHandler {
                 return llvm.toString();
             }
             default -> {
-
                 if (node instanceof ListSizeNode) {
                     ListSizePrintHandler handler =
                             new ListSizePrintHandler(temps, new ListSizeEmitter(temps));
                     return handler.emit(node, visitor);
                 }
 
-
-
                 if(type.startsWith("%struct.ArrayList")) {
+
                     ListPrintHandler handler = new ListPrintHandler(temps);
                     return handler.emit(node, visitor);
                 }
@@ -147,7 +150,7 @@ public class ExprPrintHandler {
         if (t.equals("i32") || t.equals("i1") || t.equals("i8") || t.equals("double") || t.equals("String") || t.equals("String*"))
             return false;
 
-        return t.startsWith("Struct") || (t.length() > 0 && Character.isUpperCase(t.charAt(0)));
+        return t.startsWith("Struct") || (!t.isEmpty() && Character.isUpperCase(t.charAt(0)));
     }
 
 

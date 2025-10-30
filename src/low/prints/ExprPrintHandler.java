@@ -1,12 +1,14 @@
 package low.prints;
 
 import ast.ASTNode;
+import ast.functions.FunctionCallNode;
 import ast.lists.ListGetNode;
 import ast.lists.ListNode;
 import ast.lists.ListSizeNode;
 import low.TempManager;
 import low.lists.generics.ListGetEmitter;
 import low.lists.generics.ListSizeEmitter;
+import low.main.TypeInfos;
 import low.module.LLVisitorMain;
 
 
@@ -73,11 +75,22 @@ public class ExprPrintHandler {
             }
 
             case "i8*" -> {
+                // se for chamada de função, checar tipo de retorno
+                if (node instanceof FunctionCallNode callNode) {
+                    TypeInfos fnType = visitor.getFunctionType(callNode.getName());
+                    if (fnType != null && fnType.isList()) {
+                        // imprime como lista
+                        return new ListPrintHandler(temps).emit(node, visitor);
+                    }
+                }
+
+                // fallback: tratar como string normal
                 llvm.append("  call i32 (i8*, ...) @printf(")
                         .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), ")
                         .append("i8* ").append(temp).append(")\n");
                 return llvm.toString();
             }
+
             default -> {
                 if (node instanceof ListSizeNode) {
                     ListSizePrintHandler handler =
@@ -89,6 +102,13 @@ public class ExprPrintHandler {
 
                     ListPrintHandler handler = new ListPrintHandler(temps);
                     return handler.emit(node, visitor);
+                }
+
+                if (node instanceof FunctionCallNode callNode) {
+                    TypeInfos fnType = visitor.getFunctionType(callNode.getName());
+                    if (fnType != null && fnType.isList()) {
+                        return new ListPrintHandler(temps).emit(node, visitor);
+                    }
                 }
 
                 if (node instanceof ListGetNode) {

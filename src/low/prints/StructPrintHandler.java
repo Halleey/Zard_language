@@ -91,7 +91,6 @@ public class StructPrintHandler implements PrintHandler {
             if (n != null) return n;
         }
 
-        // tenta genérico Struct<>
         String asGeneric = "Struct<" + withDots + ">";
         n = visitor.getStructNode(asGeneric);
         return n;

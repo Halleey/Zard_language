@@ -13,7 +13,7 @@ main {
     s.data.add("30");
 
     print("Elementos do Set:");
-    print(s.data);    # deve imprimir [10, 20, 30]
+    print(s.data);
 
     # Usando size()
     print("Tamanho:");

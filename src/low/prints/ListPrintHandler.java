@@ -1,6 +1,7 @@
 package low.prints;
 
 import ast.ASTNode;
+import ast.functions.FunctionCallNode;
 import ast.structs.StructFieldAccessNode;
 import ast.variables.VariableNode;
 import low.TempManager;
@@ -23,6 +24,11 @@ public class ListPrintHandler implements PrintHandler {
         if (node instanceof StructFieldAccessNode sfa) {
             String elemType = visitor.inferListElementType(sfa);
             return elemType != null;
+        }
+
+        if (node instanceof FunctionCallNode fn) {
+            TypeInfos fnType = visitor.getFunctionType(fn.getName());
+            return fnType != null && fnType.isList();
         }
 
         return false;
@@ -73,6 +79,7 @@ public class ListPrintHandler implements PrintHandler {
                 }
             }
         }
+
         else if (node instanceof StructFieldAccessNode sfa) {
             String accessIR = visitor.visit(sfa); // gera código + markers ;;VAL: ;;TYPE:
             sb.append(accessIR);
@@ -92,20 +99,44 @@ public class ListPrintHandler implements PrintHandler {
             }
 
             switch (llvmType) {
-                case "%struct.ArrayListInt*" -> {
-                    sb.append("  call void @arraylist_print_int(%struct.ArrayListInt* ").append(val).append(")\n");
-                }
-                case "%struct.ArrayListDouble*" -> {
-                    sb.append("  call void @arraylist_print_double(%struct.ArrayListDouble* ").append(val).append(")\n");
-                }
-                case "%struct.ArrayListBool*" -> {
-                    sb.append("  call void @arraylist_print_bool(%struct.ArrayListBool* ").append(val).append(")\n");
-                }
-                default -> {
-                    handleGeneric(elemType, sb, val);
-                }
+                case "%struct.ArrayListInt*" -> sb.append("  call void @arraylist_print_int(%struct.ArrayListInt* ").append(val).append(")\n");
+                case "%struct.ArrayListDouble*" -> sb.append("  call void @arraylist_print_double(%struct.ArrayListDouble* ").append(val).append(")\n");
+                case "%struct.ArrayListBool*" -> sb.append("  call void @arraylist_print_bool(%struct.ArrayListBool* ").append(val).append(")\n");
+                default -> handleGeneric(elemType, sb, val);
             }
         }
+
+        else if (node instanceof FunctionCallNode callNode) {
+
+            String callIR = visitor.visit(callNode);
+            sb.append(callIR);
+
+            String val = extractTemp(callIR);
+            llvmType = extractType(callIR);
+
+            TypeInfos fnType = visitor.getFunctionType(callNode.getName());
+            if (fnType == null || !fnType.isList()) {
+                throw new RuntimeException("Função não retorna lista: " + callNode.getName());
+            }
+            elemType = fnType.getElementType();
+
+            if (llvmType.endsWith("**")) {
+                String loaded = temps.newTemp();
+                sb.append("  ").append(loaded)
+                        .append(" = load ").append(llvmType, 0, llvmType.length() - 1)
+                        .append(", ").append(llvmType).append(" ").append(val).append("\n");
+                val = loaded;
+                llvmType = llvmType.substring(0, llvmType.length() - 1);
+            }
+
+            switch (llvmType) {
+                case "%struct.ArrayListInt*" -> sb.append("  call void @arraylist_print_int(%struct.ArrayListInt* ").append(val).append(")\n");
+                case "%struct.ArrayListDouble*" -> sb.append("  call void @arraylist_print_double(%struct.ArrayListDouble* ").append(val).append(")\n");
+                case "%struct.ArrayListBool*" -> sb.append("  call void @arraylist_print_bool(%struct.ArrayListBool* ").append(val).append(")\n");
+                default -> handleGeneric(elemType, sb, val);
+            }
+        }
+
         else {
             throw new RuntimeException("ListPrintHandler não sabe lidar com: " + node.getClass());
         }

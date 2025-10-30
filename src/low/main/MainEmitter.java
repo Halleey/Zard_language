@@ -127,11 +127,11 @@ public class MainEmitter {
                         llvm.append("  call void @arraylist_free_bool(%struct.ArrayListBool* ").append(tmp).append(")\n");
                     }
                     default -> {
-                        String bc = tempManager.newTemp();
-                        llvm.append("  ").append(tmp).append(" = load i8*, i8** %").append(varName).append("\n");
-                        llvm.append("  ").append(bc).append(" = bitcast i8* ").append(tmp).append(" to %ArrayList*\n");
-                        llvm.append("  call void @freeList(%ArrayList* ").append(bc).append(")\n");
+                        llvm.append("  ").append(tmp)
+                                .append(" = load %ArrayList*, %ArrayList** %").append(varName).append("\n");
+                        llvm.append("  call void @freeList(%ArrayList* ").append(tmp).append(")\n");
                     }
+
                 }
             }
         }

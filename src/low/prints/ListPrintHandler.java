@@ -7,6 +7,8 @@ import ast.variables.VariableNode;
 import low.TempManager;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
+
+
 public class ListPrintHandler implements PrintHandler {
     private final TempManager temps;
 
@@ -114,6 +116,15 @@ public class ListPrintHandler implements PrintHandler {
             String val = extractTemp(callIR);
             llvmType = extractType(callIR);
 
+            if ("i8*".equals(llvmType)) {
+                String casted = temps.newTemp();
+                sb.append("  ").append(casted)
+                        .append(" = bitcast i8* ").append(val).append(" to %ArrayList*\n");
+                val = casted;
+                llvmType = "%ArrayList*";
+            }
+
+
             TypeInfos fnType = visitor.getFunctionType(callNode.getName());
             if (fnType == null || !fnType.isList()) {
                 throw new RuntimeException("Função não retorna lista: " + callNode.getName());
@@ -136,6 +147,7 @@ public class ListPrintHandler implements PrintHandler {
                 default -> handleGeneric(elemType, sb, val);
             }
         }
+
 
         else {
             throw new RuntimeException("ListPrintHandler não sabe lidar com: " + node.getClass());

@@ -3,12 +3,15 @@ main {
 
     string yourName ="safety";
     List nomes = ("teste");
-    nomes.add(yourName);
-    function List<string> teste(List list) {
-        list.add("ok");
-        return list;
-    }
-
-    print(teste(nomes));
+    nomes.addAll("latenci", yourName);
+    print(nomes.get(0));
+    print(nomes);
+    List<int> numeros;
+    print("digite um numero");
+    int x = input();
+    numeros.add(x);
+    numeros.add(3);
+    print(numeros);
+    print(numeros.get(0));
 
 }

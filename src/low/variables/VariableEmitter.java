@@ -15,8 +15,6 @@ import ast.variables.VariableDeclarationNode;
 
 import java.util.HashMap;
 import java.util.Map;
-
-
 public class VariableEmitter {
     private final Map<String, TypeInfos> varTypes;
     private final TempManager temps;
@@ -74,10 +72,10 @@ public class VariableEmitter {
             }
             default -> {
                 if (srcType.startsWith("List")) {
-                    llvmType = "i8*";
+                    llvmType = "%ArrayList*";
                     elemType = srcType.substring(5, srcType.length() - 1);
                     varTypes.put(node.getName(), new TypeInfos(srcType, llvmType, elemType));
-                    return "  " + ptr + " = alloca i8*\n;;VAL:" + ptr + ";;TYPE:i8*\n";
+                    return "  " + ptr + " = alloca %ArrayList*\n;;VAL:" + ptr + ";;TYPE:%ArrayList*\n";
                 }
                 llvmType = mapLLVMType(srcType);
                 varTypes.put(node.getName(), new TypeInfos(srcType, llvmType, null));
@@ -144,7 +142,11 @@ public class VariableEmitter {
                     ListEmitter listEmitter = new ListEmitter(temps);
                     listLLVM = listEmitter.emit(listNode, visitor);
                     tmpList = extractTemp(listLLVM);
-                    return listLLVM + "  store i8* " + tmpList + ", i8** " + varPtr + "\n";
+                    String casted = temps.newTemp();
+                    return listLLVM
+                            + "  " + casted + " = bitcast i8* " + tmpList + " to %ArrayList*\n"
+                            + ";;VAL:" + casted + ";;TYPE:%ArrayList*\n"
+                            + "  store %ArrayList* " + casted + ", %ArrayList** " + varPtr + "\n";
                 }
             }
         }
@@ -177,10 +179,13 @@ public class VariableEmitter {
 
     private String callArrayListCreateAndStore(String varPtr) {
         String tmp = temps.newTemp();
+        String casted = temps.newTemp();
         return "  " + tmp + " = call i8* @arraylist_create(i64 4)\n" +
-                ";;VAL:" + tmp + ";;TYPE:i8*\n" +
-                "  store i8* " + tmp + ", i8** " + varPtr + "\n";
+                "  " + casted + " = bitcast i8* " + tmp + " to %ArrayList*\n" +
+                ";;VAL:" + casted + ";;TYPE:%ArrayList*\n" +
+                "  store %ArrayList* " + casted + ", %ArrayList** " + varPtr + "\n";
     }
+
     private String callArrayListCreateIntAndStore(String varPtr) {
         String tmp = temps.newTemp();
         return "  " + tmp + " = call %struct.ArrayListInt* @arraylist_create_int(i64 4)\n" +
@@ -209,6 +214,8 @@ public class VariableEmitter {
                     "  store %struct.ArrayListDouble* " + value + ", %struct.ArrayListDouble** %" + name + "\n";
             case "%struct.ArrayListBool*" ->
                     "  store %struct.ArrayListBool* " + value + ", %struct.ArrayListBool** %" + name + "\n";
+            case "%ArrayList*" ->
+                    "  store %ArrayList* " + value + ", %ArrayList** %" + name + "\n";
             default -> "  store " + type + " " + value + ", " + type + "* %" + name + "\n";
         };
     }

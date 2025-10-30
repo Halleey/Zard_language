@@ -38,26 +38,29 @@ public class ListGetPrintHandler implements PrintHandler {
         appendCodePrefix(sb, getCode);
 
         if ("string".equals(elemType)) {
-            sb.append("  call void @printString(%String* ").append(valTemp).append(")\n");
+            // Corrigido: imprime como C-string (i8*) usando printf("%s")
+            sb.append("  call i32 (i8*, ...) @printf(")
+                    .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), ")
+                    .append("i8* ").append(valTemp).append(")\n");
         }
         else if ("int".equals(elemType)) {
             sb.append("  call i32 (i8*, ...) @printf(")
                     .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), ")
                     .append("i32 ").append(valTemp).append(")\n");
-
-        } else if ("double".equals(elemType)) {
+        }
+        else if ("double".equals(elemType)) {
             sb.append("  call i32 (i8*, ...) @printf(")
                     .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), ")
                     .append("double ").append(valTemp).append(")\n");
-
-        } else if ("boolean".equals(elemType)) {
+        }
+        else if ("boolean".equals(elemType)) {
             String boolTmp = temps.newTemp();
             sb.append("  ").append(boolTmp).append(" = zext i1 ").append(valTemp).append(" to i32\n");
             sb.append("  call i32 (i8*, ...) @printf(")
                     .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), ")
                     .append("i32 ").append(boolTmp).append(")\n");
-
-        } else {
+        }
+        else {
             // structs
             String structName = normalizeStructName(elemType);
             sb.append("  call void @print_").append(structName)
@@ -66,7 +69,6 @@ public class ListGetPrintHandler implements PrintHandler {
 
         return sb.toString();
     }
-
 
     private void appendCodePrefix(StringBuilder llvm, String code) {
         int marker = code.lastIndexOf(";;VAL:");
@@ -92,4 +94,3 @@ public class ListGetPrintHandler implements PrintHandler {
         return s.replace('.', '_');
     }
 }
-

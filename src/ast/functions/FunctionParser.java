@@ -87,8 +87,16 @@ public class FunctionParser {
 
         parser.pushContext();
         for (int i = 0; i < paramNames.size(); i++) {
-            parser.declareVariable(paramNames.get(i), paramTypes.get(i));
+            String type = paramTypes.get(i);
+
+            if (parser.lookupStruct(type) != null && !type.startsWith("Struct<")) {
+                type = "Struct<" + type + ">";
+            }
+
+            parser.declareVariable(paramNames.get(i), type);
+            paramTypes.set(i, type);
         }
+
 
         List<ASTNode> body = parser.parseBlock();
         parser.popContext();

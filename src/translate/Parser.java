@@ -6,7 +6,6 @@ import ast.functions.FunctionCallParser;
 import ast.functions.FunctionParser;
 import ast.imports.ImportNode;
 import ast.inputs.InputParser;
-import ast.maps.MapMethodParser;
 import ast.home.MainParser;
 import ast.ifstatements.IfParser;
 import ast.loops.WhileParser;
@@ -16,6 +15,7 @@ import ast.structs.StructInstanceParser;
 import ast.structs.StructParser;
 import ast.variables.VariableNode;
 import tokens.Token;
+import translate.identifiers.IdentifierParser;
 
 import java.util.*;
 

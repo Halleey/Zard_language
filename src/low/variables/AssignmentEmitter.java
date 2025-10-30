@@ -8,18 +8,17 @@ import low.TempManager;
 import low.inputs.InputEmitter;
 import low.lists.generics.ListEmitter;
 import low.main.GlobalStringManager;
+import low.main.TypeInfos;
 import low.module.LLVisitorMain;
 
 import java.util.Map;
-
-
 public class AssignmentEmitter {
-    private final Map<String, String> varTypes;
+    private final Map<String, TypeInfos> varTypes;
     private final TempManager temps;
     private final GlobalStringManager globalStrings;
     private final LLVisitorMain visitor;
 
-    public AssignmentEmitter(Map<String, String> varTypes, TempManager temps,
+    public AssignmentEmitter(Map<String, TypeInfos> varTypes, TempManager temps,
                              GlobalStringManager globalStrings, LLVisitorMain visitor) {
         this.varTypes = varTypes;
         this.temps = temps;
@@ -28,16 +27,16 @@ public class AssignmentEmitter {
     }
 
     public String emit(AssignmentNode assignNode) {
-        // Pega ponteiro seguro
         String varPtr = visitor.varEmitter.getVarPtr(assignNode.name);
-        String llvmType = varTypes.get(assignNode.name);
-        if (llvmType == null) {
-            throw new RuntimeException("Tipo LLVM não encontrado para variável: " + assignNode.name);
+        TypeInfos info = varTypes.get(assignNode.name);
+        if (info == null) {
+            throw new RuntimeException("Tipo não encontrado para variável: " + assignNode.name);
         }
 
+        String llvmType = info.getLLVMType();
+        String sourceType = info.getSourceType();
         StringBuilder llvm = new StringBuilder();
 
-        // === LiteralNode ===
         if (assignNode.valueNode instanceof LiteralNode lit) {
             Object val = lit.value.value();
             if ("double".equals(llvmType) && val instanceof Integer i) val = i.doubleValue();
@@ -59,10 +58,8 @@ public class AssignmentEmitter {
                 }
                 case "%String*" -> {
                     String strName = globalStrings.getOrCreateString((String) val);
-                    // carrega ponteiro atual da variável
                     String tmpPtr = temps.newTemp();
                     llvm.append("  ").append(tmpPtr).append(" = load %String*, %String** ").append(varPtr).append("\n");
-                    // chama setString
                     llvm.append("  call void @setString(%String* ").append(tmpPtr)
                             .append(", i8* getelementptr ([")
                             .append(((String) val).length() + 1)
@@ -71,7 +68,6 @@ public class AssignmentEmitter {
                             .append(" x i8]* ")
                             .append(strName).append(", i32 0, i32 0))\n");
                 }
-
             }
             return llvm.toString();
         }
@@ -81,41 +77,39 @@ public class AssignmentEmitter {
             String llvmInput = inputEmitter.emit(inputNode, llvmType);
             String tmp = extractTemp(llvmInput);
 
-            if ("%String".equals(llvmType)) {
-                llvm.append(llvmInput)
-                        .append("  store %String* ").append(tmp)
-                        .append(", %String** ").append(varPtr).append("\n");
+            llvm.append(llvmInput);
+            if ("%String".equals(llvmType) || "%String*".equals(llvmType)) {
+                llvm.append("  store %String* ").append(tmp).append(", %String** ").append(varPtr).append("\n");
             } else {
-                llvm.append(llvmInput)
-                        .append("  store ").append(llvmType).append(" ").append(tmp)
+                llvm.append("  store ").append(llvmType).append(" ").append(tmp)
                         .append(", ").append(llvmType).append("* ").append(varPtr).append("\n");
             }
             return llvm.toString();
         }
 
-
-        //  (opcional)
         if (assignNode.valueNode instanceof ListNode listNode) {
             ListEmitter listEmitter = new ListEmitter(temps);
             String listLLVM = listEmitter.emit(listNode, visitor);
             String tmpList = extractTemp(listLLVM);
 
-            llvm.append(listLLVM)
-                    .append("  store i8* ").append(tmpList)
-                    .append(", i8** ").append(varPtr).append("\n");
+            llvm.append(listLLVM);
+            if (llvmType.equals("i8*")) {
+                llvm.append("  store i8* ").append(tmpList).append(", i8** ").append(varPtr).append("\n");
+            } else {
+                llvm.append("  store ").append(llvmType).append(" ").append(tmpList)
+                        .append(", ").append(llvmType).append("* ").append(varPtr).append("\n");
+            }
             return llvm.toString();
         }
 
         String exprLLVM = assignNode.valueNode.accept(visitor);
         String temp = extractTemp(exprLLVM);
 
-        if ("%String".equals(llvmType)) {
-            llvm.append(exprLLVM)
-                    .append("  store %String* ").append(temp)
-                    .append(", %String** ").append(varPtr).append("\n");
+        llvm.append(exprLLVM);
+        if ("%String".equals(llvmType) || "%String*".equals(llvmType)) {
+            llvm.append("  store %String* ").append(temp).append(", %String** ").append(varPtr).append("\n");
         } else {
-            llvm.append(exprLLVM)
-                    .append("  store ").append(llvmType).append(" ").append(temp)
+            llvm.append("  store ").append(llvmType).append(" ").append(temp)
                     .append(", ").append(llvmType).append("* ").append(varPtr).append("\n");
         }
 

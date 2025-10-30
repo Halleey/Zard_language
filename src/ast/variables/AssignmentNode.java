@@ -9,6 +9,14 @@ public class AssignmentNode extends ASTNode {
     public final String name;
     public final ASTNode valueNode;
 
+    public ASTNode getValueNode() {
+        return valueNode;
+    }
+
+    public String getName() {
+        return name;
+    }
+
     public AssignmentNode(String name, ASTNode valueNode) {
         this.name = name;
         this.valueNode = valueNode;

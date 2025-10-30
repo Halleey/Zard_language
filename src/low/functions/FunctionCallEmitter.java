@@ -4,14 +4,13 @@ import ast.ASTNode;
 import ast.functions.FunctionCallNode;
 import ast.functions.FunctionNode;
 import low.TempManager;
+import low.main.TypeInfos;
 import low.module.LLVisitorMain;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-
 public class FunctionCallEmitter {
     private final TempManager temps;
     private final Set<String> beingDeduced = new HashSet<>();
@@ -76,23 +75,25 @@ public class FunctionCallEmitter {
         String funcName = node.getName();
         String llvmFuncName = funcName.replace('.', '_');
 
-        String retType = visitor.getFunctionType(funcName);
-        if (retType == null) retType = visitor.getFunctionType(funcName.replace('.', '_'));
-        if (retType == null && funcName.contains(".")) {
+        TypeInfos retInfo = visitor.getFunctionType(funcName);
+        if (retInfo == null) retInfo = visitor.getFunctionType(funcName.replace('.', '_'));
+
+        if (retInfo == null && funcName.contains(".")) {
             String simpleName = funcName.substring(funcName.indexOf('.') + 1);
-            retType = visitor.getFunctionType(simpleName);
-            if (retType == null) retType = visitor.getFunctionType(simpleName.replace('.', '_'));
+            retInfo = visitor.getFunctionType(simpleName);
+            if (retInfo == null) retInfo = visitor.getFunctionType(simpleName.replace('.', '_'));
         }
-        if (retType == null) retType = visitor.getFunctionType(funcName.replace('.', '_'));
 
-        if (retType == null)
+        if (retInfo == null) {
             throw new RuntimeException("Função não registrada: " + funcName);
-
-        if ("any".equals(retType) && beingDeduced.contains(funcName)) {
-            retType = "i32"; // fallback
         }
 
-        retType = typeMapper.toLLVM(retType);
+        String retType = retInfo.getLLVMType();
+
+        if ("any".equals(retInfo.getSourceType()) && beingDeduced.contains(funcName)) {
+            retType = "i32";
+        }
+
         if ("string".equals(retType)) retType = "%String*";
 
         if ("void".equals(retType)) {

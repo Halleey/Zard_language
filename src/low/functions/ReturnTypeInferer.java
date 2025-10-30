@@ -10,85 +10,107 @@ import ast.variables.BinaryOpNode;
 import ast.variables.LiteralNode;
 import ast.variables.VariableDeclarationNode;
 import ast.variables.VariableNode;
+import low.main.TypeInfos;
 import low.module.LLVisitorMain;
 
 import java.util.HashMap;
 import java.util.Map;
-
 public class ReturnTypeInferer {
     private final LLVisitorMain visitor;
+    private final TypeMapper typeMapper;
 
     public ReturnTypeInferer(LLVisitorMain visitor, TypeMapper typeMapper) {
         this.visitor = visitor;
+        this.typeMapper = typeMapper;
     }
 
-    public String deduceReturnType(FunctionNode fn) {
-        // Map temporário para variáveis locais durante a inferência
-        Map<String, String> localVars = new HashMap<>();
+    public TypeInfos deduceReturnType(FunctionNode fn) {
 
-        // Primeiro, registra parâmetros da função
+        Map<String, TypeInfos> localVars = new HashMap<>();
+
         for (int i = 0; i < fn.getParams().size(); i++) {
-            localVars.put(fn.getParams().get(i), fn.getParamTypes().get(i));
+            String sourceType = fn.getParamTypes().get(i);
+            String llvmType   = typeMapper.toLLVM(sourceType);
+            String elemType   = (sourceType.startsWith("List<") && sourceType.endsWith(">"))
+                    ? sourceType.substring(5, sourceType.length() - 1)
+                    : null;
+
+            localVars.put(fn.getParams().get(i),
+                    new TypeInfos(sourceType, llvmType, elemType));
         }
 
-        // Percorre o corpo da função
         for (ASTNode stmt : fn.getBody()) {
-            // Registra variáveis declaradas localmente
             collectVarDecls(stmt, localVars);
 
-            // Se encontrar ReturnNode com expressão, infere tipo
             if (stmt instanceof ReturnNode ret && ret.expr != null) {
                 return inferType(ret.expr, localVars);
             }
         }
 
-        return "void";
+        return new TypeInfos("void", "void", null);
     }
 
-    private void collectVarDecls(ASTNode node, Map<String, String> localVars) {
+    private void collectVarDecls(ASTNode node, Map<String, TypeInfos> localVars) {
         if (node instanceof VariableDeclarationNode decl) {
-            localVars.put(decl.getName(), decl.getType());
-        } else if (node instanceof IfNode ifn) {
+            String srcType  = decl.getType();
+            String llvmType = typeMapper.toLLVM(srcType);
+            String elemType = (srcType.startsWith("List<") && srcType.endsWith(">"))
+                    ? srcType.substring(5, srcType.length() - 1)
+                    : null;
+
+            localVars.put(decl.getName(), new TypeInfos(srcType, llvmType, elemType));
+        }
+        else if (node instanceof IfNode ifn) {
             ifn.getThenBranch().forEach(stmt -> collectVarDecls(stmt, localVars));
             if (ifn.getElseBranch() != null) {
                 ifn.getElseBranch().forEach(stmt -> collectVarDecls(stmt, localVars));
             }
-        } else if (node instanceof WhileNode wn) {
+        }
+        else if (node instanceof WhileNode wn) {
             for (ASTNode stmt : wn.getBody()) {
                 collectVarDecls(stmt, localVars);
             }
         }
-
-        // Pode expandir para outros nós compostos se necessário
     }
 
-    public String inferType(ASTNode node, Map<String, String> localVars) {
+    public TypeInfos inferType(ASTNode node, Map<String, TypeInfos> localVars) {
         if (node instanceof LiteralNode lit) {
-            return lit.value.type();
-        } else if (node instanceof VariableNode var) {
-            String type = localVars.getOrDefault(var.getName(), visitor.getVarType(var.getName()));
+            String srcType  = lit.value.type();
+            String llvmType = typeMapper.toLLVM(srcType);
+            return new TypeInfos(srcType, llvmType, null);
+        }
+        else if (node instanceof VariableNode var) {
+            TypeInfos type = localVars.getOrDefault(var.getName(), visitor.getVarType(var.getName()));
             if (type == null) throw new RuntimeException("Variável não declarada: " + var.getName());
             return type;
-        } else if (node instanceof BinaryOpNode bin) {
-            String l = inferType(bin.left, localVars);
-            String r = inferType(bin.right, localVars);
-            if (!l.equals(r)) {
-                if ((l.equals("int") && r.equals("double")) || (l.equals("double") && r.equals("int"))) {
-                    return "double";
+        }
+        else if (node instanceof BinaryOpNode bin) {
+            TypeInfos l = inferType(bin.left, localVars);
+            TypeInfos r = inferType(bin.right, localVars);
+
+            if (!l.getSourceType().equals(r.getSourceType())) {
+                if ((l.getSourceType().equals("int") && r.getSourceType().equals("double"))
+                        || (l.getSourceType().equals("double") && r.getSourceType().equals("int"))) {
+                    return new TypeInfos("double", "double", null);
                 }
-                throw new RuntimeException("Tipos incompatíveis: " + l + " vs " + r);
+                throw new RuntimeException("Tipos incompatíveis: " + l.getSourceType() + " vs " + r.getSourceType());
             }
             return l;
-        } else if (node instanceof ReturnNode ret) {
+        }
+        else if (node instanceof ReturnNode ret) {
             return inferType(ret.expr, localVars);
-        } else if (node instanceof FunctionCallNode call) {
-            String type = visitor.getFunctionType(call.getName());
+        }
+        else if (node instanceof FunctionCallNode call) {
+            TypeInfos type = visitor.getFunctionType(call.getName());
             if (type == null) throw new RuntimeException("Função não registrada: " + call.getName());
-            if ("any".equals(type) && visitor.getCallEmitter().isBeingDeduced(call.getName())) {
-                return "int"; // fallback seguro
+
+            if ("any".equals(type.getSourceType())
+                    && visitor.getCallEmitter().isBeingDeduced(call.getName())) {
+                return new TypeInfos("int", "i32", null);
             }
             return type;
         }
+
         throw new RuntimeException("Não foi possível inferir tipo de " + node.getClass());
     }
 }

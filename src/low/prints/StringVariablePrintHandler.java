@@ -4,8 +4,8 @@ package low.prints;
 import ast.ASTNode;
 import ast.variables.VariableNode;
 import low.TempManager;
+import low.main.TypeInfos;
 import low.module.LLVisitorMain;
-
 public class StringVariablePrintHandler implements PrintHandler {
     private final TempManager temps;
 
@@ -16,8 +16,10 @@ public class StringVariablePrintHandler implements PrintHandler {
     @Override
     public boolean canHandle(ASTNode node, LLVisitorMain visitor) {
         if (node instanceof VariableNode varNode) {
-            String type = visitor.getVarType(varNode.getName());
-            return "%String".equals(type) || "%String*".equals(type);
+            TypeInfos info = visitor.getVarType(varNode.getName());
+            if (info == null) return false;
+            String llvmType = info.getLLVMType();
+            return "%String".equals(llvmType) || "%String*".equals(llvmType);
         }
         return false;
     }
@@ -26,6 +28,7 @@ public class StringVariablePrintHandler implements PrintHandler {
     public String emit(ASTNode node, LLVisitorMain visitor) {
         String varName = ((VariableNode) node).getName();
         String tmpLoad = temps.newTemp();
+
         return "  " + tmpLoad + " = load %String*, %String** %" + varName + "\n" +
                 "  call void @printString(%String* " + tmpLoad + ")\n";
     }

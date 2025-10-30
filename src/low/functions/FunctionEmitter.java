@@ -4,12 +4,11 @@ import ast.ASTNode;
 import ast.exceptions.ReturnNode;
 import ast.functions.FunctionNode;
 import ast.variables.LiteralNode;
+import low.main.TypeInfos;
 import low.module.LLVisitorMain;
 
 import java.util.ArrayList;
 import java.util.List;
-
-
 public class FunctionEmitter {
     private final LLVisitorMain visitor;
     private final TypeMapper typeMapper = new TypeMapper();
@@ -23,35 +22,48 @@ public class FunctionEmitter {
     public String emit(FunctionNode fn) {
         StringBuilder sb = new StringBuilder();
 
-        // registra função inicialmente com tipo provisório "any"
-        visitor.registerFunctionType(fn.getName(), "any");
+        visitor.registerFunctionType(fn.getName(),
+                new TypeInfos("any", "void", null));
 
-        // deduz tipo de retorno se necessário
-        String retType = fn.getReturnType();
-        if ("void".equals(retType) && containsReturn(fn)) {
+        String declaredType = fn.getReturnType();
+
+        TypeInfos retInfo;
+        if ("void".equals(declaredType) && containsReturn(fn)) {
+
             visitor.getCallEmitter().markBeingDeduced(fn.getName());
-            retType = returnInferer.deduceReturnType(fn);
+            retInfo = returnInferer.deduceReturnType(fn);
             visitor.getCallEmitter().unmarkBeingDeduced(fn.getName());
+        } else {
+            String llvm = typeMapper.toLLVM(declaredType);
+            String elem = null;
+            if (declaredType.startsWith("List<") && declaredType.endsWith(">")) {
+                elem = declaredType.substring(5, declaredType.length() - 1);
+            }
+            retInfo = new TypeInfos(declaredType, llvm, elem);
         }
 
-        String llvmRetType = typeMapper.toLLVM(retType);
-        visitor.registerFunctionType(fn.getName(), llvmRetType);
+        visitor.registerFunctionType(fn.getName(), retInfo);
 
-        // assinatura LLVM
+        String llvmRetType = retInfo.getLLVMType();
+
         List<String> paramSignatures = new ArrayList<>();
         for (int i = 0; i < fn.getParams().size(); i++) {
-            String llvmType = typeMapper.toLLVM(fn.getParamTypes().get(i));
+            String paramSource = fn.getParamTypes().get(i);
+            String llvmType = typeMapper.toLLVM(paramSource);
             paramSignatures.add(llvmType + " %" + fn.getParams().get(i));
+
+            visitor.putVarType(fn.getParams().get(i),
+                    new TypeInfos(paramSource, llvmType, null));
         }
 
         sb.append("; === Função: ").append(fn.getName()).append(" ===\n");
         sb.append("define ").append(llvmRetType).append(" @").append(fn.getName())
                 .append("(").append(String.join(", ", paramSignatures)).append(") {\nentry:\n");
 
-        // Aloca e registra parâmetros
         for (int i = 0; i < fn.getParams().size(); i++) {
             String paramName = fn.getParams().get(i);
-            String paramType = typeMapper.toLLVM(fn.getParamTypes().get(i));
+            TypeInfos info = visitor.getVarType(paramName);
+            String paramType = info.getLLVMType();
             String paramPtr = "%" + paramName + "_addr";
 
             sb.append("  ").append(paramPtr).append(" = alloca ").append(paramType).append("\n");
@@ -60,20 +72,18 @@ public class FunctionEmitter {
                     .append(";;VAL:").append(paramPtr).append(";;TYPE:").append(paramType).append("\n");
 
             visitor.getVariableEmitter().registerVarPtr(paramName, paramPtr);
-            visitor.putVarType(paramName, paramType);
         }
 
         for (ASTNode stmt : fn.getBody()) {
             if (stmt instanceof ReturnNode ret) {
-
                 if (ret.expr instanceof LiteralNode lit && lit.value.type().equals("string")) {
                     String literal = (String) lit.value.value();
                     String strName = visitor.getGlobalStrings().getOrCreateString(literal);
                     int len = visitor.getGlobalStrings().getLength(literal);
 
-                    String tmpPtr = visitor.getTemps().newTemp();       // ponteiro p/ literal
-                    String tmpMalloc = visitor.getTemps().newTemp();    // i8* malloc
-                    String tmpStruct = visitor.getTemps().newTemp();    // struct %String
+                    String tmpPtr = visitor.getTemps().newTemp();
+                    String tmpMalloc = visitor.getTemps().newTemp();
+                    String tmpStruct = visitor.getTemps().newTemp();
                     String tmpFieldData = visitor.getTemps().newTemp();
                     String tmpFieldLen = visitor.getTemps().newTemp();
 
@@ -100,8 +110,7 @@ public class FunctionEmitter {
 
                     sb.append("  ret %String* ").append(tmpStruct).append("\n");
                 }
-
-                else if (fn.getReturnType().startsWith("List<")) {
+                else if (retInfo.isList()) {
                     String exprCode = ret.expr.accept(visitor);
                     sb.append(exprCode);
 
@@ -110,7 +119,6 @@ public class FunctionEmitter {
 
                     sb.append("  ret ").append(tmpType).append(" ").append(tmpVal).append("\n");
                 }
-
                 else {
                     sb.append(ret.accept(visitor));
                 }
@@ -120,8 +128,6 @@ public class FunctionEmitter {
             }
         }
 
-
-        // garante return void se não houver
         if ("void".equals(llvmRetType) && !containsReturn(fn)) {
             sb.append("  ret void\n");
         }
@@ -133,6 +139,7 @@ public class FunctionEmitter {
     private boolean containsReturn(FunctionNode fn) {
         return fn.getBody().stream().anyMatch(n -> n instanceof ReturnNode);
     }
+
     private String extractLastVal(String code) {
         int v = code.lastIndexOf(";;VAL:");
         if (v == -1) return "";
@@ -147,6 +154,4 @@ public class FunctionEmitter {
         if (end == -1) end = code.length();
         return code.substring(t + 7, end).trim();
     }
-
-
 }

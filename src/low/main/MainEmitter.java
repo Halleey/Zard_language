@@ -52,18 +52,16 @@ public class MainEmitter {
         StringBuilder llvm = new StringBuilder();
         ImportEmitter importEmitter = new ImportEmitter(visitor, this.tiposDeListasUsados);
 
-        // 1) Coletar strings do próprio main (isso pode ficar)
         for (ASTNode stmt : node.body) {
             if (!(stmt instanceof ImportNode)) {
                 coletarStringsRecursivo(stmt);
             }
         }
 
-        // 2) Primeiro, processe os imports e acumule o IR deles
         StringBuilder importsIR = new StringBuilder();
         for (ASTNode stmt : node.body) {
             if (stmt instanceof ImportNode importNode) {
-                // isso já vai popular tiposDeListasUsados
+
                 importsIR.append(";; ==== Import module: ")
                         .append(importNode.path())
                         .append(" as ")
@@ -73,11 +71,9 @@ public class MainEmitter {
             }
         }
 
-        // 3) Agora sim, com tiposDeListasUsados cheio, emita o header
         llvm.append(emitHeader()).append("\n");
         llvm.append(globalStrings.getGlobalStrings()).append("\n");
 
-        // 4) Struct definitions (já inclui as vindas dos imports)
         if (!structDefinitions.isEmpty()) {
             llvm.append(";; ==== Struct Definitions ====\n");
             for (String structDef : structDefinitions) {
@@ -86,10 +82,8 @@ public class MainEmitter {
             llvm.append("\n");
         }
 
-        // 5) Emita o IR dos imports depois do header (ordem segura)
         llvm.append(importsIR);
 
-        // 6) Emita funções declaradas no arquivo principal
         FunctionEmitter fnEmitter = new FunctionEmitter(visitor);
         for (ASTNode stmt : node.body) {
             if (stmt instanceof FunctionNode fn) {
@@ -97,7 +91,6 @@ public class MainEmitter {
             }
         }
 
-        // 7) Emita o corpo do main como você já fazia
         llvm.append("define i32 @main() {\n");
         for (ASTNode stmt : node.body) {
             if (stmt instanceof FunctionNode || stmt instanceof ImportNode || stmt instanceof StructNode)
@@ -226,8 +219,6 @@ public class MainEmitter {
                 }
             }
         }
-
-
     }
 
     private void coletarStringsRecursivo(List<ASTNode> nodes) {

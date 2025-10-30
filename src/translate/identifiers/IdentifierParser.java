@@ -1,14 +1,15 @@
-package translate;
+package translate.identifiers;
 
 import ast.ASTNode;
 import ast.functions.FunctionCallNode;
 import ast.functions.FunctionReferenceNode;
-import ast.structs.StructFieldAccessNode;
 import ast.structs.StructInstanceParser;
 import tokens.Token;
 import ast.variables.AssignmentNode;
 import ast.variables.UnaryOpNode;
 import ast.variables.VariableNode;
+import translate.ListMethodParser;
+import translate.Parser;
 
 import java.util.List;
 public class IdentifierParser {
@@ -28,7 +29,6 @@ public class IdentifierParser {
                 String memberName = parser.current().getValue();
                 String receiverType = parser.getExpressionType(receiver);
 
-                // delega para Struct
                 if (receiverType != null && receiverType.startsWith("Struct")) {
                     StructFieldParser structParser = new StructFieldParser(parser);
                     return structParser.parseAsStatement(receiver, memberName);
@@ -54,7 +54,6 @@ public class IdentifierParser {
                     return structParser.parseStructInstanceAfterKeyword(qualifiedName, varName);
                 }
 
-                // caso geral (função/ref)
                 parser.advance();
                 String fullName = name + "." + memberName;
                 if (parser.current().getValue().equals("(")) {

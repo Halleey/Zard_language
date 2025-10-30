@@ -4,9 +4,8 @@ import ast.ASTNode;
 import ast.structs.StructFieldAccessNode;
 import ast.variables.VariableNode;
 import low.TempManager;
+import low.main.TypeInfos;
 import low.module.LLVisitorMain;
-
-
 public class ListPrintHandler implements PrintHandler {
     private final TempManager temps;
 
@@ -17,7 +16,8 @@ public class ListPrintHandler implements PrintHandler {
     @Override
     public boolean canHandle(ASTNode node, LLVisitorMain visitor) {
         if (node instanceof VariableNode varNode) {
-            return visitor.getListElementType(varNode.getName()) != null;
+            TypeInfos info = visitor.getVarType(varNode.getName());
+            return info != null && info.isList();
         }
 
         if (node instanceof StructFieldAccessNode sfa) {
@@ -37,8 +37,11 @@ public class ListPrintHandler implements PrintHandler {
 
         if (node instanceof VariableNode varNode) {
             String varName = varNode.getName();
-            elemType = visitor.getListElementType(varName);
-            llvmType = visitor.getVarType(varName);
+            TypeInfos info = visitor.getVarType(varName);
+            if (info == null) throw new RuntimeException("Variável não registrada: " + varName);
+
+            elemType = info.getElementType();
+            llvmType = info.getLLVMType();
 
             switch (llvmType) {
                 case "%struct.ArrayListInt*" -> {
@@ -150,6 +153,4 @@ public class ListPrintHandler implements PrintHandler {
         if (end == -1) end = code.length();
         return code.substring(t + 7, end).trim();
     }
-
-
 }

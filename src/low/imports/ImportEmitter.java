@@ -6,6 +6,8 @@ import ast.imports.ImportNode;
 import ast.structs.StructNode;
 import ast.variables.VariableDeclarationNode;
 import low.functions.FunctionEmitter;
+import low.functions.TypeMapper;
+import low.main.TypeInfos;
 import low.module.LLVisitorMain;
 import low.structs.StructEmitter;
 import tokens.Lexer;
@@ -15,7 +17,6 @@ import translate.Parser;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -25,12 +26,10 @@ import ast.lists.ListAddAllNode;
 import ast.lists.ListAddNode;
 import ast.lists.ListNode;
 import ast.loops.WhileNode;
-
-
-
+import ast.*;
 public class ImportEmitter {
     private final LLVisitorMain visitor;
-    private final Set<String> tiposDeListasUsados; // compartilhado com MainEmitter
+    private final Set<String> tiposDeListasUsados;
 
     public ImportEmitter(LLVisitorMain visitor, Set<String> tiposDeListasUsados) {
         this.visitor = visitor;
@@ -62,8 +61,15 @@ public class ImportEmitter {
                     String qualified = alias + "." + func.getName();
                     String llvmName = qualified.replace('.', '_');
 
+                    String srcType = func.getReturnType();
+                    String llvmType = new TypeMapper().toLLVM(srcType);
+                    String elemType = (srcType.startsWith("List<") && srcType.endsWith(">"))
+                            ? srcType.substring(5, srcType.length() - 1)
+                            : null;
+
                     visitor.registerImportedFunction(qualified, func);
-                    visitor.registerFunctionType(qualified, func.getReturnType( ));
+                    visitor.registerFunctionType(qualified,
+                            new TypeInfos(srcType, llvmType, elemType));
 
                     String funcIR = fnEmitter.emit(func)
                             .replace("@" + func.getName() + "(", "@" + llvmName + "(");
@@ -96,7 +102,7 @@ public class ImportEmitter {
     private void coletarListas(ASTNode node) {
         if (node == null) return;
 
-        else if (node instanceof FunctionNode func) {
+        if (node instanceof FunctionNode func) {
             String retType = func.getReturnType();
             if (retType.startsWith("List<") && retType.endsWith(">")) {
                 tiposDeListasUsados.add(retType);
@@ -109,7 +115,6 @@ public class ImportEmitter {
             func.getBody().forEach(this::coletarListas);
         }
 
-
         if (node instanceof VariableDeclarationNode varDecl) {
             if (varDecl.getType() != null && varDecl.getType().startsWith("List")) {
                 tiposDeListasUsados.add(varDecl.getType());
@@ -120,14 +125,6 @@ public class ImportEmitter {
             tiposDeListasUsados.add(tipo);
 
             listNode.getList().getElements().forEach(this::coletarListas);
-        } else if (node instanceof FunctionNode func) {
-            for (int i = 0; i < func.getParams().size(); i++) {
-                String tipo = func.getParamTypes().get(i);
-                if (tipo != null && tipo.startsWith("List")) {
-                    tiposDeListasUsados.add(tipo);
-                }
-            }
-            func.getBody().forEach(this::coletarListas);
         } else if (node instanceof IfNode ifNode) {
             coletarListas(ifNode.condition);
             ifNode.thenBranch.forEach(this::coletarListas);

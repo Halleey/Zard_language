@@ -7,6 +7,7 @@ import tokens.Token;
 import ast.variables.BinaryOpNode;
 import ast.variables.LiteralNode;
 import ast.variables.UnaryOpNode;
+import translate.identifiers.IdentifierParser;
 
 import java.util.ArrayList;
 import java.util.List;

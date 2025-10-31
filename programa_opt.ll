@@ -10,7 +10,6 @@ source_filename = "programa.ll"
 @.strDouble = private constant [4 x i8] c"%f\0A\00"
 @.strStr = private constant [4 x i8] c"%s\0A\00"
 @.strEmpty = private constant [1 x i8] zeroinitializer
-@.str0 = private constant [6 x i8] c"teste\00"
 
 declare i32 @printf(ptr, ...)
 
@@ -38,27 +37,16 @@ entry:
   ret void
 }
 
-define ptr @createPeople(ptr %p) {
+define i32 @teste(i32 %x) {
 entry:
-  %tmp3 = call ptr @createString(ptr @.str0)
-  store ptr %tmp3, ptr %p, align 8
-  %tmp6 = getelementptr inbounds %People, ptr %p, i32 0, i32 1
-  store i32 19, ptr %tmp6, align 4
-  ret ptr %p
+  ret i32 4
 }
 
 define i32 @main() {
-  %tmp10 = alloca %People, align 8
-  %tmp11 = call ptr @createString(ptr null)
-  store ptr %tmp11, ptr %tmp10, align 8
-  %tmp13 = getelementptr inbounds %People, ptr %tmp10, i32 0, i32 1
-  store i32 0, ptr %tmp13, align 4
-  %tmp17 = call ptr @createString(ptr @.str0)
-  store ptr %tmp17, ptr %tmp10, align 8
-  store i32 220, ptr %tmp13, align 4
-  call void @print_People(ptr %tmp10)
-  %tmp25 = call ptr @createPeople(ptr %tmp10)
-  call void @print_People(ptr %tmp25)
-  %1 = call i32 @getchar()
+  %1 = call i32 (ptr, ...) @printf(ptr @.strInt, i32 10)
+  %tmp4 = call i32 @teste(i32 10)
+  %2 = call i32 (ptr, ...) @printf(ptr @.strInt, i32 %tmp4)
+  %3 = call i32 (ptr, ...) @printf(ptr @.strInt, i32 10)
+  %4 = call i32 @getchar()
   ret i32 0
 }

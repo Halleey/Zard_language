@@ -15,6 +15,7 @@ import low.module.LLVisitorMain;
 
 import java.util.HashMap;
 import java.util.Map;
+
 public class ReturnTypeInferer {
     private final LLVisitorMain visitor;
     private final TypeMapper typeMapper;

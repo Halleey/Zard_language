@@ -3,9 +3,8 @@ package translate;
 import ast.ASTNode;
 import ast.lists.*;
 import ast.structs.StructFieldAccessNode;
-import ast.variables.VariableDeclarationNode;
 import tokens.Token;
-import ast.variables.VariableNode;
+
 
 
 import java.util.List;
@@ -17,7 +16,7 @@ public class ListMethodParser {
     }
 
     private ASTNode consumeArg() {
-        parser.advance(); // consome nome do método já lido
+        parser.advance();
         parser.eat(Token.TokenType.DELIMITER, "(");
 
         ASTNode arg = null;
@@ -29,7 +28,6 @@ public class ListMethodParser {
         return arg;
     }
 
-    // === Statements ===
     public ASTNode parseStatementListMethod(ASTNode receiver, String method) {
         ASTNode arg;
 
@@ -80,7 +78,6 @@ public class ListMethodParser {
         };
     }
 
-    // === Expressions ===
     public ASTNode parseExpressionListMethod(ASTNode receiver, String method) {
         parser.advance(); // consome nome do método
         parser.eat(Token.TokenType.DELIMITER, "(");

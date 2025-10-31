@@ -5,17 +5,14 @@ main {
     int age;
     }
 
-    Struct People p;
-    p.name = "teste";
-    p.age = 220;
-    print(p);
+    int x = 10;
+    print(x);
 
-    function People createPeople(People p) {
-        p.name = "teste";
-        p.age = 19;
-        return p;
+    function int teste(int x) {
+    x = 4;
+    return x;
     }
 
-    print(createPeople(p));
-
+    print(teste(x));
+    print(x);
 }

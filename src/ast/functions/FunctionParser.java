@@ -37,7 +37,12 @@ public class FunctionParser {
         return typeBuilder.toString();
     }
 
-
+    private boolean isPrimitive(String type) {
+        return switch (type) {
+            case "int", "double", "bool", "string", "char", "void" -> true;
+            default -> false;
+        };
+    }
 
     public FunctionNode parseFunction() {
         parser.advance();
@@ -84,12 +89,13 @@ public class FunctionParser {
 
         parser.eat(Token.TokenType.DELIMITER, ")");
 
-
         parser.pushContext();
         for (int i = 0; i < paramNames.size(); i++) {
             String type = paramTypes.get(i);
 
-            if (parser.lookupStruct(type) != null && !type.startsWith("Struct<")) {
+            if (parser.lookupStruct(type) != null
+                    && !type.startsWith("Struct<")
+                    && !isPrimitive(type)) {
                 type = "Struct<" + type + ">";
             }
 
@@ -97,11 +103,9 @@ public class FunctionParser {
             paramTypes.set(i, type);
         }
 
-
         List<ASTNode> body = parser.parseBlock();
         parser.popContext();
 
         return new FunctionNode(funcName, paramNames, paramTypes, body, returnType);
     }
-
 }

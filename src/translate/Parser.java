@@ -13,6 +13,7 @@ import ast.prints.PrintParser;
 import ast.structs.StructFieldAccessNode;
 import ast.structs.StructInstanceParser;
 import ast.structs.StructParser;
+import ast.variables.VarDeclarationParser;
 import ast.variables.VariableNode;
 import tokens.Token;
 import translate.identifiers.IdentifierParser;

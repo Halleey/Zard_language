@@ -1,20 +1,11 @@
-package translate;
+package ast.variables;
 
 import ast.ASTNode;
 import ast.lists.ListDeclarationParser;
-import ast.lists.ListNode;
-import ast.maps.DynamicMap;
-import ast.maps.MapNode;
 import ast.maps.MapParser;
-import ast.lists.DynamicList;
 import ast.structs.StructInstanceParser;
-import ast.variables.LiteralNode;
-import ast.variables.VariableNode;
 import tokens.Token;
-import ast.variables.VariableDeclarationNode;
-
-import java.util.ArrayList;
-import java.util.List;
+import translate.Parser;
 
 
 public class VarDeclarationParser {

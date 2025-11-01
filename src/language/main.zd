@@ -1,18 +1,19 @@
 main {
 
-    Struct People {
-    string name;
-    int age;
+print("insira um nome");
+string nome = input();
+print(nome);
+
+List nomes = ("teste", nome);
+print(nomes);
+
+   function string alterName(string name) {
+    name = "uaba laba dubi dubi";
+    return name;
     }
 
-    int x = 10;
-    print(x);
-
-    function int teste(int x) {
-    x = 4;
-    return x;
-    }
-
-    print(teste(x));
-    print(x);
+    print(alterName(nome));
+    print(nome);
+    nome = "testando";
+    print(nome);
 }

@@ -24,7 +24,6 @@ public class FunctionEmitter {
         this.returnInferer = new ReturnTypeInferer(visitor, typeMapper);
     }
 
-    // ===== Helpers de normalização =====
     private static boolean isPrimitive(String t) {
         return "int".equals(t) || "double".equals(t)
                 || "bool".equals(t) || "string".equals(t)
@@ -46,7 +45,6 @@ public class FunctionEmitter {
         return t;
     }
 
-    // ===== Emissão da função =====
     public String emit(FunctionNode fn) {
         StringBuilder sb = new StringBuilder();
 
@@ -104,7 +102,6 @@ public class FunctionEmitter {
             visitor.getVariableEmitter().registerVarPtr(paramName, paramPtr);
         }
 
-        // corpo da função
         for (ASTNode stmt : fn.getBody()) {
             if (stmt instanceof ReturnNode ret) {
                 if (ret.expr instanceof LiteralNode lit && lit.value.type().equals("string")) {
@@ -112,35 +109,16 @@ public class FunctionEmitter {
                     String strName = visitor.getGlobalStrings().getOrCreateString(literal);
                     int len = visitor.getGlobalStrings().getLength(literal);
 
-                    String tmpPtr = visitor.getTemps().newTemp();
-                    String tmpMalloc = visitor.getTemps().newTemp();
                     String tmpStruct = visitor.getTemps().newTemp();
-                    String tmpFieldData = visitor.getTemps().newTemp();
-                    String tmpFieldLen = visitor.getTemps().newTemp();
 
-                    sb.append("  ").append(tmpPtr)
-                            .append(" = getelementptr inbounds [").append(len)
-                            .append(" x i8], [").append(len)
-                            .append(" x i8]* ").append(strName)
-                            .append(", i32 0, i32 0\n");
-
-                    sb.append("  ").append(tmpMalloc)
-                            .append(" = call i8* @malloc(i64 ptrtoint (%String* getelementptr (%String, %String* null, i32 1) to i64))\n");
                     sb.append("  ").append(tmpStruct)
-                            .append(" = bitcast i8* ").append(tmpMalloc).append(" to %String*\n");
-
-                    sb.append("  ").append(tmpFieldData)
-                            .append(" = getelementptr inbounds %String, %String* ")
-                            .append(tmpStruct).append(", i32 0, i32 0\n");
-                    sb.append("  store i8* ").append(tmpPtr).append(", i8** ").append(tmpFieldData).append("\n");
-
-                    sb.append("  ").append(tmpFieldLen)
-                            .append(" = getelementptr inbounds %String, %String* ")
-                            .append(tmpStruct).append(", i32 0, i32 1\n");
-                    sb.append("  store i64 ").append(len - 1).append(", i64* ").append(tmpFieldLen).append("\n");
-
+                            .append(" = call %String* @createString(i8* getelementptr ([").append(len)
+                            .append(" x i8], [").append(len).append(" x i8]* ").append(strName)
+                            .append(", i32 0, i32 0))\n");
                     sb.append("  ret %String* ").append(tmpStruct).append("\n");
-                } else if (retInfo.isList()) {
+
+                }
+                else if (retInfo.isList()) {
                     String exprCode = ret.expr.accept(visitor);
                     sb.append(exprCode);
                     String tmpVal = extractLastVal(exprCode);

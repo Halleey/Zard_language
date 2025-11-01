@@ -37,6 +37,7 @@ public class AssignmentEmitter {
         String sourceType = info.getSourceType();
         StringBuilder llvm = new StringBuilder();
 
+        // --- Caso: valor literal ---
         if (assignNode.valueNode instanceof LiteralNode lit) {
             Object val = lit.value.value();
             if ("double".equals(llvmType) && val instanceof Integer i) val = i.doubleValue();
@@ -44,34 +45,47 @@ public class AssignmentEmitter {
             switch (llvmType) {
                 case "i32" -> llvm.append("  store i32 ").append(val)
                         .append(", i32* ").append(varPtr).append("\n");
+
                 case "double" -> llvm.append("  store double ").append(val)
                         .append(", double* ").append(varPtr).append("\n");
+
                 case "i1" -> llvm.append("  store i1 ").append((Boolean) val ? "1" : "0")
                         .append(", i1* ").append(varPtr).append("\n");
+
+                // string "crua" (char*) – mantém comportamento anterior
                 case "i8*" -> {
-                    String strName = globalStrings.getOrCreateString((String) val);
-                    int len = ((String) val).length() + 1;
+                    String s = (String) val;
+                    String strName = globalStrings.getOrCreateString(s);
+                    int len = s.length() + 1;
                     llvm.append("  store i8* getelementptr ([")
                             .append(len).append(" x i8], [").append(len).append(" x i8]* ")
                             .append(strName).append(", i32 0, i32 0), i8** ")
                             .append(varPtr).append("\n");
                 }
+
+                // *** CORRIGIDO ***: atribuição de literal para %String*
+                // Agora cria uma nova String com @createString e faz store do ponteiro.
                 case "%String*" -> {
-                    String strName = globalStrings.getOrCreateString((String) val);
-                    String tmpPtr = temps.newTemp();
-                    llvm.append("  ").append(tmpPtr).append(" = load %String*, %String** ").append(varPtr).append("\n");
-                    llvm.append("  call void @setString(%String* ").append(tmpPtr)
-                            .append(", i8* getelementptr ([")
-                            .append(((String) val).length() + 1)
-                            .append(" x i8], [")
-                            .append(((String) val).length() + 1)
-                            .append(" x i8]* ")
-                            .append(strName).append(", i32 0, i32 0))\n");
+                    String s = (String) val;
+                    String strName = globalStrings.getOrCreateString(s);
+                    int len = globalStrings.getLength(s); // inclui '\0'
+                    String tmpNew = temps.newTemp();
+
+                    llvm.append("  ").append(tmpNew)
+                            .append(" = call %String* @createString(i8* getelementptr ([").append(len)
+                            .append(" x i8], [").append(len).append(" x i8]* ").append(strName)
+                            .append(", i32 0, i32 0))\n");
+
+                    llvm.append("  store %String* ").append(tmpNew)
+                            .append(", %String** ").append(varPtr).append("\n");
+
+                    llvm.append(";;VAL:").append(tmpNew).append(";;TYPE:%String*\n");
                 }
             }
             return llvm.toString();
         }
 
+        // --- Caso: input() ---
         if (assignNode.valueNode instanceof InputNode inputNode) {
             InputEmitter inputEmitter = new InputEmitter(temps, globalStrings);
             String llvmInput = inputEmitter.emit(inputNode, llvmType);
@@ -87,6 +101,7 @@ public class AssignmentEmitter {
             return llvm.toString();
         }
 
+        // --- Caso: lista literal ---
         if (assignNode.valueNode instanceof ListNode listNode) {
             ListEmitter listEmitter = new ListEmitter(temps);
             String listLLVM = listEmitter.emit(listNode, visitor);
@@ -102,6 +117,7 @@ public class AssignmentEmitter {
             return llvm.toString();
         }
 
+        // --- Caso geral: expressão ---
         String exprLLVM = assignNode.valueNode.accept(visitor);
         String temp = extractTemp(exprLLVM);
 

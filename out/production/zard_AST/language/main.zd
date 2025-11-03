@@ -1,19 +1,14 @@
 main {
 
-print("insira um nome");
-string nome = input();
-print(nome);
-
-List nomes = ("teste", nome);
-print(nomes);
-
-   function string alterName(string name) {
-    name = "uaba laba dubi dubi";
-    return name;
+    Struct People {
+    string name;
+    int age;
     }
 
-    print(alterName(nome));
-    print(nome);
-    nome = "testando";
-    print(nome);
+
+    Struct People p = {"Berk", 220};
+    Struct People ps;
+    ps = p;
+    print(ps);
+
 }

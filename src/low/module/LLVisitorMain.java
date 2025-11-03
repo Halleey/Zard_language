@@ -73,6 +73,8 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final Map<String, StructNode> structNodes = new HashMap<>();
     private final StructInstanceEmitter instanceEmitter = new StructInstanceEmitter(temps, globalStrings);
     private final StructFieldAccessEmitter structFieldAccessEmitter = new StructFieldAccessEmitter(temps);
+
+
     public String inferListElementType(ASTNode node) {
         if (node instanceof VariableNode v) {
             return getListElementType(v.getName());

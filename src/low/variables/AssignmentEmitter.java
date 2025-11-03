@@ -12,6 +12,8 @@ import low.main.TypeInfos;
 import low.module.LLVisitorMain;
 
 import java.util.Map;
+
+
 public class AssignmentEmitter {
     private final Map<String, TypeInfos> varTypes;
     private final TempManager temps;
@@ -37,7 +39,6 @@ public class AssignmentEmitter {
         String sourceType = info.getSourceType();
         StringBuilder llvm = new StringBuilder();
 
-        // --- Caso: valor literal ---
         if (assignNode.valueNode instanceof LiteralNode lit) {
             Object val = lit.value.value();
             if ("double".equals(llvmType) && val instanceof Integer i) val = i.doubleValue();
@@ -52,7 +53,6 @@ public class AssignmentEmitter {
                 case "i1" -> llvm.append("  store i1 ").append((Boolean) val ? "1" : "0")
                         .append(", i1* ").append(varPtr).append("\n");
 
-                // string "crua" (char*) – mantém comportamento anterior
                 case "i8*" -> {
                     String s = (String) val;
                     String strName = globalStrings.getOrCreateString(s);
@@ -63,8 +63,6 @@ public class AssignmentEmitter {
                             .append(varPtr).append("\n");
                 }
 
-                // *** CORRIGIDO ***: atribuição de literal para %String*
-                // Agora cria uma nova String com @createString e faz store do ponteiro.
                 case "%String*" -> {
                     String s = (String) val;
                     String strName = globalStrings.getOrCreateString(s);
@@ -85,7 +83,6 @@ public class AssignmentEmitter {
             return llvm.toString();
         }
 
-        // --- Caso: input() ---
         if (assignNode.valueNode instanceof InputNode inputNode) {
             InputEmitter inputEmitter = new InputEmitter(temps, globalStrings);
             String llvmInput = inputEmitter.emit(inputNode, llvmType);
@@ -101,7 +98,6 @@ public class AssignmentEmitter {
             return llvm.toString();
         }
 
-        // --- Caso: lista literal ---
         if (assignNode.valueNode instanceof ListNode listNode) {
             ListEmitter listEmitter = new ListEmitter(temps);
             String listLLVM = listEmitter.emit(listNode, visitor);
@@ -117,7 +113,6 @@ public class AssignmentEmitter {
             return llvm.toString();
         }
 
-        // --- Caso geral: expressão ---
         String exprLLVM = assignNode.valueNode.accept(visitor);
         String temp = extractTemp(exprLLVM);
 

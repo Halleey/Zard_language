@@ -13,7 +13,6 @@ import low.module.LLVisitorMain;
 
 import java.util.Map;
 
-
 public class AssignmentEmitter {
     private final Map<String, TypeInfos> varTypes;
     private final TempManager temps;
@@ -117,6 +116,14 @@ public class AssignmentEmitter {
         String temp = extractTemp(exprLLVM);
 
         llvm.append(exprLLVM);
+
+        if (sourceType.startsWith("Struct")) {
+            StructCopyEmitter structCopyEmitter =
+                    new StructCopyEmitter(varTypes, temps, globalStrings, visitor);
+            llvm.append(structCopyEmitter.emit(assignNode, temp, varPtr, sourceType));
+            return llvm.toString();
+        }
+
         if ("%String".equals(llvmType) || "%String*".equals(llvmType)) {
             llvm.append("  store %String* ").append(temp).append(", %String** ").append(varPtr).append("\n");
         } else {
@@ -129,7 +136,8 @@ public class AssignmentEmitter {
 
     private String extractTemp(String code) {
         int lastValIdx = code.lastIndexOf(";;VAL:");
-        if (lastValIdx == -1) throw new RuntimeException("Não encontrou ;;VAL: em: " + code);
+        if (lastValIdx == -1)
+            throw new RuntimeException("Não encontrou ;;VAL: em: " + code);
         int typeIdx = code.indexOf(";;TYPE:", lastValIdx);
         return code.substring(lastValIdx + 6, typeIdx).trim();
     }

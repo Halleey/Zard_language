@@ -1,14 +1,46 @@
 main {
 
-    Struct People {
-    string name;
-    int age;
+    Struct Pais {
+        string nome;
     }
 
+    Struct Endereco {
+        string rua;
+        string cidade;
+        Struct Pais pais;
+    }
 
-    Struct People p = {"Berk", 220};
-    Struct People ps;
-    ps = p;
-    print(ps);
+    Struct Pessoa {
+        string nome;
+        int idade;
+        Struct Endereco endereco;
+    }
 
+    Struct Pais brasil;
+    brasil.nome = "Brasil";
+
+    Struct Endereco e1;
+    e1.rua = "Rua A";
+    e1.cidade = "São Paulo";
+    e1.pais = brasil;
+
+    Struct Pessoa p1;
+    p1.nome = "Alice";
+    p1.idade = 25;
+    p1.endereco = e1;
+
+    # === Cópia profunda ===
+    Struct Pessoa p2;
+    p2 = p1;
+
+
+
+    # === Alterações independentes ===
+    p2.nome = "Zard";
+    e1.rua = "teste";
+
+    print("=== Original p1 ===");
+    print(p1);
+    print("=== Clone p2 ===");
+    print(p2);
 }

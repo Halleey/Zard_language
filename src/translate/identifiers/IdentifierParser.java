@@ -4,6 +4,7 @@ import ast.ASTNode;
 import ast.functions.FunctionCallNode;
 import ast.functions.FunctionReferenceNode;
 import ast.structs.StructInstanceParser;
+import ast.structs.StructUpdateNode;
 import tokens.Token;
 import ast.variables.AssignmentNode;
 import ast.variables.UnaryOpNode;
@@ -11,7 +12,10 @@ import ast.variables.VariableNode;
 import translate.ListMethodParser;
 import translate.Parser;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+
 public class IdentifierParser {
     private final Parser parser;
 
@@ -31,8 +35,15 @@ public class IdentifierParser {
 
                 if (receiverType != null && receiverType.startsWith("Struct")) {
                     StructFieldParser structParser = new StructFieldParser(parser);
-                    return structParser.parseAsStatement(receiver, memberName);
+                    ASTNode structAccess = structParser.parseAsStatement(receiver, memberName);
+
+                    if (parser.current().getValue().equals("{")) {
+                        return parseInlineStructUpdate(structAccess);
+                    }
+
+                    return structAccess;
                 }
+
 
                 // delega para List
                 if (receiverType != null && receiverType.startsWith("List")) {
@@ -121,5 +132,40 @@ public class IdentifierParser {
         }
 
         return receiver;
+    }
+
+    private StructUpdateNode parseInlineStructUpdate(ASTNode target) {
+        parser.eat(Token.TokenType.DELIMITER, "{");
+
+        Map<String, ASTNode> fieldUpdates = new LinkedHashMap<>();
+        Map<String, StructUpdateNode> nestedUpdates = new LinkedHashMap<>();
+
+        while (!parser.current().getValue().equals("}")) {
+            String fieldName = parser.current().getValue();
+            parser.eat(Token.TokenType.IDENTIFIER);
+
+            // Campo simples nome: valor;
+            if (parser.current().getValue().equals(":")) {
+                parser.advance();
+                ASTNode value = parser.parseExpression();
+                parser.eat(Token.TokenType.DELIMITER, ";");
+                fieldUpdates.put(fieldName, value);
+                continue;
+            }
+
+            // Campo aninhado  nome { ... }
+            if (parser.current().getValue().equals("{")) {
+                StructUpdateNode nested = parseInlineStructUpdate(
+                        new VariableNode(fieldName)
+                );
+                nestedUpdates.put(fieldName, nested);
+                continue;
+            }
+
+            throw new RuntimeException("Esperado ':' ou '{' após nome do campo em struct update");
+        }
+
+        parser.eat(Token.TokenType.DELIMITER, "}");
+        return new StructUpdateNode(target, fieldUpdates, nestedUpdates);
     }
 }

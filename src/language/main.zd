@@ -38,9 +38,17 @@ main {
     # === Alterações independentes ===
     p2.nome = "Zard";
     e1.rua = "teste";
-
+    e1.cidade = "Santo andré";
     print("=== Original p1 ===");
     print(p1);
+
+    p2.endereco {
+        rua: "Nova Rua";
+        cidade: "Zurique";
+        pais {
+            nome: "Suíça";
+        }
+    }
     print("=== Clone p2 ===");
     print(p2);
 }

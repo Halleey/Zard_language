@@ -1,0 +1,242 @@
+	.text
+	.file	"programa.ll"
+	.globl	print_Pais                      # -- Begin function print_Pais
+	.p2align	4, 0x90
+	.type	print_Pais,@function
+print_Pais:                             # @print_Pais
+	.cfi_startproc
+# %bb.0:                                # %entry
+	pushq	%rax
+	.cfi_def_cfa_offset 16
+	movq	(%rdi), %rdi
+	callq	printString@PLT
+	popq	%rax
+	.cfi_def_cfa_offset 8
+	retq
+.Lfunc_end0:
+	.size	print_Pais, .Lfunc_end0-print_Pais
+	.cfi_endproc
+                                        # -- End function
+	.globl	print_Endereco                  # -- Begin function print_Endereco
+	.p2align	4, 0x90
+	.type	print_Endereco,@function
+print_Endereco:                         # @print_Endereco
+	.cfi_startproc
+# %bb.0:                                # %entry
+	pushq	%rbx
+	.cfi_def_cfa_offset 16
+	.cfi_offset %rbx, -16
+	movq	%rdi, %rbx
+	movq	(%rdi), %rdi
+	callq	printString@PLT
+	movq	8(%rbx), %rdi
+	callq	printString@PLT
+	movq	16(%rbx), %rdi
+	callq	print_Pais@PLT
+	popq	%rbx
+	.cfi_def_cfa_offset 8
+	retq
+.Lfunc_end1:
+	.size	print_Endereco, .Lfunc_end1-print_Endereco
+	.cfi_endproc
+                                        # -- End function
+	.globl	print_Pessoa                    # -- Begin function print_Pessoa
+	.p2align	4, 0x90
+	.type	print_Pessoa,@function
+print_Pessoa:                           # @print_Pessoa
+	.cfi_startproc
+# %bb.0:                                # %entry
+	pushq	%rbx
+	.cfi_def_cfa_offset 16
+	.cfi_offset %rbx, -16
+	movq	%rdi, %rbx
+	movq	(%rdi), %rdi
+	callq	printString@PLT
+	movl	8(%rbx), %esi
+	movl	$.L.strInt, %edi
+	xorl	%eax, %eax
+	callq	printf@PLT
+	movq	16(%rbx), %rdi
+	callq	print_Endereco@PLT
+	popq	%rbx
+	.cfi_def_cfa_offset 8
+	retq
+.Lfunc_end2:
+	.size	print_Pessoa, .Lfunc_end2-print_Pessoa
+	.cfi_endproc
+                                        # -- End function
+	.globl	main                            # -- Begin function main
+	.p2align	4, 0x90
+	.type	main,@function
+main:                                   # @main
+	.cfi_startproc
+# %bb.0:
+	subq	$120, %rsp
+	.cfi_def_cfa_offset 128
+	xorl	%edi, %edi
+	callq	createString@PLT
+	movq	%rax, 56(%rsp)
+	movl	$.L.str0, %edi
+	callq	createString@PLT
+	movq	%rax, 56(%rsp)
+	xorl	%edi, %edi
+	callq	createString@PLT
+	movq	%rax, 32(%rsp)
+	xorl	%edi, %edi
+	callq	createString@PLT
+	movq	%rax, 40(%rsp)
+	movq	$0, 48(%rsp)
+	movl	$.L.str1, %edi
+	callq	createString@PLT
+	movq	%rax, 32(%rsp)
+	movl	$.L.str2, %edi
+	callq	createString@PLT
+	movq	%rax, 40(%rsp)
+	leaq	56(%rsp), %rax
+	movq	%rax, 48(%rsp)
+	xorl	%edi, %edi
+	callq	createString@PLT
+	movq	%rax, 8(%rsp)
+	movl	$0, 16(%rsp)
+	movq	$0, 24(%rsp)
+	movl	$.L.str3, %edi
+	callq	createString@PLT
+	movq	%rax, 8(%rsp)
+	movl	$25, 16(%rsp)
+	leaq	32(%rsp), %rax
+	movq	%rax, 24(%rsp)
+	xorl	%edi, %edi
+	callq	createString@PLT
+	movq	%rax, 64(%rsp)
+	movl	$0, 72(%rsp)
+	movq	$0, 80(%rsp)
+	movq	8(%rsp), %rax
+	movq	%rax, 64(%rsp)
+	movl	16(%rsp), %eax
+	movl	%eax, 72(%rsp)
+	movq	24(%rsp), %rax
+	movq	(%rax), %rcx
+	movq	%rcx, 96(%rsp)
+	movq	8(%rax), %rcx
+	movq	%rcx, 104(%rsp)
+	movq	16(%rax), %rax
+	movq	(%rax), %rax
+	movq	%rax, 88(%rsp)
+	leaq	88(%rsp), %rax
+	movq	%rax, 112(%rsp)
+	leaq	96(%rsp), %rax
+	movq	%rax, 80(%rsp)
+	movl	$.L.str4, %edi
+	callq	createString@PLT
+	movq	%rax, 64(%rsp)
+	movl	$.L.str5, %edi
+	callq	createString@PLT
+	movq	%rax, 32(%rsp)
+	movl	$.L.str6, %edi
+	callq	createString@PLT
+	movq	%rax, 40(%rsp)
+	movl	$.L.strStr, %edi
+	movl	$.L.str7, %esi
+	xorl	%eax, %eax
+	callq	printf@PLT
+	leaq	8(%rsp), %rdi
+	callq	print_Pessoa@PLT
+	movl	$.L.strStr, %edi
+	movl	$.L.str8, %esi
+	xorl	%eax, %eax
+	callq	printf@PLT
+	leaq	64(%rsp), %rdi
+	callq	print_Pessoa@PLT
+	callq	getchar@PLT
+	xorl	%eax, %eax
+	addq	$120, %rsp
+	.cfi_def_cfa_offset 8
+	retq
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
+	.cfi_endproc
+                                        # -- End function
+	.type	.L.strChar,@object              # @.strChar
+	.section	.rodata,"a",@progbits
+.L.strChar:
+	.asciz	"%c"
+	.size	.L.strChar, 3
+
+	.type	.L.strTrue,@object              # @.strTrue
+.L.strTrue:
+	.asciz	"true\n"
+	.size	.L.strTrue, 6
+
+	.type	.L.strFalse,@object             # @.strFalse
+.L.strFalse:
+	.asciz	"false\n"
+	.size	.L.strFalse, 7
+
+	.type	.L.strInt,@object               # @.strInt
+.L.strInt:
+	.asciz	"%d\n"
+	.size	.L.strInt, 4
+
+	.type	.L.strDouble,@object            # @.strDouble
+.L.strDouble:
+	.asciz	"%f\n"
+	.size	.L.strDouble, 4
+
+	.type	.L.strStr,@object               # @.strStr
+.L.strStr:
+	.asciz	"%s\n"
+	.size	.L.strStr, 4
+
+	.type	.L.strEmpty,@object             # @.strEmpty
+.L.strEmpty:
+	.zero	1
+	.size	.L.strEmpty, 1
+
+	.type	.L.str0,@object                 # @.str0
+.L.str0:
+	.asciz	"Brasil"
+	.size	.L.str0, 7
+
+	.type	.L.str1,@object                 # @.str1
+.L.str1:
+	.asciz	"Rua A"
+	.size	.L.str1, 6
+
+	.type	.L.str2,@object                 # @.str2
+.L.str2:
+	.asciz	"S\303\243o Paulo"
+	.size	.L.str2, 11
+
+	.type	.L.str3,@object                 # @.str3
+.L.str3:
+	.asciz	"Alice"
+	.size	.L.str3, 6
+
+	.type	.L.str4,@object                 # @.str4
+.L.str4:
+	.asciz	"Zard"
+	.size	.L.str4, 5
+
+	.type	.L.str5,@object                 # @.str5
+.L.str5:
+	.asciz	"teste"
+	.size	.L.str5, 6
+
+	.type	.L.str6,@object                 # @.str6
+.L.str6:
+	.asciz	"Santo andr\303\251"
+	.size	.L.str6, 13
+
+	.type	.L.str7,@object                 # @.str7
+	.p2align	4, 0x0
+.L.str7:
+	.asciz	"=== Original p1 ==="
+	.size	.L.str7, 20
+
+	.type	.L.str8,@object                 # @.str8
+	.p2align	4, 0x0
+.L.str8:
+	.asciz	"=== Clone p2 ==="
+	.size	.L.str8, 17
+
+	.section	".note.GNU-stack","",@progbits

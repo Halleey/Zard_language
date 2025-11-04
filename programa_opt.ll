@@ -18,8 +18,9 @@ source_filename = "programa.ll"
 @.str3 = private constant [6 x i8] c"Alice\00"
 @.str4 = private constant [5 x i8] c"Zard\00"
 @.str5 = private constant [6 x i8] c"teste\00"
-@.str6 = private constant [20 x i8] c"=== Original p1 ===\00"
-@.str7 = private constant [17 x i8] c"=== Clone p2 ===\00"
+@.str6 = private constant [13 x i8] c"Santo andr\C3\A9\00"
+@.str7 = private constant [20 x i8] c"=== Original p1 ===\00"
+@.str8 = private constant [17 x i8] c"=== Clone p2 ===\00"
 
 declare i32 @printf(ptr, ...)
 
@@ -131,9 +132,11 @@ define i32 @main() {
   store ptr %tmp79, ptr %tmp46, align 8
   %tmp84 = call ptr @createString(ptr @.str5)
   store ptr %tmp84, ptr %tmp8, align 8
-  %1 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str6)
+  %tmp89 = call ptr @createString(ptr @.str6)
+  store ptr %tmp89, ptr %tmp12, align 8
+  %1 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str7)
   call void @print_Pessoa(ptr %tmp28)
-  %2 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str7)
+  %2 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str8)
   call void @print_Pessoa(ptr %tmp46)
   %3 = call i32 @getchar()
   ret i32 0

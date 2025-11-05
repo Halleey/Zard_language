@@ -15,7 +15,7 @@ main {
 
 
     function string alterName(string name) {
-    name = "hallyson";
+    name = "halley";
     return name;
     }
 

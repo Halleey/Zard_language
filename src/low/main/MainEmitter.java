@@ -15,6 +15,7 @@ import ast.prints.PrintNode;
 import ast.structs.StructFieldAccessNode;
 import ast.structs.StructInstaceNode;
 import ast.structs.StructNode;
+import ast.structs.StructUpdateNode;
 import ast.variables.AssignmentNode;
 import ast.variables.BinaryOpNode;
 import low.TempManager;
@@ -207,6 +208,10 @@ public class MainEmitter {
         }
         else if(node instanceof StructFieldAccessNode accessNode) {
                 coletarStringsRecursivo(accessNode.getValue());
+        }
+        else if (node instanceof StructUpdateNode inlineUpdate) {
+            inlineUpdate.getFieldUpdates().values().forEach(this::coletarStringsRecursivo);
+            inlineUpdate.getNestedUpdates().values().forEach(this::coletarStringsRecursivo);
         }
         else if (node instanceof StructInstaceNode structInstance) {
             for (ASTNode val : structInstance.getPositionalValues()) {

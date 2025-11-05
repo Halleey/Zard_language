@@ -14,6 +14,7 @@ import ast.lists.*;
 import ast.loops.WhileNode;
 import ast.maps.MapNode;
 import ast.prints.PrintNode;
+import ast.structs.StructUpdateNode;
 import ast.variables.*;
 
 public interface LLVMEmitVisitor {
@@ -43,5 +44,6 @@ public interface LLVMEmitVisitor {
     String visit (StructNode node);
     String visit (StructInstaceNode node);
     String visit (StructFieldAccessNode node);
+    String visit (StructUpdateNode node);
 }
 

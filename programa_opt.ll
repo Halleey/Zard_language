@@ -20,7 +20,10 @@ source_filename = "programa.ll"
 @.str5 = private constant [6 x i8] c"teste\00"
 @.str6 = private constant [13 x i8] c"Santo andr\C3\A9\00"
 @.str7 = private constant [20 x i8] c"=== Original p1 ===\00"
-@.str8 = private constant [17 x i8] c"=== Clone p2 ===\00"
+@.str8 = private constant [9 x i8] c"Nova Rua\00"
+@.str9 = private constant [8 x i8] c"Zurique\00"
+@.str10 = private constant [8 x i8] c"Su\C3\AD\C3\A7a\00"
+@.str11 = private constant [17 x i8] c"=== Clone p2 ===\00"
 
 declare i32 @printf(ptr, ...)
 
@@ -136,7 +139,17 @@ define i32 @main() {
   store ptr %tmp89, ptr %tmp12, align 8
   %1 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str7)
   call void @print_Pessoa(ptr %tmp28)
-  %2 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str8)
+  %tmp95 = load ptr, ptr %tmp50, align 8
+  %tmp97 = call ptr @createString(ptr @.str8)
+  store ptr %tmp97, ptr %tmp95, align 8
+  %tmp100 = call ptr @createString(ptr @.str9)
+  %tmp101 = getelementptr inbounds %Endereco, ptr %tmp95, i32 0, i32 1
+  store ptr %tmp100, ptr %tmp101, align 8
+  %tmp102 = getelementptr inbounds %Endereco, ptr %tmp95, i32 0, i32 2
+  %tmp103 = load ptr, ptr %tmp102, align 8
+  %tmp105 = call ptr @createString(ptr @.str10)
+  store ptr %tmp105, ptr %tmp103, align 8
+  %2 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str11)
   call void @print_Pessoa(ptr %tmp46)
   %3 = call i32 @getchar()
   ret i32 0

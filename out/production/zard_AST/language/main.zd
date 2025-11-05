@@ -33,8 +33,6 @@ main {
     Struct Pessoa p2;
     p2 = p1;
 
-
-
     # === Alterações independentes ===
     p2.nome = "Zard";
     e1.rua = "teste";
@@ -49,8 +47,6 @@ main {
             nome: "Suíça";
         }
     }
-
-
     print("=== Clone p2 ===");
     print(p2);
 }

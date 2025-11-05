@@ -71,85 +71,101 @@ print_Pessoa:                           # @print_Pessoa
 main:                                   # @main
 	.cfi_startproc
 # %bb.0:
-	subq	$120, %rsp
+	pushq	%rbx
+	.cfi_def_cfa_offset 16
+	subq	$112, %rsp
 	.cfi_def_cfa_offset 128
+	.cfi_offset %rbx, -16
 	xorl	%edi, %edi
 	callq	createString@PLT
-	movq	%rax, 56(%rsp)
+	movq	%rax, 72(%rsp)
 	movl	$.L.str0, %edi
 	callq	createString@PLT
-	movq	%rax, 56(%rsp)
+	movq	%rax, 72(%rsp)
 	xorl	%edi, %edi
 	callq	createString@PLT
-	movq	%rax, 32(%rsp)
-	xorl	%edi, %edi
-	callq	createString@PLT
-	movq	%rax, 40(%rsp)
-	movq	$0, 48(%rsp)
-	movl	$.L.str1, %edi
-	callq	createString@PLT
-	movq	%rax, 32(%rsp)
-	movl	$.L.str2, %edi
-	callq	createString@PLT
-	movq	%rax, 40(%rsp)
-	leaq	56(%rsp), %rax
 	movq	%rax, 48(%rsp)
 	xorl	%edi, %edi
 	callq	createString@PLT
-	movq	%rax, 8(%rsp)
-	movl	$0, 16(%rsp)
-	movq	$0, 24(%rsp)
-	movl	$.L.str3, %edi
+	movq	%rax, 56(%rsp)
+	movq	$0, 64(%rsp)
+	movl	$.L.str1, %edi
 	callq	createString@PLT
-	movq	%rax, 8(%rsp)
-	movl	$25, 16(%rsp)
-	leaq	32(%rsp), %rax
-	movq	%rax, 24(%rsp)
+	movq	%rax, 48(%rsp)
+	movl	$.L.str2, %edi
+	callq	createString@PLT
+	movq	%rax, 56(%rsp)
+	leaq	72(%rsp), %rax
+	movq	%rax, 64(%rsp)
 	xorl	%edi, %edi
 	callq	createString@PLT
-	movq	%rax, 64(%rsp)
-	movl	$0, 72(%rsp)
-	movq	$0, 80(%rsp)
-	movq	8(%rsp), %rax
-	movq	%rax, 64(%rsp)
-	movl	16(%rsp), %eax
-	movl	%eax, 72(%rsp)
-	movq	24(%rsp), %rax
+	movq	%rax, (%rsp)
+	movl	$0, 8(%rsp)
+	movq	$0, 16(%rsp)
+	movl	$.L.str3, %edi
+	callq	createString@PLT
+	movq	%rax, (%rsp)
+	movl	$25, 8(%rsp)
+	leaq	48(%rsp), %rax
+	movq	%rax, 16(%rsp)
+	xorl	%edi, %edi
+	callq	createString@PLT
+	movq	%rax, 24(%rsp)
+	movl	$0, 32(%rsp)
+	movq	$0, 40(%rsp)
+	movq	(%rsp), %rax
+	movq	%rax, 24(%rsp)
+	movl	8(%rsp), %eax
+	movl	%eax, 32(%rsp)
+	movq	16(%rsp), %rax
 	movq	(%rax), %rcx
-	movq	%rcx, 96(%rsp)
+	movq	%rcx, 88(%rsp)
 	movq	8(%rax), %rcx
-	movq	%rcx, 104(%rsp)
+	movq	%rcx, 96(%rsp)
 	movq	16(%rax), %rax
 	movq	(%rax), %rax
-	movq	%rax, 88(%rsp)
-	leaq	88(%rsp), %rax
-	movq	%rax, 112(%rsp)
-	leaq	96(%rsp), %rax
 	movq	%rax, 80(%rsp)
+	leaq	80(%rsp), %rax
+	movq	%rax, 104(%rsp)
+	leaq	88(%rsp), %rax
+	movq	%rax, 40(%rsp)
 	movl	$.L.str4, %edi
 	callq	createString@PLT
-	movq	%rax, 64(%rsp)
+	movq	%rax, 24(%rsp)
 	movl	$.L.str5, %edi
 	callq	createString@PLT
-	movq	%rax, 32(%rsp)
+	movq	%rax, 48(%rsp)
 	movl	$.L.str6, %edi
 	callq	createString@PLT
-	movq	%rax, 40(%rsp)
+	movq	%rax, 56(%rsp)
 	movl	$.L.strStr, %edi
 	movl	$.L.str7, %esi
 	xorl	%eax, %eax
 	callq	printf@PLT
-	leaq	8(%rsp), %rdi
+	movq	%rsp, %rdi
 	callq	print_Pessoa@PLT
+	movq	40(%rsp), %rbx
+	movl	$.L.str8, %edi
+	callq	createString@PLT
+	movq	%rax, (%rbx)
+	movl	$.L.str9, %edi
+	callq	createString@PLT
+	movq	%rax, 8(%rbx)
+	movq	16(%rbx), %rbx
+	movl	$.L.str10, %edi
+	callq	createString@PLT
+	movq	%rax, (%rbx)
 	movl	$.L.strStr, %edi
-	movl	$.L.str8, %esi
+	movl	$.L.str11, %esi
 	xorl	%eax, %eax
 	callq	printf@PLT
-	leaq	64(%rsp), %rdi
+	leaq	24(%rsp), %rdi
 	callq	print_Pessoa@PLT
 	callq	getchar@PLT
 	xorl	%eax, %eax
-	addq	$120, %rsp
+	addq	$112, %rsp
+	.cfi_def_cfa_offset 16
+	popq	%rbx
 	.cfi_def_cfa_offset 8
 	retq
 .Lfunc_end3:
@@ -234,9 +250,24 @@ main:                                   # @main
 	.size	.L.str7, 20
 
 	.type	.L.str8,@object                 # @.str8
-	.p2align	4, 0x0
 .L.str8:
+	.asciz	"Nova Rua"
+	.size	.L.str8, 9
+
+	.type	.L.str9,@object                 # @.str9
+.L.str9:
+	.asciz	"Zurique"
+	.size	.L.str9, 8
+
+	.type	.L.str10,@object                # @.str10
+.L.str10:
+	.asciz	"Su\303\255\303\247a"
+	.size	.L.str10, 8
+
+	.type	.L.str11,@object                # @.str11
+	.p2align	4, 0x0
+.L.str11:
 	.asciz	"=== Clone p2 ==="
-	.size	.L.str8, 17
+	.size	.L.str11, 17
 
 	.section	".note.GNU-stack","",@progbits

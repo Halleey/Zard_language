@@ -33,8 +33,6 @@ main {
     Struct Pessoa p2;
     p2 = p1;
 
-
-
     # === Alterações independentes ===
     p2.nome = "Zard";
     e1.rua = "teste";

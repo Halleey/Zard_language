@@ -15,6 +15,7 @@ import ast.lists.*;
 import ast.loops.WhileNode;
 import ast.maps.MapNode;
 import ast.prints.PrintNode;
+import ast.structs.StructUpdateNode;
 import ast.variables.*;
 import low.TempManager;
 import low.exceptions.ReturnEmitter;
@@ -30,6 +31,7 @@ import low.prints.PrintEmitter;
 import low.structs.StructEmitter;
 import low.structs.StructFieldAccessEmitter;
 import low.structs.StructInstanceEmitter;
+import low.structs.StructUpdateEmitter;
 import low.variables.*;
 import low.whiles.WhileEmitter;
 
@@ -63,6 +65,8 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final ListGetEmitter getEmitter = new ListGetEmitter(temps);
     private final ListAddAllEmitter allEmitter = new ListAddAllEmitter(temps, globalStrings);
     private final FunctionCallEmitter callEmiter = new FunctionCallEmitter(temps);
+    private final StructUpdateEmitter updateEmitter = new StructUpdateEmitter(temps, this);
+
 
     public final Map<String, FunctionNode> functions = new HashMap<>();
     public final Map<String, FunctionNode> importedFunctions = new HashMap<>();
@@ -151,6 +155,12 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     }
     @Override public String visit(StructInstaceNode node) { return instanceEmitter.emit(node, this); }
     @Override public String visit(StructFieldAccessNode node) { return structFieldAccessEmitter.emit(node, this); }
+
+    @Override
+    public String visit(StructUpdateNode node) {
+        return updateEmitter.emit(node);
+    }
+
     @Override public String visit(MainAST node) {
         MainEmitter mainEmitter = new MainEmitter(globalStrings, temps, tiposDeListasUsados, structDefinitions);
         return mainEmitter.emit(node, this);
@@ -256,5 +266,51 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         }
         return name;
     }
+
+    public String resolveStructName(ASTNode node) {
+        // Caso seja uma variável simples
+        if (node instanceof VariableNode varNode) {
+            TypeInfos type = getVarType(varNode.getName());
+            if (type != null) {
+                String t = type.getSourceType();
+                if (t.startsWith("Struct<") && t.endsWith(">")) {
+                    return t.substring(7, t.length() - 1).trim();
+                }
+                if (t.startsWith("Struct ")) {
+                    return t.substring(7).trim();
+                }
+                return t.replace("%", "").replace("*", "");
+            }
+            throw new RuntimeException("Unknown variable struct type: " + varNode.getName());
+        }
+
+        // Caso seja acesso a campo de struct (p2.endereco)
+        if (node instanceof StructFieldAccessNode sfa) {
+            String parentType = getStructFieldType(sfa);
+            if (parentType.startsWith("Struct<") && parentType.endsWith(">")) {
+                return parentType.substring(7, parentType.length() - 1).trim();
+            }
+            if (parentType.startsWith("Struct ")) {
+                return parentType.substring(7).trim();
+            }
+            return parentType.replace("%", "").replace("*", "");
+        }
+
+        // Caso seja retorno de List.get() que contém struct
+        if (node instanceof ListGetNode lg) {
+            String elem = inferListElementType(lg.getListName());
+            if (elem == null) throw new RuntimeException("Cannot resolve struct name from list element type");
+            if (elem.startsWith("Struct<") && elem.endsWith(">")) {
+                return elem.substring(7, elem.length() - 1).trim();
+            }
+            if (elem.startsWith("Struct ")) {
+                return elem.substring(7).trim();
+            }
+            return elem.replace("%", "").replace("*", "");
+        }
+
+        throw new RuntimeException("Cannot resolve struct name from node type: " + node.getClass().getSimpleName());
+    }
+
 
 }

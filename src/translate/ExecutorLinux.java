@@ -43,15 +43,6 @@ public class ExecutorLinux {
         // Gerar LLVM IR
         LLVMGenerator llvmGen = new LLVMGenerator();
         String llvmCode = llvmGen.generate(ast);
-
-
-        System.out.println("=== TOKENS GERADOS ===");
-        for (int i = 0; i < tokens.size(); i++) {
-            Token t = tokens.get(i);
-            System.out.printf("[%03d] %-12s -> %s%n", i, t.getType(), t.getValue());
-        }
-
-
         System.out.println("=== LLVM IR ===");
         System.out.println(llvmCode);
 

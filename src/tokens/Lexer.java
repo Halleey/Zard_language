@@ -61,7 +61,7 @@ public class Lexer {
         String identifier = result.toString();
 
         return switch (identifier) {
-            case "int", "string", "double", "char", "print", "if", "else", "else if", "input", "function", "return",
+            case "int", "string", "double", "float", "char", "print", "if", "else", "else if", "input", "function", "return",
                  "main", "while", "call", "List", "Map", "boolean", "break", "import", "var", "as", "Struct" ->
                     new Token(Token.TokenType.KEYWORD, identifier);
             case "new" -> new Token(Token.TokenType.INSTANCE, identifier);

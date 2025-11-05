@@ -4,8 +4,6 @@ import ast.expressions.TypedValue;
 import low.main.GlobalStringManager;
 import low.TempManager;
 import ast.variables.LiteralNode;
-
-
 public class LiteralEmitter {
     private final TempManager temps;
     private final GlobalStringManager globalStrings;
@@ -21,20 +19,27 @@ public class LiteralEmitter {
         StringBuilder llvm = new StringBuilder();
 
         switch (value.type()) {
-            case "int" -> {
-                llvm.append("  ").append(temp).append(" = add i32 0, ").append(value.value()).append("\n");
-                llvm.append(";;VAL:").append(temp).append(";;TYPE:i32\n");
-            }
-            case "double" -> {
-                // Gera literal double diretamente sem somar 0
-                llvm.append("  ").append(temp).append(" = fadd double 0.0, ")
-                        .append(value.value()).append("\n");
-                llvm.append(";;VAL:").append(temp).append(";;TYPE:double\n");
+            case "int" -> llvm.append("  ").append(temp)
+                    .append(" = add i32 0, ").append(value.value()).append("\n")
+                    .append(";;VAL:").append(temp).append(";;TYPE:i32\n");
+            case "double" -> llvm.append("  ").append(temp)
+                    .append(" = fadd double 0.0, ").append(value.value()).append("\n")
+                    .append(";;VAL:").append(temp).append(";;TYPE:double\n");
+
+            case "float" -> {
+                String val = value.value().toString();
+                if (!val.endsWith("f") && !val.endsWith("F")) {
+                    val = val + "f";
+                }
+                llvm.append("  ").append(temp)
+                        .append(" = fadd float 0.0, ").append(val).append("\n")
+                        .append(";;VAL:").append(temp).append(";;TYPE:float\n");
             }
             case "boolean" -> {
                 boolean b = (Boolean) value.value();
-                llvm.append("  ").append(temp).append(" = add i1 0, ").append(b ? 1 : 0).append("\n");
-                llvm.append(";;VAL:").append(temp).append(";;TYPE:i1\n");
+                llvm.append("  ").append(temp)
+                        .append(" = add i1 0, ").append(b ? 1 : 0).append("\n")
+                        .append(";;VAL:").append(temp).append(";;TYPE:i1\n");
             }
             case "char" -> {
                 String str = (String) value.value();
@@ -42,15 +47,17 @@ public class LiteralEmitter {
                     throw new RuntimeException("Invalid char literal: " + str);
                 }
                 int ascii = str.charAt(0);
-                llvm.append("  ").append(temp).append(" = add i8 0, ").append(ascii).append("\n")
+                llvm.append("  ").append(temp)
+                        .append(" = add i8 0, ").append(ascii).append("\n")
                         .append(";;VAL:").append(temp).append(";;TYPE:i8\n");
             }
             case "string" -> {
                 String literal = (String) value.value();
-                String strName = globalStrings.getOrCreateString(literal); // registrar @str
+                String strName = globalStrings.getOrCreateString(literal);
                 String tmp = temps.newTemp();
                 llvm.append("  ").append(tmp)
-                        .append(" = call %String* @createString(i8* ").append(strName).append(")\n")
+                        .append(" = call %String* @createString(i8* ")
+                        .append(strName).append(")\n")
                         .append(";;VAL:").append(tmp).append(";;TYPE:%String*\n");
             }
             default -> throw new RuntimeException("Literal type not supported: " + value.type());

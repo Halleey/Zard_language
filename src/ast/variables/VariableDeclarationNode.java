@@ -29,10 +29,10 @@ public class VariableDeclarationNode extends ASTNode {
     public String accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
-
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
         TypedValue value;
+
         if (ctxHasStruct(ctx, type)) {
             String structName = extractStructName(type);
 
@@ -58,6 +58,11 @@ public class VariableDeclarationNode extends ASTNode {
                 value = evaluateMap(ctx, (MapNode) initializer, (DynamicMap) value.value());
             } else {
                 value = initializer.evaluate(ctx);
+
+                if ("float".equals(type) && "double".equals(value.type())) {
+                    double d = (Double) value.value();
+                    value = new TypedValue("float", (float) d);
+                }
                 ctx.setVariable(name, value);
             }
         }
@@ -145,6 +150,7 @@ public class VariableDeclarationNode extends ASTNode {
             case "double" -> new TypedValue("double", 0.0);
             case "string" -> new TypedValue("string", "");
             case "boolean" -> new TypedValue("boolean", false);
+            case "float" -> new TypedValue("float", 0.0);
             case "char" -> new TypedValue("char", '\0');
             default -> throw new RuntimeException("Tipo desconhecido: " + type);
         };

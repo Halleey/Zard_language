@@ -164,6 +164,13 @@ public class VariableEmitter {
         String result = exprLLVM;
         if (!tempType.equals(llvmType)) {
             String castTmp = temps.newTemp();
+
+            if (tempType.equals("double") && llvmType.equals("float")) {
+                result += "  " + castTmp + " = fptrunc double " + temp + " to float\n" +
+                        ";;VAL:" + castTmp + ";;TYPE:float\n";
+                temp = castTmp;
+            }
+
             if (tempType.equals("i32") && llvmType.equals("double")) {
                 result += "  " + castTmp + " = sitofp i32 " + temp + " to double\n" +
                         ";;VAL:" + castTmp + ";;TYPE:double\n";

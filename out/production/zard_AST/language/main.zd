@@ -4,6 +4,9 @@ main {
         string nome;
     }
 
+
+    float teste = 3.14;
+    print(teste);
     Struct Endereco {
         string rua;
         string cidade;
@@ -39,7 +42,7 @@ main {
 
     # === Alterações independentes ===
     p2.nome = "Zard";
-    p2.telefones.add("21 44444-5555");  
+    p2.telefones.add("21 44444-5555");
 
     e1.rua = "teste";
     e1.cidade = "Santo andré";

@@ -56,6 +56,16 @@ public class ExprPrintHandler {
                         .append("double ").append(temp).append(")\n");
                 return llvm.toString();
             }
+            case "float" -> {
+                String tmpExt = temps.newTemp();
+                llvm.append("  ").append(tmpExt)
+                        .append(" = fpext float ").append(temp).append(" to double\n")
+                        .append(";;VAL:").append(tmpExt).append(";;TYPE:double\n");
+                llvm.append("  call i32 (i8*, ...) @printf(")
+                        .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strFloat, i32 0, i32 0), ")
+                        .append("double ").append(tmpExt).append(")\n");
+                return llvm.toString();
+            }
             case "i1" -> {
                 new PrimitivePrintHandler(temps).emitBoolPrint(llvm, temp);
                 return llvm.toString();

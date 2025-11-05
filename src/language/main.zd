@@ -4,6 +4,9 @@ main {
         string nome;
     }
 
+
+    float teste = 3.14;
+    print(teste);
     Struct Endereco {
         string rua;
         string cidade;

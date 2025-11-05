@@ -49,6 +49,8 @@ public class AssignmentEmitter {
                 case "double" -> llvm.append("  store double ").append(val)
                         .append(", double* ").append(varPtr).append("\n");
 
+                case "float" ->llvm.append("  store float").append(val).append(", float*").append(varPtr).append("\n");
+
                 case "i1" -> llvm.append("  store i1 ").append((Boolean) val ? "1" : "0")
                         .append(", i1* ").append(varPtr).append("\n");
 

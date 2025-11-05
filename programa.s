@@ -67,7 +67,12 @@ print_Pessoa:                           # @print_Pessoa
 	.size	print_Pessoa, .Lfunc_end2-print_Pessoa
 	.cfi_endproc
                                         # -- End function
-	.globl	main                            # -- Begin function main
+	.section	.rodata.cst8,"aM",@progbits,8
+	.p2align	3, 0x0                          # -- Begin function main
+.LCPI3_0:
+	.quad	0x40091eb860000000              # double 3.1400001049041748
+	.text
+	.globl	main
 	.p2align	4, 0x90
 	.type	main,@function
 main:                                   # @main
@@ -78,6 +83,10 @@ main:                                   # @main
 	subq	$128, %rsp
 	.cfi_def_cfa_offset 144
 	.cfi_offset %rbx, -16
+	movsd	.LCPI3_0(%rip), %xmm0           # xmm0 = [3.1400001049041748E+0,0.0E+0]
+	movl	$.L.strFloat, %edi
+	movb	$1, %al
+	callq	printf@PLT
 	xorl	%edi, %edi
 	callq	createString@PLT
 	movq	%rax, 88(%rsp)
@@ -225,6 +234,11 @@ main:                                   # @main
 .L.strDouble:
 	.asciz	"%f\n"
 	.size	.L.strDouble, 4
+
+	.type	.L.strFloat,@object             # @.strFloat
+.L.strFloat:
+	.asciz	"%f\n"
+	.size	.L.strFloat, 4
 
 	.type	.L.strStr,@object               # @.strStr
 .L.strStr:

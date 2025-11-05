@@ -47,6 +47,7 @@ public class TypeMapper {
         return switch (type) {
             case "int" -> "i32";
             case "double" -> "double";
+            case "float" -> "float";
             case "boolean" -> "i1";
             case "string" -> "%String*";
             case "void" -> "void";

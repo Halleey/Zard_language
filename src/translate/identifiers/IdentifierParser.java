@@ -4,6 +4,7 @@ import ast.ASTNode;
 import ast.functions.FunctionCallNode;
 import ast.functions.FunctionReferenceNode;
 import ast.structs.StructInstanceParser;
+import ast.structs.StructMethodCallNode;
 import ast.structs.StructUpdateNode;
 import tokens.Token;
 import ast.variables.AssignmentNode;
@@ -34,11 +35,20 @@ public class IdentifierParser {
                 String receiverType = parser.getExpressionType(receiver);
 
                 if (receiverType != null && receiverType.startsWith("Struct")) {
+
                     StructFieldParser structParser = new StructFieldParser(parser);
                     ASTNode structAccess = structParser.parseAsStatement(receiver, memberName);
 
                     if (parser.current().getValue().equals("{")) {
                         return parseInlineStructUpdate(structAccess);
+                    }
+
+                    if (parser.current().getValue().equals("(")) {
+                        List<ASTNode> args = parser.parseArguments();
+                        parser.eat(Token.TokenType.DELIMITER, ";");
+
+                        String structName = receiverType.substring("Struct<".length(), receiverType.length() - 1);
+                        return new StructMethodCallNode(receiver, structName, memberName, args);
                     }
 
                     return structAccess;

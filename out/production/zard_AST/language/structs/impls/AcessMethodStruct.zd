@@ -1,0 +1,21 @@
+
+
+main {
+Struct Pessoa {
+    string nome;
+    int idade;
+}
+
+impl Pessoa {
+    function void hello() {
+        print("Olá do método hello()");
+    }
+}
+
+    Struct Pessoa p;
+    p.nome = "Zard";
+    p.idade = 22;
+
+    # chamada de método do impl
+    p.hello();
+}

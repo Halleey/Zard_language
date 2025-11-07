@@ -1,6 +1,7 @@
 package ast.runtime;
 
 import ast.expressions.TypedValue;
+import ast.functions.FunctionNode;
 import ast.variables.VariableDeclarationNode;
 
 import java.util.HashMap;
@@ -11,6 +12,17 @@ public class RuntimeContext {
     private final Map<String, TypedValue> variables = new HashMap<>();
     private final RuntimeContext parent;
     private final Map<String, StructDefinition> structTypes = new HashMap<>();
+    private final Map<String, Map<String, FunctionNode>> structMethods = new HashMap<>();
+
+    public Map<String, FunctionNode> getOrCreateStructMethodTable(String structName) {
+        return structMethods.computeIfAbsent(structName, k -> new HashMap<>());
+    }
+
+    public FunctionNode getStructMethod(String structName, String methodName) {
+        Map<String, FunctionNode> table = structMethods.get(structName);
+        if (table == null) return null;
+        return table.get(methodName);
+    }
 
 
 

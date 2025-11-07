@@ -1,64 +1,27 @@
 main {
 
-    Struct Pais {
-        string nome;
-    }
+  # If instantiated empty, type must be declared
+  List<int> numbers;
 
+  # If initialized with values, type is inferred
+  List nomes = ("zard", "angel");
 
-    float teste = 3.14;
-    print(teste);
-    Struct Endereco {
-        string rua;
-        string cidade;
-        Struct Pais pais;
-    }
+  # Adding values
+  numbers.add(3);
+  int x = 2;
+  numbers.addAll(3,4,5,x);
 
-    Struct Pessoa {
-        string nome;
-        int idade;
-        Struct Endereco endereco;
-        List<string> telefones;
-    }
+  # Getting size
+  int z = numbers.size();
+  print(z);
+  print(numbers.size());
 
-    # ---- Instâncias base ----
-    Struct Pais brasil;
-    brasil.nome = "Brasil";
+  # Removing
+  numbers.remove(0);
 
-    Struct Endereco e1;
-    e1.rua = "Rua A";
-    e1.cidade = "São Paulo";
-    e1.pais = brasil;
+  # Accessing
+  print(numbers.get(1));
 
-    Struct Pessoa p1;
-    p1.nome = "Alice";
-    p1.idade = 25;
-    p1.endereco = e1;
-    p1.telefones.add("11 99999-1111");
-    p1.telefones.add("11 22222-3333");
-
-    # === Cópia profunda ===
-    Struct Pessoa p2;
-    p2 = p1;
-
-    # === Alterações independentes ===
-    p2.nome = "Zard";
-    p2.telefones.add("21 44444-5555");
-
-    e1.rua = "teste";
-    e1.cidade = "Santo andré";
-
-    print("=== Original p1 ===");
-    print(p1);
-
-    # Atualização inline aninhada com lista e sub-struct
-    p2.endereco {
-        rua: "Nova Rua";
-        cidade: "Zurique";
-        pais {
-            nome: "Suíça";
-        }
-    }
-
-    print("=== Clone p2 ===");
-    print(p2);
+  # Clearing
+  numbers.clear();
 }

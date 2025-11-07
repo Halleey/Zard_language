@@ -10,6 +10,7 @@ import ast.home.MainParser;
 import ast.ifstatements.IfParser;
 import ast.loops.WhileParser;
 import ast.prints.PrintParser;
+import ast.structs.ImplementsParser;
 import ast.structs.StructFieldAccessNode;
 import ast.structs.StructInstanceParser;
 import ast.structs.StructParser;
@@ -143,7 +144,11 @@ public class Parser {
                         return instanceParser.parseStructInstanceAfterKeyword(structName, varName);
                     }
                 }
-                    case "input" -> {
+                case "impl" -> {
+                    ImplementsParser implementsParser = new ImplementsParser(this);
+                    return implementsParser.implNode();
+                }
+                case "input" -> {
                     InputParser inputParser = new InputParser(this);
                     return inputParser.parse();
                 }

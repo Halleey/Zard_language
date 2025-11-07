@@ -1,6 +1,7 @@
 package ast.functions;
 
 import ast.ASTNode;
+import ast.exceptions.ReturnValue;
 import ast.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
@@ -13,7 +14,7 @@ public class FunctionNode extends ASTNode {
     private final List<String> params;
     private final List<String> paramTypes;
     private final List<ASTNode> body;
-    private final String returnType; // novo campo
+    private final String returnType;
 
     public FunctionNode(String name, List<String> params, List<String> paramTypes,
                         List<ASTNode> body, String returnType) {
@@ -21,7 +22,7 @@ public class FunctionNode extends ASTNode {
         this.params = params;
         this.paramTypes = paramTypes;
         this.body = body;
-        this.returnType = returnType != null ? returnType : "void"; // default
+        this.returnType = returnType != null ? returnType : "void";
     }
 
     public List<String> getParamTypes() { return paramTypes; }
@@ -40,9 +41,50 @@ public class FunctionNode extends ASTNode {
         ctx.declareVariable(name, new TypedValue("function", this));
         return null;
     }
+
+    public TypedValue invoke(RuntimeContext parentCtx, List<TypedValue> args) {
+        RuntimeContext localCtx = new RuntimeContext(parentCtx);
+
+        for (int i = 0; i < params.size(); i++) {
+            String paramName = params.get(i);
+            TypedValue argValue = i < args.size() ? args.get(i) : new TypedValue("void", null);
+            String paramType = i < paramTypes.size() ? paramTypes.get(i) : "any";
+
+            argValue = promoteTypeIfNeeded(argValue, paramType);
+            localCtx.declareVariable(paramName, argValue);
+        }
+
+        try {
+            for (ASTNode node : body) {
+                node.evaluate(localCtx);
+            }
+        } catch (ReturnValue rv) {
+            TypedValue retVal = rv.value;
+            return promoteTypeIfNeeded(retVal, returnType);
+        }
+
+        return null;
+    }
+
+    private TypedValue promoteTypeIfNeeded(TypedValue value, String targetType) {
+        if (value == null) return null;
+        String valueType = value.type();
+
+        if (valueType.equals(targetType)) return value;
+
+        if (targetType.equals("double") && valueType.equals("int")) {
+            return new TypedValue("double", ((Integer) value.value()).doubleValue());
+        }
+
+        if (targetType.startsWith("List<") && valueType.equals("List")) {
+            return new TypedValue(targetType, value.value());
+        }
+
+        return value;
+    }
+
     @Override
     public void print(String prefix) {
-
         StringBuilder sig = new StringBuilder();
         sig.append(prefix).append("Function ").append(name).append("(");
         for (int i = 0; i < params.size(); i++) {
@@ -54,11 +96,7 @@ public class FunctionNode extends ASTNode {
 
         if (!body.isEmpty()) {
             System.out.println(prefix + "  Body ");
-            for (ASTNode stmt : body) {
-                stmt.print(prefix + "    ");
-            }
+            for (ASTNode stmt : body) stmt.print(prefix + "    ");
         }
     }
-
-
 }

@@ -12,8 +12,6 @@ import java.util.List;
 
 
 import ast.*;
-
-
 public class FunctionEmitter {
     private final LLVisitorMain visitor;
     private final TypeMapper typeMapper = new TypeMapper();
@@ -48,15 +46,30 @@ public class FunctionEmitter {
     public String emit(FunctionNode fn) {
         StringBuilder sb = new StringBuilder();
 
-        visitor.registerFunctionType(fn.getName(), new TypeInfos("any", "void", null));
+        String baseName = fn.getName();
+        String implOwner = fn.getImplStructName();
+        String irName;
+
+        if (implOwner != null && !implOwner.isEmpty()) {
+            // método de impl: Set + add -> Set_add
+            irName = implOwner + "_" + baseName;
+        } else {
+            // função normal
+            irName = baseName;
+        }
+
+        // registra tipo "any" primeiro pra evitar dependências cíclicas
+        visitor.registerFunctionType(irName, new TypeInfos("any", "void", null));
 
         String declaredType = normalizeSourceType(fn.getReturnType());
 
         TypeInfos retInfo;
         if ("void".equals(declaredType) && containsReturn(fn)) {
-            visitor.getCallEmitter().markBeingDeduced(fn.getName());
+            // aqui eu mantive o mark/unmark com o nome lógico da função
+            // (não precisa ser o mangleado)
+            visitor.getCallEmitter().markBeingDeduced(baseName);
             retInfo = returnInferer.deduceReturnType(fn);
-            visitor.getCallEmitter().unmarkBeingDeduced(fn.getName());
+            visitor.getCallEmitter().unmarkBeingDeduced(baseName);
         } else {
             String normalized = normalizeSourceType(declaredType);
             String llvm = typeMapper.toLLVM(normalized);
@@ -67,7 +80,8 @@ public class FunctionEmitter {
             retInfo = new TypeInfos(normalized, llvm, elem);
         }
 
-        visitor.registerFunctionType(fn.getName(), retInfo);
+        // registra o tipo final usando SEMPRE o nome do IR (mangleado ou não)
+        visitor.registerFunctionType(irName, retInfo);
 
         String llvmRetType = retInfo.getLLVMType();
         List<String> paramSignatures = new ArrayList<>();
@@ -83,8 +97,8 @@ public class FunctionEmitter {
                     new TypeInfos(paramSource, llvmType, null));
         }
 
-        sb.append("; === Função: ").append(fn.getName()).append(" ===\n");
-        sb.append("define ").append(llvmRetType).append(" @").append(fn.getName())
+        sb.append("; === Função: ").append(irName).append(" ===\n");
+        sb.append("define ").append(llvmRetType).append(" @").append(irName)
                 .append("(").append(String.join(", ", paramSignatures)).append(") {\nentry:\n");
 
         // aloca e registra parâmetros

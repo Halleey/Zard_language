@@ -16,6 +16,8 @@ public class FunctionNode extends ASTNode {
     private final List<ASTNode> body;
     private final String returnType;
 
+    private String implStructName; // null se não for função de impl
+
     public FunctionNode(String name, List<String> params, List<String> paramTypes,
                         List<ASTNode> body, String returnType) {
         this.name = name;
@@ -23,6 +25,15 @@ public class FunctionNode extends ASTNode {
         this.paramTypes = paramTypes;
         this.body = body;
         this.returnType = returnType != null ? returnType : "void";
+        this.implStructName = null;
+    }
+
+    public void setImplStructName(String structName) {
+        this.implStructName = structName;
+    }
+
+    public String getImplStructName() {
+        return implStructName;
     }
 
     public List<String> getParamTypes() { return paramTypes; }

@@ -8,14 +8,11 @@ import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
 import ast.imports.ImportNode;
-import ast.structs.StructFieldAccessNode;
-import ast.structs.StructInstaceNode;
-import ast.structs.StructNode;
+import ast.structs.*;
 import ast.lists.*;
 import ast.loops.WhileNode;
 import ast.maps.MapNode;
 import ast.prints.PrintNode;
-import ast.structs.StructUpdateNode;
 import ast.variables.*;
 import low.TempManager;
 import low.exceptions.ReturnEmitter;
@@ -28,10 +25,7 @@ import low.main.GlobalStringManager;
 import low.main.MainEmitter;
 import low.main.TypeInfos;
 import low.prints.PrintEmitter;
-import low.structs.StructEmitter;
-import low.structs.StructFieldAccessEmitter;
-import low.structs.StructInstanceEmitter;
-import low.structs.StructUpdateEmitter;
+import low.structs.*;
 import low.variables.*;
 import low.whiles.WhileEmitter;
 
@@ -40,7 +34,6 @@ import java.util.*;
 public class LLVisitorMain implements LLVMEmitVisitor {
 
     private final Map<String, TypeInfos> varTypes = new HashMap<>();
-
     private final Map<String, TypeInfos> functionTypes = new HashMap<>();
 
     private final TempManager temps = new TempManager();
@@ -77,6 +70,8 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final Map<String, StructNode> structNodes = new HashMap<>();
     private final StructInstanceEmitter instanceEmitter = new StructInstanceEmitter(temps, globalStrings);
     private final StructFieldAccessEmitter structFieldAccessEmitter = new StructFieldAccessEmitter(temps);
+    private final StructMethodCallEmitter methodCallEmitter   = new StructMethodCallEmitter(temps);
+    private final ImplEmitter implEmitter = new ImplEmitter(this);
 
 
     public String inferListElementType(ASTNode node) {
@@ -159,6 +154,16 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     @Override
     public String visit(StructUpdateNode node) {
         return updateEmitter.emit(node);
+    }
+
+    @Override
+    public String visit(StructMethodCallNode node) {
+        return methodCallEmitter.emit(node, this);
+    }
+
+    @Override
+    public String visit(ImplNode node) {
+        return implEmitter.emit(node);
     }
 
     @Override public String visit(MainAST node) {

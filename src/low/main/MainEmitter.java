@@ -12,10 +12,7 @@ import ast.lists.ListAddNode;
 import ast.lists.ListNode;
 import ast.loops.WhileNode;
 import ast.prints.PrintNode;
-import ast.structs.StructFieldAccessNode;
-import ast.structs.StructInstaceNode;
-import ast.structs.StructNode;
-import ast.structs.StructUpdateNode;
+import ast.structs.*;
 import ast.variables.AssignmentNode;
 import ast.variables.BinaryOpNode;
 import low.TempManager;
@@ -62,7 +59,6 @@ public class MainEmitter {
         StringBuilder importsIR = new StringBuilder();
         for (ASTNode stmt : node.body) {
             if (stmt instanceof ImportNode importNode) {
-
                 importsIR.append(";; ==== Import module: ")
                         .append(importNode.path())
                         .append(" as ")
@@ -92,9 +88,26 @@ public class MainEmitter {
             }
         }
 
+        boolean temImpls = node.body.stream().anyMatch(s -> s instanceof ImplNode);
+        if (temImpls) {
+            llvm.append(";; ==== Impl Definitions ====\n");
+        }
+
+        for (ASTNode stmt : node.body) {
+            if (stmt instanceof ImplNode implNode) {
+                String implIR = implNode.accept(visitor);
+                if (implIR != null && !implIR.isBlank()) {
+                    llvm.append(implIR).append("\n");
+                }
+            }
+        }
+
         llvm.append("define i32 @main() {\n");
         for (ASTNode stmt : node.body) {
-            if (stmt instanceof FunctionNode || stmt instanceof ImportNode || stmt instanceof StructNode)
+            if (stmt instanceof FunctionNode
+                    || stmt instanceof ImportNode
+                    || stmt instanceof StructNode
+                    || stmt instanceof ImplNode)
                 continue;
 
             llvm.append("  ; ").append(stmt.getClass().getSimpleName()).append("\n");
@@ -103,6 +116,7 @@ public class MainEmitter {
                 llvm.append(stmtIR);
             }
 
+            // guarda listas para liberar no final
             if (stmt instanceof VariableDeclarationNode varDecl &&
                     varDecl.getType().startsWith("List")) {
                 listasAlocadas.add(varDecl.getName());
@@ -116,23 +130,32 @@ public class MainEmitter {
                 String tmp = tempManager.newTemp();
                 switch (tipoLista) {
                     case "int" -> {
-                        llvm.append("  ").append(tmp).append(" = load %struct.ArrayListInt*, %struct.ArrayListInt** %").append(varName).append("\n");
-                        llvm.append("  call void @arraylist_free_int(%struct.ArrayListInt* ").append(tmp).append(")\n");
+                        llvm.append("  ").append(tmp)
+                                .append(" = load %struct.ArrayListInt*, %struct.ArrayListInt** %")
+                                .append(varName).append("\n");
+                        llvm.append("  call void @arraylist_free_int(%struct.ArrayListInt* ")
+                                .append(tmp).append(")\n");
                     }
                     case "double" -> {
-                        llvm.append("  ").append(tmp).append(" = load %struct.ArrayListDouble*, %struct.ArrayListDouble** %").append(varName).append("\n");
-                        llvm.append("  call void @arraylist_free_double(%struct.ArrayListDouble* ").append(tmp).append(")\n");
+                        llvm.append("  ").append(tmp)
+                                .append(" = load %struct.ArrayListDouble*, %struct.ArrayListDouble** %")
+                                .append(varName).append("\n");
+                        llvm.append("  call void @arraylist_free_double(%struct.ArrayListDouble* ")
+                                .append(tmp).append(")\n");
                     }
                     case "boolean" -> {
-                        llvm.append("  ").append(tmp).append(" = load %struct.ArrayListBool*, %struct.ArrayListBool** %").append(varName).append("\n");
-                        llvm.append("  call void @arraylist_free_bool(%struct.ArrayListBool* ").append(tmp).append(")\n");
+                        llvm.append("  ").append(tmp)
+                                .append(" = load %struct.ArrayListBool*, %struct.ArrayListBool** %")
+                                .append(varName).append("\n");
+                        llvm.append("  call void @arraylist_free_bool(%struct.ArrayListBool* ")
+                                .append(tmp).append(")\n");
                     }
                     default -> {
                         llvm.append("  ").append(tmp)
-                                .append(" = load %ArrayList*, %ArrayList** %").append(varName).append("\n");
+                                .append(" = load %ArrayList*, %ArrayList** %")
+                                .append(varName).append("\n");
                         llvm.append("  call void @freeList(%ArrayList* ").append(tmp).append(")\n");
                     }
-
                 }
             }
         }
@@ -142,7 +165,6 @@ public class MainEmitter {
 
         return llvm.toString();
     }
-
     private void coletarStringsRecursivo(ASTNode node) {
         if (node instanceof LiteralNode lit && lit.value.type().equals("string"))
             globalStrings.getOrCreateString((String) lit.value.value());
@@ -151,9 +173,6 @@ public class MainEmitter {
             if (inputNode.getPrompt() != null)
                 globalStrings.getOrCreateString(inputNode.getPrompt());
         }
-
-
-
         else if (node instanceof FunctionNode func) {
             String retType = func.getReturnType();
             if (retType.startsWith("List<") && retType.endsWith(">")) {
@@ -179,8 +198,6 @@ public class MainEmitter {
             coletarStringsRecursivo(bin.left);
             coletarStringsRecursivo(bin.right);
         }
-
-
 
         if (node instanceof VariableDeclarationNode varDecl) {
             if (varDecl.getType().startsWith("List")) registrarTipoDeLista(varDecl.getType());

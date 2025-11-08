@@ -15,6 +15,22 @@ public class StructMethodCallNode extends ASTNode {
     private final String methodName;
     private final List<ASTNode> args;
 
+    public ASTNode getStructInstance() {
+        return structInstance;
+    }
+
+    public String getStructName() {
+        return structName;
+    }
+
+    public String getMethodName() {
+        return methodName;
+    }
+
+    public List<ASTNode> getArgs() {
+        return args;
+    }
+
     public StructMethodCallNode(ASTNode structInstance, String structName, String methodName, List<ASTNode> args) {
         this.structInstance = structInstance;
         this.structName = structName;
@@ -24,7 +40,7 @@ public class StructMethodCallNode extends ASTNode {
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
-        return "";
+        return visitor.visit(this);
     }
 
     @Override

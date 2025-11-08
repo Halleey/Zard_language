@@ -1,5 +1,42 @@
 	.text
 	.file	"programa.ll"
+	.globl	print_Set                       # -- Begin function print_Set
+	.p2align	4, 0x90
+	.type	print_Set,@function
+print_Set:                              # @print_Set
+	.cfi_startproc
+# %bb.0:                                # %entry
+	pushq	%rax
+	.cfi_def_cfa_offset 16
+	movq	(%rdi), %rdi
+	callq	arraylist_print_int@PLT
+	popq	%rax
+	.cfi_def_cfa_offset 8
+	retq
+.Lfunc_end0:
+	.size	print_Set, .Lfunc_end0-print_Set
+	.cfi_endproc
+                                        # -- End function
+	.globl	Set_add                         # -- Begin function Set_add
+	.p2align	4, 0x90
+	.type	Set_add,@function
+Set_add:                                # @Set_add
+	.cfi_startproc
+# %bb.0:                                # %entry
+	pushq	%rbx
+	.cfi_def_cfa_offset 16
+	.cfi_offset %rbx, -16
+	movq	%rdi, %rbx
+	movq	(%rdi), %rdi
+	callq	arraylist_add_int@PLT
+	movq	%rbx, %rax
+	popq	%rbx
+	.cfi_def_cfa_offset 8
+	retq
+.Lfunc_end1:
+	.size	Set_add, .Lfunc_end1-Set_add
+	.cfi_endproc
+                                        # -- End function
 	.globl	main                            # -- Begin function main
 	.p2align	4, 0x90
 	.type	main,@function
@@ -10,77 +47,57 @@ main:                                   # @main
 	.cfi_def_cfa_offset 16
 	pushq	%rbx
 	.cfi_def_cfa_offset 24
-	subq	$24, %rsp
-	.cfi_def_cfa_offset 48
+	subq	$40, %rsp
+	.cfi_def_cfa_offset 64
 	.cfi_offset %rbx, -24
 	.cfi_offset %r14, -16
+	movl	$10, %edi
+	callq	arraylist_create_int@PLT
+	movq	%rax, 16(%rsp)
 	movl	$4, %edi
 	callq	arraylist_create_int@PLT
 	movq	%rax, %rbx
-	movl	$4, %edi
-	callq	arraylist_create@PLT
-	movq	%rax, %r14
-	movl	$.L.str0, %edi
-	callq	createString@PLT
-	movq	%r14, %rdi
-	movq	%rax, %rsi
-	callq	arraylist_add_String@PLT
-	movl	$.L.str1, %edi
-	callq	createString@PLT
-	movq	%r14, %rdi
-	movq	%rax, %rsi
-	callq	arraylist_add_String@PLT
-	movq	%rbx, %rdi
-	movl	$3, %esi
-	callq	arraylist_add_int@PLT
 	movabsq	$17179869187, %rax              # imm = 0x400000003
-	movq	%rax, 8(%rsp)
-	movabsq	$8589934597, %rax               # imm = 0x200000005
-	movq	%rax, 16(%rsp)
-	leaq	8(%rsp), %rsi
-	movl	$4, %edx
+	movq	%rax, 28(%rsp)
+	movl	$5, 36(%rsp)
+	leaq	28(%rsp), %rsi
+	movl	$3, %edx
 	movq	%rbx, %rdi
 	callq	arraylist_addAll_int@PLT
+	movq	%rbx, 8(%rsp)
+	leaq	8(%rsp), %rbx
 	movq	%rbx, %rdi
-	callq	arraylist_size_int@PLT
-	movl	$.L.strInt, %edi
-	movl	%eax, %esi
-	xorl	%eax, %eax
-	callq	printf@PLT
-	movq	%rbx, %rdi
-	callq	arraylist_size_int@PLT
-	movl	$.L.strInt, %edi
-	movl	%eax, %esi
-	xorl	%eax, %eax
-	callq	printf@PLT
-	movq	%rbx, %rdi
-	xorl	%esi, %esi
-	callq	arraylist_remove_int@PLT
-	leaq	4(%rsp), %rdx
-	movl	$1, %esi
-	movq	%rbx, %rdi
-	callq	arraylist_get_int@PLT
-	movl	4(%rsp), %esi
-	movl	$.L.strInt, %edi
-	xorl	%eax, %eax
-	callq	printf@PLT
-	movq	%rbx, %rdi
-	callq	arraylist_clear_int@PLT
-	movq	%rbx, %rdi
-	callq	arraylist_free_int@PLT
+	movl	$2, %esi
+	callq	Set_add@PLT
+	leaq	16(%rsp), %r14
 	movq	%r14, %rdi
-	callq	freeList@PLT
+	movl	$1, %esi
+	callq	Set_add@PLT
+	movq	%r14, %rdi
+	movl	$22, %esi
+	callq	Set_add@PLT
+	movq	%r14, %rdi
+	movl	$99, %esi
+	callq	Set_add@PLT
+	movl	$.L.strStr, %edi
+	movl	$.L.str0, %esi
+	xorl	%eax, %eax
+	callq	printf@PLT
+	movq	%r14, %rdi
+	callq	print_Set@PLT
+	movq	%rbx, %rdi
+	callq	print_Set@PLT
 	callq	getchar@PLT
 	xorl	%eax, %eax
-	addq	$24, %rsp
+	addq	$40, %rsp
 	.cfi_def_cfa_offset 24
 	popq	%rbx
 	.cfi_def_cfa_offset 16
 	popq	%r14
 	.cfi_def_cfa_offset 8
 	retq
-.Lfunc_end0:
-	.size	main, .Lfunc_end0-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 	.cfi_endproc
                                         # -- End function
 	.type	.L.strChar,@object              # @.strChar
@@ -125,13 +142,9 @@ main:                                   # @main
 	.size	.L.strEmpty, 1
 
 	.type	.L.str0,@object                 # @.str0
+	.p2align	4, 0x0
 .L.str0:
-	.asciz	"zard"
-	.size	.L.str0, 5
-
-	.type	.L.str1,@object                 # @.str1
-.L.str1:
-	.asciz	"angel"
-	.size	.L.str1, 6
+	.asciz	"=== Conte\303\272do do Set ==="
+	.size	.L.str0, 25
 
 	.section	".note.GNU-stack","",@progbits

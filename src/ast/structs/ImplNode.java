@@ -29,7 +29,7 @@ public class ImplNode extends ASTNode {
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
-        return "";
+        return visitor.visit(this);
     }
 
     @Override

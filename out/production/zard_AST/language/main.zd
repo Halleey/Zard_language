@@ -1,27 +1,26 @@
 main {
+    Struct Set {
+        string name;
+        List<?> data;
+    }
+    impl Set {
+        # adiciona elemento e retorna o próprio Set (permite encadeamento)
+        function Struct<Set> add(Struct<Set> s, ? value) {
+            s.data.add(value);
+            return s;
+        }
+    }
 
-  # If instantiated empty, type must be declared
-  List<int> numbers;
+    # ==== uso ====
+    Struct Set s;
+    Struct Set t = {name : "zard", data : 3,4,5};
+    # adiciona elementos (sem this, passando s explicitamente)
+    t.add(2);
+    s.add(1);
+    s.add(22);
+    s.add(99);
 
-  # If initialized with values, type is inferred
-  List nomes = ("zard", "angel");
-
-  # Adding values
-  numbers.add(3);
-  int x = 2;
-  numbers.addAll(3,4,5,x);
-
-  # Getting size
-  int z = numbers.size();
-  print(z);
-  print(numbers.size());
-
-  # Removing
-  numbers.remove(0);
-
-  # Accessing
-  print(numbers.get(1));
-
-  # Clearing
-  numbers.clear();
+    print("=== Conteúdo do Set ===");
+    print(s);
+    print(t);
 }

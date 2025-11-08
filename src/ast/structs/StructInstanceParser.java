@@ -1,6 +1,9 @@
 package ast.structs;
 
 import ast.ASTNode;
+import ast.lists.DynamicList;
+import ast.lists.ListNode;
+import ast.variables.LiteralNode;
 import ast.variables.VariableDeclarationNode;
 import tokens.Token;
 import translate.Parser;
@@ -30,9 +33,7 @@ public class StructInstanceParser {
             // Decisão: se próximo token é IDENTIFIER seguido de ":" -> nomeado
             if (parser.current().getType() == Token.TokenType.IDENTIFIER &&
                     parser.peekValue(1).equals(":")) {
-
                 namedValues = parseNamedInitializers(structName);
-
             } else {
                 positionalValues = parsePositionalInitializers();
             }
@@ -86,8 +87,6 @@ public class StructInstanceParser {
 
     private Map<String, ASTNode> parseNamedInitializers(String structName) {
         Map<String, ASTNode> map = new LinkedHashMap<>();
-
-        // mapa de tipos declarados da struct (para checar primitivos)
         Map<String, String> fields = parser.lookupStruct(structName);
 
         while (!parser.current().getValue().equals("}")) {
@@ -100,25 +99,55 @@ public class StructInstanceParser {
                 throw new RuntimeException("Campo desconhecido na inicialização de " + structName + ": " + fieldName);
             }
 
-            // **Restrição por enquanto**: só tipos primitivos (int, double, bool, string)
-            if (!isPrimitiveType(expectedType)) {
+            ASTNode expr;
+
+            if (expectedType.startsWith("List<")) {
+                List<ASTNode> listValues = new ArrayList<>();
+                listValues.add(parser.parseExpression());
+
+                while (parser.current().getValue().equals(",")) {
+                    parser.eat(Token.TokenType.DELIMITER, ",");
+                    if (parser.current().getType() == Token.TokenType.IDENTIFIER &&
+                            parser.peekValue(1).equals(":")) {
+                        break;
+                    }
+                    listValues.add(parser.parseExpression());
+                }
+
+                String innerType = expectedType.substring(5, expectedType.length() - 1);
+                if (innerType.equals("?")) {
+                    innerType = inferListTypeFromValues(listValues); // chama o método abaixo
+                    expectedType = "List<" + innerType + ">";
+                }
+
+                DynamicList dyn = new DynamicList(innerType, listValues);
+                expr = new ListNode(dyn);
+            }
+
+
+            else if (isPrimitiveType(expectedType)) {
+                expr = parser.parseExpression();
+            }
+
+            else {
                 throw new RuntimeException("Inicialização nomeada ainda não suporta tipo não-primitivo para o campo '"
                         + fieldName + "' (tipo: " + expectedType + ").");
             }
 
-            ASTNode expr = parser.parseExpression();
-
             if (map.containsKey(fieldName)) {
                 throw new RuntimeException("Campo duplicado na inicialização: " + fieldName);
             }
+
             map.put(fieldName, expr);
 
+            // consome vírgula final entre pares
             if (parser.current().getValue().equals(",")) {
                 parser.eat(Token.TokenType.DELIMITER, ",");
             } else {
                 break;
             }
         }
+
         return map;
     }
 
@@ -127,4 +156,30 @@ public class StructInstanceParser {
         return s.equals("int") || s.equals("double") || s.equals("bool") ||
                 s.equals("string") || s.equals("%string") || s.equals("String");
     }
+
+    private String inferListTypeFromValues(List<ASTNode> values) {
+        if (values.isEmpty()) return "any";
+
+        ASTNode first = values.get(0);
+
+        // Literais básicos
+        if (first instanceof LiteralNode literal) {
+            String litType = literal.getValue().type();
+            switch (litType) {
+                case "int": return "int";
+                case "double": return "double";
+                case "float": return "float";
+                case "string": return "string";
+                case "boolean": return "boolean";
+            }
+        }
+        // Structs
+        if (first instanceof ast.structs.StructInstaceNode structNode) {
+            return "Struct<" + structNode.getName() + ">";
+        }
+
+        return "any"; // fallback
+    }
+
+
 }

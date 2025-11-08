@@ -170,6 +170,10 @@ public class Lexer {
                 tokens.add(readNumber());
                 continue;
             }
+            if(currentChar == '?') {
+                tokens.add(readOperator());
+                continue;
+            }
             if (currentChar == '+' || currentChar == '-' || currentChar == '*' || currentChar == '/' || currentChar == '%' ||
                     currentChar == '&' || currentChar == '|') {
                 tokens.add(readOperator());

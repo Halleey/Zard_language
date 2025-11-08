@@ -42,9 +42,13 @@ public class DynamicList {
         ASTNode removedNode = elements.remove(index);
         return removedNode.evaluate(ctx);
     }
-
     public void add(TypedValue value) {
         String valType = value.type();
+
+        if (elementType.equals("?") || elementType.equals("any")) {
+            elements.add(new LiteralNode(value));
+            return;
+        }
 
         boolean ok = valType.equals(elementType);
 

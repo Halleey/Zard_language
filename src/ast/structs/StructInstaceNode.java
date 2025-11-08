@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+
 public class StructInstaceNode extends ASTNode {
     private final String structName;
     private final List<ASTNode> positionalValues;
@@ -36,68 +37,97 @@ public class StructInstaceNode extends ASTNode {
     public String accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
-
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
         StructDefinition def = ctx.getStructType(structName);
         Map<String, TypedValue> fieldValues = new LinkedHashMap<>();
         List<VariableDeclarationNode> fields = def.getFields();
 
+        // Caso especial: struct com UM campo apenas (ex: Struct ListHolder { List<int> data; })
+        if (fields.size() == 1) {
+            VariableDeclarationNode only = fields.get(0);
+            String fname = only.getName();
+            String ftype = only.getType();
+
+            if (ftype.startsWith("List<")) {
+                String innerType = ftype.substring(5, ftype.length() - 1);
+                DynamicList dyn = new DynamicList(innerType, new ArrayList<>());
+
+                if (!namedValues.isEmpty() && namedValues.containsKey(fname)) {
+                    TypedValue v = namedValues.get(fname).evaluate(ctx);
+                    dyn.add(v);
+                } else if (!positionalValues.isEmpty()) {
+                    for (ASTNode pv : positionalValues) {
+                        dyn.add(pv.evaluate(ctx));
+                    }
+                }
+                fieldValues.put(fname, new TypedValue(ftype, dyn));
+                return new TypedValue("Struct<" + structName + ">", fieldValues);
+            }
+        }
+
+        VariableDeclarationNode listField = null;
+        for (VariableDeclarationNode f : fields) {
+            if (f.getType().startsWith("List<")) {
+                if (listField == null) listField = f;
+                else { listField = null; break; }
+            }
+        }
+
+        boolean useListShortcut = (listField != null && !positionalValues.isEmpty());
+
+        // Loop de inicialização
         for (int i = 0; i < fields.size(); i++) {
             VariableDeclarationNode field = fields.get(i);
             String fname = field.getName();
             String ftype = field.getType();
 
-            ASTNode astValue = null;
+            TypedValue value;
 
+            if (useListShortcut && field == listField) {
+                String innerType = ftype.substring(5, ftype.length() - 1);
+                DynamicList dyn = new DynamicList(innerType, new ArrayList<>());
+                for (ASTNode pv : positionalValues) {
+                    dyn.add(pv.evaluate(ctx));
+                }
+                fieldValues.put(fname, new TypedValue(ftype, dyn));
+                continue;
+            }
+
+            ASTNode astValue = null;
             if (!namedValues.isEmpty() && namedValues.containsKey(fname)) {
                 astValue = namedValues.get(fname);
-            } else if (i < positionalValues.size()) {
+            } else if (!useListShortcut && i < positionalValues.size()) {
                 astValue = positionalValues.get(i);
             }
 
-            TypedValue value;
-
-            // Caso 1: se o campo é uma lista
             if (ftype.startsWith("List<")) {
                 String innerType = ftype.substring(5, ftype.length() - 1);
-                DynamicList dyn = new DynamicList(innerType, new ArrayList<>());
 
-                // Se houver valores posicionais, adiciona-os à lista
-                if (astValue != null) {
-                    if (astValue instanceof ListNode listNode) {
-                        for (ASTNode elem : listNode.getList().getElements()) {
-                            dyn.add(elem.evaluate(ctx));
-                        }
-                    } else {
-                        // Valor único adicionado
-                        dyn.add(astValue.evaluate(ctx));
-                    }
-                }
-
-                value = new TypedValue(ftype, dyn);
-            }
-
-            // Caso 2: valor explícito
-            else if (astValue != null) {
-                value = astValue.evaluate(ctx);
-            }
-            // Caso 3: inicialização automática
-            else {
-                if (ftype.startsWith("Struct<")) {
-                    String inner = ftype.substring("Struct<".length(), ftype.length() - 1);
-                    value = new StructInstaceNode(inner, null, null).evaluate(ctx);
-                } else if (ftype.equals("string")) {
-                    value = new TypedValue("string", "");
-                } else if (ftype.equals("int")) {
-                    value = new TypedValue("int", 0);
-                } else if (ftype.equals("double") || ftype.equals("float")) {
-                    value = new TypedValue(ftype, 0.0);
-                } else if (ftype.equals("boolean")) {
-                    value = new TypedValue("boolean", false);
+                if (astValue instanceof ListNode listNode) {
+                    // Usa a lista pronta do ListNode
+                    value = listNode.   evaluate(ctx);
                 } else {
-                    value = field.createInitialValue();
+                    // Cria nova lista e adiciona item único
+                    DynamicList dyn = new DynamicList(innerType, new ArrayList<>());
+                    if (astValue != null) dyn.add(astValue.evaluate(ctx));
+                    value = new TypedValue(ftype, dyn);
                 }
+            } else if (astValue != null) {
+                value = astValue.evaluate(ctx);
+            } else if (ftype.startsWith("Struct<")) {
+                String inner = ftype.substring("Struct<".length(), ftype.length() - 1);
+                value = new StructInstaceNode(inner, null, null).evaluate(ctx);
+            } else if (ftype.equals("string")) {
+                value = new TypedValue("string", "");
+            } else if (ftype.equals("int")) {
+                value = new TypedValue("int", 0);
+            } else if (ftype.equals("double") || ftype.equals("float")) {
+                value = new TypedValue(ftype, 0.0);
+            } else if (ftype.equals("boolean")) {
+                value = new TypedValue("boolean", false);
+            } else {
+                value = field.createInitialValue();
             }
 
             fieldValues.put(fname, value);
@@ -115,7 +145,7 @@ public class StructInstaceNode extends ASTNode {
                 System.out.println(prefix + "  " + e.getKey() + " =");
                 e.getValue().print(prefix + "    ");
             }
-        } else if (positionalValues != null && !positionalValues.isEmpty()) {
+        } else if (!positionalValues.isEmpty()) {
             for (int i = 0; i < positionalValues.size(); i++) {
                 System.out.println(prefix + "  field[" + i + "] =");
                 ASTNode astValue = positionalValues.get(i);

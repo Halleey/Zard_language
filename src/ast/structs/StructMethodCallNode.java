@@ -33,7 +33,7 @@ public class StructMethodCallNode extends ASTNode {
 
         FunctionNode method = ctx.getStructMethod(structName, methodName);
         if (method == null) {
-            throw new RuntimeException("Método " + methodName + " não encontrado em Struct " + structName);
+            throw new RuntimeException("Method " + methodName + " not found in Struct " + structName);
         }
 
         List<TypedValue> argValues = new ArrayList<>();
@@ -41,10 +41,17 @@ public class StructMethodCallNode extends ASTNode {
             argValues.add(arg.evaluate(ctx));
         }
 
-        RuntimeContext local = new RuntimeContext(ctx);
+        if (!method.getParamTypes().isEmpty()) {
+            String firstType = method.getParamTypes().get(0);
+            if (firstType.startsWith("Struct<" + structName + ">")) {
+                argValues.add(0, instanceVal);
+            }
+        }
 
+        RuntimeContext local = new RuntimeContext(ctx);
         return method.invoke(local, argValues);
     }
+
 
     @Override
     public void print(String prefix) {

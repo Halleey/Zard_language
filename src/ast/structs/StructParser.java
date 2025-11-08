@@ -70,13 +70,21 @@ public class StructParser {
             typeBuilder.append("<");
 
             String innerType = parser.current().getValue();
-            if (parser.current().getType() == Token.TokenType.KEYWORD) {
+            Token.TokenType innerTypeToken = parser.current().getType();
+
+            if (innerTypeToken == Token.TokenType.KEYWORD) {
                 parser.eat(Token.TokenType.KEYWORD);
-            } else if (parser.current().getType() == Token.TokenType.IDENTIFIER) {
+            } else if (innerTypeToken == Token.TokenType.IDENTIFIER) {
                 parser.eat(Token.TokenType.IDENTIFIER);
-            } else {
+            }
+            else if (innerTypeToken == Token.TokenType.OPERATOR && innerType.equals("?")) {
+                parser.eat(Token.TokenType.OPERATOR, "?");
+                innerType = "?"; // marcador genérico
+            }
+            else {
                 throw new RuntimeException("Esperado tipo em genérico: " + innerType);
             }
+
             typeBuilder.append(innerType);
 
             while (parser.current().getValue().equals(",")) {

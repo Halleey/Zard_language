@@ -27,8 +27,6 @@ import ast.variables.VariableDeclarationNode;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-
 public class MainEmitter {
     private final GlobalStringManager globalStrings;
     private final TempManager tempManager;
@@ -87,17 +85,15 @@ public class MainEmitter {
                 llvm.append(fnEmitter.emit(fn)).append("\n");
             }
         }
-
         boolean temImpls = node.body.stream().anyMatch(s -> s instanceof ImplNode);
         if (temImpls) {
             llvm.append(";; ==== Impl Definitions ====\n");
-        }
-
-        for (ASTNode stmt : node.body) {
-            if (stmt instanceof ImplNode implNode) {
-                String implIR = implNode.accept(visitor);
-                if (implIR != null && !implIR.isBlank()) {
-                    llvm.append(implIR).append("\n");
+            for (ASTNode stmt : node.body) {
+                if (stmt instanceof ImplNode implNode) {
+                    String implIR = implNode.accept(visitor);
+                    if (implIR != null && !implIR.isBlank()) {
+                        llvm.append(implIR).append("\n");
+                    }
                 }
             }
         }
@@ -116,7 +112,6 @@ public class MainEmitter {
                 llvm.append(stmtIR);
             }
 
-            // guarda listas para liberar no final
             if (stmt instanceof VariableDeclarationNode varDecl &&
                     varDecl.getType().startsWith("List")) {
                 listasAlocadas.add(varDecl.getName());
@@ -165,15 +160,43 @@ public class MainEmitter {
 
         return llvm.toString();
     }
+
     private void coletarStringsRecursivo(ASTNode node) {
-        if (node instanceof LiteralNode lit && lit.value.type().equals("string"))
+        if (node == null) return;
+
+        if (node instanceof LiteralNode lit && lit.value.type().equals("string")) {
             globalStrings.getOrCreateString((String) lit.value.value());
+            return;
+        }
+
         if (node instanceof InputNode inputNode) {
             usesInput = true;
-            if (inputNode.getPrompt() != null)
+            if (inputNode.getPrompt() != null) {
                 globalStrings.getOrCreateString(inputNode.getPrompt());
+            }
+            return;
         }
-        else if (node instanceof FunctionNode func) {
+
+        if (node instanceof ImplNode impl) {
+            for (FunctionNode m : impl.getMethods()) {
+
+                String retType = m.getReturnType();
+                if (retType.startsWith("List<") && retType.endsWith(">")) {
+                    registrarTipoDeLista(retType);
+                }
+                for (String paramType : m.getParamTypes()) {
+                    if (paramType.startsWith("List<") && paramType.endsWith(">")) {
+                        registrarTipoDeLista(paramType);
+                    }
+                }
+                for (ASTNode stmt : m.getBody()) {
+                    coletarStringsRecursivo(stmt);
+                }
+            }
+            return;
+        }
+
+        if (node instanceof FunctionNode func) {
             String retType = func.getReturnType();
             if (retType.startsWith("List<") && retType.endsWith(">")) {
                 registrarTipoDeLista(retType);
@@ -184,57 +207,85 @@ public class MainEmitter {
                 }
             }
             func.getBody().forEach(this::coletarStringsRecursivo);
+            return;
         }
-
-
 
         if (node instanceof PrintNode printNode) {
-            ASTNode expr = printNode.expr;
-            if (expr instanceof LiteralNode lit && lit.value.type().equals("string")) {
-                globalStrings.getOrCreateString((String) lit.value.value());
-            }
+            coletarStringsRecursivo(printNode.expr);
+            return;
         }
+
         if (node instanceof BinaryOpNode bin) {
             coletarStringsRecursivo(bin.left);
             coletarStringsRecursivo(bin.right);
+            return;
         }
 
         if (node instanceof VariableDeclarationNode varDecl) {
-            if (varDecl.getType().startsWith("List")) registrarTipoDeLista(varDecl.getType());
-            if (varDecl.initializer != null) coletarStringsRecursivo(varDecl.initializer);
-        } else if (node instanceof FunctionNode func) {
-            func.getBody().forEach(this::coletarStringsRecursivo);
-        } else if (node instanceof IfNode ifNode) {
+            if (varDecl.getType().startsWith("List")) {
+                registrarTipoDeLista(varDecl.getType());
+            }
+            if (varDecl.initializer != null) {
+                coletarStringsRecursivo(varDecl.initializer);
+            }
+            return;
+        }
+        if (node instanceof IfNode ifNode) {
             coletarStringsRecursivo(ifNode.condition);
             ifNode.thenBranch.forEach(this::coletarStringsRecursivo);
-            if (ifNode.elseBranch != null) ifNode.elseBranch.forEach(this::coletarStringsRecursivo);
-        } else if (node instanceof WhileNode whileNode) {
+            if (ifNode.elseBranch != null) {
+                ifNode.elseBranch.forEach(this::coletarStringsRecursivo);
+            }
+            return;
+        }
+
+        if (node instanceof WhileNode whileNode) {
             coletarStringsRecursivo(whileNode.condition);
             whileNode.body.forEach(this::coletarStringsRecursivo);
-        } else if (node instanceof ListNode listNode) {
+            return;
+        }
+
+        if (node instanceof ListNode listNode) {
             registrarTipoDeLista("List<" + listNode.getList().getElementType() + ">");
             listNode.getList().getElements().forEach(this::coletarStringsRecursivo);
-        } else if (node instanceof ListAddNode addNode)
+            return;
+        }
+
+        if (node instanceof ListAddNode addNode) {
             coletarStringsRecursivo(addNode.getValuesNode());
-        else if (node instanceof AssignmentNode assignNode)
-            coletarStringsRecursivo(assignNode.valueNode);
-        else if (node instanceof ListAddAllNode addAllNode)
+            return;
+        }
+
+        if (node instanceof ListAddAllNode addAllNode) {
             coletarStringsRecursivo(addAllNode.getArgs());
-        else if(node instanceof ReturnNode returnNode) {
+            return;
+        }
+
+        if (node instanceof AssignmentNode assignNode) {
+            coletarStringsRecursivo(assignNode.valueNode);
+            return;
+        }
+
+        if (node instanceof ReturnNode returnNode) {
             coletarStringsRecursivo(returnNode.expr);
+            return;
         }
-        else if(node instanceof StructFieldAccessNode accessNode) {
-                coletarStringsRecursivo(accessNode.getValue());
+
+        if (node instanceof StructFieldAccessNode accessNode) {
+            coletarStringsRecursivo(accessNode.getValue());
+            return;
         }
-        else if (node instanceof StructUpdateNode inlineUpdate) {
+
+        if (node instanceof StructUpdateNode inlineUpdate) {
             inlineUpdate.getFieldUpdates().values().forEach(this::coletarStringsRecursivo);
             inlineUpdate.getNestedUpdates().values().forEach(this::coletarStringsRecursivo);
+            return;
         }
-        else if (node instanceof StructInstaceNode structInstance) {
+
+        if (node instanceof StructInstaceNode structInstance) {
             for (ASTNode val : structInstance.getPositionalValues()) {
                 coletarStringsRecursivo(val);
             }
-
             if (structInstance.getNamedValues() != null) {
                 for (ASTNode val : structInstance.getNamedValues().values()) {
                     coletarStringsRecursivo(val);
@@ -244,12 +295,14 @@ public class MainEmitter {
     }
 
     private void coletarStringsRecursivo(List<ASTNode> nodes) {
+        if (nodes == null) return;
         nodes.forEach(this::coletarStringsRecursivo);
     }
 
     private void registrarTipoDeLista(String tipoCompleto) {
         tiposDeListasUsados.add(tipoCompleto.trim());
     }
+
     private String emitHeader() {
         StringBuilder sb = new StringBuilder();
         sb.append("""
@@ -257,21 +310,21 @@ public class MainEmitter {
         declare i32 @getchar()
         declare void @printString(%String*)
         declare i8* @malloc(i64)
-        declare void @setString(%String*, i8*)
-        @.strChar = private constant [3 x i8] c"%c\\00"         
+        declare void @setString(%String*)
+        @.strChar = private constant [3 x i8] c"%c\\00"
         @.strTrue = private constant [6 x i8] c"true\\0A\\00"
         @.strFalse = private constant [7 x i8] c"false\\0A\\00"
         @.strInt = private constant [4 x i8] c"%d\\0A\\00"
         @.strDouble = private constant [4 x i8] c"%f\\0A\\00"
         @.strFloat = private constant [4 x i8] c"%f\\0A\\00"
         @.strStr = private constant [4 x i8] c"%s\\0A\\00"
-        @.strEmpty = private constant [1 x i8] c"\00"
+        @.strEmpty = private constant [1 x i8] c"\\00"
         declare %String* @createString(i8*)
         declare i1 @strcmp_eq(%String*, %String*)
         declare i1 @strcmp_neq(%String*, %String*)
 
         %String = type { i8*, i64 }
-    """);
+        """);
 
         if (!tiposDeListasUsados.isEmpty()) {
             sb.append("""
@@ -283,73 +336,69 @@ public class MainEmitter {
         declare i8* @arraylist_get_ptr(%ArrayList*, i64)
         declare void @arraylist_print_ptr(%ArrayList*, void (i8*)*)
         %ArrayList = type opaque
-    """);
+        """);
         }
-
 
         if (usesInput) {
             sb.append("""
-            declare i32 @inputInt(i8*)
-            declare i8 @inputChar(i8)   
-            declare double @inputDouble(i8*)
-            declare i1 @inputBool(i8*)
-            declare i8* @inputString(i8*)
+        declare i32 @inputInt(i8*)
+        declare i8 @inputChar(i8)
+        declare double @inputDouble(i8*)
+        declare i1 @inputBool(i8*)
+        declare i8* @inputString(i8*)
         """);
         }
 
         for (String tipo : tiposDeListasUsados) {
             if (tipo.contains("<int>")) {
                 sb.append("""
-                %struct.ArrayListInt = type { i32*, i64, i64 }
-                declare %struct.ArrayListInt* @arraylist_create_int(i64)
-                declare void @arraylist_add_int(%struct.ArrayListInt*, i32)
-                declare void @arraylist_addAll_int(%struct.ArrayListInt*, i32*, i64)
-                declare void @arraylist_print_int(%struct.ArrayListInt*)
-                declare void @arraylist_clear_int(%struct.ArrayListInt*)
-                declare void @arraylist_free_int(%struct.ArrayListInt*)
-                declare i32  @arraylist_get_int(%struct.ArrayListInt*, i64, i32*)
-                declare void @arraylist_remove_int(%struct.ArrayListInt*, i64)
-                declare i32  @arraylist_size_int(%struct.ArrayListInt*)
-            """);
+        %struct.ArrayListInt = type { i32*, i64, i64 }
+        declare %struct.ArrayListInt* @arraylist_create_int(i64)
+        declare void @arraylist_add_int(%struct.ArrayListInt*, i32)
+        declare void @arraylist_addAll_int(%struct.ArrayListInt*, i32*, i64)
+        declare void @arraylist_print_int(%struct.ArrayListInt*)
+        declare void @arraylist_clear_int(%struct.ArrayListInt*)
+        declare void @arraylist_free_int(%struct.ArrayListInt*)
+        declare i32  @arraylist_get_int(%struct.ArrayListInt*, i64, i32*)
+        declare void @arraylist_remove_int(%struct.ArrayListInt*, i64)
+        declare i32  @arraylist_size_int(%struct.ArrayListInt*)
+        """);
             } else if (tipo.contains("<double>")) {
                 sb.append("""
-                %struct.ArrayListDouble = type { double*, i64, i64 }
-                declare %struct.ArrayListDouble* @arraylist_create_double(i64)
-                declare void @arraylist_add_double(%struct.ArrayListDouble*, double)
-                declare void @arraylist_addAll_double(%struct.ArrayListDouble*, double*, i64)
-                declare void @arraylist_print_double(%struct.ArrayListDouble*)
-                declare double  @arraylist_get_double(%struct.ArrayListDouble*, i64, double*)
-                declare void @arraylist_clear_double(%struct.ArrayListDouble*)
-                declare void @arraylist_remove_double(%struct.ArrayListDouble*, i64)
-                declare void @arraylist_free_double(%struct.ArrayListDouble*)
-                declare i32  @arraylist_size_double(%struct.ArrayListDouble*)
-            """);
+        %struct.ArrayListDouble = type { double*, i64, i64 }
+        declare %struct.ArrayListDouble* @arraylist_create_double(i64)
+        declare void @arraylist_add_double(%struct.ArrayListDouble*, double)
+        declare void @arraylist_addAll_double(%struct.ArrayListDouble*, double*, i64)
+        declare void @arraylist_print_double(%struct.ArrayListDouble*)
+        declare double  @arraylist_get_double(%struct.ArrayListDouble*, i64, double*)
+        declare void @arraylist_clear_double(%struct.ArrayListDouble*)
+        declare void @arraylist_remove_double(%struct.ArrayListDouble*, i64)
+        declare void @arraylist_free_double(%struct.ArrayListDouble*)
+        declare i32  @arraylist_size_double(%struct.ArrayListDouble*)
+        """);
             } else if (tipo.contains("<string>")) {
-
                 sb.append("""
-                declare void @arraylist_add_string(%ArrayList*, i8*)
-                declare void @arraylist_addAll_string(%ArrayList*, i8**, i64)
-                declare void @arraylist_print_string(%ArrayList*)
-                declare void @arraylist_add_String(%ArrayList*, %String*)
-                declare void @arraylist_addAll_String(%ArrayList*, %String**, i64)
-                declare void @removeItem(%ArrayList*, i64)
-                declare i8* @getItem(%ArrayList*, i64)
-                
-            """);
+        declare void @arraylist_add_string(%ArrayList*, i8*)
+        declare void @arraylist_addAll_string(%ArrayList*, i8**, i64)
+        declare void @arraylist_print_string(%ArrayList*)
+        declare void @arraylist_add_String(%ArrayList*, %String*)
+        declare void @arraylist_addAll_String(%ArrayList*, %String**, i64)
+        declare void @removeItem(%ArrayList*, i64)
+        declare i8* @getItem(%ArrayList*, i64)
+        """);
             } else if (tipo.contains("<boolean>")) {
                 sb.append("""
-                %struct.ArrayListBool = type { i1*, i64, i64 }
-                declare %struct.ArrayListBool* @arraylist_create_bool(i64)
-                declare void @arraylist_add_bool(%struct.ArrayListBool*, i1)
-                declare void @arraylist_addAll_bool(%struct.ArrayListBool*, i8*, i64)
-                declare void @arraylist_print_bool(%struct.ArrayListBool*)
-                declare void @arraylist_clear_bool(%struct.ArrayListBool*)
-                declare void @arraylist_remove_bool(%struct.ArrayListBool*, i64)
-                declare void @arraylist_free_bool(%struct.ArrayListBool*)
-                declare i1 @arraylist_get_bool(%struct.ArrayListBool*, i64, i1*)
-                declare i32  @arraylist_size_bool(%struct.ArrayListBool*)
-             
-            """);
+        %struct.ArrayListBool = type { i1*, i64, i64 }
+        declare %struct.ArrayListBool* @arraylist_create_bool(i64)
+        declare void @arraylist_add_bool(%struct.ArrayListBool*, i1)
+        declare void @arraylist_addAll_bool(%struct.ArrayListBool*, i8*, i64)
+        declare void @arraylist_print_bool(%struct.ArrayListBool*)
+        declare void @arraylist_clear_bool(%struct.ArrayListBool*)
+        declare void @arraylist_remove_bool(%struct.ArrayListBool*, i64)
+        declare void @arraylist_free_bool(%struct.ArrayListBool*)
+        declare i1 @arraylist_get_bool(%struct.ArrayListBool*, i64, i1*)
+        declare i32  @arraylist_size_bool(%struct.ArrayListBool*)
+        """);
             }
         }
 

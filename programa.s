@@ -6,11 +6,15 @@
 print_Set:                              # @print_Set
 	.cfi_startproc
 # %bb.0:                                # %entry
-	pushq	%rax
+	pushq	%rbx
 	.cfi_def_cfa_offset 16
+	.cfi_offset %rbx, -16
+	movq	%rdi, %rbx
 	movq	(%rdi), %rdi
+	callq	printString@PLT
+	movq	8(%rbx), %rdi
 	callq	arraylist_print_int@PLT
-	popq	%rax
+	popq	%rbx
 	.cfi_def_cfa_offset 8
 	retq
 .Lfunc_end0:
@@ -27,7 +31,7 @@ Set_add:                                # @Set_add
 	.cfi_def_cfa_offset 16
 	.cfi_offset %rbx, -16
 	movq	%rdi, %rbx
-	movq	(%rdi), %rdi
+	movq	8(%rdi), %rdi
 	callq	arraylist_add_int@PLT
 	movq	%rbx, %rax
 	popq	%rbx
@@ -47,13 +51,19 @@ main:                                   # @main
 	.cfi_def_cfa_offset 16
 	pushq	%rbx
 	.cfi_def_cfa_offset 24
-	subq	$40, %rsp
-	.cfi_def_cfa_offset 64
+	subq	$56, %rsp
+	.cfi_def_cfa_offset 80
 	.cfi_offset %rbx, -24
 	.cfi_offset %r14, -16
+	xorl	%edi, %edi
+	callq	createString@PLT
+	movq	%rax, 8(%rsp)
 	movl	$10, %edi
 	callq	arraylist_create_int@PLT
 	movq	%rax, 16(%rsp)
+	movl	$.L.str0, %edi
+	callq	createString@PLT
+	movq	%rax, 40(%rsp)
 	movl	$4, %edi
 	callq	arraylist_create_int@PLT
 	movq	%rax, %rbx
@@ -64,12 +74,12 @@ main:                                   # @main
 	movl	$3, %edx
 	movq	%rbx, %rdi
 	callq	arraylist_addAll_int@PLT
-	movq	%rbx, 8(%rsp)
-	leaq	8(%rsp), %rbx
+	movq	%rbx, 48(%rsp)
+	leaq	40(%rsp), %rbx
 	movq	%rbx, %rdi
 	movl	$2, %esi
 	callq	Set_add@PLT
-	leaq	16(%rsp), %r14
+	leaq	8(%rsp), %r14
 	movq	%r14, %rdi
 	movl	$1, %esi
 	callq	Set_add@PLT
@@ -80,16 +90,20 @@ main:                                   # @main
 	movl	$99, %esi
 	callq	Set_add@PLT
 	movl	$.L.strStr, %edi
-	movl	$.L.str0, %esi
+	movl	$.L.str1, %esi
 	xorl	%eax, %eax
 	callq	printf@PLT
-	movq	%r14, %rdi
-	callq	print_Set@PLT
+	movq	16(%rsp), %rdi
+	callq	arraylist_print_int@PLT
+	movl	$.L.strStr, %edi
+	movl	$.L.str2, %esi
+	xorl	%eax, %eax
+	callq	printf@PLT
 	movq	%rbx, %rdi
 	callq	print_Set@PLT
 	callq	getchar@PLT
 	xorl	%eax, %eax
-	addq	$40, %rsp
+	addq	$56, %rsp
 	.cfi_def_cfa_offset 24
 	popq	%rbx
 	.cfi_def_cfa_offset 16
@@ -142,9 +156,19 @@ main:                                   # @main
 	.size	.L.strEmpty, 1
 
 	.type	.L.str0,@object                 # @.str0
-	.p2align	4, 0x0
 .L.str0:
+	.asciz	"zard"
+	.size	.L.str0, 5
+
+	.type	.L.str1,@object                 # @.str1
+	.p2align	4, 0x0
+.L.str1:
 	.asciz	"=== Conte\303\272do do Set ==="
-	.size	.L.str0, 25
+	.size	.L.str1, 25
+
+	.type	.L.str2,@object                 # @.str2
+.L.str2:
+	.asciz	"set T"
+	.size	.L.str2, 6
 
 	.section	".note.GNU-stack","",@progbits

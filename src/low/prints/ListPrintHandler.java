@@ -157,8 +157,12 @@ public class ListPrintHandler implements PrintHandler {
     }
 
     private void handleGeneric(String elemType, StringBuilder sb, String tmp) {
-        if (elemType == null) {
-            throw new RuntimeException("ListPrintHandler: elemType nulo");
+        if (elemType == null || elemType.equals("?")) {
+
+            sb.append("  call void @arraylist_print_ptr(%ArrayList* ")
+                    .append(tmp)
+                    .append(", void (i8*)* null)\n");
+            return;
         }
 
         switch (elemType) {

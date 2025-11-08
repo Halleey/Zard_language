@@ -25,14 +25,12 @@ public class StructFieldAccessEmitter {
     public String emit(StructFieldAccessNode node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
 
-        // Gera código da instância da struct
         String structCode = node.getStructInstance().accept(visitor);
         llvm.append(structCode);
 
         String structVal = extractTemp(structCode);
         String structLLVMType = extractType(structCode).trim();
 
-        // Corrige ponteiro duplo (**)
         if (structLLVMType.endsWith("**")) {
             String base = structLLVMType.substring(0, structLLVMType.length() - 1);
             String tmp = temps.newTemp();

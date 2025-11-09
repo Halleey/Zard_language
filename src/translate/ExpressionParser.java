@@ -11,6 +11,8 @@ import translate.identifiers.IdentifierParser;
 
 import java.util.ArrayList;
 import java.util.List;
+
+
 public class ExpressionParser {
     private final Parser parent;
 
@@ -137,8 +139,9 @@ public class ExpressionParser {
                 String name = tok.getValue();
                 parent.advance();
                 IdentifierParser idParser = new IdentifierParser(parent);
-                return idParser.parseAsStatement(name);
+                return idParser.parseAsExpression(name);
             }
+
         }
 
         if (tok.getValue().equals("(")) {

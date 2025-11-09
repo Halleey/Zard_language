@@ -13,7 +13,7 @@ main {
 
     List<Pessoa> pessoas;
 
-    Struct Pessoa p1;
+    Pessoa p1;
     p1.nome = "Alice";
     p1.idade = 25;
     Struct Endereco e1;
@@ -21,10 +21,10 @@ main {
     e1.cidade = "São Paulo";
     p1.endereco = e1;
 
-    Struct Pessoa p2;
+    Pessoa p2;
     p2.nome = "Bob";
     p2.idade = 17;
-    Struct Endereco e2;
+    Endereco e2;
     e2.rua = "Av. Central";
     e2.cidade = "Rio de Janeiro";
     p2.endereco = e2;

@@ -1,9 +1,8 @@
 ; ModuleID = 'programa.ll'
 source_filename = "programa.ll"
 
-%Endereco = type { ptr, ptr, ptr }
-%Pessoa = type { ptr, i32, ptr, ptr }
-%Pais = type { ptr }
+%Endereco = type { ptr, ptr }
+%Pessoa = type { ptr, i32, ptr }
 
 @.strChar = private constant [3 x i8] c"%c\00"
 @.strTrue = private constant [6 x i8] c"true\0A\00"
@@ -13,21 +12,15 @@ source_filename = "programa.ll"
 @.strFloat = private constant [4 x i8] c"%f\0A\00"
 @.strStr = private constant [4 x i8] c"%s\0A\00"
 @.strEmpty = private constant [1 x i8] zeroinitializer
-@.str0 = private constant [7 x i8] c"Brasil\00"
+@.str0 = private constant [6 x i8] c"Alice\00"
 @.str1 = private constant [6 x i8] c"Rua A\00"
 @.str2 = private constant [11 x i8] c"S\C3\A3o Paulo\00"
-@.str3 = private constant [6 x i8] c"Alice\00"
-@.str4 = private constant [14 x i8] c"11 99999-1111\00"
-@.str5 = private constant [14 x i8] c"11 22222-3333\00"
-@.str6 = private constant [5 x i8] c"Zard\00"
-@.str7 = private constant [14 x i8] c"21 44444-5555\00"
-@.str8 = private constant [6 x i8] c"teste\00"
-@.str9 = private constant [13 x i8] c"Santo andr\C3\A9\00"
-@.str10 = private constant [20 x i8] c"=== Original p1 ===\00"
-@.str11 = private constant [9 x i8] c"Nova Rua\00"
-@.str12 = private constant [8 x i8] c"Zurique\00"
-@.str13 = private constant [8 x i8] c"Su\C3\AD\C3\A7a\00"
-@.str14 = private constant [17 x i8] c"=== Clone p2 ===\00"
+@.str3 = private constant [4 x i8] c"Bob\00"
+@.str4 = private constant [12 x i8] c"Av. Central\00"
+@.str5 = private constant [15 x i8] c"Rio de Janeiro\00"
+@.str6 = private constant [37 x i8] c"A primeira pessoa mora em S\C3\A3o Paulo\00"
+@.str7 = private constant [19 x i8] c" \C3\A9 menor de idade\00"
+@.str8 = private constant [8 x i8] c"Pessoa:\00"
 
 declare i32 @printf(ptr, ...)
 
@@ -59,27 +52,6 @@ declare ptr @arraylist_get_ptr(ptr, i64)
 
 declare void @arraylist_print_ptr(ptr, ptr)
 
-declare void @arraylist_add_string(ptr, ptr)
-
-declare void @arraylist_addAll_string(ptr, ptr, i64)
-
-declare void @arraylist_print_string(ptr)
-
-declare void @arraylist_add_String(ptr, ptr)
-
-declare void @arraylist_addAll_String(ptr, ptr, i64)
-
-declare void @removeItem(ptr, i64)
-
-declare ptr @getItem(ptr, i64)
-
-define void @print_Pais(ptr %p) {
-entry:
-  %val0 = load ptr, ptr %p, align 8
-  call void @printString(ptr %val0)
-  ret void
-}
-
 define void @print_Endereco(ptr %p) {
 entry:
   %val0 = load ptr, ptr %p, align 8
@@ -87,9 +59,6 @@ entry:
   %f1 = getelementptr inbounds %Endereco, ptr %p, i32 0, i32 1
   %val1 = load ptr, ptr %f1, align 8
   call void @printString(ptr %val1)
-  %f2 = getelementptr inbounds %Endereco, ptr %p, i32 0, i32 2
-  %val2 = load ptr, ptr %f2, align 8
-  call void @print_Pais(ptr %val2)
   ret void
 }
 
@@ -103,107 +72,156 @@ entry:
   %f2 = getelementptr inbounds %Pessoa, ptr %p, i32 0, i32 2
   %val2 = load ptr, ptr %f2, align 8
   call void @print_Endereco(ptr %val2)
-  %f3 = getelementptr inbounds %Pessoa, ptr %p, i32 0, i32 3
-  %val3 = load ptr, ptr %f3, align 8
-  call void @arraylist_print_string(ptr %val3)
   ret void
 }
 
 define i32 @main() {
-  %1 = call i32 (ptr, ...) @printf(ptr @.strFloat, double 0x40091EB860000000)
-  %tmp4 = alloca %Pais, align 8
-  %tmp5 = call ptr @createString(ptr null)
-  store ptr %tmp5, ptr %tmp4, align 8
-  %tmp10 = call ptr @createString(ptr @.str0)
-  store ptr %tmp10, ptr %tmp4, align 8
-  %tmp12 = alloca %Endereco, align 8
-  %tmp13 = call ptr @createString(ptr null)
-  store ptr %tmp13, ptr %tmp12, align 8
-  %tmp15 = call ptr @createString(ptr null)
-  %tmp16 = getelementptr inbounds %Endereco, ptr %tmp12, i32 0, i32 1
-  store ptr %tmp15, ptr %tmp16, align 8
-  %tmp17 = getelementptr inbounds %Endereco, ptr %tmp12, i32 0, i32 2
-  store ptr null, ptr %tmp17, align 8
-  %tmp21 = call ptr @createString(ptr @.str1)
-  store ptr %tmp21, ptr %tmp12, align 8
-  %tmp26 = call ptr @createString(ptr @.str2)
-  store ptr %tmp26, ptr %tmp16, align 8
-  store ptr %tmp4, ptr %tmp17, align 8
-  %tmp32 = alloca %Pessoa, align 8
-  %tmp33 = call ptr @createString(ptr null)
-  store ptr %tmp33, ptr %tmp32, align 8
-  %tmp35 = getelementptr inbounds %Pessoa, ptr %tmp32, i32 0, i32 1
-  store i32 0, ptr %tmp35, align 4
-  %tmp36 = getelementptr inbounds %Pessoa, ptr %tmp32, i32 0, i32 2
-  store ptr null, ptr %tmp36, align 8
-  %tmp37 = call ptr @arraylist_create(i64 10)
-  %tmp38 = getelementptr inbounds %Pessoa, ptr %tmp32, i32 0, i32 3
-  store ptr %tmp37, ptr %tmp38, align 8
-  %tmp42 = call ptr @createString(ptr @.str3)
-  store ptr %tmp42, ptr %tmp32, align 8
-  store i32 25, ptr %tmp35, align 4
-  store ptr %tmp12, ptr %tmp36, align 8
-  %tmp54 = load ptr, ptr %tmp38, align 8
-  %tmp56 = call ptr @createString(ptr @.str4)
-  call void @arraylist_add_String(ptr %tmp54, ptr %tmp56)
-  %tmp60 = load ptr, ptr %tmp38, align 8
-  %tmp62 = call ptr @createString(ptr @.str5)
-  call void @arraylist_add_String(ptr %tmp60, ptr %tmp62)
-  %tmp64 = alloca %Pessoa, align 8
-  %tmp65 = call ptr @createString(ptr null)
-  store ptr %tmp65, ptr %tmp64, align 8
-  %tmp67 = getelementptr inbounds %Pessoa, ptr %tmp64, i32 0, i32 1
-  store i32 0, ptr %tmp67, align 4
-  %tmp68 = getelementptr inbounds %Pessoa, ptr %tmp64, i32 0, i32 2
-  store ptr null, ptr %tmp68, align 8
-  %tmp69 = call ptr @arraylist_create(i64 10)
-  %tmp70 = getelementptr inbounds %Pessoa, ptr %tmp64, i32 0, i32 3
-  store ptr %tmp69, ptr %tmp70, align 8
-  %tmp75 = load ptr, ptr %tmp32, align 8
-  store ptr %tmp75, ptr %tmp64, align 8
-  %tmp78 = load i32, ptr %tmp35, align 4
-  store i32 %tmp78, ptr %tmp67, align 4
-  %tmp81 = load ptr, ptr %tmp36, align 8
-  %tmp82 = alloca %Endereco, align 8
-  %tmp85 = load ptr, ptr %tmp81, align 8
-  store ptr %tmp85, ptr %tmp82, align 8
-  %tmp86 = getelementptr inbounds %Endereco, ptr %tmp81, i32 0, i32 1
-  %tmp87 = getelementptr inbounds %Endereco, ptr %tmp82, i32 0, i32 1
-  %tmp88 = load ptr, ptr %tmp86, align 8
-  store ptr %tmp88, ptr %tmp87, align 8
-  %tmp89 = getelementptr inbounds %Endereco, ptr %tmp81, i32 0, i32 2
-  %tmp90 = getelementptr inbounds %Endereco, ptr %tmp82, i32 0, i32 2
-  %tmp91 = load ptr, ptr %tmp89, align 8
-  %tmp92 = alloca %Pais, align 8
-  %tmp95 = load ptr, ptr %tmp91, align 8
-  store ptr %tmp95, ptr %tmp92, align 8
-  store ptr %tmp92, ptr %tmp90, align 8
-  store ptr %tmp82, ptr %tmp68, align 8
-  %tmp98 = load ptr, ptr %tmp38, align 8
-  store ptr %tmp98, ptr %tmp70, align 8
-  %tmp102 = call ptr @createString(ptr @.str6)
-  store ptr %tmp102, ptr %tmp64, align 8
-  %tmp106 = load ptr, ptr %tmp70, align 8
-  %tmp108 = call ptr @createString(ptr @.str7)
-  call void @arraylist_add_String(ptr %tmp106, ptr %tmp108)
-  %tmp113 = call ptr @createString(ptr @.str8)
-  store ptr %tmp113, ptr %tmp12, align 8
-  %tmp118 = call ptr @createString(ptr @.str9)
-  store ptr %tmp118, ptr %tmp16, align 8
-  %2 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str10)
-  call void @print_Pessoa(ptr %tmp32)
-  %tmp124 = load ptr, ptr %tmp68, align 8
-  %tmp126 = call ptr @createString(ptr @.str11)
-  store ptr %tmp126, ptr %tmp124, align 8
-  %tmp129 = call ptr @createString(ptr @.str12)
-  %tmp130 = getelementptr inbounds %Endereco, ptr %tmp124, i32 0, i32 1
-  store ptr %tmp129, ptr %tmp130, align 8
-  %tmp131 = getelementptr inbounds %Endereco, ptr %tmp124, i32 0, i32 2
-  %tmp132 = load ptr, ptr %tmp131, align 8
-  %tmp134 = call ptr @createString(ptr @.str13)
-  store ptr %tmp134, ptr %tmp132, align 8
-  %3 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str14)
-  call void @print_Pessoa(ptr %tmp64)
+  %tmp0 = call ptr @arraylist_create(i64 4)
+  %tmp3 = alloca %Pessoa, align 8
+  %tmp4 = call ptr @createString(ptr null)
+  store ptr %tmp4, ptr %tmp3, align 8
+  %tmp6 = getelementptr inbounds %Pessoa, ptr %tmp3, i32 0, i32 1
+  store i32 0, ptr %tmp6, align 4
+  %tmp7 = getelementptr inbounds %Pessoa, ptr %tmp3, i32 0, i32 2
+  store ptr null, ptr %tmp7, align 8
+  %tmp11 = call ptr @createString(ptr @.str0)
+  store ptr %tmp11, ptr %tmp3, align 8
+  store i32 25, ptr %tmp6, align 4
+  %tmp17 = alloca %Endereco, align 8
+  %tmp18 = call ptr @createString(ptr null)
+  store ptr %tmp18, ptr %tmp17, align 8
+  %tmp20 = call ptr @createString(ptr null)
+  %tmp21 = getelementptr inbounds %Endereco, ptr %tmp17, i32 0, i32 1
+  store ptr %tmp20, ptr %tmp21, align 8
+  %tmp25 = call ptr @createString(ptr @.str1)
+  store ptr %tmp25, ptr %tmp17, align 8
+  %tmp30 = call ptr @createString(ptr @.str2)
+  store ptr %tmp30, ptr %tmp21, align 8
+  store ptr %tmp17, ptr %tmp7, align 8
+  %tmp36 = alloca %Pessoa, align 8
+  %tmp37 = call ptr @createString(ptr null)
+  store ptr %tmp37, ptr %tmp36, align 8
+  %tmp39 = getelementptr inbounds %Pessoa, ptr %tmp36, i32 0, i32 1
+  store i32 0, ptr %tmp39, align 4
+  %tmp40 = getelementptr inbounds %Pessoa, ptr %tmp36, i32 0, i32 2
+  store ptr null, ptr %tmp40, align 8
+  %tmp44 = call ptr @createString(ptr @.str3)
+  store ptr %tmp44, ptr %tmp36, align 8
+  store i32 17, ptr %tmp39, align 4
+  %tmp50 = alloca %Endereco, align 8
+  %tmp51 = call ptr @createString(ptr null)
+  store ptr %tmp51, ptr %tmp50, align 8
+  %tmp53 = call ptr @createString(ptr null)
+  %tmp54 = getelementptr inbounds %Endereco, ptr %tmp50, i32 0, i32 1
+  store ptr %tmp53, ptr %tmp54, align 8
+  %tmp58 = call ptr @createString(ptr @.str4)
+  store ptr %tmp58, ptr %tmp50, align 8
+  %tmp63 = call ptr @createString(ptr @.str5)
+  store ptr %tmp63, ptr %tmp54, align 8
+  store ptr %tmp50, ptr %tmp40, align 8
+  call void @arraylist_add_ptr(ptr %tmp0, ptr %tmp3)
+  call void @arraylist_add_ptr(ptr %tmp0, ptr %tmp36)
+  %tmp78 = call ptr @arraylist_get_ptr(ptr %tmp0, i64 0)
+  %tmp81 = load ptr, ptr %tmp78, align 8
+  call void @printString(ptr %tmp81)
+  %tmp85 = call ptr @arraylist_get_ptr(ptr %tmp0, i64 0)
+  %tmp87 = getelementptr inbounds %Pessoa, ptr %tmp85, i32 0, i32 2
+  %tmp88 = load ptr, ptr %tmp87, align 8
+  %tmp90 = load ptr, ptr %tmp88, align 8
+  call void @printString(ptr %tmp90)
+  %tmp94 = call ptr @arraylist_get_ptr(ptr %tmp0, i64 0)
+  %tmp96 = getelementptr inbounds %Pessoa, ptr %tmp94, i32 0, i32 2
+  %tmp97 = load ptr, ptr %tmp96, align 8
+  %tmp98 = getelementptr inbounds %Endereco, ptr %tmp97, i32 0, i32 1
+  %tmp99 = load ptr, ptr %tmp98, align 8
+  call void @printString(ptr %tmp99)
+  %tmp103 = call ptr @arraylist_get_ptr(ptr %tmp0, i64 1)
+  %tmp106 = load ptr, ptr %tmp103, align 8
+  call void @printString(ptr %tmp106)
+  %tmp110 = call ptr @arraylist_get_ptr(ptr %tmp0, i64 1)
+  %tmp112 = getelementptr inbounds %Pessoa, ptr %tmp110, i32 0, i32 2
+  %tmp113 = load ptr, ptr %tmp112, align 8
+  %tmp115 = load ptr, ptr %tmp113, align 8
+  call void @printString(ptr %tmp115)
+  %tmp119 = call ptr @arraylist_get_ptr(ptr %tmp0, i64 1)
+  %tmp121 = getelementptr inbounds %Pessoa, ptr %tmp119, i32 0, i32 2
+  %tmp122 = load ptr, ptr %tmp121, align 8
+  %tmp123 = getelementptr inbounds %Endereco, ptr %tmp122, i32 0, i32 1
+  %tmp124 = load ptr, ptr %tmp123, align 8
+  call void @printString(ptr %tmp124)
+  %tmp128 = call ptr @arraylist_get_ptr(ptr %tmp0, i64 0)
+  %tmp130 = getelementptr inbounds %Pessoa, ptr %tmp128, i32 0, i32 2
+  %tmp131 = load ptr, ptr %tmp130, align 8
+  %tmp132 = getelementptr inbounds %Endereco, ptr %tmp131, i32 0, i32 1
+  %tmp133 = load ptr, ptr %tmp132, align 8
+  %tmp135 = call ptr @createString(ptr @.str2)
+  %tmp137 = call i1 @strcmp_eq(ptr %tmp133, ptr %tmp135)
+  br i1 %tmp137, label %then_0, label %endif_0
+
+then_0:                                           ; preds = %0
+  %1 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str6)
+  br label %endif_0
+
+endif_0:                                          ; preds = %then_0, %0
+  %tmp142 = call ptr @arraylist_get_ptr(ptr %tmp0, i64 1)
+  %tmp144 = getelementptr inbounds %Pessoa, ptr %tmp142, i32 0, i32 1
+  %tmp145 = load i32, ptr %tmp144, align 4
+  %tmp147 = icmp slt i32 %tmp145, 18
+  br i1 %tmp147, label %then_1, label %endif_1
+
+then_1:                                           ; preds = %endif_0
+  %tmp151 = call ptr @arraylist_get_ptr(ptr %tmp0, i64 1)
+  %tmp154 = load ptr, ptr %tmp151, align 8
+  call void @printString(ptr %tmp154)
+  %2 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str7)
+  br label %endif_1
+
+endif_1:                                          ; preds = %then_1, %endif_0
+  %i = alloca i32, align 4
+  store i32 0, ptr %i, align 4
+  %tmp1571 = load i32, ptr %i, align 4
+  %tmp1602 = call i32 @length(ptr %tmp0)
+  %tmp1613 = icmp slt i32 %tmp1571, %tmp1602
+  br i1 %tmp1613, label %while_body_1.lr.ph, label %while_end_2
+
+while_body_1.lr.ph:                               ; preds = %endif_1
+  br label %while_body_1
+
+while_body_1:                                     ; preds = %while_body_1.lr.ph, %while_body_1
+  %3 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str8)
+  %tmp164 = load i32, ptr %i, align 4
+  %tmp165 = zext i32 %tmp164 to i64
+  %tmp166 = call ptr @arraylist_get_ptr(ptr %tmp0, i64 %tmp165)
+  %tmp169 = load ptr, ptr %tmp166, align 8
+  call void @printString(ptr %tmp169)
+  %tmp171 = load i32, ptr %i, align 4
+  %tmp172 = zext i32 %tmp171 to i64
+  %tmp173 = call ptr @arraylist_get_ptr(ptr %tmp0, i64 %tmp172)
+  %tmp175 = getelementptr inbounds %Pessoa, ptr %tmp173, i32 0, i32 2
+  %tmp176 = load ptr, ptr %tmp175, align 8
+  %tmp178 = load ptr, ptr %tmp176, align 8
+  call void @printString(ptr %tmp178)
+  %tmp180 = load i32, ptr %i, align 4
+  %tmp181 = zext i32 %tmp180 to i64
+  %tmp182 = call ptr @arraylist_get_ptr(ptr %tmp0, i64 %tmp181)
+  %tmp184 = getelementptr inbounds %Pessoa, ptr %tmp182, i32 0, i32 2
+  %tmp185 = load ptr, ptr %tmp184, align 8
+  %tmp186 = getelementptr inbounds %Endereco, ptr %tmp185, i32 0, i32 1
+  %tmp187 = load ptr, ptr %tmp186, align 8
+  call void @printString(ptr %tmp187)
+  %tmp188 = load i32, ptr %i, align 4
+  %tmp190 = add i32 %tmp188, 1
+  store i32 %tmp190, ptr %i, align 4
+  %tmp157 = load i32, ptr %i, align 4
+  %tmp160 = call i32 @length(ptr %tmp0)
+  %tmp161 = icmp slt i32 %tmp157, %tmp160
+  br i1 %tmp161, label %while_body_1, label %while_cond_0.while_end_2_crit_edge
+
+while_cond_0.while_end_2_crit_edge:               ; preds = %while_body_1
+  br label %while_end_2
+
+while_end_2:                                      ; preds = %while_cond_0.while_end_2_crit_edge, %endif_1
+  call void @freeList(ptr %tmp0)
   %4 = call i32 @getchar()
   ret i32 0
 }

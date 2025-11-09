@@ -103,12 +103,18 @@ public class IdentifierParser {
                 String fullName = name + "." + memberName;
                 if (parser.current().getValue().equals("(")) {
                     List<ASTNode> args = parser.parseArguments();
-                    parser.eat(Token.TokenType.DELIMITER, ";");
+                    // Só consome ';' se realmente for um statement completo (fora de expressão)
+                    if (parser.current().getValue().equals(";")) {
+                        parser.eat(Token.TokenType.DELIMITER, ";");
+                    }
                     return new FunctionCallNode(fullName, args);
                 } else {
-                    parser.eat(Token.TokenType.DELIMITER, ";");
+                    if (parser.current().getValue().equals(";")) {
+                        parser.eat(Token.TokenType.DELIMITER, ";");
+                    }
                     return new VariableNode(fullName);
                 }
+
             }
 
             case "=" -> {
@@ -158,4 +164,45 @@ public class IdentifierParser {
         parser.eat(Token.TokenType.DELIMITER, "}");
         return new StructUpdateNode(target, fieldUpdates, nestedUpdates);
     }
+
+    public ASTNode parseAsExpression(String name) {
+        ASTNode receiver = new VariableNode(name);
+        Token current = parser.current();
+
+        if (current.getValue().equals("(")) {
+            List<ASTNode> args = parser.parseArguments();
+            return new FunctionCallNode(name, args);
+        }
+
+        if (current.getValue().equals(".")) {
+            parser.advance();
+            String memberName = parser.current().getValue();
+            String receiverType = parser.getExpressionType(receiver);
+
+            // delega para Struct
+            if (receiverType != null && receiverType.startsWith("Struct")) {
+                StructFieldParser structParser = new StructFieldParser(parser);
+                return structParser.parseAsExpression(receiver, memberName);
+            }
+
+            // delega para List
+            if (receiverType != null && receiverType.startsWith("List")) {
+                ListMethodParser listParser = new ListMethodParser(parser);
+                return listParser.parseExpressionListMethod(receiver, memberName);
+            }
+
+            // caso geral
+            parser.advance();
+            String fullName = name + "." + memberName;
+            if (parser.current().getValue().equals("(")) {
+                List<ASTNode> args = parser.parseArguments();
+                return new FunctionCallNode(fullName, args);
+            } else {
+                return new FunctionReferenceNode(fullName);
+            }
+        }
+
+        return receiver;
+    }
+
 }

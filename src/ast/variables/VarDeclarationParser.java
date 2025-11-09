@@ -43,7 +43,7 @@ public class VarDeclarationParser {
                 if (parser.current().getValue().equals("{")) {
 
                     StructInstanceParser instanceParser = new StructInstanceParser(parser);
-                    VariableDeclarationNode node = instanceParser.parseStructInline(structName, varName);
+                    VariableDeclarationNode node = instanceParser.parseStructInstanceAfterKeyword(structName, varName);
                     parser.declareVariableType(varName, "Struct<" + structName + ">");
                     return node;
                 } else {

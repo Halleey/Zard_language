@@ -129,20 +129,8 @@ public class Parser {
 
                     String structName = current().getValue();
                     eat(Token.TokenType.IDENTIFIER);
-
-                    Token next = current();
-
-                    if (next.getValue().equals("{")) {
                         StructParser structParser = new StructParser(this);
                         return structParser.parseStructAfterKeyword(structName);
-                    } else {
-
-                        String varName = current().getValue();
-                        eat(Token.TokenType.IDENTIFIER);
-
-                        StructInstanceParser instanceParser = new StructInstanceParser(this);
-                        return instanceParser.parseStructInstanceAfterKeyword(structName, varName);
-                    }
                 }
                 case "impl" -> {
                     ImplementsParser implementsParser = new ImplementsParser(this);
@@ -200,6 +188,7 @@ public class Parser {
             }
         }
         if (tok.getType() == Token.TokenType.IDENTIFIER) {
+
             String name = tok.getValue();
             advance(); // consome IDENTIFIER
             IdentifierParser idParser = new IdentifierParser(this);
@@ -268,6 +257,10 @@ public class Parser {
 
     public void declareVariableType(String name, String type) {
         variableTypes.put(name, type);
+    }
+
+    public boolean isKnownStruct(String name) {
+        return structDefinitions.containsKey(name);
     }
 
 }

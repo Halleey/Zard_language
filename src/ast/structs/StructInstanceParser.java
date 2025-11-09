@@ -13,6 +13,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+
+import java.util.*;
+
 public class StructInstanceParser {
     private final Parser parser;
 
@@ -30,7 +33,6 @@ public class StructInstanceParser {
             parser.eat(Token.TokenType.OPERATOR, "=");
             parser.eat(Token.TokenType.DELIMITER, "{");
 
-            // Decisão: se próximo token é IDENTIFIER seguido de ":" -> nomeado
             if (parser.current().getType() == Token.TokenType.IDENTIFIER &&
                     parser.peekValue(1).equals(":")) {
                 namedValues = parseNamedInitializers(structName);
@@ -39,31 +41,26 @@ public class StructInstanceParser {
             }
 
             parser.eat(Token.TokenType.DELIMITER, "}");
+            parser.eat(Token.TokenType.DELIMITER, ";");
         }
 
-        parser.eat(Token.TokenType.DELIMITER, ";");
+        else if (parser.current().getValue().equals("{")) {
+            parser.eat(Token.TokenType.DELIMITER, "{");
 
-        StructInstaceNode instanceNode = new StructInstaceNode(structName, positionalValues, namedValues);
+            if (parser.current().getType() == Token.TokenType.IDENTIFIER &&
+                    parser.peekValue(1).equals(":")) {
+                namedValues = parseNamedInitializers(structName);
+            } else {
+                positionalValues = parsePositionalInitializers();
+            }
 
-        parser.declareVariable(varName, "Struct<" + structName + ">");
-        return new VariableDeclarationNode(varName, "Struct<" + structName + ">", instanceNode);
-    }
-
-    public VariableDeclarationNode parseStructInline(String structName, String varName) {
-        parser.eat(Token.TokenType.DELIMITER, "{");
-
-        List<ASTNode> positionalValues = null;
-        Map<String, ASTNode> namedValues = null;
-
-        if (parser.current().getType() == Token.TokenType.IDENTIFIER &&
-                parser.peekValue(1).equals(":")) {
-            namedValues = parseNamedInitializers(structName);
-        } else {
-            positionalValues = parsePositionalInitializers();
+            parser.eat(Token.TokenType.DELIMITER, "}");
+            parser.eat(Token.TokenType.DELIMITER, ";");
         }
 
-        parser.eat(Token.TokenType.DELIMITER, "}");
-        parser.eat(Token.TokenType.DELIMITER, ";");
+        else {
+            parser.eat(Token.TokenType.DELIMITER, ";");
+        }
 
         StructInstaceNode instanceNode = new StructInstaceNode(structName, positionalValues, namedValues);
         parser.declareVariable(varName, "Struct<" + structName + ">");
@@ -75,12 +72,9 @@ public class StructInstanceParser {
         while (!parser.current().getValue().equals("}")) {
             ASTNode value = parser.parseExpression();
             values.add(value);
-
             if (parser.current().getValue().equals(",")) {
                 parser.eat(Token.TokenType.DELIMITER, ",");
-            } else {
-                break;
-            }
+            } else break;
         }
         return values;
     }
@@ -95,9 +89,8 @@ public class StructInstanceParser {
             parser.eat(Token.TokenType.DELIMITER, ":");
 
             String expectedType = fields.get(fieldName);
-            if (expectedType == null) {
-                throw new RuntimeException("Campo desconhecido na inicialização de " + structName + ": " + fieldName);
-            }
+            if (expectedType == null)
+                throw new RuntimeException("Campo desconhecido em " + structName + ": " + fieldName);
 
             ASTNode expr;
 
@@ -108,44 +101,32 @@ public class StructInstanceParser {
                 while (parser.current().getValue().equals(",")) {
                     parser.eat(Token.TokenType.DELIMITER, ",");
                     if (parser.current().getType() == Token.TokenType.IDENTIFIER &&
-                            parser.peekValue(1).equals(":")) {
+                            parser.peekValue(1).equals(":"))
                         break;
-                    }
                     listValues.add(parser.parseExpression());
                 }
 
                 String innerType = expectedType.substring(5, expectedType.length() - 1);
                 if (innerType.equals("?")) {
-                    innerType = inferListTypeFromValues(listValues); // chama o método abaixo
+                    innerType = inferListTypeFromValues(listValues);
                     expectedType = "List<" + innerType + ">";
                 }
 
                 DynamicList dyn = new DynamicList(innerType, listValues);
                 expr = new ListNode(dyn);
-            }
-
-
-            else if (isPrimitiveType(expectedType)) {
+            } else if (isPrimitiveType(expectedType)) {
                 expr = parser.parseExpression();
+            } else {
+                throw new RuntimeException("Tipo não suportado para campo '" + fieldName + "' em struct " + structName);
             }
 
-            else {
-                throw new RuntimeException("Inicialização nomeada ainda não suporta tipo não-primitivo para o campo '"
-                        + fieldName + "' (tipo: " + expectedType + ").");
-            }
-
-            if (map.containsKey(fieldName)) {
-                throw new RuntimeException("Campo duplicado na inicialização: " + fieldName);
-            }
+            if (map.containsKey(fieldName))
+                throw new RuntimeException("Campo duplicado: " + fieldName);
 
             map.put(fieldName, expr);
 
-            // consome vírgula final entre pares
-            if (parser.current().getValue().equals(",")) {
-                parser.eat(Token.TokenType.DELIMITER, ",");
-            } else {
-                break;
-            }
+            if (parser.current().getValue().equals(",")) parser.eat(Token.TokenType.DELIMITER, ",");
+            else break;
         }
 
         return map;
@@ -153,19 +134,17 @@ public class StructInstanceParser {
 
     private boolean isPrimitiveType(String t) {
         String s = t.trim().toLowerCase();
-        return s.equals("int") || s.equals("double") || s.equals("bool") ||
-                s.equals("string") || s.equals("%string") || s.equals("String");
+        return s.equals("int") || s.equals("double") || s.equals("float") ||
+                s.equals("bool") || s.equals("boolean") ||
+                s.equals("string") || s.equals("%string");
     }
 
     private String inferListTypeFromValues(List<ASTNode> values) {
         if (values.isEmpty()) return "any";
-
         ASTNode first = values.get(0);
 
-        // Literais básicos
         if (first instanceof LiteralNode literal) {
-            String litType = literal.getValue().type();
-            switch (litType) {
+            switch (literal.getValue().type()) {
                 case "int": return "int";
                 case "double": return "double";
                 case "float": return "float";
@@ -173,13 +152,9 @@ public class StructInstanceParser {
                 case "boolean": return "boolean";
             }
         }
-        // Structs
-        if (first instanceof ast.structs.StructInstaceNode structNode) {
-            return "Struct<" + structNode.getName() + ">";
-        }
+        if (first instanceof StructInstaceNode s)
+            return "Struct<" + s.getName() + ">";
 
-        return "any"; // fallback
+        return "any";
     }
-
-
 }

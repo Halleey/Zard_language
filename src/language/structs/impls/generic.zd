@@ -1,19 +1,19 @@
 main {
     Struct Set {
         string name;
-        List<?> data;
+        List<int> data;
     }
     impl Set {
         # adiciona elemento e retorna o próprio Set (permite encadeamento)
-        function Struct<Set> add(Struct<Set> s, ? value) {
+        function Struct<Set> add(Struct<Set> s, int value) {
             s.data.add(value);
             return s;
         }
     }
 
     # ==== uso ====
-    Struct Set s;
-    Struct Set t = {name : "zard", data : 3,4,5};
+      Set s;
+      Set t = {name : "zard", data : 3,4,5};
     # adiciona elementos (sem this, passando s explicitamente)
     t.add(2);
     s.add(1);
@@ -22,5 +22,6 @@ main {
 
     print("=== Conteúdo do Set ===");
     print(s.data);
+    print("set T");
     print(t);
 }

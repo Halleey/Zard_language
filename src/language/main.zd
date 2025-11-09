@@ -1,27 +1,64 @@
 main {
-    Struct Set {
-        string name;
-        List<int> data;
+
+    Struct Pais {
+        string nome;
     }
-    impl Set {
-        # adiciona elemento e retorna o próprio Set (permite encadeamento)
-        function Struct<Set> add(Struct<Set> s, int value) {
-            s.data.add(value);
-            return s;
+
+
+    float teste = 3.14;
+    print(teste);
+    Struct Endereco {
+        string rua;
+        string cidade;
+        Struct Pais pais;
+    }
+
+    Struct Pessoa {
+        string nome;
+        int idade;
+        Struct Endereco endereco;
+        List<string> telefones;
+    }
+
+    # ---- Instâncias base ----
+    Pais brasil;
+    brasil.nome = "Brasil";
+
+    Endereco e1;
+    e1.rua = "Rua A";
+    e1.cidade = "São Paulo";
+    e1.pais = brasil;
+
+    Pessoa p1;
+    p1.nome = "Alice";
+    p1.idade = 25;
+    p1.endereco = e1;
+    p1.telefones.add("11 99999-1111");
+    p1.telefones.add("11 22222-3333");
+
+    # === Cópia profunda ===
+    Pessoa p2;
+    p2 = p1;
+
+    # === Alterações independentes ===
+    p2.nome = "Zard";
+    p2.telefones.add("21 44444-5555");
+
+    e1.rua = "teste";
+    e1.cidade = "Santo andré";
+
+    print("=== Original p1 ===");
+    print(p1);
+
+    # Atualização inline aninhada com lista e sub-struct
+    p2.endereco {
+        rua: "Nova Rua";
+        cidade: "Zurique";
+        pais {
+            nome: "Suíça";
         }
     }
 
-    # ==== uso ====
-    Struct Set s;
-    Struct Set t = {name : "zard", data : 3,4,5};
-    # adiciona elementos (sem this, passando s explicitamente)
-    t.add(2);
-    s.add(1);
-    s.add(22);
-    s.add(99);
-
-    print("=== Conteúdo do Set ===");
-    print(s.data);
-    print("set T");
-    print(t);
+    print("=== Clone p2 ===");
+    print(p2);
 }

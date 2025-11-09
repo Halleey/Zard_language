@@ -137,7 +137,7 @@ public class ExpressionParser {
                 String name = tok.getValue();
                 parent.advance();
                 IdentifierParser idParser = new IdentifierParser(parent);
-                return idParser.parseAsExpression(name);
+                return idParser.parseAsStatement(name);
             }
         }
 

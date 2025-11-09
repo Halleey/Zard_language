@@ -12,8 +12,8 @@ main {
     }
 
     # ==== uso ====
-    Struct Set s;
-    Struct Set t = {name : "zard", data : 3,4,5};
+     Set s;
+     Set t = {name : "zard", data : 3,4,5};
     # adiciona elementos (sem this, passando s explicitamente)
     t.add(2);
     s.add(1);

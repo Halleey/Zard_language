@@ -1,5 +1,3 @@
-
-
 main {
 Struct Pessoa {
     string nome;
@@ -12,7 +10,7 @@ impl Pessoa {
     }
 }
 
-    Struct Pessoa p;
+     Pessoa p;
     p.nome = "Zard";
     p.idade = 22;
 

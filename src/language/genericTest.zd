@@ -17,11 +17,10 @@ main {
     # adiciona elementos (sem this, passando s explicitamente)
     t.add(2);
     s.add(1);
-    names.add(3.14);
+    names.add(3,14);
+    print(names);
 
     print("=== Conteúdo do Set ===");
     print(s);
-    print("struct T");
     print(t);
-    print(names);
 }

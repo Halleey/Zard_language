@@ -7,11 +7,17 @@ import low.module.LLVMEmitVisitor;
 
 import java.util.List;
 
+
+
 public class MainAST extends ASTNode {
     public final List<ASTNode> body;
 
     public MainAST(List<ASTNode> body) {
         this.body = body;
+    }
+
+    public List<ASTNode> getBody() {
+        return body;
     }
 
     @Override
@@ -21,18 +27,22 @@ public class MainAST extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        TypedValue result = null;
-        for (ASTNode node : body) {
-            result = node.evaluate(ctx);
+        for (ASTNode n : body) {
+            n.evaluate(ctx);
         }
-        return result; // retorna o último valor ou null
+        return null;
     }
 
     @Override
     public void print(String prefix) {
         System.out.println(prefix + "Main:");
-        for (ASTNode node : body) {
-            node.print(prefix + "  ");
+        for (ASTNode n : body) {
+            n.print(prefix + "  ");
         }
+    }
+
+    @Override
+    public List<ASTNode> getChildren() {
+        return body;
     }
 }

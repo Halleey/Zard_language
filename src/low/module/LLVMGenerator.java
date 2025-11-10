@@ -1,11 +1,16 @@
 package low.module;
 
 import ast.ASTNode;
+import ast.TypeSpecializer;
 
 import java.util.List;
 
 public class LLVMGenerator {
-    private final LLVisitorMain visitor = new LLVisitorMain();
+    private final LLVisitorMain visitor;
+
+    public LLVMGenerator(TypeSpecializer typeSpecializer) {
+        this.visitor = new LLVisitorMain(typeSpecializer);
+    }
 
     public LLVisitorMain getVisitor() {
         return visitor;

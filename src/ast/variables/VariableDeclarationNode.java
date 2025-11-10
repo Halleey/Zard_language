@@ -11,8 +11,8 @@ import low.module.LLVMEmitVisitor;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-
 
 public class VariableDeclarationNode extends ASTNode {
     private final String name;
@@ -29,6 +29,7 @@ public class VariableDeclarationNode extends ASTNode {
     public String accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
+
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
         TypedValue value;
@@ -174,4 +175,16 @@ public class VariableDeclarationNode extends ASTNode {
 
     public String getName() { return name; }
     public String getType() { return type; }
+
+    @Override
+    public List<ASTNode> getChildren() {
+        if (initializer == null) return java.util.Collections.emptyList();
+        return java.util.Collections.singletonList(initializer);
+    }
+
+    public ASTNode getInitializer() {
+        return initializer;
+    }
+
+
 }

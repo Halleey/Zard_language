@@ -7,21 +7,23 @@ import ast.variables.VariableDeclarationNode;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;
+import java.util.List;
 
 public class StructNode extends ASTNode {
     private final String name;
     private final List<VariableDeclarationNode> fields;
+
+    public StructNode(String name, List<VariableDeclarationNode> fields) {
+        this.name = name;
+        this.fields = fields;
+    }
+
     public String getName() {
         return name;
     }
 
     public List<VariableDeclarationNode> getFields() {
         return fields;
-    }
-
-    public StructNode(String name, List<VariableDeclarationNode> fields) {
-        this.name = name;
-        this.fields = fields;
     }
 
     @Override
@@ -35,7 +37,6 @@ public class StructNode extends ASTNode {
         return null;
     }
 
-
     @Override
     public void print(String prefix) {
         System.out.println(prefix + "Struct " + name);
@@ -44,5 +45,16 @@ public class StructNode extends ASTNode {
         }
     }
 
+    public void replaceFieldType(String fieldName, String newType) {
+        for (int i = 0; i < fields.size(); i++) {
+            VariableDeclarationNode field = fields.get(i);
+            if (field.getName().equals(fieldName)) {
+                VariableDeclarationNode updated =
+                        new VariableDeclarationNode(field.getName(), newType, field.initializer);
+                fields.set(i, updated);
+                return;
+            }
+        }
+    }
 
 }

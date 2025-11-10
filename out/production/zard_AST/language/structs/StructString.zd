@@ -5,7 +5,7 @@ main {
     }
 
     # Cria uma instância do Set
-    Struct Set s;
+    Set s;
 
     print("digite seu nome");
     string nome = input();

@@ -1,6 +1,7 @@
 package low.module;
 
 import ast.ASTNode;
+import ast.TypeSpecializer;
 import ast.exceptions.BreakNode;
 import ast.exceptions.ReturnNode;
 import ast.functions.FunctionCallNode;
@@ -72,6 +73,17 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final StructFieldAccessEmitter structFieldAccessEmitter = new StructFieldAccessEmitter(temps);
     private final StructMethodCallEmitter methodCallEmitter   = new StructMethodCallEmitter(temps);
     private final ImplEmitter implEmitter = new ImplEmitter(this);
+
+
+    private final TypeSpecializer typeSpecializer;
+
+    public LLVisitorMain(TypeSpecializer typeSpecializer) {
+        this.typeSpecializer = typeSpecializer;
+    }
+
+    public TypeSpecializer getTypeSpecializer() {
+        return typeSpecializer;
+    }
 
 
     public String inferListElementType(ASTNode node) {

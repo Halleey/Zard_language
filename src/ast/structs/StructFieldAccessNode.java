@@ -5,6 +5,7 @@ import ast.expressions.TypedValue;
 import ast.runtime.RuntimeContext;
 import low.module.LLVMEmitVisitor;
 
+import java.util.List;
 import java.util.Map;
 
 
@@ -12,7 +13,7 @@ public class StructFieldAccessNode extends ASTNode {
     private final ASTNode structInstance;
     private final String fieldName;
     private final ASTNode value;
-
+    private String resolvedFieldType;
     public StructFieldAccessNode(ASTNode structInstance, String fieldName, ASTNode value) {
         this.structInstance = structInstance;
         this.fieldName = fieldName;
@@ -69,5 +70,19 @@ public class StructFieldAccessNode extends ASTNode {
         } else {
             System.out.println(prefix + "StructFieldAccess: " + fieldName);
         }
+    }
+
+    public void setResolvedFieldType(String s) {
+        this.resolvedFieldType = s;
+    }
+
+    // (Opcional) getter para debug
+    public String getResolvedFieldType() {
+        return resolvedFieldType;
+    }
+
+    public List<ASTNode> getChildren() {
+        return value != null ? List.of(structInstance, value)
+                : List.of(structInstance);
     }
 }

@@ -1,25 +1,18 @@
 package translate;
 
 import ast.ASTNode;
+import ast.TypeSpecializer;
 import ast.exceptions.ReturnValue;
 import ast.prints.ASTPrinter;
 import ast.runtime.RuntimeContext;
 import low.module.LLVMGenerator;
 import tokens.Lexer;
 import tokens.Token;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
-
 import java.util.ArrayList;
 import java.util.List;
-
-
-import java.nio.file.*;
-import java.util.*;
-import java.io.*;
-import java.nio.file.*;
-import java.util.*;
-import java.io.*;
 
 public class ExecutorLinux {
     public static void main(String[] args) throws Exception {
@@ -37,16 +30,22 @@ public class ExecutorLinux {
         Parser parser = new Parser(tokens);
         List<ASTNode> ast = parser.parse();
 
-        System.out.println("=== AST ===");
+        System.out.println("=== AST (antes da especialização) ===");
         ASTPrinter.printAST(ast);
 
-        // Gerar LLVM IR
-        LLVMGenerator llvmGen = new LLVMGenerator();
+        // resolver tipos genéricos e inferir monomorfizações
+        System.out.println("Executando TypeSpecializer...");
+        TypeSpecializer specializer = new TypeSpecializer();
+        specializer.specialize(ast);
+
+        System.out.println("=== AST (após especialização de tipos) ===");
+        ASTPrinter.printAST(ast);
+
+        LLVMGenerator llvmGen = new LLVMGenerator(specializer);
         String llvmCode = llvmGen.generate(ast);
         System.out.println("=== LLVM IR ===");
         System.out.println(llvmCode);
 
-        // Salvar o IR
         Path llPath = Path.of("programa.ll");
         Files.writeString(llPath, llvmCode);
         System.out.println("LLVM IR salvo em programa.ll");
@@ -54,7 +53,6 @@ public class ExecutorLinux {
         Path optimizedLL = Path.of("programa_opt.ll");
 
         System.out.println("Executando otimizador LLVM...");
-
         String passes = "mem2reg,sroa,early-cse,gvn-hoist,dce,adce,reassociate,loop-simplify,loop-rotate,loop-unroll,loop-vectorize";
 
         List<String> optCmd = new ArrayList<>();
@@ -75,16 +73,14 @@ public class ExecutorLinux {
 
         System.out.println("Arquivo otimizado salvo em " + optimizedLL);
 
-        // --- Etapa 1.5: Gerar assembly a partir do IR otimizado ---
         String asmExt = isWindows ? "asm" : "s";
         Path asmPath = Path.of("programa." + asmExt);
-
         System.out.println("Gerando assembly com llc...");
+
         List<String> llcCmd = new ArrayList<>();
         llcCmd.add("llc");
         llcCmd.add("-filetype=asm");
         llcCmd.add("-O2");
-        // Se quiser forçar alvo: ex.: llcCmd.add("-mtriple=x86_64-pc-linux-gnu");
         llcCmd.add(optimizedLL.toString());
         llcCmd.add("-o");
         llcCmd.add(asmPath.toString());
@@ -98,7 +94,7 @@ public class ExecutorLinux {
         }
         System.out.println("Assembly salvo em " + asmPath);
 
-        // --- Etapa 2: Compilar executável final ---
+        // --- Compilar executável final ---
         List<String> runtimeFiles = List.of(
                 "src/helpers/string/Stringz.c",
                 "src/helpers/inputs/InputUtil.c",
@@ -136,7 +132,6 @@ public class ExecutorLinux {
 
         if (exitCodeExe == 0) {
             System.out.println("Executável gerado: " + exeName);
-
             System.out.println("Executando programa final...");
             ProcessBuilder pbRun = new ProcessBuilder(isWindows ? exeName : "./" + exeName);
             pbRun.inheritIO();
@@ -146,16 +141,14 @@ public class ExecutorLinux {
         } else {
             throw new RuntimeException("Falha ao linkar executável");
         }
-//
-        RuntimeContext context = new RuntimeContext();
-        for (ASTNode astNode : ast) {
-            try {
-                astNode.evaluate(context);
-            }
-            catch (ReturnValue v) {
-                break;
-            }
-        }
+
+//        RuntimeContext context = new RuntimeContext();
+//        for (ASTNode astNode : ast) {
+//            try {
+//                astNode.evaluate(context);
+//            } catch (ReturnValue v) {
+//                break;
+//            }
+//        }
     }
 }
-

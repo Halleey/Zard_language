@@ -10,14 +10,13 @@ import java.util.List;
 import java.util.Map;
 
 public class ImplNode extends ASTNode {
-    private  final String structName;
+    private final String structName;
     private final List<FunctionNode> methods;
 
     public ImplNode(String structName, List<FunctionNode> methods) {
         this.structName = structName;
         this.methods = methods;
     }
-
 
     public String getStructName() {
         return structName;
@@ -35,14 +34,17 @@ public class ImplNode extends ASTNode {
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
         Map<String, FunctionNode> map = ctx.getOrCreateStructMethodTable(structName);
-        for (FunctionNode fn :  methods)
+        for (FunctionNode fn : methods) {
             map.put(fn.getName(), fn);
+        }
         return null;
     }
+
     @Override
     public void print(String prefix) {
-        System.out.println(prefix+ " Impl for  Struct<" + structName+ ">");
-        for (FunctionNode fn : methods)
+        System.out.println(prefix + " Impl for  Struct<" + structName + ">");
+        for (FunctionNode fn : methods) {
             fn.print(prefix + " ");
+        }
     }
 }

@@ -21,15 +21,15 @@ main {
     }
 
     # ---- Instâncias base ----
-    Struct Pais brasil;
+    Pais brasil;
     brasil.nome = "Brasil";
 
-    Struct Endereco e1;
+    Endereco e1;
     e1.rua = "Rua A";
     e1.cidade = "São Paulo";
     e1.pais = brasil;
 
-    Struct Pessoa p1;
+    Pessoa p1;
     p1.nome = "Alice";
     p1.idade = 25;
     p1.endereco = e1;
@@ -37,7 +37,7 @@ main {
     p1.telefones.add("11 22222-3333");
 
     # === Cópia profunda ===
-    Struct Pessoa p2;
+    Pessoa p2;
     p2 = p1;
 
     # === Alterações independentes ===

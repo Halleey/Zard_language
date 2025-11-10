@@ -12,6 +12,8 @@ import java.util.List;
 
 
 import ast.*;
+
+
 public class FunctionEmitter {
     private final LLVisitorMain visitor;
     private final TypeMapper typeMapper = new TypeMapper();
@@ -58,15 +60,13 @@ public class FunctionEmitter {
             irName = baseName;
         }
 
-        // registra tipo "any" primeiro pra evitar dependências cíclicas
         visitor.registerFunctionType(irName, new TypeInfos("any", "void", null));
 
         String declaredType = normalizeSourceType(fn.getReturnType());
 
         TypeInfos retInfo;
         if ("void".equals(declaredType) && containsReturn(fn)) {
-            // aqui eu mantive o mark/unmark com o nome lógico da função
-            // (não precisa ser o mangleado)
+
             visitor.getCallEmitter().markBeingDeduced(baseName);
             retInfo = returnInferer.deduceReturnType(fn);
             visitor.getCallEmitter().unmarkBeingDeduced(baseName);
@@ -79,8 +79,6 @@ public class FunctionEmitter {
             }
             retInfo = new TypeInfos(normalized, llvm, elem);
         }
-
-        // registra o tipo final usando SEMPRE o nome do IR (mangleado ou não)
         visitor.registerFunctionType(irName, retInfo);
 
         String llvmRetType = retInfo.getLLVMType();

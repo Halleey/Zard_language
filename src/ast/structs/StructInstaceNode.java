@@ -14,11 +14,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-
 public class StructInstaceNode extends ASTNode {
     private final String structName;
     private final List<ASTNode> positionalValues;
     private final Map<String, ASTNode> namedValues;
+    private String concreteType;
 
     public StructInstaceNode(String structName,
                              List<ASTNode> positionalValues,
@@ -26,6 +26,7 @@ public class StructInstaceNode extends ASTNode {
         this.structName = structName;
         this.positionalValues = (positionalValues != null) ? positionalValues : new ArrayList<>();
         this.namedValues = (namedValues != null) ? namedValues : new LinkedHashMap<>();
+        this.concreteType = null;
     }
 
     public String getName() { return structName; }
@@ -33,17 +34,23 @@ public class StructInstaceNode extends ASTNode {
     public Map<String, ASTNode> getNamedValues() { return namedValues; }
     public boolean isNamedInit() { return !namedValues.isEmpty(); }
 
+    public void setConcreteType(String t) { this.concreteType = t; }
+    public String getConcreteType() { return concreteType; }
+
+    public void replaceFieldType(String field, String newType) {
+    }
+
     @Override
     public String accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
+
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
         StructDefinition def = ctx.getStructType(structName);
         Map<String, TypedValue> fieldValues = new LinkedHashMap<>();
         List<VariableDeclarationNode> fields = def.getFields();
 
-        // Caso especial: struct com UM campo apenas (ex: Struct ListHolder { List<int> data; })
         if (fields.size() == 1) {
             VariableDeclarationNode only = fields.get(0);
             String fname = only.getName();
@@ -76,7 +83,6 @@ public class StructInstaceNode extends ASTNode {
 
         boolean useListShortcut = (listField != null && !positionalValues.isEmpty());
 
-        // Loop de inicialização
         for (int i = 0; i < fields.size(); i++) {
             VariableDeclarationNode field = fields.get(i);
             String fname = field.getName();
@@ -105,10 +111,8 @@ public class StructInstaceNode extends ASTNode {
                 String innerType = ftype.substring(5, ftype.length() - 1);
 
                 if (astValue instanceof ListNode listNode) {
-                    // Usa a lista pronta do ListNode
-                    value = listNode.   evaluate(ctx);
+                    value = listNode.evaluate(ctx);
                 } else {
-                    // Cria nova lista e adiciona item único
                     DynamicList dyn = new DynamicList(innerType, new ArrayList<>());
                     if (astValue != null) dyn.add(astValue.evaluate(ctx));
                     value = new TypedValue(ftype, dyn);
@@ -155,5 +159,12 @@ public class StructInstaceNode extends ASTNode {
         } else {
             System.out.println(prefix + "  <no field values>");
         }
+    }
+
+    @Override
+    public List<ASTNode> getChildren() {
+        List<ASTNode> list = new ArrayList<>(positionalValues);
+        list.addAll(namedValues.values());
+        return list;
     }
 }

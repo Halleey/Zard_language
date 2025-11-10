@@ -1,242 +1,126 @@
 	.text
 	.file	"programa.ll"
-	.globl	print_Endereco                  # -- Begin function print_Endereco
+	.globl	print_Set                       # -- Begin function print_Set
 	.p2align	4, 0x90
-	.type	print_Endereco,@function
-print_Endereco:                         # @print_Endereco
+	.type	print_Set,@function
+print_Set:                              # @print_Set
 	.cfi_startproc
 # %bb.0:                                # %entry
-	pushq	%rbx
+	pushq	%rax
 	.cfi_def_cfa_offset 16
-	.cfi_offset %rbx, -16
-	movq	%rdi, %rbx
 	movq	(%rdi), %rdi
 	callq	printString@PLT
-	movq	8(%rbx), %rdi
-	callq	printString@PLT
-	popq	%rbx
+	popq	%rax
 	.cfi_def_cfa_offset 8
 	retq
 .Lfunc_end0:
-	.size	print_Endereco, .Lfunc_end0-print_Endereco
+	.size	print_Set, .Lfunc_end0-print_Set
 	.cfi_endproc
                                         # -- End function
-	.globl	print_Pessoa                    # -- Begin function print_Pessoa
+	.globl	Set_add                         # -- Begin function Set_add
 	.p2align	4, 0x90
-	.type	print_Pessoa,@function
-print_Pessoa:                           # @print_Pessoa
+	.type	Set_add,@function
+Set_add:                                # @Set_add
 	.cfi_startproc
 # %bb.0:                                # %entry
 	pushq	%rbx
 	.cfi_def_cfa_offset 16
 	.cfi_offset %rbx, -16
 	movq	%rdi, %rbx
-	movq	(%rdi), %rdi
-	callq	printString@PLT
-	movl	8(%rbx), %esi
-	movl	$.L.strInt, %edi
-	xorl	%eax, %eax
-	callq	printf@PLT
-	movq	16(%rbx), %rdi
-	callq	print_Endereco@PLT
+	movq	8(%rdi), %rdi
+	callq	arraylist_add_int@PLT
+	movq	%rbx, %rax
 	popq	%rbx
 	.cfi_def_cfa_offset 8
 	retq
 .Lfunc_end1:
-	.size	print_Pessoa, .Lfunc_end1-print_Pessoa
+	.size	Set_add, .Lfunc_end1-Set_add
 	.cfi_endproc
                                         # -- End function
-	.globl	main                            # -- Begin function main
+	.section	.rodata.cst8,"aM",@progbits,8
+	.p2align	3, 0x0                          # -- Begin function main
+.LCPI2_0:
+	.quad	0x40091eb851eb851f              # double 3.1400000000000001
+	.text
+	.globl	main
 	.p2align	4, 0x90
 	.type	main,@function
 main:                                   # @main
 	.cfi_startproc
 # %bb.0:
-	pushq	%rbp
-	.cfi_def_cfa_offset 16
-	.cfi_offset %rbp, -16
-	movq	%rsp, %rbp
-	.cfi_def_cfa_register %rbp
 	pushq	%r15
+	.cfi_def_cfa_offset 16
 	pushq	%r14
+	.cfi_def_cfa_offset 24
 	pushq	%rbx
-	subq	$88, %rsp
-	.cfi_offset %rbx, -40
-	.cfi_offset %r14, -32
-	.cfi_offset %r15, -24
-	movl	$4, %edi
-	callq	arraylist_create@PLT
-	movq	%rax, %rbx
+	.cfi_def_cfa_offset 32
+	subq	$64, %rsp
+	.cfi_def_cfa_offset 96
+	.cfi_offset %rbx, -32
+	.cfi_offset %r14, -24
+	.cfi_offset %r15, -16
 	xorl	%edi, %edi
 	callq	createString@PLT
-	movq	%rax, -104(%rbp)
-	movl	$0, -96(%rbp)
-	movq	$0, -88(%rbp)
+	movq	%rax, 48(%rsp)
+	movl	$10, %edi
+	callq	arraylist_create@PLT
+	movq	%rax, 56(%rsp)
+	xorl	%edi, %edi
+	callq	createString@PLT
+	movq	%rax, 32(%rsp)
+	movl	$10, %edi
+	callq	arraylist_create@PLT
+	movq	%rax, 40(%rsp)
 	movl	$.L.str0, %edi
 	callq	createString@PLT
-	movq	%rax, -104(%rbp)
-	movl	$25, -96(%rbp)
-	xorl	%edi, %edi
-	callq	createString@PLT
-	movq	%rax, -56(%rbp)
-	xorl	%edi, %edi
-	callq	createString@PLT
-	movq	%rax, -48(%rbp)
-	movl	$.L.str1, %edi
-	callq	createString@PLT
-	movq	%rax, -56(%rbp)
-	movl	$.L.str2, %edi
-	callq	createString@PLT
-	movq	%rax, -48(%rbp)
-	leaq	-56(%rbp), %rax
-	movq	%rax, -88(%rbp)
-	xorl	%edi, %edi
-	callq	createString@PLT
-	movq	%rax, -80(%rbp)
-	movl	$0, -72(%rbp)
-	movq	$0, -64(%rbp)
-	movl	$.L.str3, %edi
-	callq	createString@PLT
-	movq	%rax, -80(%rbp)
-	movl	$17, -72(%rbp)
-	xorl	%edi, %edi
-	callq	createString@PLT
-	movq	%rax, -40(%rbp)
-	xorl	%edi, %edi
-	callq	createString@PLT
-	movq	%rax, -32(%rbp)
-	movl	$.L.str4, %edi
-	callq	createString@PLT
-	movq	%rax, -40(%rbp)
-	movl	$.L.str5, %edi
-	callq	createString@PLT
-	movq	%rax, -32(%rbp)
-	leaq	-40(%rbp), %rax
-	movq	%rax, -64(%rbp)
-	leaq	-104(%rbp), %rsi
+	movq	%rax, 16(%rsp)
+	movl	$4, %edi
+	callq	arraylist_create_int@PLT
+	movq	%rax, %rbx
+	movabsq	$17179869187, %rax              # imm = 0x400000003
+	movq	%rax, 4(%rsp)
+	movl	$5, 12(%rsp)
+	leaq	4(%rsp), %rsi
+	movl	$3, %edx
 	movq	%rbx, %rdi
-	callq	arraylist_add_ptr@PLT
-	leaq	-80(%rbp), %rsi
+	callq	arraylist_addAll_int@PLT
+	movq	%rbx, 24(%rsp)
+	leaq	16(%rsp), %rbx
 	movq	%rbx, %rdi
-	callq	arraylist_add_ptr@PLT
-	movq	%rbx, %rdi
-	xorl	%esi, %esi
-	callq	arraylist_get_ptr@PLT
-	movq	(%rax), %rdi
-	callq	printString@PLT
-	movq	%rbx, %rdi
-	xorl	%esi, %esi
-	callq	arraylist_get_ptr@PLT
-	movq	16(%rax), %rax
-	movq	(%rax), %rdi
-	callq	printString@PLT
-	movq	%rbx, %rdi
-	xorl	%esi, %esi
-	callq	arraylist_get_ptr@PLT
-	movq	16(%rax), %rax
-	movq	8(%rax), %rdi
-	callq	printString@PLT
+	movl	$2, %esi
+	callq	Set_add@PLT
+	leaq	48(%rsp), %r15
+	movq	%r15, %rdi
 	movl	$1, %esi
-	movq	%rbx, %rdi
-	callq	arraylist_get_ptr@PLT
-	movq	(%rax), %rdi
-	callq	printString@PLT
-	movl	$1, %esi
-	movq	%rbx, %rdi
-	callq	arraylist_get_ptr@PLT
-	movq	16(%rax), %rax
-	movq	(%rax), %rdi
-	callq	printString@PLT
-	movl	$1, %esi
-	movq	%rbx, %rdi
-	callq	arraylist_get_ptr@PLT
-	movq	16(%rax), %rax
-	movq	8(%rax), %rdi
-	callq	printString@PLT
-	movq	%rbx, %rdi
-	xorl	%esi, %esi
-	callq	arraylist_get_ptr@PLT
-	movq	16(%rax), %rax
-	movq	8(%rax), %r14
-	movl	$.L.str2, %edi
-	callq	createString@PLT
+	callq	Set_add@PLT
+	leaq	32(%rsp), %r14
+	movsd	.LCPI2_0(%rip), %xmm0           # xmm0 = [3.1400000000000001E+0,0.0E+0]
 	movq	%r14, %rdi
-	movq	%rax, %rsi
-	callq	strcmp_eq@PLT
-	testb	$1, %al
-	je	.LBB2_2
-# %bb.1:                                # %then_0
+	callq	Set_add@PLT
 	movl	$.L.strStr, %edi
-	movl	$.L.str6, %esi
+	movl	$.L.str1, %esi
 	xorl	%eax, %eax
 	callq	printf@PLT
-.LBB2_2:                                # %endif_0
-	movl	$1, %esi
-	movq	%rbx, %rdi
-	callq	arraylist_get_ptr@PLT
-	cmpl	$17, 8(%rax)
-	jg	.LBB2_4
-# %bb.3:                                # %then_1
-	movl	$1, %esi
-	movq	%rbx, %rdi
-	callq	arraylist_get_ptr@PLT
-	movq	(%rax), %rdi
-	callq	printString@PLT
+	movq	%r15, %rdi
+	callq	print_Set@PLT
 	movl	$.L.strStr, %edi
-	movl	$.L.str7, %esi
+	movl	$.L.str2, %esi
 	xorl	%eax, %eax
 	callq	printf@PLT
-.LBB2_4:                                # %endif_1
-	movq	%rsp, %rax
-	leaq	-16(%rax), %r14
-	movq	%r14, %rsp
-	movl	$0, -16(%rax)
 	movq	%rbx, %rdi
-	callq	length@PLT
-	testl	%eax, %eax
-	jle	.LBB2_6
-	.p2align	4, 0x90
-.LBB2_5:                                # %while_body_1
-                                        # =>This Inner Loop Header: Depth=1
-	movl	$.L.strStr, %edi
-	movl	$.L.str8, %esi
-	xorl	%eax, %eax
-	callq	printf@PLT
-	movl	(%r14), %esi
-	movq	%rbx, %rdi
-	callq	arraylist_get_ptr@PLT
-	movq	(%rax), %rdi
-	callq	printString@PLT
-	movl	(%r14), %esi
-	movq	%rbx, %rdi
-	callq	arraylist_get_ptr@PLT
-	movq	16(%rax), %rax
-	movq	(%rax), %rdi
-	callq	printString@PLT
-	movl	(%r14), %esi
-	movq	%rbx, %rdi
-	callq	arraylist_get_ptr@PLT
-	movq	16(%rax), %rax
-	movq	8(%rax), %rdi
-	callq	printString@PLT
-	movl	(%r14), %r15d
-	incl	%r15d
-	movl	%r15d, (%r14)
-	movq	%rbx, %rdi
-	callq	length@PLT
-	cmpl	%eax, %r15d
-	jl	.LBB2_5
-.LBB2_6:                                # %while_end_2
-	movq	%rbx, %rdi
-	callq	freeList@PLT
+	callq	print_Set@PLT
+	movq	%r14, %rdi
+	callq	print_Set@PLT
 	callq	getchar@PLT
 	xorl	%eax, %eax
-	leaq	-24(%rbp), %rsp
+	addq	$64, %rsp
+	.cfi_def_cfa_offset 32
 	popq	%rbx
+	.cfi_def_cfa_offset 24
 	popq	%r14
+	.cfi_def_cfa_offset 16
 	popq	%r15
-	popq	%rbp
-	.cfi_def_cfa %rsp, 8
+	.cfi_def_cfa_offset 8
 	retq
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
@@ -285,49 +169,18 @@ main:                                   # @main
 
 	.type	.L.str0,@object                 # @.str0
 .L.str0:
-	.asciz	"Alice"
-	.size	.L.str0, 6
+	.asciz	"zard"
+	.size	.L.str0, 5
 
 	.type	.L.str1,@object                 # @.str1
+	.p2align	4, 0x0
 .L.str1:
-	.asciz	"Rua A"
-	.size	.L.str1, 6
+	.asciz	"=== Conte\303\272do do Set ==="
+	.size	.L.str1, 25
 
 	.type	.L.str2,@object                 # @.str2
 .L.str2:
-	.asciz	"S\303\243o Paulo"
-	.size	.L.str2, 11
-
-	.type	.L.str3,@object                 # @.str3
-.L.str3:
-	.asciz	"Bob"
-	.size	.L.str3, 4
-
-	.type	.L.str4,@object                 # @.str4
-.L.str4:
-	.asciz	"Av. Central"
-	.size	.L.str4, 12
-
-	.type	.L.str5,@object                 # @.str5
-.L.str5:
-	.asciz	"Rio de Janeiro"
-	.size	.L.str5, 15
-
-	.type	.L.str6,@object                 # @.str6
-	.p2align	4, 0x0
-.L.str6:
-	.asciz	"A primeira pessoa mora em S\303\243o Paulo"
-	.size	.L.str6, 37
-
-	.type	.L.str7,@object                 # @.str7
-	.p2align	4, 0x0
-.L.str7:
-	.asciz	" \303\251 menor de idade"
-	.size	.L.str7, 19
-
-	.type	.L.str8,@object                 # @.str8
-.L.str8:
-	.asciz	"Pessoa:"
-	.size	.L.str8, 8
+	.asciz	"struct T"
+	.size	.L.str2, 9
 
 	.section	".note.GNU-stack","",@progbits

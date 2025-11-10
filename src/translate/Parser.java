@@ -12,7 +12,6 @@ import ast.loops.WhileParser;
 import ast.prints.PrintParser;
 import ast.structs.ImplementsParser;
 import ast.structs.StructFieldAccessNode;
-import ast.structs.StructInstanceParser;
 import ast.structs.StructParser;
 import ast.variables.VarDeclarationParser;
 import ast.variables.VariableNode;
@@ -37,8 +36,6 @@ public class Parser {
         if (fields != null) return fields.get(field);
         return null;
     }
-
-
 
     public Parser(List<Token> tokens) {
         this.tokens = tokens;

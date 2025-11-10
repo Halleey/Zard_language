@@ -14,7 +14,13 @@ public class FunctionNode extends ASTNode {
     private final List<String> params;
     private final List<String> paramTypes;
     private final List<ASTNode> body;
-    private final String returnType;
+    private  String returnType;
+
+    public void setReturnType(String type) { this.returnType = type; }
+
+    @Override
+    public List<ASTNode> getChildren() { return body; }
+
 
     private String implStructName; // null se não for função de impl
 

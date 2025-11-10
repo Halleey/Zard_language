@@ -1,6 +1,7 @@
 package translate;
 
 import ast.ASTNode;
+import ast.TypeSpecializer;
 import ast.exceptions.ReturnValue;
 import ast.prints.ASTPrinter;
 import ast.runtime.RuntimeContext;
@@ -27,10 +28,12 @@ public class WindowsExecutor {
 
             System.out.println("=== AST ===");
             ASTPrinter.printAST(ast);
+            TypeSpecializer specializer = new TypeSpecializer();
+            specializer.specialize(ast);
 
-            // LLVM IR
-            LLVMGenerator llvmGen = new LLVMGenerator();
-            String llvmCode = llvmGen.generate(ast);
+            LLVMGenerator generator = new LLVMGenerator(specializer);
+            String llvmCode = generator.generate(ast);
+
 
             System.out.println("=== LLVM IR ===");
             System.out.println(llvmCode);

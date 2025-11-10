@@ -5,11 +5,15 @@ import ast.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
+import java.util.List;
+
 public class ListAddNode extends ASTNode {
 
     private final ASTNode listNode;
     private final ASTNode valuesNode;
-    private final String elementType; // novo campo
+    private String elementType; // novo campo
+
+
 
     public ListAddNode(ASTNode listNode, ASTNode valuesNode, String elementType) {
         this.listNode = listNode;
@@ -37,6 +41,14 @@ public class ListAddNode extends ASTNode {
         listNode.print(prefix + "    ");
         System.out.println(prefix + "  Value to Add:");
         valuesNode.print(prefix + "    ");
+    }
+
+    public void setType(String newType) {
+        this.elementType = newType;
+    }
+
+    public List<ASTNode> getChildren() {
+        return List.of(listNode, valuesNode);
     }
 
     public ASTNode getListNode() {

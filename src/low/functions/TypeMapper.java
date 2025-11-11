@@ -1,4 +1,5 @@
 package low.functions;
+import low.utils.LLVMNameUtils;
 
 public class TypeMapper {
     public String toLLVM(String type) {
@@ -10,15 +11,14 @@ public class TypeMapper {
 
         if (type.startsWith("List<") && type.endsWith(">")) {
             String inner = type.substring(5, type.length() - 1).trim();
-
             return switch (inner) {
                 case "int"    -> "%struct.ArrayListInt*";
                 case "double" -> "%struct.ArrayListDouble*";
                 case "boolean"-> "%struct.ArrayListBool*";
-                default       -> "i8*";
+                case "string" -> "%struct.ArrayListStr*";
+                default       -> "%ArrayList*";
             };
         }
-
 
         if (type.startsWith("%") && type.endsWith("*")) {
             return type;
@@ -26,22 +26,23 @@ public class TypeMapper {
 
         if (type.startsWith("Struct<") && type.endsWith(">")) {
             String inner = type.substring(7, type.length() - 1).trim();
-            return "%" + inner.replace(".", "_") + "*";
+            String llvmName = LLVMNameUtils.llvmSafe(inner);
+            return "%" + llvmName + "*";
         }
 
         if (type.startsWith("Struct ")) {
             String inner = type.substring("Struct ".length()).trim();
-            return "%" + inner.replace(".", "_") + "*";
+            String llvmName = LLVMNameUtils.llvmSafe(inner);
+            return "%" + llvmName + "*";
         }
 
         if (type.contains(".")) {
-            String llvmName = "%" + type.replace(".", "_");
+            String llvmName = "%" + LLVMNameUtils.llvmSafe(type);
             return llvmName + "*";
         }
 
         switch (type) {
-            case "i32", "double", "i1", "i8*", "void", "%String*":
-                return type;
+            case "i32", "double", "i1", "i8*", "void", "%String*": return type;
         }
 
         return switch (type) {
@@ -55,7 +56,7 @@ public class TypeMapper {
             case "char" -> "i8";
             default -> {
                 if (Character.isUpperCase(type.charAt(0))) {
-                    yield "%" + type + "*";
+                    yield "%" + LLVMNameUtils.llvmSafe(type) + "*";
                 }
                 throw new RuntimeException("Tipo não suportado: " + type);
             }

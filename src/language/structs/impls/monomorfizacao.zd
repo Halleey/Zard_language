@@ -9,15 +9,13 @@ main {
             return s;
         }
     }
-
     # ==== uso ====
     Set s;
-    Set chars;
     Set names;
     Set t = {data : 3,4,5};
     s.add(1);
-
     names.add(3.14);
+
     print(names);
     print(t);
     print(s);

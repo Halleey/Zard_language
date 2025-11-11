@@ -4,6 +4,7 @@ import ast.ASTNode;
 import ast.expressions.TypedValue;
 import ast.functions.FunctionNode;
 import ast.runtime.RuntimeContext;
+import ast.variables.VariableNode;
 import low.module.LLVMEmitVisitor;
 
 import java.util.ArrayList;
@@ -81,5 +82,14 @@ public class StructMethodCallNode extends ASTNode {
             }
         }
     }
+
+    public String getReceiverName() {
+        if (structInstance instanceof VariableNode v) {
+            return v.getName(); //gambiarra basica para extrair o real nome da estrutura
+        }
+        return null;
+    }
+
+
 }
 

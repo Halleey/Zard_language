@@ -6,20 +6,31 @@ import ast.runtime.RuntimeContext;
 import ast.variables.VariableDeclarationNode;
 import low.module.LLVMEmitVisitor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.List;
 
 public class StructNode extends ASTNode {
     private final String name;
     private final List<VariableDeclarationNode> fields;
+    private String llvmName; // nome LLVM único, ex: Set_int, Set_double
 
     public StructNode(String name, List<VariableDeclarationNode> fields) {
         this.name = name;
         this.fields = fields;
+        this.llvmName = name;
     }
 
     public String getName() {
         return name;
+    }
+
+    public String getLLVMName() {
+        return llvmName;
+    }
+
+    public void setLLVMName(String llvmName) {
+        this.llvmName = llvmName;
     }
 
     public List<VariableDeclarationNode> getFields() {
@@ -45,16 +56,20 @@ public class StructNode extends ASTNode {
         }
     }
 
-    public void replaceFieldType(String fieldName, String newType) {
-        for (int i = 0; i < fields.size(); i++) {
-            VariableDeclarationNode field = fields.get(i);
-            if (field.getName().equals(fieldName)) {
-                VariableDeclarationNode updated =
-                        new VariableDeclarationNode(field.getName(), newType, field.initializer);
-                fields.set(i, updated);
-                return;
+    public StructNode cloneWithType(String elemType) {
+        List<VariableDeclarationNode> clonedFields = new ArrayList<>();
+        for (VariableDeclarationNode f : fields) {
+            String t = f.getType();
+            if (t.contains("List<?>")) {
+                t = "List<" + elemType + ">";
+            } else if (t.equals("?")) {
+                t = elemType;
             }
+            clonedFields.add(new VariableDeclarationNode(f.getName(), t, f.getInitializer()));
         }
-    }
 
+        StructNode clone = new StructNode(name + "_" + elemType, clonedFields);
+        clone.setLLVMName(name + "_" + elemType);
+        return clone;
+    }
 }

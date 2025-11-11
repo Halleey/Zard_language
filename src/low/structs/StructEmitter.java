@@ -7,6 +7,8 @@ import low.module.LLVisitorMain;
 
 import java.util.ArrayList;
 import java.util.List;
+
+
 public class StructEmitter {
     private final LLVisitorMain visitorMain;
     private final TypeMapper typeMapper = new TypeMapper();
@@ -18,71 +20,103 @@ public class StructEmitter {
     public String emit(StructNode node) {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("%").append(node.getName()).append(" = type { ");
+        String llvmName = (node.getLLVMName() != null && !node.getLLVMName().isBlank())
+                ? node.getLLVMName()
+                : node.getName();
+
+        System.out.println("[StructEmitter] Emitindo struct: " + node.getName() + " -> %" + llvmName);
+
+        // ===== Definição do tipo =====
+        sb.append("%").append(llvmName).append(" = type { ");
         List<String> fieldLLVMTypes = new ArrayList<>();
         for (VariableDeclarationNode field : node.getFields()) {
-            fieldLLVMTypes.add(toLLVMFieldType(field.getType()));
+            String llvmType = toLLVMFieldType(field.getType());
+            fieldLLVMTypes.add(llvmType);
+            System.out.println("  [Field] " + field.getName() + " : " + field.getType() + " -> " + llvmType);
         }
         sb.append(String.join(", ", fieldLLVMTypes));
         sb.append(" }\n\n");
 
-        sb.append("define void @print_").append(node.getName())
-                .append("(%").append(node.getName()).append("* %p) {\nentry:\n");
+        // ===== Função de impressão =====
+        sb.append("define void @print_").append(llvmName)
+                .append("(%").append(llvmName).append("* %p) {\nentry:\n");
 
         for (int i = 0; i < node.getFields().size(); i++) {
             VariableDeclarationNode field = node.getFields().get(i);
             String type = field.getType();
 
             sb.append("  %f").append(i).append(" = getelementptr inbounds %")
-                    .append(node.getName()).append(", %").append(node.getName())
+                    .append(llvmName).append(", %").append(llvmName)
                     .append("* %p, i32 0, i32 ").append(i).append("\n");
 
+            // ---------- campos primitivos ----------
             if (type.equals("int")) {
                 sb.append("  %val").append(i).append(" = load i32, i32* %f").append(i).append("\n");
-                sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr "
-                        + "([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %val").append(i).append(")\n");
+                sb.append("  call i32 (i8*, ...) @printf(")
+                        .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), ")
+                        .append("i32 %val").append(i).append(")\n");
+            } else if (type.equals("double")) {
+                sb.append("  %val").append(i).append(" = load double, double* %f").append(i).append("\n");
+                sb.append("  call i32 (i8*, ...) @printf(")
+                        .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), ")
+                        .append("double %val").append(i).append(")\n");
+            } else if (type.equals("boolean") || type.equals("bool")) {
+                sb.append("  %val").append(i).append(" = load i1, i1* %f").append(i).append("\n");
+                // Simples: imprime como 0/1 por enquanto, ou usa printString se tiver
+                sb.append("  call i32 (i8*, ...) @printf(")
+                        .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), ")
+                        .append("i32 zext (i1 %val").append(i).append(" to i32))\n");
             } else if (type.equals("string")) {
                 sb.append("  %val").append(i).append(" = load %String*, %String** %f").append(i).append("\n");
                 sb.append("  call void @printString(%String* %val").append(i).append(")\n");
             }
 
+            // ---------- Struct X ----------
             else if (type.startsWith("Struct ")) {
                 String inner = type.substring("Struct ".length()).trim();
-                sb.append("  %val").append(i).append(" = load %").append(inner)
-                        .append("*, %").append(inner).append("** %f").append(i).append("\n");
-                sb.append("  call void @print_").append(inner)
-                        .append("(%").append(inner).append("* %val").append(i).append(")\n");
-            } else if (type.startsWith("Struct<") && type.endsWith(">")) {
-                String inner = type.substring(7, type.length() - 1).trim();
-                sb.append("  %val").append(i).append(" = load %").append(inner)
-                        .append("*, %").append(inner).append("** %f").append(i).append("\n");
-                sb.append("  call void @print_").append(inner)
-                        .append("(%").append(inner).append("* %val").append(i).append(")\n");
+                String innerLLVM = resolveStructLLVMName(inner);
+                sb.append("  %val").append(i).append(" = load %").append(innerLLVM)
+                        .append("*, %").append(innerLLVM).append("** %f").append(i).append("\n");
+                sb.append("  call void @print_").append(innerLLVM)
+                        .append("(%").append(innerLLVM).append("* %val").append(i).append(")\n");
             }
 
+            // ---------- Struct<Y> ----------
+            else if (type.startsWith("Struct<") && type.endsWith(">")) {
+                String inner = type.substring(7, type.length() - 1).trim();
+                String innerLLVM = resolveStructLLVMName(inner);
+                sb.append("  %val").append(i).append(" = load %").append(innerLLVM)
+                        .append("*, %").append(innerLLVM).append("** %f").append(i).append("\n");
+                sb.append("  call void @print_").append(innerLLVM)
+                        .append("(%").append(innerLLVM).append("* %val").append(i).append(")\n");
+            }
+
+            // ---------- List<T> ----------
             else if (type.startsWith("List<")) {
                 String elementType = type.substring(5, type.length() - 1).trim();
-                sb.append("  %val").append(i).append(" = load %ArrayList*, %ArrayList** %f").append(i).append("\n");
+                String listLLVMType = toLLVMFieldType(type); // mesmo mapeamento do campo
 
-                // strings e tipos primitivos específicos
-                if (elementType.equals("string") || elementType.equals("String")) {
-                    sb.append("  call void @arraylist_print_string(%ArrayList* %val").append(i).append(")\n");
-                } else if (elementType.equals("int")) {
-                    sb.append("  call void @arraylist_print_int(%struct.ArrayListInt* %val").append(i).append(")\n");
+                // load com o tipo correto (coerente com a definição do struct)
+                sb.append("  %val").append(i).append(" = load ")
+                        .append(listLLVMType).append(", ")
+                        .append(listLLVMType).append("* %f").append(i).append("\n");
+
+                // Escolhe a função de impressão adequada
+                if (elementType.equals("int")) {
+                    sb.append("  call void @arraylist_print_int(%struct.ArrayListInt* %val")
+                            .append(i).append(")\n");
                 } else if (elementType.equals("double")) {
-                    sb.append("  call void @arraylist_print_double(%struct.ArrayListDouble* %val").append(i).append(")\n");
-                } else if (elementType.equals("boolean")) {
-                    sb.append("  call void @arraylist_print_bool(%struct.ArrayListBool* %val").append(i).append(")\n");
+                    sb.append("  call void @arraylist_print_double(%struct.ArrayListDouble* %val")
+                            .append(i).append(")\n");
+                } else if (elementType.equals("boolean") || elementType.equals("bool")) {
+                    sb.append("  call void @arraylist_print_bool(%struct.ArrayListBool* %val")
+                            .append(i).append(")\n");
+                } else if (elementType.equals("string") || elementType.equals("String")) {
+                    sb.append("  call void @arraylist_print_string(%ArrayList* %val")
+                            .append(i).append(")\n");
                 } else if (elementType.startsWith("Struct")) {
-                    // listas de structs: imprime via ponteiro + função tipada
-                    String inner = elementType
-                            .replace("Struct<", "")
-                            .replace("Struct ", "")
-                            .replace(">", "")
-                            .trim();
-                    sb.append("  call void @arraylist_print_ptr(%ArrayList* %val")
-                            .append(i)
-                            .append(", void (i8*)* @print_").append(inner).append(")\n");
+                    // Se quiser tratar List<Struct<...>> no futuro, dá pra usar arraylist_print_ptr aqui.
+                    sb.append("  ; TODO: imprimir List<").append(elementType).append("> via arraylist_print_ptr\n");
                 } else {
                     sb.append("  ; Unrecognized list type: ").append(elementType).append("\n");
                 }
@@ -95,18 +129,40 @@ public class StructEmitter {
 
     private String toLLVMFieldType(String type) {
         if (type.startsWith("List<")) {
-            String innerType = type.substring(5, type.length() - 1).trim();
             visitorMain.tiposDeListasUsados.add(type);
-            return "%ArrayList*";
+
+            String inner = type.substring(5, type.length() - 1).trim();
+
+            return switch (inner) {
+                case "int" -> "%struct.ArrayListInt*";
+                case "double" -> "%struct.ArrayListDouble*";
+                case "boolean", "bool" -> "%struct.ArrayListBool*";
+                case "string", "String", "?" -> "%ArrayList*";
+                default -> "%ArrayList*";
+            };
         }
+
         if (type.startsWith("Struct ")) {
             String inner = type.substring("Struct ".length()).trim();
-            return "%" + inner + "*";
+            String innerLLVM = resolveStructLLVMName(inner);
+            return "%" + innerLLVM + "*";
         }
+
         if (type.startsWith("Struct<") && type.endsWith(">")) {
             String inner = type.substring(7, type.length() - 1).trim();
-            return "%" + inner + "*";
+            String innerLLVM = resolveStructLLVMName(inner);
+            return "%" + innerLLVM + "*";
         }
+
         return typeMapper.toLLVM(type);
+    }
+
+    private String resolveStructLLVMName(String logicalName) {
+        StructNode n = visitorMain.getStructNode(logicalName);
+        if (n != null && n.getLLVMName() != null && !n.getLLVMName().isBlank()) {
+            System.out.println("[StructEmitter] Resolved struct LLVM name: " + logicalName + " -> " + n.getLLVMName());
+            return n.getLLVMName();
+        }
+        return logicalName;
     }
 }

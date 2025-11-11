@@ -10,7 +10,7 @@ import java.util.List;
 
 public class DynamicList {
     private final List<ASTNode> elements;
-    private final String elementType;
+    private  String elementType;
 
     public DynamicList(String elementType, List<ASTNode> elements) {
         this.elementType = elementType;
@@ -46,6 +46,15 @@ public class DynamicList {
         String valType = value.type();
 
         if (elementType.equals("?") || elementType.equals("any")) {
+            if (elements.isEmpty()) {
+                // trava o tipo dessa lista na primeira inserção
+                this.elementType = valType;
+            } else if (!valType.equals(this.elementType)) {
+                throw new RuntimeException(
+                        "Tipo inválido para lista <" + elementType + ">: " + valType
+                );
+            }
+
             elements.add(new LiteralNode(value));
             return;
         }
@@ -65,7 +74,6 @@ public class DynamicList {
 
         elements.add(new LiteralNode(value));
     }
-
 
     public int size() {
         return elements.size();

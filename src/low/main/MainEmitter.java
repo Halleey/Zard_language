@@ -322,9 +322,9 @@ public class MainEmitter {
         declare %String* @createString(i8*)
         declare i1 @strcmp_eq(%String*, %String*)
         declare i1 @strcmp_neq(%String*, %String*)
-
+    
         %String = type { i8*, i64 }
-        """);
+    """);
 
         if (!tiposDeListasUsados.isEmpty()) {
             sb.append("""
@@ -336,7 +336,7 @@ public class MainEmitter {
         declare i8* @arraylist_get_ptr(%ArrayList*, i64)
         declare void @arraylist_print_ptr(%ArrayList*, void (i8*)*)
         %ArrayList = type opaque
-        """);
+    """);
         }
 
         if (usesInput) {
@@ -346,7 +346,7 @@ public class MainEmitter {
         declare double @inputDouble(i8*)
         declare i1 @inputBool(i8*)
         declare i8* @inputString(i8*)
-        """);
+    """);
         }
 
         for (String tipo : tiposDeListasUsados) {
@@ -361,8 +361,8 @@ public class MainEmitter {
         declare void @arraylist_free_int(%struct.ArrayListInt*)
         declare i32  @arraylist_get_int(%struct.ArrayListInt*, i64, i32*)
         declare void @arraylist_remove_int(%struct.ArrayListInt*, i64)
-        declare i32  @arraylist_size_int(%struct.ArrayListInt*)
-        """);
+    declare i32  @arraylist_size_int(%struct.ArrayListInt*)
+    """);
             } else if (tipo.contains("<double>")) {
                 sb.append("""
         %struct.ArrayListDouble = type { double*, i64, i64 }
@@ -375,8 +375,8 @@ public class MainEmitter {
         declare void @arraylist_remove_double(%struct.ArrayListDouble*, i64)
         declare void @arraylist_free_double(%struct.ArrayListDouble*)
         declare i32  @arraylist_size_double(%struct.ArrayListDouble*)
-        """);
-            } else if (tipo.contains("<string>")) {
+    """);
+            } else if (tipo.contains("<string>") || tipo.contains("<?>")) {
                 sb.append("""
         declare void @arraylist_add_string(%ArrayList*, i8*)
         declare void @arraylist_addAll_string(%ArrayList*, i8**, i64)
@@ -385,7 +385,7 @@ public class MainEmitter {
         declare void @arraylist_addAll_String(%ArrayList*, %String**, i64)
         declare void @removeItem(%ArrayList*, i64)
         declare i8* @getItem(%ArrayList*, i64)
-        """);
+    """);
             } else if (tipo.contains("<boolean>")) {
                 sb.append("""
         %struct.ArrayListBool = type { i1*, i64, i64 }
@@ -398,10 +398,10 @@ public class MainEmitter {
         declare void @arraylist_free_bool(%struct.ArrayListBool*)
         declare i1 @arraylist_get_bool(%struct.ArrayListBool*, i64, i1*)
         declare i32  @arraylist_size_bool(%struct.ArrayListBool*)
-        """);
+    """);
             }
         }
-
         return sb.toString();
     }
+
 }

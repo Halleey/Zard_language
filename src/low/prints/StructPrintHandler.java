@@ -3,11 +3,12 @@ package low.prints;
 import ast.ASTNode;
 import ast.structs.StructInstaceNode;
 import ast.structs.StructNode;
-
 import ast.variables.VariableNode;
 import low.TempManager;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
+import low.utils.LLVMNameUtils;
+
 public class StructPrintHandler implements PrintHandler {
     private final TempManager temps;
 
@@ -22,8 +23,7 @@ public class StructPrintHandler implements PrintHandler {
         if (node instanceof VariableNode var) {
             TypeInfos info = visitor.getVarType(var.getName());
             if (info != null) llvmType = info.getLLVMType();
-        }
-        if (node instanceof StructInstaceNode inst) {
+        } else if (node instanceof StructInstaceNode inst) {
             llvmType = "%" + inst.getName() + "*";
         }
 
@@ -38,9 +38,7 @@ public class StructPrintHandler implements PrintHandler {
         StringBuilder llvm = new StringBuilder();
 
         String code = node.accept(visitor);
-        if (!code.isBlank()) {
-            llvm.append(code);
-        }
+        if (code != null && !code.isBlank()) llvm.append(code);
 
         String temp = extractTemp(code);
         String type = extractType(code).trim();
@@ -54,20 +52,37 @@ public class StructPrintHandler implements PrintHandler {
             llvm.append(";;VAL:").append(t).append(";;TYPE:").append(base).append("\n");
             temp = t;
             type = base;
+            System.out.println("[StructPrintHandler] Corrigido ponteiro duplo -> " + type);
         }
 
-        // Resolve struct dona
-        String key = normalizeKeyFromLLVMPtr(type); // ex: %Pessoa* -> Pessoa
+        String key = normalizeKeyFromLLVMPtr(type);
         StructNode def = resolveStructNode(key, visitor);
         if (def == null) {
             throw new RuntimeException("Struct não encontrada para impressão: " + key + " (type=" + type + ")");
         }
 
-        String shortName = def.getName();
-        String printFn = "@print_" + shortName;
+        String rawLLVMName = def.getLLVMName();
+        String llvmStructName = LLVMNameUtils.llvmSafe(rawLLVMName)
+                .replace("<", "_")
+                .replace(">", "");
 
-        // chamada direta, sem bitcast para i8*
-        llvm.append("  call void ").append(printFn)
+
+        String targetPtrType = "%" + llvmStructName + "*";
+
+        if (!type.equals(targetPtrType)) {
+            String castTemp = temps.newTemp();
+            llvm.append("  ").append(castTemp)
+                    .append(" = bitcast ")
+                    .append(type).append(" ").append(temp)
+                    .append(" to ").append(targetPtrType).append("\n");
+            llvm.append(";;VAL:").append(castTemp).append(";;TYPE:").append(targetPtrType).append("\n");
+            temp = castTemp;
+            type = targetPtrType;
+            System.out.println("[StructPrintHandler] Bitcast aplicado para " + targetPtrType);
+        }
+
+        llvm.append("  call void @print_")
+                .append(llvmStructName)
                 .append("(").append(type).append(" ").append(temp).append(")\n");
 
         llvm.append(";;VAL:").append(temp).append(";;TYPE:").append(type).append("\n");
@@ -76,24 +91,31 @@ public class StructPrintHandler implements PrintHandler {
     }
 
     private StructNode resolveStructNode(String key, LLVisitorMain visitor) {
-
         StructNode n = visitor.getStructNode(key);
         if (n != null) return n;
 
-        String withDots = key.replace('_', '.');
-        n = visitor.getStructNode(withDots);
+        String base = stripGenericBase(key);
+        String safe = LLVMNameUtils.llvmSafe(key);
+        String safeBase = LLVMNameUtils.llvmSafe(base);
+
+        n = visitor.getStructNode(base + "<int>");
         if (n != null) return n;
 
-        int idx = key.indexOf('_');
-        if (idx >= 0 && idx + 1 < key.length()) {
-            String shortOnly = key.substring(idx + 1);
-            n = visitor.getStructNode(shortOnly);
-            if (n != null) return n;
-        }
+        n = visitor.getStructNode(base + "_" + safeBase);
+        if (n != null) return n;
 
-        String asGeneric = "Struct<" + withDots + ">";
-        n = visitor.getStructNode(asGeneric);
-        return n;
+        n = visitor.getStructNode(safe);
+        if (n != null) return n;
+
+        n = visitor.getStructNode("%" + safe);
+        if (n != null) return n;
+
+        return null;
+    }
+
+    private String stripGenericBase(String key) {
+        int idx = key.indexOf('<');
+        return (idx > 0) ? key.substring(0, idx).trim() : key;
     }
 
     private String normalizeKeyFromLLVMPtr(String llvmPtrType) {
@@ -104,13 +126,17 @@ public class StructPrintHandler implements PrintHandler {
     }
 
     private String extractTemp(String code) {
+        if (code == null) return "%unk";
         int v = code.lastIndexOf(";;VAL:");
         int t = code.indexOf(";;TYPE:", v);
+        if (v == -1 || t == -1) return "%unk";
         return code.substring(v + 6, t).trim();
     }
 
     private String extractType(String code) {
+        if (code == null) return "%unk";
         int t = code.lastIndexOf(";;TYPE:");
+        if (t == -1) return "%unk";
         return code.substring(t + 7).trim();
     }
 }

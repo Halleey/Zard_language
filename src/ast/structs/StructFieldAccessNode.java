@@ -8,12 +8,12 @@ import low.module.LLVMEmitVisitor;
 import java.util.List;
 import java.util.Map;
 
-
 public class StructFieldAccessNode extends ASTNode {
     private final ASTNode structInstance;
     private final String fieldName;
     private final ASTNode value;
     private String resolvedFieldType;
+
     public StructFieldAccessNode(ASTNode structInstance, String fieldName, ASTNode value) {
         this.structInstance = structInstance;
         this.fieldName = fieldName;
@@ -76,11 +76,11 @@ public class StructFieldAccessNode extends ASTNode {
         this.resolvedFieldType = s;
     }
 
-    // (Opcional) getter para debug
     public String getResolvedFieldType() {
         return resolvedFieldType;
     }
 
+    @Override
     public List<ASTNode> getChildren() {
         return value != null ? List.of(structInstance, value)
                 : List.of(structInstance);

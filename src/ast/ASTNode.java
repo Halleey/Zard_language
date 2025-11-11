@@ -14,4 +14,7 @@ public abstract class ASTNode {
     public List<ASTNode> getChildren() {
         return Collections.emptyList(); // subclasses podem sobrescrever
     }
+    public String getType() {
+        return null;
+    }
 }

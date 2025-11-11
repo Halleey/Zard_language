@@ -6,6 +6,7 @@ import ast.exceptions.ReturnValue;
 import ast.prints.ASTPrinter;
 import ast.runtime.RuntimeContext;
 import low.module.LLVMGenerator;
+import low.module.LLVisitorMain;
 import tokens.Lexer;
 import tokens.Token;
 
@@ -13,13 +14,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-
 public class WindowsExecutor {
     public static void main(String[] args) {
         try {
-            // Caminho do arquivo de entrada
             String filePath = args.length > 0 ? args[0] : "src/language/main.zd";
             String code = Files.readString(Path.of(filePath));
+
             // Lexer + Parser
             Lexer lexer = new Lexer(code);
             List<Token> tokens = lexer.tokenize();
@@ -28,12 +28,21 @@ public class WindowsExecutor {
 
             System.out.println("=== AST ===");
             ASTPrinter.printAST(ast);
+
+            // === ESPECIALIZAÇÃO DE TIPOS ===
+            System.out.println("Executando TypeSpecializer...");
             TypeSpecializer specializer = new TypeSpecializer();
+
+            // Cria visitor e conecta com o specializer
+            LLVisitorMain visitor = new LLVisitorMain(specializer);
+            specializer.setVisitor(visitor);
+
+            // Especializa tipos
             specializer.specialize(ast);
 
-            LLVMGenerator generator = new LLVMGenerator(specializer);
+            // === GERAÇÃO DE LLVM IR ===
+            LLVMGenerator generator = new LLVMGenerator(visitor);
             String llvmCode = generator.generate(ast);
-
 
             System.out.println("=== LLVM IR ===");
             System.out.println(llvmCode);
@@ -43,7 +52,7 @@ public class WindowsExecutor {
             Files.writeString(llPath, llvmCode);
             System.out.println("LLVM IR salvo em programa.ll");
 
-            // Arquivos C do runtime
+            // Arquivos do runtime
             List<String> runtimeFiles = List.of(
                     "src/low/runtime/string/Stringz.c",
                     "src/low/runtime/inputs/InputUtil.c",
@@ -51,11 +60,10 @@ public class WindowsExecutor {
                     "src/low/runtime/ints/ArrayListInt.c",
                     "src/low/runtime/bool/ArrayListBool.c",
                     "src/low/runtime/doubles/ArrayListDouble.c",
-                    "src/low/runtime/print/PrintList.c",
-                    ""
+                    "src/low/runtime/print/PrintList.c"
             );
 
-            // Flags de include para headers
+            // Includes
             List<String> includeDirs = List.of(
                     "-Isrc/low/runtime/string",
                     "-Isrc/low/runtime/input",
@@ -63,7 +71,7 @@ public class WindowsExecutor {
                     "-Isrc/low/runtime/print"
             );
 
-            // Montar comando do clang
+            // Montar comando clang
             List<String> cmdExe = new ArrayList<>();
             cmdExe.add("clang");
             cmdExe.add("programa.ll");
@@ -74,7 +82,7 @@ public class WindowsExecutor {
 
             System.out.println("Executando clang para gerar executável...");
             ProcessBuilder pbExe = new ProcessBuilder(cmdExe);
-            pbExe.inheritIO(); // Para ver a saída do compilador
+            pbExe.inheritIO();
             Process processExe = pbExe.start();
             int exitCodeExe = processExe.waitFor();
 
@@ -83,35 +91,8 @@ public class WindowsExecutor {
             } else {
                 throw new RuntimeException("Falha ao linkar executável");
             }
-//
-//            List<String> cmdAsmPure = new ArrayList<>();
-//            cmdAsmPure.add("clang");
-//            cmdAsmPure.add("-S");          // gera assembly
-//            cmdAsmPure.add("programa.ll");
-//            cmdAsmPure.add("-o");
-//            cmdAsmPure.add("programa.s");
-//
-//            ProcessBuilder pbAsmPure = new ProcessBuilder(cmdAsmPure);
-//            pbAsmPure.inheritIO();
-//            Process processAsmPure = pbAsmPure.start();
-//            int exitCodeAsmPure = processAsmPure.waitFor();
-//            if (exitCodeAsmPure == 0) System.out.println("Assembly puro gerado: programa.s");
-//
-//// Comando para gerar assembly do executável completo (com runtime)
-//            List<String> cmdAsmFull = new ArrayList<>();
-//            cmdAsmFull.add("clang");
-//            cmdAsmFull.add("-S");          // gera assembly
-//            cmdAsmFull.add("programa.ll");
-//            cmdAsmFull.addAll(runtimeFiles);
-//
-//            ProcessBuilder pbAsmFull = new ProcessBuilder(cmdAsmFull);
-//            pbAsmFull.inheritIO();
-//            Process processAsmFull = pbAsmFull.start();
-//            int exitCodeAsmFull = processAsmFull.waitFor();
-//            if (exitCodeAsmFull == 0) System.out.println("Assembly completo gerado (um .s por arquivo)");
 
-            // Execução na AST (interpretação)
-//            System.out.println("=== Execution ===");
+            // Execução interpretada opcional
             RuntimeContext ctx = new RuntimeContext();
             for (ASTNode node : ast) {
                 try {

@@ -15,6 +15,8 @@ import ast.variables.VariableDeclarationNode;
 
 import java.util.HashMap;
 import java.util.Map;
+
+
 public class VariableEmitter {
     private final Map<String, TypeInfos> varTypes;
     private final TempManager temps;
@@ -39,7 +41,7 @@ public class VariableEmitter {
 
         String srcType = node.getType();
         String llvmType;
-        String elemType = null;
+        String elemType;
 
         switch (srcType) {
             case "string" -> {

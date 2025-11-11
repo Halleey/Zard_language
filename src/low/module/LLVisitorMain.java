@@ -27,6 +27,7 @@ import low.main.MainEmitter;
 import low.main.TypeInfos;
 import low.prints.PrintEmitter;
 import low.structs.*;
+import low.utils.LLVMNameUtils;
 import low.variables.*;
 import low.whiles.WhileEmitter;
 
@@ -74,6 +75,38 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final StructMethodCallEmitter methodCallEmitter   = new StructMethodCallEmitter(temps);
     private final ImplEmitter implEmitter = new ImplEmitter(this);
 
+
+
+    public final Map<String, StructNode> specializedStructs = new HashMap<>();
+
+
+    public StructNode getOrCreateSpecializedStruct(StructNode base, String elemType) {
+        if (base == null || elemType == null) return null;
+
+        String key = base.getName() + "<" + elemType + ">";
+        if (specializedStructs.containsKey(key)) {
+            return specializedStructs.get(key);
+        }
+
+        StructNode clone = base.cloneWithType(elemType);
+        String llvmName = LLVMNameUtils.llvmSafe(base.getName() + "_" + elemType);
+        clone.setLLVMName(llvmName);
+
+
+        specializedStructs.put(key, clone);
+
+        String baseName = base.getName();
+        structNodes.put(key, clone);
+        structNodes.put(baseName + "_" + elemType, clone);
+        structNodes.put(llvmName, clone);
+        structNodes.put("%" + llvmName, clone);
+        structNodes.put(baseName + "<" + elemType + ">", clone);
+
+        String llvmDef = structEmitter.emit(clone);
+        structDefinitions.add(llvmDef);
+
+        return clone;
+    }
 
     private final TypeSpecializer typeSpecializer;
 
@@ -154,12 +187,26 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return loopEndLabels.peek();
     }
 
-    @Override public String visit(StructNode node) {
+    @Override
+    public String visit(StructNode node) {
+        // Evita redefinir structs que já foram emitidas
+        String llvmName = (node.getLLVMName() != null && !node.getLLVMName().isBlank())
+                ? node.getLLVMName()
+                : node.getName();
+
+        boolean alreadyDefined = structDefinitions.stream()
+                .anyMatch(def -> def.startsWith("%" + llvmName + " "));
+
+        if (alreadyDefined) {
+            return "";
+        }
+
         String llvm = structEmitter.emit(node);
         addStructDefinition(llvm);
         registerStructNode(node);
         return "";
     }
+
     @Override public String visit(StructInstaceNode node) { return instanceEmitter.emit(node, this); }
     @Override public String visit(StructFieldAccessNode node) { return structFieldAccessEmitter.emit(node, this); }
 

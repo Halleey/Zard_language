@@ -19,6 +19,7 @@ public class VariableDeclarationNode extends ASTNode {
     private final String type;
     public final ASTNode initializer;
 
+
     public VariableDeclarationNode(String name, String type, ASTNode initializer) {
         this.name = name;
         this.type = type;
@@ -85,10 +86,16 @@ public class VariableDeclarationNode extends ASTNode {
 
     private String extractStructName(String typeName) {
         if (typeName.startsWith("Struct<") && typeName.endsWith(">")) {
-            return typeName.substring("Struct<".length(), typeName.length() - 1);
+            String inner = typeName.substring("Struct<".length(), typeName.length() - 1);
+            int genericIdx = inner.indexOf('<');
+            if (genericIdx != -1) {
+                inner = inner.substring(0, genericIdx);
+            }
+            return inner.trim();
         }
         return typeName;
     }
+
 
     private TypedValue evaluateList(RuntimeContext ctx, ListNode listNode, DynamicList list) {
         for (ASTNode elem : listNode.getList().getElements()) {
@@ -174,6 +181,7 @@ public class VariableDeclarationNode extends ASTNode {
     }
 
     public String getName() { return name; }
+    @Override
     public String getType() { return type; }
 
     @Override
@@ -185,6 +193,8 @@ public class VariableDeclarationNode extends ASTNode {
     public ASTNode getInitializer() {
         return initializer;
     }
+
+
 
 
 }

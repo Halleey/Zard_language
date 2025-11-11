@@ -5,13 +5,11 @@ package low.structs;
 import ast.ASTNode;
 import ast.structs.StructMethodCallNode;
 import low.TempManager;
-import low.functions.TypeMapper;
+
 import low.module.LLVisitorMain;
-
-
 public class StructMethodCallEmitter {
+
     private final TempManager temps;
-    private final TypeMapper typeMapper = new TypeMapper();
 
     public StructMethodCallEmitter(TempManager temps) {
         this.temps = temps;
@@ -20,62 +18,61 @@ public class StructMethodCallEmitter {
     public String emit(StructMethodCallNode node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
 
-        String structName = visitor.resolveStructName(node.getStructInstance());
         String methodName = node.getMethodName();
 
-        String fnName = "@" + structName + "_" + methodName;
+        ASTNode receiver = node.getStructInstance();
+        String recvIR = receiver.accept(visitor);
+        String recvVal = extractLastVal(recvIR);
+        String recvType = extractLastType(recvIR);
 
-        String recvCode = node.getStructInstance().accept(visitor);
-        llvm.append(recvCode);
+        llvm.append(recvIR);
 
-        String recvVal = extractVal(recvCode);
-        String recvType = extractType(recvCode);
-        if (recvVal == null || recvType == null)
-            throw new RuntimeException("Failed to extract receiver value/type for StructMethodCallNode");
+        String cleanType = recvType.replace("%", "").replace("*", "");
+        String llvmSafe = cleanType
+                .replace("Struct<", "")
+                .replace(">", "")
+                .replace("<", "_")
+                .replace(",", "_")
+                .replace(" ", "_");
+        String llvmFuncName = llvmSafe + "_" + methodName;
 
-        StringBuilder argList = new StringBuilder();
-        for (ASTNode arg : node.getArgs()) {
-            String argCode = arg.accept(visitor);
-            llvm.append(argCode);
+        StringBuilder callArgs = new StringBuilder();
+        callArgs.append(recvType).append(" ").append(recvVal);
 
-            String argVal = extractVal(argCode);
-            String argType = extractType(argCode);
+        if (!node.getArgs().isEmpty()) {
+            ASTNode arg = node.getArgs().get(0);
+            String argIR = arg.accept(visitor);
+            llvm.append(argIR);
 
-            if (argVal == null || argType == null)
-                throw new RuntimeException("Cannot extract argument value/type in StructMethodCallNode");
-
-            argList.append(", ")
-                    .append(argType)
-                    .append(" ")
-                    .append(argVal);
+            String argVal = extractLastVal(argIR);
+            String argType = extractLastType(argIR);
+            callArgs.append(", ").append(argType).append(" ").append(argVal);
         }
 
-        String tmp = temps.newTemp();
-        llvm.append("  ").append(tmp).append(" = call ").append(recvType)
-                .append(" ").append(fnName)
-                .append("(").append(recvType).append(" ").append(recvVal)
-                .append(argList).append(")\n");
+        String retType = recvType;
 
-        llvm.append(";;VAL:").append(tmp)
-                .append(";;TYPE:").append(recvType)
-                .append("\n");
+        String tmp = temps.newTemp();
+        llvm.append("  ").append(tmp)
+                .append(" = call ").append(retType)
+                .append(" @").append(llvmFuncName)
+                .append("(").append(callArgs).append(")\n")
+                .append(";;VAL:").append(tmp).append(";;TYPE:").append(retType).append("\n");
 
         return llvm.toString();
     }
 
-    private String extractVal(String code) {
-        int i = code.lastIndexOf(";;VAL:");
-        if (i == -1) return null;
-        int j = code.indexOf(";;TYPE:", i);
-        if (j == -1) return null;
-        return code.substring(i + 6, j).trim();
+    private String extractLastVal(String code) {
+        int v = code.lastIndexOf(";;VAL:");
+        if (v == -1) return "";
+        int t = code.indexOf(";;TYPE:", v);
+        return (t == -1) ? "" : code.substring(v + 6, t).trim();
     }
 
-    private String extractType(String code) {
-        int j = code.lastIndexOf(";;TYPE:");
-        if (j == -1) return null;
-        String line = code.substring(j + 7).trim();
-        int end = line.indexOf('\n');
-        return (end != -1) ? line.substring(0, end).trim() : line;
+    private String extractLastType(String code) {
+        int t = code.lastIndexOf(";;TYPE:");
+        if (t == -1) return "";
+        int end = code.indexOf("\n", t);
+        if (end == -1) end = code.length();
+        return code.substring(t + 7, end).trim();
     }
 }

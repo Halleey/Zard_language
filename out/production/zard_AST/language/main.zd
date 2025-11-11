@@ -1,6 +1,5 @@
 main {
     Struct Set {
-        string name;
         List<?> data;
     }
     impl Set {
@@ -10,18 +9,16 @@ main {
             return s;
         }
     }
+
     # ==== uso ====
     Set s;
+    Set chars;
     Set names;
-    Set t = {name : "zard", data : 3,4,5};
-    # adiciona elementos (sem this, passando s explicitamente)
-    t.add(2);
+    Set t = {data : 3,4,5};
     s.add(1);
-    names.add(3.14);
 
-    print("=== Conteúdo do Set ===");
-    print(s);
-    print("struct T");
-    print(t);
+    names.add(3.14);
     print(names);
+    print(t);
+    print(s);
 }

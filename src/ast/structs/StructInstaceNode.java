@@ -32,13 +32,11 @@ public class StructInstaceNode extends ASTNode {
     public String getName() { return structName; }
     public List<ASTNode> getPositionalValues() { return positionalValues; }
     public Map<String, ASTNode> getNamedValues() { return namedValues; }
-    public boolean isNamedInit() { return !namedValues.isEmpty(); }
 
     public void setConcreteType(String t) { this.concreteType = t; }
     public String getConcreteType() { return concreteType; }
 
-    public void replaceFieldType(String field, String newType) {
-    }
+
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
@@ -50,28 +48,6 @@ public class StructInstaceNode extends ASTNode {
         StructDefinition def = ctx.getStructType(structName);
         Map<String, TypedValue> fieldValues = new LinkedHashMap<>();
         List<VariableDeclarationNode> fields = def.getFields();
-
-        if (fields.size() == 1) {
-            VariableDeclarationNode only = fields.get(0);
-            String fname = only.getName();
-            String ftype = only.getType();
-
-            if (ftype.startsWith("List<")) {
-                String innerType = ftype.substring(5, ftype.length() - 1);
-                DynamicList dyn = new DynamicList(innerType, new ArrayList<>());
-
-                if (!namedValues.isEmpty() && namedValues.containsKey(fname)) {
-                    TypedValue v = namedValues.get(fname).evaluate(ctx);
-                    dyn.add(v);
-                } else if (!positionalValues.isEmpty()) {
-                    for (ASTNode pv : positionalValues) {
-                        dyn.add(pv.evaluate(ctx));
-                    }
-                }
-                fieldValues.put(fname, new TypedValue(ftype, dyn));
-                return new TypedValue("Struct<" + structName + ">", fieldValues);
-            }
-        }
 
         VariableDeclarationNode listField = null;
         for (VariableDeclarationNode f : fields) {
@@ -90,6 +66,7 @@ public class StructInstaceNode extends ASTNode {
 
             TypedValue value;
 
+            // caso especial: atalho p/ struct com um único campo lista e valores posicionais
             if (useListShortcut && field == listField) {
                 String innerType = ftype.substring(5, ftype.length() - 1);
                 DynamicList dyn = new DynamicList(innerType, new ArrayList<>());

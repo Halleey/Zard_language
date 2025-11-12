@@ -5,18 +5,29 @@ main {
     impl Set {
         # adiciona elemento e retorna o próprio Set (permite encadeamento)
         function Struct<Set> add(Set s, ? value) {
-            s.data.add(value);
+        int i = 0;
+        while(i < s.data.size()) {
+            if(s.data.get(i) == value){
+            return s;
+            }
+            i++;
+        }
+         s.data.add(value);
             return s;
         }
+
+        function Struct<Set> remove(Set s, int index) {
+        s.data.remove(index);
+        return s;
+        }
+
     }
+
     # ==== uso ====
     Set s;
-    Set names;
-    Set t = {data : 3,4,5};
     s.add(1);
-    names.add(3.14);
-
-    print(names);
-    print(t);
+    s.add(1);
+    s.remove(0);
     print(s);
+
 }

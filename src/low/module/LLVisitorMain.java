@@ -78,6 +78,29 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
 
     public final Map<String, StructNode> specializedStructs = new HashMap<>();
+    // === Controle de especialização de tipo (para ImplEmitter / TypeSpecializer) ===
+    private String currentSpecializationType = null;
+
+    /**
+     * Entra num contexto de especialização de tipo.
+     * Exemplo: innerType = "int" → todas as listas genéricas viram List<int>.
+     */
+    public void enterTypeSpecialization(String innerType) {
+        this.currentSpecializationType = innerType;
+    }
+
+    /** Sai do contexto de especialização. */
+    public void exitTypeSpecialization() {
+        this.currentSpecializationType = null;
+    }
+
+    /** Retorna o tipo concreto da especialização atual (ex: "int", "double"). */
+    public String getCurrentSpecializationType() {
+        return currentSpecializationType;
+    }
+
+
+
 
 
     public StructNode getOrCreateSpecializedStruct(StructNode base, String elemType) {

@@ -8,6 +8,7 @@ import low.module.LLVisitorMain;
 
 import java.util.Map;
 
+import low.main.TypeInfos;
 
 public class ImplEmitter {
     private final LLVisitorMain visitor;
@@ -26,12 +27,14 @@ public class ImplEmitter {
 
         for (FunctionNode fn : node.getMethods()) {
             if (isListImplMethod(baseStruct, fn)) {
-                // só gera genérico se não há especialização inferida
+                // só gera genérica se não há especialização inferida
                 if (!temEspecializacao) {
-                    llvm.append("; === Impl genérica para Struct<").append(baseStruct).append("> ===\n");
+                    llvm.append("; === Impl genérica para Struct<")
+                            .append(baseStruct).append("> ===\n");
                     llvm.append(generateFunctionImpl(baseStruct, fn, null));
                 }
 
+                // gera versões especializadas (ex: Struct<Set<int>>)
                 for (Map.Entry<String, StructNode> entry : visitor.specializedStructs.entrySet()) {
                     String name = entry.getKey();
                     if (name.startsWith(baseStruct + "<")) {
@@ -50,32 +53,10 @@ public class ImplEmitter {
         return llvm.toString();
     }
 
-
     private boolean isListImplMethod(String baseStruct, FunctionNode fn) {
         return "Set".equals(baseStruct)
                 && fn.getParams() != null
                 && fn.getParams().size() >= 2;
-    }
-
-    private String emitListImpls(String baseStruct, FunctionNode fn) {
-        StringBuilder llvm = new StringBuilder();
-
-        llvm.append("; === Impl para Struct<").append(baseStruct).append("> ===\n");
-        llvm.append(generateFunctionImpl(baseStruct, fn, null));
-
-        if (!visitor.specializedStructs.isEmpty()) {
-            for (Map.Entry<String, StructNode> entry : visitor.specializedStructs.entrySet()) {
-                String name = entry.getKey();
-                if (name.startsWith(baseStruct + "<")) {
-                    String inner = extractInnerType(name);
-                    llvm.append("; === Impl especializado para Struct<")
-                            .append(baseStruct).append("<").append(inner).append(">> ===\n");
-                    llvm.append(generateFunctionImpl(baseStruct, fn, inner));
-                }
-            }
-        }
-
-        return llvm.toString();
     }
 
     private String emitSimpleMethod(String baseStruct, FunctionNode fn) {
@@ -102,7 +83,6 @@ public class ImplEmitter {
 
         return sb.toString();
     }
-
     private String generateFunctionImpl(String baseStruct, FunctionNode fn, String specialized) {
         StringBuilder sb = new StringBuilder();
 
@@ -133,6 +113,7 @@ public class ImplEmitter {
                 .append(", ").append(valueTypeLLVM).append(" %").append(valueS).append(") {\n");
         sb.append("entry:\n");
 
+        // === Aloca parâmetros no stack ===
         sb.append("  %").append(paramS).append("_addr = alloca ").append(paramTypeLLVM).append("\n");
         sb.append("  store ").append(paramTypeLLVM).append(" %").append(paramS)
                 .append(", ").append(paramTypeLLVM).append("* %").append(paramS).append("_addr\n");
@@ -141,32 +122,38 @@ public class ImplEmitter {
         sb.append("  store ").append(valueTypeLLVM).append(" %").append(valueS)
                 .append(", ").append(valueTypeLLVM).append("* %").append(valueS).append("_addr\n");
 
-        sb.append("  %tmp0 = load ").append(paramTypeLLVM).append(", ").append(paramTypeLLVM)
-                .append("* %").append(paramS).append("_addr\n");
-        sb.append("  %tmp1 = getelementptr inbounds ").append(structLLVM).append(", ")
-                .append(structLLVM).append("* %tmp0, i32 0, i32 0\n");
+        // ✅ REGISTRA PONTEIROS DOS PARÂMETROS
+        String paramPtr = "%" + paramS + "_addr";
+        String valuePtr = "%" + valueS + "_addr";
+        visitor.getVariableEmitter().registerVarPtr(paramS, paramPtr);
+        visitor.getVariableEmitter().registerVarPtr(valueS, valuePtr);
 
-        if (specialized == null) {
-            sb.append("  %tmp2 = load %ArrayList*, %ArrayList** %tmp1\n");
-            sb.append("  %tmp3 = load i8*, i8** %").append(valueS).append("_addr\n");
-            sb.append("  call void @arraylist_add_string(%ArrayList* %tmp2, i8* %tmp3)\n");
-        } else if (specialized.equals("int")) {
-            sb.append("  %tmp2 = load %struct.ArrayListInt*, %struct.ArrayListInt** %tmp1\n");
-            sb.append("  %tmp3 = load i32, i32* %").append(valueS).append("_addr\n");
-            sb.append("  call void @arraylist_add_int(%struct.ArrayListInt* %tmp2, i32 %tmp3)\n");
-        } else if (specialized.equals("double")) {
-            sb.append("  %tmp2 = load %struct.ArrayListDouble*, %struct.ArrayListDouble** %tmp1\n");
-            sb.append("  %tmp3 = load double, double* %").append(valueS).append("_addr\n");
-            sb.append("  call void @arraylist_add_double(%struct.ArrayListDouble* %tmp2, double %tmp3)\n");
-        } else if (specialized.equals("bool") || specialized.equals("boolean")) {
-            sb.append("  %tmp2 = load %struct.ArrayListBool*, %struct.ArrayListBool** %tmp1\n");
-            sb.append("  %tmp3 = load i1, i1* %").append(valueS).append("_addr\n");
-            sb.append("  call void @arraylist_add_bool(%struct.ArrayListBool* %tmp2, i1 %tmp3)\n");
+        // ✅ REGISTRA TIPOS DOS PARÂMETROS
+        if (specialized != null) {
+            String structSourceType = "Struct<" + baseStruct + "<" + specialized + ">>";
+            String structLLVMType = "%" + baseStruct + "_" + specialized + "*";
+            visitor.putVarType(paramS, new TypeInfos(structSourceType, structLLVMType, null));
+            visitor.putVarType(valueS, new TypeInfos(specialized, mapToLLVMType(specialized), null));
         } else {
-            sb.append("  ; TODO: Suporte a tipo ").append(specialized).append("\n");
+            visitor.putVarType(paramS, new TypeInfos("Struct<" + baseStruct + ">", "%" + baseStruct + "*", null));
+            visitor.putVarType(valueS, new TypeInfos("?", "i8*", null));
         }
 
-        sb.append("  ret ").append(retType).append(" %tmp0\n");
+        // === Corpo da função ===
+        if (fn.getBody() != null && !fn.getBody().isEmpty()) {
+            if (specialized != null)
+                visitor.enterTypeSpecialization(specialized);
+
+            for (ASTNode stmt : fn.getBody()) {
+                sb.append(stmt.accept(visitor));
+            }
+
+            if (specialized != null)
+                visitor.exitTypeSpecialization();
+        }
+
+        // === Retorno ===
+        sb.append("  ret ").append(retType).append(" %").append(paramS).append("\n");
         sb.append("}\n\n");
         return sb.toString();
     }

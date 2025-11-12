@@ -65,7 +65,8 @@ public class ExecutorLinux {
         // === GERAÇÃO LLVM (usa o MESMO visitor) ===
         LLVMGenerator llvmGen = new LLVMGenerator(visitor);
         String llvmCode = llvmGen.generate(ast);
-
+        System.out.println("LLVM GERADO");
+        System.out.println(llvmCode);
         Path llPath = Path.of("programa.ll");
         Files.writeString(llPath, llvmCode);
         System.out.println("LLVM IR salvo em programa.ll");
@@ -165,6 +166,10 @@ public class ExecutorLinux {
             System.out.println("Programa finalizado com código: " + exitRun);
         } else {
             throw new RuntimeException("Falha ao linkar executável");
+        }
+        RuntimeContext runtimeContext = new RuntimeContext();
+        for (ASTNode node: ast) {
+            node.evaluate(runtimeContext);
         }
     }
 }

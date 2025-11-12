@@ -8,7 +8,7 @@ import low.lists.doubles.ListAddDoubleEmitter;
 import low.lists.ints.ListIntAddEmitter;
 import low.main.GlobalStringManager;
 import low.module.LLVMEmitVisitor;
-
+import low.module.LLVisitorMain;
 
 public class ListAddEmitter {
     private final TempManager temps;
@@ -28,24 +28,53 @@ public class ListAddEmitter {
     public String emit(ListAddNode node, LLVMEmitVisitor visitor) {
         StringBuilder llvm = new StringBuilder();
 
+        String specialized = null;
+        if (visitor instanceof LLVisitorMain mainVisitor) {
+            specialized = mainVisitor.getCurrentSpecializationType();
+        }
+
+        if (specialized != null) {
+            String listCode = node.getListNode().accept(visitor);
+            llvm.append(listCode);
+
+            String listTmp = extractTemp(listCode);          // já vem como "%tmp23" etc.
+            String valCode = node.getValuesNode().accept(visitor);
+            llvm.append(valCode);
+            String valTmp = extractTemp(valCode);
+
+            String func = switch (specialized) {
+                case "int" -> "arraylist_add_int";
+                case "double" -> "arraylist_add_double";
+                case "bool", "boolean" -> "arraylist_add_bool";
+                case "string" -> "arraylist_add_string";
+                default -> "arraylist_add_ptr";
+            };
+
+            String listLLVMType = "%struct.ArrayList" + capitalize(specialized) + "*";
+
+            llvm.append("  call void @").append(func)
+                    .append("(").append(listLLVMType).append(" ").append(listTmp)
+                    .append(", ").append(mapToLLVMType(specialized)).append(" ").append(valTmp)
+                    .append(")\n");
+
+            llvm.append(";;VAL:").append(listTmp)
+                    .append(";;TYPE:").append(listLLVMType).append("\n");
+
+            return llvm.toString();
+        }
+
+
         String listCode = node.getListNode().accept(visitor);
         llvm.append(listCode);
 
         String valCode = node.getValuesNode().accept(visitor);
         String valType = extractType(valCode);
 
-        if (valType.equals("i32")) {
-            return intAddEmitter.emit(node, visitor);
-        }
-        if (valType.equals("double")) {
-            return doubleEmitter.emit(node, visitor);
-        }
-        if (valType.equals("i1")) {
-            return boolAddEmitter.emit(node, visitor);
-        }
+        if (valType.equals("i32")) return intAddEmitter.emit(node, visitor);
+        if (valType.equals("double")) return doubleEmitter.emit(node, visitor);
+        if (valType.equals("i1")) return boolAddEmitter.emit(node, visitor);
 
         String listTmp = extractTemp(listCode);
-
         String listCastTmp = temps.newTemp();
         llvm.append("  ").append(listCastTmp)
                 .append(" = bitcast i8* ").append(listTmp)
@@ -56,12 +85,10 @@ public class ListAddEmitter {
 
         switch (valType) {
             case "%String*" -> {
-
                 llvm.append("  call void @arraylist_add_String(%ArrayList* ")
                         .append(listCastTmp).append(", %String* ").append(valTmp).append(")\n");
             }
             case "i8*" -> {
-
                 if (node.getValuesNode() instanceof LiteralNode lit &&
                         lit.value.type().equals("string")) {
                     String literal = (String) lit.value.value();
@@ -77,15 +104,14 @@ public class ListAddEmitter {
                 }
             }
             default -> {
-
                 if (valType.startsWith("%struct.") || valType.startsWith("%")) {
                     llvm.append("  call void @arraylist_add_ptr(%ArrayList* ")
-                            .append(listCastTmp).append(", ").append(valType).append(" ").append(valTmp).append(")\n");
+                            .append(listCastTmp).append(", ").append(valType)
+                            .append(" ").append(valTmp).append(")\n");
                 } else {
                     throw new RuntimeException("Tipo não suportado em ListAdd: " + valType);
                 }
             }
-
         }
 
         llvm.append(";;VAL:").append(listCastTmp).append(";;TYPE:%ArrayList*\n");
@@ -102,5 +128,20 @@ public class ListAddEmitter {
         int typeIdx = code.indexOf(";;TYPE:");
         int endIdx = code.indexOf("\n", typeIdx);
         return code.substring(typeIdx + 7, endIdx == -1 ? code.length() : endIdx).trim();
+    }
+
+    private String mapToLLVMType(String type) {
+        return switch (type) {
+            case "int" -> "i32";
+            case "double" -> "double";
+            case "bool", "boolean" -> "i1";
+            case "string" -> "%String*";
+            default -> "i8*";
+        };
+    }
+
+    private String capitalize(String s) {
+        if (s == null || s.isEmpty()) return s;
+        return s.substring(0, 1).toUpperCase() + s.substring(1);
     }
 }

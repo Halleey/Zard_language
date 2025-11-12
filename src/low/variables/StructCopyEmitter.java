@@ -24,12 +24,10 @@ public class StructCopyEmitter {
         this.globalStrings = globalStrings;
         this.visitor = visitor;
     }
-
     public String emit(AssignmentNode node, String srcTemp, String dstPtr, String structTypeName) {
         StringBuilder llvm = new StringBuilder();
 
         String structName = structTypeName.substring(structTypeName.indexOf("<") + 1, structTypeName.indexOf(">")).trim();
-
         StructNode def = visitor.getStructNode(structName);
         if (def == null) {
             throw new RuntimeException("Struct definition not found for: " + structName);
@@ -45,7 +43,7 @@ public class StructCopyEmitter {
 
         int index = 0;
         for (VariableDeclarationNode field : def.getFields()) {
-            String fieldType = field.getType(); // tipo original ("int", "string", "Struct<Endereco>", etc.)
+            String fieldType = field.getType();
             String llvmFieldType = typeMapper.toLLVM(fieldType);
 
             String srcFieldPtr = temps.newTemp();
@@ -63,7 +61,6 @@ public class StructCopyEmitter {
 
             if (fieldType.startsWith("Struct<")) {
                 String innerStructName = fieldType.substring(fieldType.indexOf("<") + 1, fieldType.indexOf(">")).trim();
-
                 String srcInner = temps.newTemp();
                 llvm.append("  ").append(srcInner)
                         .append(" = load %").append(innerStructName)
@@ -80,6 +77,14 @@ public class StructCopyEmitter {
                         .append(", %").append(innerStructName).append("** ").append(dstFieldPtr).append("\n");
             }
 
+            else if (fieldType.startsWith("List<string>") || fieldType.startsWith("List<String>")) {
+                String val = temps.newTemp();
+                llvm.append("  ").append(val)
+                        .append(" = load %ArrayList*, %ArrayList** ").append(srcFieldPtr).append("\n");
+                llvm.append("  store %ArrayList* ").append(val)
+                        .append(", %ArrayList** ").append(dstFieldPtr).append("\n");
+            }
+
             else if (llvmFieldType.equals("%String*")) {
                 String val = temps.newTemp();
                 llvm.append("  ").append(val)
@@ -87,6 +92,7 @@ public class StructCopyEmitter {
                 llvm.append("  store %String* ").append(val)
                         .append(", %String** ").append(dstFieldPtr).append("\n");
             }
+
             else {
                 String val = temps.newTemp();
                 llvm.append("  ").append(val)
@@ -106,6 +112,7 @@ public class StructCopyEmitter {
 
         return llvm.toString();
     }
+
 
 
     private String emitRecursiveCopy(String structName, String srcTemp, String dstTemp) {
@@ -152,6 +159,14 @@ public class StructCopyEmitter {
 
                 llvm.append("  store %").append(innerStruct).append("* ").append(newInner)
                         .append(", %").append(innerStruct).append("** ").append(dstFieldPtr).append("\n");
+            }
+
+            else if (fieldType.startsWith("List<string>") || fieldType.startsWith("List<String>")) {
+                String val = temps.newTemp();
+                llvm.append("  ").append(val)
+                        .append(" = load %ArrayList*, %ArrayList** ").append(srcFieldPtr).append("\n");
+                llvm.append("  store %ArrayList* ").append(val)
+                        .append(", %ArrayList** ").append(dstFieldPtr).append("\n");
             }
 
             else if (llvmFieldType.equals("%String*")) {

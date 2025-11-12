@@ -37,11 +37,10 @@ public class ListAddEmitter {
             String listCode = node.getListNode().accept(visitor);
             llvm.append(listCode);
 
-            String listTmp = extractTemp(listCode);          // já vem como "%tmp23" etc.
+            String listTmp = extractTemp(listCode);
             String valCode = node.getValuesNode().accept(visitor);
             llvm.append(valCode);
             String valTmp = extractTemp(valCode);
-
             String func = switch (specialized) {
                 case "int" -> "arraylist_add_int";
                 case "double" -> "arraylist_add_double";
@@ -50,7 +49,8 @@ public class ListAddEmitter {
                 default -> "arraylist_add_ptr";
             };
 
-            String listLLVMType = "%struct.ArrayList" + capitalize(specialized) + "*";
+            String normalized = normalizeListType(specialized);
+            String listLLVMType = "%struct.ArrayList" + normalized + "*";
 
             llvm.append("  call void @").append(func)
                     .append("(").append(listLLVMType).append(" ").append(listTmp)
@@ -62,7 +62,6 @@ public class ListAddEmitter {
 
             return llvm.toString();
         }
-
 
         String listCode = node.getListNode().accept(visitor);
         llvm.append(listCode);
@@ -118,6 +117,7 @@ public class ListAddEmitter {
         return llvm.toString();
     }
 
+
     private String extractTemp(String code) {
         int lastValIdx = code.lastIndexOf(";;VAL:");
         int typeIdx = code.indexOf(";;TYPE:", lastValIdx);
@@ -140,8 +140,13 @@ public class ListAddEmitter {
         };
     }
 
-    private String capitalize(String s) {
-        if (s == null || s.isEmpty()) return s;
-        return s.substring(0, 1).toUpperCase() + s.substring(1);
+    private String normalizeListType(String type) {
+        return switch (type) {
+            case "boolean", "bool" -> "Bool";
+            case "int" -> "Int";
+            case "double" -> "Double";
+            case "string", "String" -> "String";
+            default -> "Ptr";
+        };
     }
 }

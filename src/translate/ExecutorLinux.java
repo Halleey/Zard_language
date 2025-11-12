@@ -28,11 +28,9 @@ public class ExecutorLinux {
         String os = System.getProperty("os.name").toLowerCase();
         boolean isWindows = os.contains("win");
 
-        // Caminho do arquivo fonte
         String filePath = args.length > 0 ? args[0] : "src/language/main.zd";
         String code = Files.readString(Path.of(filePath));
 
-        // === LEXER + PARSER ===
         Lexer lexer = new Lexer(code);
         List<Token> tokens = lexer.tokenize();
         Parser parser = new Parser(tokens);
@@ -41,28 +39,23 @@ public class ExecutorLinux {
         System.out.println("=== AST (antes da especialização) ===");
         ASTPrinter.printAST(ast);
 
-        // === FASE DE ESPECIALIZAÇÃO DE TIPOS ===
         System.out.println("Executando TypeSpecializer...");
         TypeSpecializer specializer = new TypeSpecializer();
 
-        // Cria visitor principal e conecta com o specializer
         LLVisitorMain visitor = new LLVisitorMain(specializer);
         specializer.setVisitor(visitor);
 
-        // Registra structs bases antes da especialização
         for (ASTNode n : ast) {
             if (n instanceof MainAST mainAst) {
                 visitor.registrarStructs(mainAst);
             }
         }
 
-        // Executa especialização
         specializer.specialize(ast);
 
         System.out.println("=== AST (após especialização de tipos) ===");
         ASTPrinter.printAST(ast);
 
-        // === GERAÇÃO LLVM (usa o MESMO visitor) ===
         LLVMGenerator llvmGen = new LLVMGenerator(visitor);
         String llvmCode = llvmGen.generate(ast);
         System.out.println("LLVM GERADO");
@@ -71,7 +64,6 @@ public class ExecutorLinux {
         Files.writeString(llPath, llvmCode);
         System.out.println("LLVM IR salvo em programa.ll");
 
-        // === OTIMIZAÇÃO LLVM ===
         Path optimizedLL = Path.of("programa_opt.ll");
         System.out.println("Executando otimizador LLVM...");
 
@@ -98,7 +90,6 @@ public class ExecutorLinux {
 
         System.out.println("Arquivo otimizado salvo em " + optimizedLL);
 
-        // === GERAÇÃO DE ASSEMBLY COM LLC ===
         String asmExt = isWindows ? "asm" : "s";
         Path asmPath = Path.of("programa." + asmExt);
         System.out.println("Gerando assembly com llc...");
@@ -120,7 +111,6 @@ public class ExecutorLinux {
 
         System.out.println("Assembly salvo em " + asmPath);
 
-        // === COMPILAÇÃO FINAL COM CLANG ===
         List<String> runtimeFiles = List.of(
                 "src/helpers/string/Stringz.c",
                 "src/helpers/inputs/InputUtil.c",
@@ -167,9 +157,10 @@ public class ExecutorLinux {
         } else {
             throw new RuntimeException("Falha ao linkar executável");
         }
-        RuntimeContext runtimeContext = new RuntimeContext();
-        for (ASTNode node: ast) {
-            node.evaluate(runtimeContext);
-        }
+//        RuntimeContext runtimeContext = new RuntimeContext();
+//        for (ASTNode node: ast) {
+//            node.evaluate(runtimeContext);
+//        }
     }
 }
+

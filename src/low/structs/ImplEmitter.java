@@ -5,10 +5,9 @@ import ast.functions.FunctionNode;
 import ast.structs.ImplNode;
 import ast.structs.StructNode;
 import low.module.LLVisitorMain;
+import low.main.TypeInfos;
 
 import java.util.Map;
-
-import low.main.TypeInfos;
 
 public class ImplEmitter {
     private final LLVisitorMain visitor;
@@ -27,14 +26,12 @@ public class ImplEmitter {
 
         for (FunctionNode fn : node.getMethods()) {
             if (isListImplMethod(baseStruct, fn)) {
-                // só gera genérica se não há especialização inferida
                 if (!temEspecializacao) {
                     llvm.append("; === Impl genérica para Struct<")
                             .append(baseStruct).append("> ===\n");
                     llvm.append(generateFunctionImpl(baseStruct, fn, null));
                 }
 
-                // gera versões especializadas (ex: Struct<Set<int>>)
                 for (Map.Entry<String, StructNode> entry : visitor.specializedStructs.entrySet()) {
                     String name = entry.getKey();
                     if (name.startsWith(baseStruct + "<")) {
@@ -86,21 +83,36 @@ public class ImplEmitter {
     private String generateFunctionImpl(String baseStruct, FunctionNode fn, String specialized) {
         StringBuilder sb = new StringBuilder();
 
+        String declaredType = null;
+        if (fn.getParamTypes() != null && fn.getParamTypes().size() > 1) {
+            declaredType = fn.getParamTypes().get(1);
+            if (declaredType != null) declaredType = declaredType.trim();
+        }
+
         String fnName;
         String structLLVM;
         String paramTypeLLVM;
-        String valueTypeLLVM;
 
         if (specialized == null) {
             fnName = baseStruct + "_" + fn.getName();
             structLLVM = "%" + baseStruct;
             paramTypeLLVM = structLLVM + "*";
-            valueTypeLLVM = "i8*";
         } else {
             fnName = baseStruct + "_" + specialized + "_" + fn.getName();
             structLLVM = "%" + baseStruct + "_" + specialized;
             paramTypeLLVM = structLLVM + "*";
+        }
+
+        String valueTypeLLVM;
+        boolean declaredIsGeneric = declaredType != null && declaredType.contains("?");
+
+        if (declaredType != null && !declaredIsGeneric) {
+            valueTypeLLVM = mapToLLVMType(declaredType);
+        } else if (specialized != null) {
             valueTypeLLVM = mapToLLVMType(specialized);
+        } else {
+
+            valueTypeLLVM = "i8*";
         }
 
         String retType = paramTypeLLVM;
@@ -122,24 +134,41 @@ public class ImplEmitter {
         sb.append("  store ").append(valueTypeLLVM).append(" %").append(valueS)
                 .append(", ").append(valueTypeLLVM).append("* %").append(valueS).append("_addr\n");
 
-        // ✅ REGISTRA PONTEIROS DOS PARÂMETROS
         String paramPtr = "%" + paramS + "_addr";
         String valuePtr = "%" + valueS + "_addr";
         visitor.getVariableEmitter().registerVarPtr(paramS, paramPtr);
         visitor.getVariableEmitter().registerVarPtr(valueS, valuePtr);
 
-        // ✅ REGISTRA TIPOS DOS PARÂMETROS
+        String structSourceType;
+        String structLLVMType;
         if (specialized != null) {
-            String structSourceType = "Struct<" + baseStruct + "<" + specialized + ">>";
-            String structLLVMType = "%" + baseStruct + "_" + specialized + "*";
-            visitor.putVarType(paramS, new TypeInfos(structSourceType, structLLVMType, null));
-            visitor.putVarType(valueS, new TypeInfos(specialized, mapToLLVMType(specialized), null));
+            structSourceType = "Struct<" + baseStruct + "<" + specialized + ">>";
+            structLLVMType = "%" + baseStruct + "_" + specialized + "*";
         } else {
-            visitor.putVarType(paramS, new TypeInfos("Struct<" + baseStruct + ">", "%" + baseStruct + "*", null));
-            visitor.putVarType(valueS, new TypeInfos("?", "i8*", null));
+            structSourceType = "Struct<" + baseStruct + ">";
+            structLLVMType = "%" + baseStruct + "*";
         }
 
-        // === Corpo da função ===
+        visitor.putVarType(paramS, new TypeInfos(structSourceType, structLLVMType, null));
+
+        // ================= COERÊNCIA DE VALOR =================
+        String sourceType;
+        String llvmType;
+
+        if (declaredType != null && !declaredIsGeneric) {
+            sourceType = declaredType;
+            llvmType = mapToLLVMType(declaredType);
+        }
+        else if (specialized != null && (declaredType == null || declaredType.contains("?"))) {
+            sourceType = specialized;
+            llvmType = mapToLLVMType(specialized);
+        }
+        else {
+            sourceType = "?";
+            llvmType = "i8*";
+        }
+
+        visitor.putVarType(valueS, new TypeInfos(sourceType, llvmType, null));
         if (fn.getBody() != null && !fn.getBody().isEmpty()) {
             if (specialized != null)
                 visitor.enterTypeSpecialization(specialized);
@@ -152,7 +181,6 @@ public class ImplEmitter {
                 visitor.exitTypeSpecialization();
         }
 
-        // === Retorno ===
         sb.append("  ret ").append(retType).append(" %").append(paramS).append("\n");
         sb.append("}\n\n");
         return sb.toString();

@@ -19,6 +19,15 @@ public class ImplEmitter {
     public String emit(ImplNode node) {
         StringBuilder llvm = new StringBuilder();
         String baseStruct = node.getStructName();
+        boolean hasUsageForBase = visitor.specializedStructs.keySet().stream()
+                        .anyMatch(name -> name.equals(baseStruct) || name.startsWith(baseStruct + "<"));
+
+        if (!hasUsageForBase) {
+            return "";
+        }
+
+        llvm.append(";; ==== Impl Definitions ====\n");
+
 
         llvm.append(";; ==== Impl Definitions ====\n");
 
@@ -26,12 +35,7 @@ public class ImplEmitter {
 
         for (FunctionNode fn : node.getMethods()) {
             if (isListImplMethod(baseStruct, fn)) {
-                if (!temEspecializacao) {
-                    llvm.append("; === Impl genérica para Struct<")
-                            .append(baseStruct).append("> ===\n");
-                    llvm.append(generateFunctionImpl(baseStruct, fn, null));
-                }
-
+                // GERA SOMENTE AS VERSÕES ESPECIALIZADAS
                 for (Map.Entry<String, StructNode> entry : visitor.specializedStructs.entrySet()) {
                     String name = entry.getKey();
                     if (name.startsWith(baseStruct + "<")) {
@@ -45,6 +49,7 @@ public class ImplEmitter {
                 llvm.append(emitSimpleMethod(baseStruct, fn));
             }
         }
+
 
         llvm.append("\n");
         return llvm.toString();

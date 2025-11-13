@@ -27,6 +27,8 @@ import ast.variables.VariableDeclarationNode;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+
 public class MainEmitter {
     private final GlobalStringManager globalStrings;
     private final TempManager tempManager;
@@ -305,24 +307,26 @@ public class MainEmitter {
 
     private String emitHeader() {
         StringBuilder sb = new StringBuilder();
+
         sb.append("""
         declare i32 @printf(i8*, ...)
         declare i32 @getchar()
         declare void @printString(%String*)
         declare i8* @malloc(i64)
-        declare void @setString(%String*)
-        @.strChar = private constant [3 x i8] c"%c\\00"
-        @.strTrue = private constant [6 x i8] c"true\\0A\\00"
-        @.strFalse = private constant [7 x i8] c"false\\0A\\00"
-        @.strInt = private constant [4 x i8] c"%d\\0A\\00"
+        declare void @setString(i8*)
+        @.strChar   = private constant [3 x i8] c"%c\\00"
+        @.strTrue   = private constant [6 x i8] c"true\\0A\\00"
+        @.strFalse  = private constant [7 x i8] c"false\\0A\\00"
+        @.strInt    = private constant [4 x i8] c"%d\\0A\\00"
         @.strDouble = private constant [4 x i8] c"%f\\0A\\00"
-        @.strFloat = private constant [4 x i8] c"%f\\0A\\00"
-        @.strStr = private constant [4 x i8] c"%s\\0A\\00"
-        @.strEmpty = private constant [1 x i8] c"\\00"
+        @.strFloat  = private constant [4 x i8] c"%f\\0A\\00"
+        @.strStr    = private constant [4 x i8] c"%s\\0A\\00"
+        @.strEmpty  = private constant [1 x i8] c"\\00"
+
         declare %String* @createString(i8*)
         declare i1 @strcmp_eq(%String*, %String*)
         declare i1 @strcmp_neq(%String*, %String*)
-    
+
         %String = type { i8*, i64 }
     """);
 
@@ -342,7 +346,7 @@ public class MainEmitter {
         if (usesInput) {
             sb.append("""
         declare i32 @inputInt(i8*)
-        declare i8 @inputChar(i8)
+        declare i8  @inputChar(i8)
         declare double @inputDouble(i8*)
         declare i1 @inputBool(i8*)
         declare i8* @inputString(i8*)
@@ -350,6 +354,8 @@ public class MainEmitter {
         }
 
         for (String tipo : tiposDeListasUsados) {
+            tipo = tipo.trim();
+
             if (tipo.contains("<int>")) {
                 sb.append("""
         %struct.ArrayListInt = type { i32*, i64, i64 }
@@ -359,24 +365,30 @@ public class MainEmitter {
         declare void @arraylist_print_int(%struct.ArrayListInt*)
         declare void @arraylist_clear_int(%struct.ArrayListInt*)
         declare void @arraylist_free_int(%struct.ArrayListInt*)
-        declare i32  @arraylist_get_int(%struct.ArrayListInt*, i64, i32*)
+        declare i32 @arraylist_get_int(%struct.ArrayListInt*, i64, i32*)
         declare void @arraylist_remove_int(%struct.ArrayListInt*, i64)
-    declare i32  @arraylist_size_int(%struct.ArrayListInt*)
+        declare i32 @arraylist_size_int(%struct.ArrayListInt*)
     """);
-            } else if (tipo.contains("<double>")) {
+                continue;
+            }
+
+            if (tipo.contains("<double>")) {
                 sb.append("""
         %struct.ArrayListDouble = type { double*, i64, i64 }
         declare %struct.ArrayListDouble* @arraylist_create_double(i64)
         declare void @arraylist_add_double(%struct.ArrayListDouble*, double)
         declare void @arraylist_addAll_double(%struct.ArrayListDouble*, double*, i64)
         declare void @arraylist_print_double(%struct.ArrayListDouble*)
-        declare double  @arraylist_get_double(%struct.ArrayListDouble*, i64, double*)
+        declare double @arraylist_get_double(%struct.ArrayListDouble*, i64, double*)
         declare void @arraylist_clear_double(%struct.ArrayListDouble*)
         declare void @arraylist_remove_double(%struct.ArrayListDouble*, i64)
         declare void @arraylist_free_double(%struct.ArrayListDouble*)
-        declare i32  @arraylist_size_double(%struct.ArrayListDouble*)
+        declare i32 @arraylist_size_double(%struct.ArrayListDouble*)
     """);
-            } else if (tipo.contains("<string>") || tipo.contains("<?>")) {
+                continue;
+            }
+
+            if (tipo.contains("<string>")) {
                 sb.append("""
         declare void @arraylist_add_string(%ArrayList*, i8*)
         declare void @arraylist_addAll_string(%ArrayList*, i8**, i64)
@@ -386,7 +398,14 @@ public class MainEmitter {
         declare void @removeItem(%ArrayList*, i64)
         declare i8* @getItem(%ArrayList*, i64)
     """);
-            } else if (tipo.contains("<boolean>")) {
+                continue;
+            }
+
+            if (tipo.contains("<?>")) {
+                continue;
+            }
+
+            if (tipo.contains("<boolean>")) {
                 sb.append("""
         %struct.ArrayListBool = type { i1*, i64, i64 }
         declare %struct.ArrayListBool* @arraylist_create_bool(i64)
@@ -397,10 +416,11 @@ public class MainEmitter {
         declare void @arraylist_remove_bool(%struct.ArrayListBool*, i64)
         declare void @arraylist_free_bool(%struct.ArrayListBool*)
         declare i1 @arraylist_get_bool(%struct.ArrayListBool*, i64, i1*)
-        declare i32  @arraylist_size_bool(%struct.ArrayListBool*)
+        declare i32 @arraylist_size_bool(%struct.ArrayListBool*)
     """);
             }
         }
+
         return sb.toString();
     }
 

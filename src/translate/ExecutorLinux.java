@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ast.*;
+import translate.identifiers.MethodDesugarer;
 
 
 import java.nio.file.*;
@@ -36,8 +37,12 @@ public class ExecutorLinux {
         Parser parser = new Parser(tokens);
         List<ASTNode> ast = parser.parse();
 
-        System.out.println("=== AST (antes da especialização) ===");
-        ASTPrinter.printAST(ast);
+        //System.out.println("=== AST (antes da especialização) ===");
+        //ASTPrinter.printAST(ast);
+
+        // dessugar dos métodos de impl (injeta receiver, ajusta retorno, etc.)
+        MethodDesugarer desugarer = new MethodDesugarer();
+        desugarer.desugar(ast);
 
         System.out.println("Executando TypeSpecializer...");
         TypeSpecializer specializer = new TypeSpecializer();
@@ -45,6 +50,7 @@ public class ExecutorLinux {
         LLVisitorMain visitor = new LLVisitorMain(specializer);
         specializer.setVisitor(visitor);
 
+        // registra structs antes de especializar
         for (ASTNode n : ast) {
             if (n instanceof MainAST mainAst) {
                 visitor.registrarStructs(mainAst);
@@ -59,7 +65,7 @@ public class ExecutorLinux {
         LLVMGenerator llvmGen = new LLVMGenerator(visitor);
         String llvmCode = llvmGen.generate(ast);
         System.out.println("LLVM GERADO");
-        System.out.println(llvmCode);
+       // System.out.println(llvmCode);
         Path llPath = Path.of("programa.ll");
         Files.writeString(llPath, llvmCode);
         System.out.println("LLVM IR salvo em programa.ll");

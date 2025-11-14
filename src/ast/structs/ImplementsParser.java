@@ -7,6 +7,7 @@ import translate.Parser;
 
 import java.util.ArrayList;
 import java.util.List;
+
 public class ImplementsParser {
     private final Parser parser;
 
@@ -16,6 +17,7 @@ public class ImplementsParser {
 
     public ImplNode implNode() {
         parser.advance(); // consome 'impl'
+
         String structName = parser.current().getValue();
         parser.eat(Token.TokenType.IDENTIFIER);
         parser.eat(Token.TokenType.DELIMITER, "{");
@@ -23,10 +25,10 @@ public class ImplementsParser {
         List<FunctionNode> methods = new ArrayList<>();
 
         while (!parser.current().getValue().equals("}")) {
-            FunctionParser functionParser = new FunctionParser(parser);
-            FunctionNode fn = functionParser.parseFunction();
 
-            fn.setImplStructName(structName);
+            FunctionParser functionParser = new FunctionParser(parser, structName);
+
+            FunctionNode fn = functionParser.parseFunction();
 
             methods.add(fn);
         }

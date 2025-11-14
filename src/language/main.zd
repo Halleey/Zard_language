@@ -4,7 +4,7 @@ main {
     }
     impl Set {
         # adiciona elemento e retorna o próprio Set (permite encadeamento)
-        function Struct<Set> add( ? value) {
+        function add( ? value) {
         int i = 0;
         while(i < s.data.size()) {
             if(s.data.get(i) == value){
@@ -16,7 +16,7 @@ main {
             return s;
         }
 
-        function Struct<Set> remove( int index) {
+        function remove( int index) {
         s.data.remove(index);
         return s;
         }

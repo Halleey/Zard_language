@@ -223,6 +223,19 @@ public class MainEmitter {
             return;
         }
 
+        if (node instanceof StructMethodCallNode call) {
+            if (call.getStructInstance() != null) {
+                coletarStringsRecursivo(call.getStructInstance());
+            }
+            if (call.getArgs() != null) {
+                for (ASTNode arg : call.getArgs()) {
+                    coletarStringsRecursivo(arg);
+                }
+            }
+            return;
+        }
+
+
         if (node instanceof VariableDeclarationNode varDecl) {
             if (varDecl.getType().startsWith("List")) {
                 registrarTipoDeLista(varDecl.getType());

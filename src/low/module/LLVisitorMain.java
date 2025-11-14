@@ -32,52 +32,52 @@ import low.variables.*;
 import low.whiles.WhileEmitter;
 
 import java.util.*;
-
 public class LLVisitorMain implements LLVMEmitVisitor {
 
-    private final Map<String, TypeInfos> varTypes = new HashMap<>();
-    private final Map<String, TypeInfos> functionTypes = new HashMap<>();
+    // ==== TABELAS DE TIPOS / ESTADO LOCAL ====
+    private final Map<String, TypeInfos> varTypes;
+    private final Map<String, TypeInfos> functionTypes;
 
-    private final TempManager temps = new TempManager();
-    private final List<String> structDefinitions = new ArrayList<>();
-    private final GlobalStringManager globalStrings = new GlobalStringManager();
-    private final Map<String, String> listElementTypes = new HashMap<>();
+    private final TempManager temps;
+    private final List<String> structDefinitions;
+    private final GlobalStringManager globalStrings;
+    private final Map<String, String> listElementTypes;
 
-    public final VariableEmitter varEmitter = new VariableEmitter(varTypes, temps, this);
-    public final PrintEmitter printEmitter = new PrintEmitter(globalStrings, temps);
-    private final AssignmentEmitter assignmentEmitter = new AssignmentEmitter(varTypes, temps, globalStrings, this);
-    private final UnaryOpEmitter unaryOpEmitter = new UnaryOpEmitter(varTypes, temps, varEmitter);
-    private final LiteralEmitter literalEmitter = new LiteralEmitter(temps, globalStrings);
-    private final BinaryOpEmitter binaryEmitter = new BinaryOpEmitter(temps, this);
-    private final IfEmitter ifEmitter = new IfEmitter(temps, this);
-    private final WhileEmitter whileEmitter = new WhileEmitter(temps, this);
-    private final ListEmitter listEmitter = new ListEmitter(temps);
-    private final Deque<String> loopEndLabels = new ArrayDeque<>();
-    private final ListAddEmitter listAddEmitter = new ListAddEmitter(temps, globalStrings);
-    private final ListRemoveEmitter listRemoveEmitter = new ListRemoveEmitter(temps);
-    private final ListClearEmitter clearEmitter = new ListClearEmitter(temps);
-    private final ListSizeEmitter sizeEmitter = new ListSizeEmitter(temps);
-    private final ListGetEmitter getEmitter = new ListGetEmitter(temps);
-    private final ListAddAllEmitter allEmitter = new ListAddAllEmitter(temps, globalStrings);
-    private final FunctionCallEmitter callEmiter = new FunctionCallEmitter(temps);
-    private final StructUpdateEmitter updateEmitter = new StructUpdateEmitter(temps, this);
+    // ==== EMITTERS ====
+    public final VariableEmitter varEmitter;
+    public final PrintEmitter printEmitter;
+    private final AssignmentEmitter assignmentEmitter;
+    private final UnaryOpEmitter unaryOpEmitter;
+    private final LiteralEmitter literalEmitter;
+    private final BinaryOpEmitter binaryEmitter;
+    private final IfEmitter ifEmitter;
+    private final WhileEmitter whileEmitter;
+    private final ListEmitter listEmitter;
+    private final Deque<String> loopEndLabels;
+    private final ListAddEmitter listAddEmitter;
+    private final ListRemoveEmitter listRemoveEmitter;
+    private final ListClearEmitter clearEmitter;
+    private final ListSizeEmitter sizeEmitter;
+    private final ListGetEmitter getEmitter;
+    private final ListAddAllEmitter allEmitter;
+    private final FunctionCallEmitter callEmiter;
+    private final StructUpdateEmitter updateEmitter;
 
+    // ==== FUNÇÕES / STRUCTS / IMPORTS ====
+    public final Map<String, FunctionNode> functions;
+    public final Map<String, FunctionNode> importedFunctions;
+    public final Set<String> tiposDeListasUsados;
 
-    public final Map<String, FunctionNode> functions = new HashMap<>();
-    public final Map<String, FunctionNode> importedFunctions = new HashMap<>();
-    public final Set<String> tiposDeListasUsados = new HashSet<>();
+    private final ImportEmitter importEmitter;
+    private final StructEmitter structEmitter;
+    private final Map<String, StructNode> structNodes;
+    private final StructInstanceEmitter instanceEmitter;
+    private final StructFieldAccessEmitter structFieldAccessEmitter;
+    private final StructMethodCallEmitter methodCallEmitter;
+    private final ImplEmitter implEmitter;
 
-    private final ImportEmitter importEmitter = new ImportEmitter(this, this.tiposDeListasUsados);
-    private final StructEmitter structEmitter = new StructEmitter(this);
-    private final Map<String, StructNode> structNodes = new HashMap<>();
-    private final StructInstanceEmitter instanceEmitter = new StructInstanceEmitter(temps, globalStrings);
-    private final StructFieldAccessEmitter structFieldAccessEmitter = new StructFieldAccessEmitter(temps);
-    private final StructMethodCallEmitter methodCallEmitter   = new StructMethodCallEmitter(temps);
-    private final ImplEmitter implEmitter = new ImplEmitter(this);
-
-
-
-    public final Map<String, StructNode> specializedStructs = new HashMap<>();
+    // ==== STRUCTS ESPECIALIZADAS ====
+    public final Map<String, StructNode> specializedStructs;
     private String currentSpecializationType = null;
 
     public void enterTypeSpecialization(String innerType) {
@@ -92,10 +92,102 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return currentSpecializationType;
     }
 
+    // ==== TYPE SPECIALIZER ====
+    private final TypeSpecializer typeSpecializer;
 
+    public TypeSpecializer getTypeSpecializer() {
+        return typeSpecializer;
+    }
 
+    // ==== CONSTRUTOR PÚBLICO (USO NORMAL) ====
+    public LLVisitorMain(TypeSpecializer typeSpecializer) {
+        this(
+                typeSpecializer,
+                new HashMap<>(),   // functionTypes
+                new HashMap<>(),   // functions
+                new HashMap<>(),   // importedFunctions
+                new HashMap<>(),   // structNodes
+                new HashMap<>(),   // specializedStructs
+                new HashSet<>(),   // tiposDeListasUsados
+                new ArrayList<>(), // structDefinitions
+                new GlobalStringManager()
+        );
+    }
 
+    // ==== CONSTRUTOR INTERNO (USADO POR fork) ====
+    private LLVisitorMain(
+            TypeSpecializer typeSpecializer,
+            Map<String, TypeInfos> functionTypes,
+            Map<String, FunctionNode> functions,
+            Map<String, FunctionNode> importedFunctions,
+            Map<String, StructNode> structNodes,
+            Map<String, StructNode> specializedStructs,
+            Set<String> tiposDeListasUsados,
+            List<String> structDefinitions,
+            GlobalStringManager globalStrings
+    ) {
+        this.typeSpecializer = typeSpecializer;
 
+        // compartilhados entre visitantes
+        this.functionTypes = functionTypes;
+        this.functions = functions;
+        this.importedFunctions = importedFunctions;
+        this.structNodes = structNodes;
+        this.specializedStructs = specializedStructs;
+        this.tiposDeListasUsados = tiposDeListasUsados;
+        this.structDefinitions = structDefinitions;
+        this.globalStrings = globalStrings;
+
+        // estado LOCAL ao visitor
+        this.varTypes = new HashMap<>();
+        this.listElementTypes = new HashMap<>();
+        this.temps = new TempManager();
+        this.loopEndLabels = new ArrayDeque<>();
+
+        // emitters dependem do estado acima
+        this.varEmitter = new VariableEmitter(varTypes, temps, this);
+        this.printEmitter = new PrintEmitter(globalStrings, temps);
+        this.assignmentEmitter = new AssignmentEmitter(varTypes, temps, globalStrings, this);
+        this.unaryOpEmitter = new UnaryOpEmitter(varTypes, temps, varEmitter);
+        this.literalEmitter = new LiteralEmitter(temps, globalStrings);
+        this.binaryEmitter = new BinaryOpEmitter(temps, this);
+        this.ifEmitter = new IfEmitter(temps, this);
+        this.whileEmitter = new WhileEmitter(temps, this);
+        this.listEmitter = new ListEmitter(temps);
+        this.listAddEmitter = new ListAddEmitter(temps, globalStrings);
+        this.listRemoveEmitter = new ListRemoveEmitter(temps);
+        this.clearEmitter = new ListClearEmitter(temps);
+        this.sizeEmitter = new ListSizeEmitter(temps);
+        this.getEmitter = new ListGetEmitter(temps);
+        this.allEmitter = new ListAddAllEmitter(temps, globalStrings);
+        this.callEmiter = new FunctionCallEmitter(temps);
+        this.updateEmitter = new StructUpdateEmitter(temps, this);
+        this.importEmitter = new ImportEmitter(this, this.tiposDeListasUsados);
+        this.structEmitter = new StructEmitter(this);
+        this.instanceEmitter = new StructInstanceEmitter(temps, globalStrings);
+        this.structFieldAccessEmitter = new StructFieldAccessEmitter(temps);
+        this.methodCallEmitter = new StructMethodCallEmitter(temps);
+        this.implEmitter = new ImplEmitter(this, temps);
+    }
+
+    // ==== fork: VISITOR ISOLADO PARA IMPLS ESPECIALIZADAS ====
+    public LLVisitorMain fork() {
+        // Compartilha o que é global / de leitura,
+        // cria novo contexto para variáveis, temps etc.
+        return new LLVisitorMain(
+                this.typeSpecializer,
+                this.functionTypes,
+                this.functions,
+                this.importedFunctions,
+                this.structNodes,
+                this.specializedStructs,
+                this.tiposDeListasUsados,
+                this.structDefinitions,
+                this.globalStrings
+        );
+    }
+
+    // ==== LÓGICA DE STRUCTS ESPECIALIZADAS ====
     public StructNode getOrCreateSpecializedStruct(StructNode base, String elemType) {
         if (base == null || elemType == null) return null;
 
@@ -107,7 +199,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         StructNode clone = base.cloneWithType(elemType);
         String llvmName = LLVMNameUtils.llvmSafe(base.getName() + "_" + elemType);
         clone.setLLVMName(llvmName);
-
 
         specializedStructs.put(key, clone);
 
@@ -124,17 +215,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return clone;
     }
 
-    private final TypeSpecializer typeSpecializer;
-
-    public LLVisitorMain(TypeSpecializer typeSpecializer) {
-        this.typeSpecializer = typeSpecializer;
-    }
-
-    public TypeSpecializer getTypeSpecializer() {
-        return typeSpecializer;
-    }
-
-
+    // ==== LIST TYPES INFERENCE ====
     public String inferListElementType(ASTNode node) {
         if (node instanceof VariableNode v) {
             return getListElementType(v.getName());
@@ -155,6 +236,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public void registerListElementType(String varName, String elementType) {
         listElementTypes.put(varName, elementType);
     }
+
     public String getListElementType(String varName) {
         return listElementTypes.get(varName);
     }
@@ -162,12 +244,15 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public void registerStructNode(StructNode node) {
         structNodes.put(node.getName(), node);
     }
+
     public void registerStructNode(String qualifiedName, StructNode node) {
         structNodes.put(qualifiedName, node);
     }
+
     public StructNode getStructNode(String name) {
         return structNodes.get(name);
     }
+
     public void addStructDefinition(String llvmDef) {
         structDefinitions.add(llvmDef);
     }
@@ -175,9 +260,11 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public void registerImportedFunction(String qualifiedName, FunctionNode func) {
         importedFunctions.put(qualifiedName, func);
     }
+
     public void registerFunctionType(String name, TypeInfos typeInfo) {
         functionTypes.put(name, typeInfo);
     }
+
     public TypeInfos getFunctionType(String name) {
         return functionTypes.get(name);
     }
@@ -190,12 +277,15 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return varTypes.get(name);
     }
 
+    // ==== LOOP CONTROL ====
     public void pushLoopEnd(String label) {
         loopEndLabels.push(label);
     }
+
     public void popLoopEnd() {
         loopEndLabels.pop();
     }
+
     public String currentLoopEnd() {
         if (loopEndLabels.isEmpty()) {
             throw new RuntimeException("Break fora de loop!");
@@ -203,6 +293,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return loopEndLabels.peek();
     }
 
+    // ==== VISITORS DE NODES ====
     @Override
     public String visit(StructNode node) {
         // Evita redefinir structs que já foram emitidas
@@ -223,8 +314,15 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return "";
     }
 
-    @Override public String visit(StructInstaceNode node) { return instanceEmitter.emit(node, this); }
-    @Override public String visit(StructFieldAccessNode node) { return structFieldAccessEmitter.emit(node, this); }
+    @Override
+    public String visit(StructInstaceNode node) {
+        return instanceEmitter.emit(node, this);
+    }
+
+    @Override
+    public String visit(StructFieldAccessNode node) {
+        return structFieldAccessEmitter.emit(node, this);
+    }
 
     @Override
     public String visit(StructUpdateNode node) {
@@ -241,53 +339,140 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return implEmitter.emit(node);
     }
 
-    @Override public String visit(MainAST node) {
+    @Override
+    public String visit(MainAST node) {
         MainEmitter mainEmitter = new MainEmitter(globalStrings, temps, tiposDeListasUsados, structDefinitions);
         return mainEmitter.emit(node, this);
     }
 
-    @Override public String visit(ReturnNode node) { return new ReturnEmitter(this, temps).emit(node); }
-    @Override public String visit(ImportNode node) { return importEmitter.emit(node); }
-    @Override public String visit(MapNode node) { return ""; }
-    @Override public String visit(VariableDeclarationNode node) {
+    @Override
+    public String visit(ReturnNode node) {
+        return new ReturnEmitter(this, temps).emit(node);
+    }
+
+    @Override
+    public String visit(ImportNode node) {
+        return importEmitter.emit(node);
+    }
+
+    @Override
+    public String visit(MapNode node) {
+        return "";
+    }
+
+    @Override
+    public String visit(VariableDeclarationNode node) {
         return varEmitter.emitAlloca(node) + varEmitter.emitInit(node);
     }
-    @Override public String visit(LiteralNode node) {
+
+    @Override
+    public String visit(LiteralNode node) {
         return literalEmitter.emit(node);
     }
-    @Override public String visit(VariableNode node) {
+
+    @Override
+    public String visit(VariableNode node) {
         return varEmitter.emitLoad(node.getName());
     }
-    @Override public String visit(BinaryOpNode node) {
+
+    @Override
+    public String visit(BinaryOpNode node) {
         return binaryEmitter.emit(node);
     }
-    @Override public String visit(WhileNode node) {
+
+    @Override
+    public String visit(WhileNode node) {
         return whileEmitter.emit(node);
     }
-    @Override public String visit(BreakNode node) {
-        return "  br label %" + currentLoopEnd() + "\n"; }
-    @Override public String visit(ListNode node) { return listEmitter.emit(node, this); }
-    @Override public String visit(ListAddNode node) { return listAddEmitter.emit(node, this); }
-    @Override public String visit(ListRemoveNode node) { return listRemoveEmitter.emit(node, this); }
-    @Override public String visit(ListClearNode node) { return clearEmitter.emit(node, this); }
-    @Override public String visit(IfNode node) { return ifEmitter.emit(node); }
-    @Override public String visit(PrintNode node) { return printEmitter.emit(node, this); }
-    @Override public String visit(UnaryOpNode node) { return unaryOpEmitter.emit(node.getOperator(), node.getExpr()); }
-    @Override public String visit(AssignmentNode node) { return assignmentEmitter.emit(node); }
-    @Override public String visit(ListSizeNode node) { return sizeEmitter.emit(node, this); }
-    @Override public String visit(ListGetNode node) { return getEmitter.emit(node, this); }
-    @Override public String visit(ListAddAllNode node) { return allEmitter.emit(node, this); }
-    @Override public String visit(FunctionNode node) {
+
+    @Override
+    public String visit(BreakNode node) {
+        return "  br label %" + currentLoopEnd() + "\n";
+    }
+
+    @Override
+    public String visit(ListNode node) {
+        return listEmitter.emit(node, this);
+    }
+
+    @Override
+    public String visit(ListAddNode node) {
+        return listAddEmitter.emit(node, this);
+    }
+
+    @Override
+    public String visit(ListRemoveNode node) {
+        return listRemoveEmitter.emit(node, this);
+    }
+
+    @Override
+    public String visit(ListClearNode node) {
+        return clearEmitter.emit(node, this);
+    }
+
+    @Override
+    public String visit(IfNode node) {
+        return ifEmitter.emit(node);
+    }
+
+    @Override
+    public String visit(PrintNode node) {
+        return printEmitter.emit(node, this);
+    }
+
+    @Override
+    public String visit(UnaryOpNode node) {
+        return unaryOpEmitter.emit(node.getOperator(), node.getExpr());
+    }
+
+    @Override
+    public String visit(AssignmentNode node) {
+        return assignmentEmitter.emit(node);
+    }
+
+    @Override
+    public String visit(ListSizeNode node) {
+        return sizeEmitter.emit(node, this);
+    }
+
+    @Override
+    public String visit(ListGetNode node) {
+        return getEmitter.emit(node, this);
+    }
+
+    @Override
+    public String visit(ListAddAllNode node) {
+        return allEmitter.emit(node, this);
+    }
+
+    @Override
+    public String visit(FunctionNode node) {
         functions.put(node.getName(), node);
         return new FunctionEmitter(this).emit(node);
     }
-    @Override public String visit(FunctionCallNode node) { return callEmiter.emit(node, this); }
 
-    public TempManager getTemps() { return temps; }
-    public GlobalStringManager getGlobalStrings() { return globalStrings; }
-    public VariableEmitter getVariableEmitter() { return varEmitter; }
-    public FunctionCallEmitter getCallEmitter() { return callEmiter; }
+    @Override
+    public String visit(FunctionCallNode node) {
+        return callEmiter.emit(node, this);
+    }
 
+    public TempManager getTemps() {
+        return temps;
+    }
+
+    public GlobalStringManager getGlobalStrings() {
+        return globalStrings;
+    }
+
+    public VariableEmitter getVariableEmitter() {
+        return varEmitter;
+    }
+
+    public FunctionCallEmitter getCallEmitter() {
+        return callEmiter;
+    }
+
+    // ==== REGISTRO INICIAL DE STRUCTS ====
     public void registrarStructs(MainAST node) {
         for (ASTNode stmt : node.body) {
             if (stmt instanceof StructNode structNode) {
@@ -295,27 +480,30 @@ public class LLVisitorMain implements LLVMEmitVisitor {
             }
         }
     }
+
+    // ==== RESOLUÇÃO DE TIPOS DE CAMPOS DE STRUCT ====
     public String getStructFieldType(StructFieldAccessNode node) {
         String structName = null;
         if (node.getStructInstance() instanceof VariableNode varNode) {
             TypeInfos receiverInfo = getVarType(varNode.getName());
-            if (receiverInfo == null) throw new RuntimeException("Unknown receiver type for struct field access: " + node);
-            structName = receiverInfo.getSourceType().replace("%","").replace("*","");
-        }
-        else if (node.getStructInstance() instanceof StructFieldAccessNode nested) {
+            if (receiverInfo == null)
+                throw new RuntimeException("Unknown receiver type for struct field access: " + node);
+            structName = receiverInfo.getSourceType().replace("%", "").replace("*", "");
+        } else if (node.getStructInstance() instanceof StructFieldAccessNode nested) {
             String receiverType = getStructFieldType(nested);
             if (receiverType.startsWith("Struct<") && receiverType.endsWith(">")) {
                 structName = receiverType.substring("Struct<".length(), receiverType.length() - 1);
             } else {
                 structName = receiverType.replace("%", "").replace("*", "");
             }
-        }
-        else if (node.getStructInstance() instanceof ListGetNode lg) {
+        } else if (node.getStructInstance() instanceof ListGetNode lg) {
             String elem = inferListElementType(lg.getListName());
-            if (elem == null) throw new RuntimeException("Cannot infer element type from ListGet receiver: " + lg);
-            structName = elem.startsWith("Struct<") && elem.endsWith(">") ? elem.substring("Struct<".length(), elem.length() - 1) : elem;
-        }
-        else {
+            if (elem == null)
+                throw new RuntimeException("Cannot infer element type from ListGet receiver: " + lg);
+            structName = elem.startsWith("Struct<") && elem.endsWith(">")
+                    ? elem.substring("Struct<".length(), elem.length() - 1)
+                    : elem;
+        } else {
             throw new RuntimeException("Unsupported receiver in struct field access");
         }
 
@@ -391,6 +579,4 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
         throw new RuntimeException("Cannot resolve struct name from node type: " + node.getClass().getSimpleName());
     }
-
-
 }

@@ -4,7 +4,7 @@ main {
     }
     impl Set {
         # adiciona elemento e retorna o próprio Set (permite encadeamento)
-        function Struct<Set> adicionar(Set s, ? value) {
+        function Struct<Set> add(Set s, ? value) {
         int i = 0;
         while(i < s.data.size()) {
             if(s.data.get(i) == value){
@@ -22,9 +22,10 @@ main {
         }
 
     }
-    Set t;
-    t.adicionar(1);
-    List teste =("testando");
-    print(teste);
-    print(t);
+
+    string nome = "zard";
+    print("o nome é");
+    print(nome);
+
+
 }

@@ -15,7 +15,7 @@ public class TypeMapper {
                 case "int"    -> "%struct.ArrayListInt*";
                 case "double" -> "%struct.ArrayListDouble*";
                 case "boolean"-> "%struct.ArrayListBool*";
-                case "string" -> "%struct.ArrayListStr*";
+                case "string" -> "%ArrayList*";
                 default       -> "%ArrayList*";
             };
         }

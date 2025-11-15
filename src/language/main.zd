@@ -4,7 +4,7 @@ main {
     }
     impl Set {
         # adiciona elemento e retorna o próprio Set (permite encadeamento)
-        function add( ? value) {
+        function add(? value) {
         int i = 0;
         while(i < s.data.size()) {
             if(s.data.get(i) == value){
@@ -25,12 +25,9 @@ main {
 
     # ==== uso ====
     Set s;
-    Set t;
-    string nome = "zard";
-    s.add("teste");
-    s.add(nome);
-   # s.remove(0);
+    s.add("treste");
+    s.add("tres");
+    s.remove(0);
     print(s);
-    t = s;
-    print(s);
+
 }

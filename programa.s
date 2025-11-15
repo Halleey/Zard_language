@@ -113,44 +113,35 @@ Set_string_remove:                      # @Set_string_remove
 main:                                   # @main
 	.cfi_startproc
 # %bb.0:
-	pushq	%r14
-	.cfi_def_cfa_offset 16
 	pushq	%rbx
-	.cfi_def_cfa_offset 24
-	pushq	%rax
+	.cfi_def_cfa_offset 16
+	subq	$16, %rsp
 	.cfi_def_cfa_offset 32
-	.cfi_offset %rbx, -24
-	.cfi_offset %r14, -16
+	.cfi_offset %rbx, -16
 	movl	$10, %edi
 	callq	arraylist_create@PLT
-	movq	%rax, (%rsp)
-	movl	$10, %edi
-	callq	arraylist_create@PLT
-	movl	$16, %edi
-	callq	malloc@PLT
-	movq	%rax, %rbx
-	movq	$.L.str0, (%rax)
-	movq	$4, 8(%rax)
-	movl	$.L.str1, %edi
+	movq	%rax, 8(%rsp)
+	movl	$.L.str0, %edi
 	callq	createString@PLT
-	movq	%rsp, %r14
-	movq	%r14, %rdi
+	leaq	8(%rsp), %rbx
+	movq	%rbx, %rdi
 	movq	%rax, %rsi
 	callq	Set_string_add@PLT
-	movq	%r14, %rdi
-	movq	%rbx, %rsi
+	movl	$.L.str1, %edi
+	callq	createString@PLT
+	movq	%rbx, %rdi
+	movq	%rax, %rsi
 	callq	Set_string_add@PLT
-	movq	%r14, %rdi
-	callq	print_Set_string@PLT
-	movq	%r14, %rdi
+	movq	%rbx, %rdi
+	xorl	%esi, %esi
+	callq	Set_string_remove@PLT
+	movq	%rbx, %rdi
 	callq	print_Set_string@PLT
 	callq	getchar@PLT
 	xorl	%eax, %eax
-	addq	$8, %rsp
-	.cfi_def_cfa_offset 24
-	popq	%rbx
+	addq	$16, %rsp
 	.cfi_def_cfa_offset 16
-	popq	%r14
+	popq	%rbx
 	.cfi_def_cfa_offset 8
 	retq
 .Lfunc_end4:
@@ -200,12 +191,12 @@ main:                                   # @main
 
 	.type	.L.str0,@object                 # @.str0
 .L.str0:
-	.asciz	"zard"
-	.size	.L.str0, 5
+	.asciz	"treste"
+	.size	.L.str0, 7
 
 	.type	.L.str1,@object                 # @.str1
 .L.str1:
-	.asciz	"teste"
-	.size	.L.str1, 6
+	.asciz	"tres"
+	.size	.L.str1, 5
 
 	.section	".note.GNU-stack","",@progbits

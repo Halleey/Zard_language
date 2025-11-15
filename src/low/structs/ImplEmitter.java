@@ -189,6 +189,7 @@ public class ImplEmitter {
             for (ASTNode stmt : fn.getBody()) {
 
                 // --- LISTADD ESPECIALIZADO PARA STRING ---
+                // --- LISTADD (especializado por tipo) ---
                 if (stmt instanceof ListAddNode addNode) {
 
                     String listCode = addNode.getListNode().accept(isolated);
@@ -197,22 +198,70 @@ public class ImplEmitter {
                     String valCode = addNode.getValuesNode().accept(isolated);
                     String valTmp = extractTemp(valCode);
 
-                    // SE O ELEMENTO É STRING -> usar arraylist_add_String
+                    // llvmType aqui é o tipo LLVM do VALUE (valueS),
+                    // calculado lá em cima (i32, double, %String*, i8*, etc.)
+                    String funcName;
+                    String listLLVMType;
+                    String valueLLVMType = llvmType;
+
                     if ("%String*".equals(llvmType)) {
+                        // List<string> → usa ArrayList genérica + função específica de String (se você tiver)
+                        funcName = "arraylist_add_String";
+                        listLLVMType = "%ArrayList*";
+
                         sb.append(listCode)
                                 .append(valCode)
-                                .append("  call void @arraylist_add_String(%ArrayList* ")
-                                .append(listTmp).append(", %String* ").append(valTmp).append(")\n")
-                                .append(";;VAL:").append(listTmp).append(";;TYPE:%ArrayList*\n");
+                                .append("  call void @").append(funcName)
+                                .append("(").append(listLLVMType).append(" ").append(listTmp)
+                                .append(", ").append(valueLLVMType).append(" ").append(valTmp).append(")\n")
+                                .append(";;VAL:").append(listTmp).append(";;TYPE:").append(listLLVMType).append("\n");
+
+                        continue;
+
+                    } else if ("i32".equals(llvmType)) {
+                        // List<int> → usa ArrayListInt especializada
+                        funcName = "arraylist_add_int";
+                        listLLVMType = "%struct.ArrayListInt*";
+
+                        sb.append(listCode)
+                                .append(valCode)
+                                .append("  call void @").append(funcName)
+                                .append("(").append(listLLVMType).append(" ").append(listTmp)
+                                .append(", ").append(valueLLVMType).append(" ").append(valTmp).append(")\n");
+
+                        continue;
+
+                    } else if ("double".equals(llvmType)) {
+                        // Se tiver suporte a double: ajuste conforme sua runtime
+                        funcName = "arraylist_add_double";
+                        listLLVMType = "%struct.ArrayListDouble*";
+
+                        sb.append(listCode)
+                                .append(valCode)
+                                .append("  call void @").append(funcName)
+                                .append("(").append(listLLVMType).append(" ").append(listTmp)
+                                .append(", ").append(valueLLVMType).append(" ").append(valTmp).append(")\n");
+
+                        continue;
+
+                    } else {
+                        // Fallback genérico: ponteiros/structs/etc → ArrayList* + i8*
+                        funcName = "arraylist_add_ptr";
+                        listLLVMType = "%ArrayList*";
+                        String castTmp = valTmp;
+
+                        // Se o valor não for i8*, você provavelmente vai precisar de um cast aqui (bitcast),
+                        // mas isso depende de como você representa structs/String no runtime.
+                        // Por enquanto, assumimos que valTmp já é i8* quando cai aqui.
+
+                        sb.append(listCode)
+                                .append(valCode)
+                                .append("  call void @").append(funcName)
+                                .append("(").append(listLLVMType).append(" ").append(listTmp)
+                                .append(", i8* ").append(castTmp).append(")\n");
+
                         continue;
                     }
-
-                    // CASO NORMAL
-                    sb.append(listCode)
-                            .append(valCode)
-                            .append("  call void @arraylist_add_ptr(%ArrayList* ")
-                            .append(listTmp).append(", i8* ").append(valTmp).append(")\n");
-                    continue;
                 }
 
 

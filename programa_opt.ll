@@ -2,7 +2,6 @@
 source_filename = "programa.ll"
 
 %Set_string = type { ptr }
-%String = type { ptr, i64 }
 
 @.strChar = private constant [3 x i8] c"%c\00"
 @.strTrue = private constant [6 x i8] c"true\0A\00"
@@ -12,8 +11,8 @@ source_filename = "programa.ll"
 @.strFloat = private constant [4 x i8] c"%f\0A\00"
 @.strStr = private constant [4 x i8] c"%s\0A\00"
 @.strEmpty = private constant [1 x i8] zeroinitializer
-@.str0 = private constant [5 x i8] c"zard\00"
-@.str1 = private constant [6 x i8] c"teste\00"
+@.str0 = private constant [7 x i8] c"treste\00"
+@.str1 = private constant [5 x i8] c"tres\00"
 
 declare i32 @printf(ptr, ...)
 
@@ -133,15 +132,11 @@ define i32 @main() {
   %tmp0 = alloca %Set_string, align 8
   %tmp1 = call ptr @arraylist_create(i64 10)
   store ptr %tmp1, ptr %tmp0, align 8
-  %tmp5 = call ptr @arraylist_create(i64 10)
-  %tmp8 = call ptr @malloc(i64 ptrtoint (ptr getelementptr (%String, ptr null, i32 1) to i64))
-  store ptr @.str0, ptr %tmp8, align 8
-  %tmp12 = getelementptr inbounds %String, ptr %tmp8, i32 0, i32 1
-  store i64 4, ptr %tmp12, align 4
-  %tmp15 = call ptr @createString(ptr @.str1)
-  %tmp16 = call ptr @Set_string_add(ptr %tmp0, ptr %tmp15)
-  %tmp19 = call ptr @Set_string_add(ptr %tmp0, ptr %tmp8)
-  call void @print_Set_string(ptr %tmp0)
+  %tmp6 = call ptr @createString(ptr @.str0)
+  %tmp7 = call ptr @Set_string_add(ptr %tmp0, ptr %tmp6)
+  %tmp10 = call ptr @createString(ptr @.str1)
+  %tmp11 = call ptr @Set_string_add(ptr %tmp0, ptr %tmp10)
+  %tmp14 = call ptr @Set_string_remove(ptr %tmp0, i32 0)
   call void @print_Set_string(ptr %tmp0)
   %1 = call i32 @getchar()
   ret i32 0

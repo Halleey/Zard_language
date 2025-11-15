@@ -133,13 +133,15 @@ define i32 @main() {
   %tmp0 = alloca %Set_string, align 8
   %tmp1 = call ptr @arraylist_create(i64 10)
   store ptr %tmp1, ptr %tmp0, align 8
-  %tmp4 = call ptr @malloc(i64 ptrtoint (ptr getelementptr (%String, ptr null, i32 1) to i64))
-  store ptr @.str0, ptr %tmp4, align 8
-  %tmp8 = getelementptr inbounds %String, ptr %tmp4, i32 0, i32 1
-  store i64 4, ptr %tmp8, align 4
-  %tmp11 = call ptr @createString(ptr @.str1)
-  %tmp12 = call ptr @Set_string_add(ptr %tmp0, ptr %tmp11)
-  %tmp15 = call ptr @Set_string_add(ptr %tmp0, ptr %tmp4)
+  %tmp5 = call ptr @arraylist_create(i64 10)
+  %tmp8 = call ptr @malloc(i64 ptrtoint (ptr getelementptr (%String, ptr null, i32 1) to i64))
+  store ptr @.str0, ptr %tmp8, align 8
+  %tmp12 = getelementptr inbounds %String, ptr %tmp8, i32 0, i32 1
+  store i64 4, ptr %tmp12, align 4
+  %tmp15 = call ptr @createString(ptr @.str1)
+  %tmp16 = call ptr @Set_string_add(ptr %tmp0, ptr %tmp15)
+  %tmp19 = call ptr @Set_string_add(ptr %tmp0, ptr %tmp8)
+  call void @print_Set_string(ptr %tmp0)
   call void @print_Set_string(ptr %tmp0)
   %1 = call i32 @getchar()
   ret i32 0

@@ -25,10 +25,12 @@ main {
 
     # ==== uso ====
     Set s;
+    Set t;
     string nome = "zard";
     s.add("teste");
     s.add(nome);
    # s.remove(0);
     print(s);
-
+    t = s;
+    print(s);
 }

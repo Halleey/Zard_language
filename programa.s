@@ -124,6 +124,8 @@ main:                                   # @main
 	movl	$10, %edi
 	callq	arraylist_create@PLT
 	movq	%rax, (%rsp)
+	movl	$10, %edi
+	callq	arraylist_create@PLT
 	movl	$16, %edi
 	callq	malloc@PLT
 	movq	%rax, %rbx
@@ -138,6 +140,8 @@ main:                                   # @main
 	movq	%r14, %rdi
 	movq	%rbx, %rsi
 	callq	Set_string_add@PLT
+	movq	%r14, %rdi
+	callq	print_Set_string@PLT
 	movq	%r14, %rdi
 	callq	print_Set_string@PLT
 	callq	getchar@PLT

@@ -6,7 +6,7 @@ import ast.variables.LiteralNode;
 import ast.variables.VariableDeclarationNode;
 import ast.variables.VariableNode;
 import tokens.Token;
-import translate.Parser;
+import translate.front.Parser;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -2,7 +2,7 @@ package ast.inputs;
 
 import ast.ASTNode;
 import tokens.Token;
-import translate.Parser;
+import translate.front.Parser;
 
 public class InputParser  {
     private final Parser parser;

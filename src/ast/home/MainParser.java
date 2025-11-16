@@ -2,7 +2,7 @@ package ast.home;
 
 import ast.ASTNode;
 import tokens.Token;
-import translate.Parser;
+import translate.front.Parser;
 
 import java.util.ArrayList;
 import java.util.List;

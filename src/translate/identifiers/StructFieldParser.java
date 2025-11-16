@@ -1,7 +1,6 @@
 package translate.identifiers;
 
-import translate.ListMethodParser;
-import translate.Parser;
+import translate.front.Parser;
 
 import ast.ASTNode;
 import ast.structs.StructFieldAccessNode;

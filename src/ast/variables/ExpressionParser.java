@@ -1,12 +1,10 @@
-package translate;
+package ast.variables;
 
 import ast.ASTNode;
 import ast.inputs.InputParser;
 import ast.expressions.TypedValue;
 import tokens.Token;
-import ast.variables.BinaryOpNode;
-import ast.variables.LiteralNode;
-import ast.variables.UnaryOpNode;
+import translate.front.Parser;
 import translate.identifiers.IdentifierParser;
 
 import java.util.ArrayList;

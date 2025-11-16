@@ -8,7 +8,7 @@ import ast.structs.StructNode;
 import low.module.LLVMEmitVisitor;
 import tokens.Lexer;
 import tokens.Token;
-import translate.Parser;
+import translate.front.Parser;
 import ast.variables.VariableDeclarationNode;
 
 import java.io.IOException;

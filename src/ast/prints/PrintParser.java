@@ -2,7 +2,7 @@ package ast.prints;
 
 import ast.ASTNode;
 import tokens.Token;
-import translate.Parser;
+import translate.front.Parser;
 
 public class PrintParser {
     private final Parser parser;

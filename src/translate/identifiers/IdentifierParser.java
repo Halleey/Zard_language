@@ -12,8 +12,7 @@ import tokens.Token;
 import ast.variables.AssignmentNode;
 import ast.variables.UnaryOpNode;
 import ast.variables.VariableNode;
-import translate.ListMethodParser;
-import translate.Parser;
+import translate.front.Parser;
 
 import java.util.LinkedHashMap;
 import java.util.List;

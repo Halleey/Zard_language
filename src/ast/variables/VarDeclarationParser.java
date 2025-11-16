@@ -5,7 +5,7 @@ import ast.lists.ListDeclarationParser;
 import ast.maps.MapParser;
 import ast.structs.StructInstanceParser;
 import tokens.Token;
-import translate.Parser;
+import translate.front.Parser;
 
 
 public class VarDeclarationParser {

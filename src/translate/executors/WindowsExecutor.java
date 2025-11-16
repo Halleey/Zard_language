@@ -1,4 +1,4 @@
-package translate;
+package translate.executors;
 
 import ast.ASTNode;
 import ast.TypeSpecializer;
@@ -9,6 +9,7 @@ import low.module.LLVMGenerator;
 import low.module.LLVisitorMain;
 import tokens.Lexer;
 import tokens.Token;
+import translate.front.Parser;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

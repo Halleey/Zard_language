@@ -12,7 +12,7 @@ import low.module.LLVisitorMain;
 import low.structs.StructEmitter;
 import tokens.Lexer;
 import tokens.Token;
-import translate.Parser;
+import translate.front.Parser;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,7 +26,7 @@ import ast.lists.ListAddAllNode;
 import ast.lists.ListAddNode;
 import ast.lists.ListNode;
 import ast.loops.WhileNode;
-import ast.*;
+
 public class ImportEmitter {
     private final LLVisitorMain visitor;
     private final Set<String> tiposDeListasUsados;

@@ -2,7 +2,7 @@ package ast.maps;
 
 import ast.ASTNode;
 import tokens.Token;
-import translate.Parser;
+import translate.front.Parser;
 import ast.variables.VariableNode;
 
 public class MapMethodParser {

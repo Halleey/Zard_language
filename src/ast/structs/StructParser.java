@@ -2,7 +2,7 @@ package ast.structs;
 
 import ast.variables.VariableDeclarationNode;
 import tokens.Token;
-import translate.Parser;
+import translate.front.Parser;
 
 import java.util.ArrayList;
 import java.util.HashMap;

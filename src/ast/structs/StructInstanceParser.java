@@ -6,15 +6,12 @@ import ast.lists.ListNode;
 import ast.variables.LiteralNode;
 import ast.variables.VariableDeclarationNode;
 import tokens.Token;
-import translate.Parser;
+import translate.front.Parser;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-
-import java.util.*;
 
 public class StructInstanceParser {
     private final Parser parser;

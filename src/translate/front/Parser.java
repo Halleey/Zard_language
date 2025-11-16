@@ -1,4 +1,4 @@
-package translate;
+package translate.front;
 import ast.ASTNode;
 import ast.exceptions.BreakNode;
 import ast.exceptions.ReturnNode;
@@ -13,6 +13,7 @@ import ast.prints.PrintParser;
 import ast.structs.ImplementsParser;
 import ast.structs.StructFieldAccessNode;
 import ast.structs.StructParser;
+import ast.variables.ExpressionParser;
 import ast.variables.VarDeclarationParser;
 import ast.variables.VariableNode;
 import tokens.Token;

@@ -73,7 +73,7 @@ public class ListAddEmitter {
 
                 System.out.println("[ListAddEmitter] Specialized STRING branch acionado");
 
-                llvm.append("  call void @arraylist_add_string(%ArrayList* ")
+                llvm.append("  call void @arraylist_add_String(%ArrayList* ")
                         .append(listTmp)
                         .append(", %String* ").append(valTmp)
                         .append(")\n");

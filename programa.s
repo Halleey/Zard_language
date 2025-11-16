@@ -11,126 +11,110 @@ print_Set:                              # @print_Set
 	.size	print_Set, .Lfunc_end0-print_Set
 	.cfi_endproc
                                         # -- End function
-	.globl	print_Set_boolean               # -- Begin function print_Set_boolean
+	.globl	print_Set_string                # -- Begin function print_Set_string
 	.p2align	4, 0x90
-	.type	print_Set_boolean,@function
-print_Set_boolean:                      # @print_Set_boolean
+	.type	print_Set_string,@function
+print_Set_string:                       # @print_Set_string
 	.cfi_startproc
 # %bb.0:                                # %entry
 	pushq	%rax
 	.cfi_def_cfa_offset 16
 	movq	(%rdi), %rdi
-	callq	arraylist_print_bool@PLT
+	callq	arraylist_print_string@PLT
 	popq	%rax
 	.cfi_def_cfa_offset 8
 	retq
 .Lfunc_end1:
-	.size	print_Set_boolean, .Lfunc_end1-print_Set_boolean
+	.size	print_Set_string, .Lfunc_end1-print_Set_string
 	.cfi_endproc
                                         # -- End function
-	.globl	Set_boolean_add                 # -- Begin function Set_boolean_add
+	.globl	Set_string_add                  # -- Begin function Set_string_add
 	.p2align	4, 0x90
-	.type	Set_boolean_add,@function
-Set_boolean_add:                        # @Set_boolean_add
+	.type	Set_string_add,@function
+Set_string_add:                         # @Set_string_add
 	.cfi_startproc
 # %bb.0:                                # %entry
-	pushq	%rbp
-	.cfi_def_cfa_offset 16
-	.cfi_offset %rbp, -16
-	movq	%rsp, %rbp
-	.cfi_def_cfa_register %rbp
 	pushq	%r15
+	.cfi_def_cfa_offset 16
 	pushq	%r14
-	pushq	%r13
-	pushq	%r12
+	.cfi_def_cfa_offset 24
 	pushq	%rbx
-	pushq	%rax
-	.cfi_offset %rbx, -56
-	.cfi_offset %r12, -48
-	.cfi_offset %r13, -40
-	.cfi_offset %r14, -32
-	.cfi_offset %r15, -24
-	movl	%esi, %r14d
+	.cfi_def_cfa_offset 32
+	.cfi_offset %rbx, -32
+	.cfi_offset %r14, -24
+	.cfi_offset %r15, -16
+	movq	%rsi, %r14
 	movq	%rdi, %rbx
 	movq	(%rdi), %rdi
-	callq	arraylist_size_bool@PLT
+	callq	length@PLT
 	testl	%eax, %eax
 	movq	(%rbx), %rdi
 	jle	.LBB2_5
 # %bb.1:                                # %while_body_1.lr.ph
 	xorl	%r15d, %r15d
-	movl	%r14d, %r12d
-	andb	$1, %r12b
 	.p2align	4, 0x90
 .LBB2_3:                                # %while_body_1
                                         # =>This Inner Loop Header: Depth=1
-	movq	%rsp, %r13
-	leaq	-16(%r13), %rdx
-	movq	%rdx, %rsp
 	movq	%r15, %rsi
-	callq	arraylist_get_bool@PLT
-	cmpb	%r12b, -16(%r13)
-	je	.LBB2_4
+	callq	arraylist_get_ptr@PLT
+	movq	%rax, %rdi
+	movq	%r14, %rsi
+	callq	strcmp_eq@PLT
+	testb	$1, %al
+	jne	.LBB2_4
 # %bb.2:                                # %while_cond_0
                                         #   in Loop: Header=BB2_3 Depth=1
 	movq	(%rbx), %rdi
-	callq	arraylist_size_bool@PLT
+	callq	length@PLT
 	movq	(%rbx), %rdi
 	incq	%r15
 	cmpl	%eax, %r15d
 	jl	.LBB2_3
 .LBB2_5:                                # %while_end_2
-	movzbl	%r14b, %esi
-	callq	arraylist_add_bool@PLT
+	movq	%r14, %rsi
+	callq	arraylist_add_String@PLT
 .LBB2_4:                                # %then_0
 	movq	%rbx, %rax
-	leaq	-40(%rbp), %rsp
 	popq	%rbx
-	popq	%r12
-	popq	%r13
+	.cfi_def_cfa_offset 24
 	popq	%r14
+	.cfi_def_cfa_offset 16
 	popq	%r15
-	popq	%rbp
-	.cfi_def_cfa %rsp, 8
+	.cfi_def_cfa_offset 8
 	retq
 .Lfunc_end2:
-	.size	Set_boolean_add, .Lfunc_end2-Set_boolean_add
+	.size	Set_string_add, .Lfunc_end2-Set_string_add
 	.cfi_endproc
                                         # -- End function
-	.globl	Set_boolean_get                 # -- Begin function Set_boolean_get
+	.globl	Set_string_get                  # -- Begin function Set_string_get
 	.p2align	4, 0x90
-	.type	Set_boolean_get,@function
-Set_boolean_get:                        # @Set_boolean_get
+	.type	Set_string_get,@function
+Set_string_get:                         # @Set_string_get
 	.cfi_startproc
 # %bb.0:                                # %entry
 	pushq	%rbx
 	.cfi_def_cfa_offset 16
-	subq	$16, %rsp
-	.cfi_def_cfa_offset 32
 	.cfi_offset %rbx, -16
 	movq	%rdi, %rbx
 	movq	(%rdi), %rdi
 	movl	%esi, %esi
-	leaq	15(%rsp), %rdx
-	callq	arraylist_get_bool@PLT
-	movzbl	15(%rsp), %esi
-	movl	$.L.strInt, %edi
+	callq	arraylist_get_ptr@PLT
+	movl	$.L.strStr, %edi
+	movq	%rax, %rsi
 	xorl	%eax, %eax
 	callq	printf@PLT
 	movq	%rbx, %rax
-	addq	$16, %rsp
-	.cfi_def_cfa_offset 16
 	popq	%rbx
 	.cfi_def_cfa_offset 8
 	retq
 .Lfunc_end3:
-	.size	Set_boolean_get, .Lfunc_end3-Set_boolean_get
+	.size	Set_string_get, .Lfunc_end3-Set_string_get
 	.cfi_endproc
                                         # -- End function
-	.globl	Set_boolean_remove              # -- Begin function Set_boolean_remove
+	.globl	Set_string_remove               # -- Begin function Set_string_remove
 	.p2align	4, 0x90
-	.type	Set_boolean_remove,@function
-Set_boolean_remove:                     # @Set_boolean_remove
+	.type	Set_string_remove,@function
+Set_string_remove:                      # @Set_string_remove
 	.cfi_startproc
 # %bb.0:                                # %entry
 	pushq	%rbx
@@ -139,13 +123,13 @@ Set_boolean_remove:                     # @Set_boolean_remove
 	movq	%rdi, %rbx
 	movq	(%rdi), %rdi
 	movl	%esi, %esi
-	callq	arraylist_remove_bool@PLT
+	callq	removeItem@PLT
 	movq	%rbx, %rax
 	popq	%rbx
 	.cfi_def_cfa_offset 8
 	retq
 .Lfunc_end4:
-	.size	Set_boolean_remove, .Lfunc_end4-Set_boolean_remove
+	.size	Set_string_remove, .Lfunc_end4-Set_string_remove
 	.cfi_endproc
                                         # -- End function
 	.globl	main                            # -- Begin function main
@@ -160,23 +144,24 @@ main:                                   # @main
 	.cfi_def_cfa_offset 32
 	.cfi_offset %rbx, -16
 	movl	$10, %edi
-	callq	arraylist_create_bool@PLT
+	callq	arraylist_create@PLT
 	movq	%rax, 8(%rsp)
+	movl	$.L.str0, %edi
+	callq	createString@PLT
 	leaq	8(%rsp), %rbx
 	movq	%rbx, %rdi
+	movq	%rax, %rsi
+	callq	Set_string_add@PLT
+	movl	$.L.str1, %edi
+	callq	createString@PLT
+	movq	%rbx, %rdi
+	movq	%rax, %rsi
+	callq	Set_string_add@PLT
+	movq	%rbx, %rdi
 	xorl	%esi, %esi
-	callq	Set_boolean_add@PLT
+	callq	Set_string_get@PLT
 	movq	%rbx, %rdi
-	movl	$1, %esi
-	callq	Set_boolean_add@PLT
-	movq	%rbx, %rdi
-	xorl	%esi, %esi
-	callq	Set_boolean_remove@PLT
-	movq	%rbx, %rdi
-	xorl	%esi, %esi
-	callq	Set_boolean_get@PLT
-	movq	%rbx, %rdi
-	callq	print_Set_boolean@PLT
+	callq	print_Set_string@PLT
 	callq	getchar@PLT
 	xorl	%eax, %eax
 	addq	$16, %rsp
@@ -228,5 +213,15 @@ main:                                   # @main
 .L.strEmpty:
 	.zero	1
 	.size	.L.strEmpty, 1
+
+	.type	.L.str0,@object                 # @.str0
+.L.str0:
+	.asciz	"ook"
+	.size	.L.str0, 4
+
+	.type	.L.str1,@object                 # @.str1
+.L.str1:
+	.asciz	"yes"
+	.size	.L.str1, 4
 
 	.section	".note.GNU-stack","",@progbits

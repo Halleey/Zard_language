@@ -31,9 +31,9 @@ main {
 
     # ==== uso ====
     Set s;
-    s.add(false);
-    s.add(true);
-    s.remove(0);
+    s.add("ook");
+    s.add("yes");
+
     s.get(0);
     print(s);
 

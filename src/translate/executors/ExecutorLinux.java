@@ -27,8 +27,8 @@ public class ExecutorLinux {
 
         toolchain.runExecutable(exePath);
 
-        ASTInterpreter interpreter = new ASTInterpreter();
-        interpreter.run(ast);
+//        ASTInterpreter interpreter = new ASTInterpreter();
+//        interpreter.run(ast);
     }
 }
 

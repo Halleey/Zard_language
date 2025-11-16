@@ -18,6 +18,7 @@ main {
 
         function get(int index) {
         print(s.data.get(index));
+
         return s;
         }
 
@@ -30,9 +31,9 @@ main {
 
     # ==== uso ====
     Set s;
-    s.add("ok");
-    s.add("zard");
-    #s.remove(0);
+    s.add(false);
+    s.add(true);
+    s.remove(0);
     s.get(0);
     print(s);
 

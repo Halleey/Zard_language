@@ -9,7 +9,6 @@ import low.lists.ints.ListIntAddEmitter;
 import low.main.GlobalStringManager;
 import low.module.LLVMEmitVisitor;
 import low.module.LLVisitorMain;
-
 public class ListAddEmitter {
 
     private final TempManager temps;
@@ -35,16 +34,27 @@ public class ListAddEmitter {
             specialized = mainVisitor.getCurrentSpecializationType();
         }
 
+
+
         if (specialized != null) {
 
-            // ---- Gerar código para acessar a lista ----
             String listCode = node.getListNode().accept(visitor);
             llvm.append(listCode);
             String listTmp = extractTemp(listCode);
+            String listType = extractType(listCode);
 
             String valCode = node.getValuesNode().accept(visitor);
             llvm.append(valCode);
             String valTmp = extractTemp(valCode);
+            String valType = extractType(valCode);
+
+            System.out.println("[ListAddEmitter] (SPECIALIZED MODE)");
+            System.out.println("  listCode:\n" + listCode);
+            System.out.println("  → listTmp = " + listTmp);
+            System.out.println("  → listType = " + listType);
+            System.out.println("  valCode:\n" + valCode);
+            System.out.println("  → valTmp = " + valTmp);
+            System.out.println("  → valType = " + valType);
 
             String func = switch (specialized) {
                 case "int"    -> "arraylist_add_int";
@@ -54,89 +64,100 @@ public class ListAddEmitter {
                 default       -> "arraylist_add_ptr";
             };
 
+            System.out.println("[ListAddEmitter] Runtime function chosen = " + func);
+
             String listLLVMType;
 
             if (specialized.equals("string")) {
                 listLLVMType = "%ArrayList*";
 
+                System.out.println("[ListAddEmitter] Specialized STRING branch acionado");
+
                 llvm.append("  call void @arraylist_add_string(%ArrayList* ")
                         .append(listTmp)
                         .append(", %String* ").append(valTmp)
                         .append(")\n");
-
             } else {
-
 
                 String normalized = normalizeListType(specialized);
                 listLLVMType = "%struct.ArrayList" + normalized + "*";
 
+                System.out.println("[ListAddEmitter] normalized = " + normalized);
+                System.out.println("[ListAddEmitter] listLLVMType = " + listLLVMType);
+
+                String llvmType = mapToLLVMType(specialized);
+
+                System.out.println("[ListAddEmitter] llvmType(value) = " + llvmType);
+
                 llvm.append("  call void @").append(func)
                         .append("(").append(listLLVMType).append(" ").append(listTmp)
-                        .append(", ").append(mapToLLVMType(specialized)).append(" ").append(valTmp)
+                        .append(", ").append(llvmType).append(" ").append(valTmp)
                         .append(")\n");
             }
 
             llvm.append(";;VAL:").append(listTmp)
                     .append(";;TYPE:").append(listLLVMType).append("\n");
 
+            System.out.println("[ListAddEmitter] ==== FIM DO SPECIALIZED ====\n");
             return llvm.toString();
         }
 
+        System.out.println("[ListAddEmitter] (FALLBACK MODE)");
+
         String listCode = node.getListNode().accept(visitor);
         llvm.append(listCode);
+        String listTmp = extractTemp(listCode);
+        String listType = extractType(listCode);
 
         String valCode = node.getValuesNode().accept(visitor);
         llvm.append(valCode);
-
+        String valTmp = extractTemp(valCode);
         String valType = extractType(valCode);
 
-        if (valType.equals("i32"))    return intAddEmitter.emit(node, visitor);
-        if (valType.equals("double")) return doubleEmitter.emit(node, visitor);
-        if (valType.equals("i1"))     return boolAddEmitter.emit(node, visitor);
+        System.out.println("  listCode:\n" + listCode);
+        System.out.println("  → listTmp = " + listTmp);
+        System.out.println("  → listType = " + listType);
+        System.out.println("  valCode:\n" + valCode);
+        System.out.println("  → valTmp = " + valTmp);
+        System.out.println("  → valType = " + valType);
 
-        String listTmp = extractTemp(listCode);
+        if (valType.equals("i32")) {
+            System.out.println("[ListAddEmitter] → INT fallback");
+            return intAddEmitter.emit(node, visitor);
+        }
+        if (valType.equals("double")) {
+            System.out.println("[ListAddEmitter] → DOUBLE fallback");
+            return doubleEmitter.emit(node, visitor);
+        }
+        if (valType.equals("i1")) {
+            System.out.println("[ListAddEmitter] → BOOL fallback");
+            return boolAddEmitter.emit(node, visitor);
+        }
+
+        System.out.println("[ListAddEmitter] → PTR/STRING fallback");
 
         String listCastTmp = temps.newTemp();
         llvm.append("  ").append(listCastTmp)
-                .append(" = bitcast i8* ").append(listTmp)
+                .append(" = bitcast ").append(listType).append(" ").append(listTmp)
                 .append(" to %ArrayList*\n");
-
-        String valTmp = extractTemp(valCode);
 
         if (valType.equals("%String*")) {
             llvm.append("  call void @arraylist_add_String(%ArrayList* ")
                     .append(listCastTmp).append(", %String* ").append(valTmp).append(")\n");
         }
         else if (valType.equals("i8*")) {
-            if (node.getValuesNode() instanceof LiteralNode lit &&
-                    lit.value.type().equals("string")) {
-
-                String literal = (String) lit.value.value();
-                String strName = globalStringManager.getOrCreateString(literal);
-
-                llvm.append("  call void @arraylist_add_string(%ArrayList* ")
-                        .append(listCastTmp)
-                        .append(", i8* getelementptr ([")
-                        .append(literal.length() + 1)
-                        .append(" x i8], [")
-                        .append(literal.length() + 1)
-                        .append(" x i8]* ")
-                        .append(strName)
-                        .append(", i32 0, i32 0))\n");
-
-            } else {
-                llvm.append("  call void @arraylist_add_string(%ArrayList* ")
-                        .append(listCastTmp).append(", i8* ").append(valTmp).append(")\n");
-            }
+            llvm.append("  call void @arraylist_add_string(%ArrayList* ")
+                    .append(listCastTmp).append(", i8* ").append(valTmp).append(")\n");
         }
         else {
-
             llvm.append("  call void @arraylist_add_ptr(%ArrayList* ")
                     .append(listCastTmp).append(", ")
                     .append(valType).append(" ").append(valTmp).append(")\n");
         }
 
         llvm.append(";;VAL:").append(listCastTmp).append(";;TYPE:%ArrayList*\n");
+
+        System.out.println("[ListAddEmitter] ==== FIM FALBACK ====\n");
         return llvm.toString();
     }
 

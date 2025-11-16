@@ -163,10 +163,10 @@ public class ExecutorLinux {
         } else {
             throw new RuntimeException("Falha ao linkar executável");
         }
-//        RuntimeContext runtimeContext = new RuntimeContext();
-//        for (ASTNode node: ast) {
-//            node.evaluate(runtimeContext);
-//        }
+        RuntimeContext runtimeContext = new RuntimeContext();
+        for (ASTNode node: ast) {
+            node.evaluate(runtimeContext);
+        }
     }
 }
 

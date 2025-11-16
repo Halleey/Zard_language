@@ -1,33 +1,13 @@
 main {
-    Struct Set {
-        List<?> data;
-    }
-    impl Set {
-        # adiciona elemento e retorna o próprio Set (permite encadeamento)
-        function add(? value) {
-        int i = 0;
-        while(i < s.data.size()) {
-            if(s.data.get(i) == value){
-            return s;
-            }
-            i++;
-        }
-         s.data.add(value);
-            return s;
-        }
 
-        function remove( int index) {
-        s.data.remove(index);
-        return s;
-        }
+function List<int> addList (List<int> numeros) {
+numeros.remove(0);
+return numeros;
+}
 
-    }
+List teste = (3);
 
-    # ==== uso ====
-    Set s;
-    s.add("treste");
-    s.add("tres");
-    s.remove(0);
-    print(s);
+call addList(teste);
+print(teste);
 
 }

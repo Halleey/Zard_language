@@ -10,7 +10,7 @@ import java.util.List;
 public class FunctionParser {
 
     private final Parser parser;
-    private final String implStructName; // struct do impl (ex: "Set") ou null
+    private final String implStructName;
 
     public FunctionParser(Parser parser) {
         this(parser, null);
@@ -70,14 +70,17 @@ public class FunctionParser {
         };
     }
 
+    private boolean isListType(String type) {
+
+        return type != null && type.startsWith("List");
+    }
+
     public FunctionNode parseFunction() {
         debug("==== parseFunction() INICIO ====");
 
-        // consome 'function'
         debug("Consumindo 'function'");
         parser.advance();
 
-        // Retorno padrão
         String returnType = "?";
 
         Token cur = parser.current();
@@ -94,9 +97,8 @@ public class FunctionParser {
             }
         }
 
-        debug("→ Tipo de retorno detectado: " + returnType);
+        debug("-> Tipo de retorno detectado: " + returnType);
 
-        // Nome da função
         String funcName = parser.current().getValue();
         debug("Nome da função encontrado: " + funcName);
         parser.eat(Token.TokenType.IDENTIFIER);
@@ -149,13 +151,9 @@ public class FunctionParser {
         debug("Parâmetros lidos: " + paramNames);
         parser.eat(Token.TokenType.DELIMITER, ")");
 
-        // ============================================
-        // CONTEXTO LOCAL
-        // ============================================
         debug("PUSH contexto local.");
         parser.pushContext();
 
-        // Declarar parâmetros explícitos
         for (int i = 0; i < paramNames.size(); i++) {
             String type = paramTypes.get(i);
 
@@ -164,7 +162,8 @@ public class FunctionParser {
 
             if (parser.lookupStruct(type) != null
                     && !type.startsWith("Struct<")
-                    && !isPrimitive(type)) {
+                    && !isPrimitive(type)
+                    && !isListType(type)) { // <<<<<< ADICIONADO
                 type = "Struct<" + type + ">";
                 debug("  Tipo ajustado para: " + type);
             }
@@ -173,16 +172,12 @@ public class FunctionParser {
             paramTypes.set(i, type);
         }
 
-        // 🔥 INJEÇÃO DO RECEIVER IMPLÍCITO "s"
         if (implStructName != null && !paramNames.contains("s")) {
             String receiverType = "Struct<" + implStructName + ">";
             debug("Injetando receiver implícito → s : " + receiverType);
 
             parser.declareVariable("s", receiverType);
 
-            // caso queira aparecer na assinatura, descomente:
-            // paramNames.add(0, "s");
-            // paramTypes.add(0, receiverType);
         }
 
         // PARSEIA CORPO

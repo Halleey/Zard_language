@@ -1,91 +1,35 @@
 package translate.front;
+
 import ast.ASTNode;
-import ast.exceptions.BreakNode;
-import ast.exceptions.ReturnNode;
-import ast.functions.FunctionCallParser;
-import ast.functions.FunctionParser;
-import ast.imports.ImportNode;
-import ast.inputs.InputParser;
-import ast.home.MainParser;
-import ast.ifstatements.IfParser;
-import ast.loops.WhileParser;
-import ast.prints.PrintParser;
-import ast.structs.ImplementsParser;
 import ast.structs.StructFieldAccessNode;
-import ast.structs.StructParser;
 import ast.variables.ExpressionParser;
-import ast.variables.VarDeclarationParser;
 import ast.variables.VariableNode;
 import tokens.Token;
-import translate.identifiers.IdentifierParser;
+import translate.front.specializers.StatemantParser;
 
 import java.util.*;
 
 public class Parser {
+
     private final List<Token> tokens;
     private int pos = 0;
+
     private final Map<String, String> variableTypes = new HashMap<>();
     private final Deque<Map<String, String>> variableStack = new ArrayDeque<>();
     private final Map<String, Map<String, String>> structDefinitions = new HashMap<>();
 
-    public void declareStruct(String name, Map<String, String> fields) {
-        structDefinitions.put(name, fields);
-    }
-
-    public String getStructFieldType(String structName, String field) {
-        Map<String, String> fields = structDefinitions.get(structName);
-        if (fields != null) return fields.get(field);
-        return null;
-    }
+    private final StatemantParser statementParser;
+    private final ExpressionParser expressionParser;
 
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
+
         variableStack.push(new HashMap<>()); // contexto global
+
+        this.statementParser = new StatemantParser(this);
+        this.expressionParser = new ExpressionParser(this);
     }
 
-    public void pushContext() {
-        variableStack.push(new HashMap<>());
-    }
-
-    public void popContext() {
-        variableStack.pop();
-    }
-
-    public void declareVariable(String name, String type) {
-        variableStack.peek().put(name, type);
-    }
-
-    public String getVariableType(String name) {
-        // primeiro verifica a stack de escopo
-        for (Map<String, String> ctx : variableStack) {
-            if (ctx.containsKey(name)) return ctx.get(name);
-        }
-
-        // depois verifica o mapa global
-        return variableTypes.get(name);
-    }
-
-
-    public Token current() {
-        if (pos < tokens.size()) return tokens.get(pos);
-        return new Token(Token.TokenType.EOF, "");
-    }
-
-    public void advance() {
-        if (pos < tokens.size()) pos++;
-    }
-
-    public void eat(Token.TokenType type) {
-        if (current().getType() == type) advance();
-        else throw new RuntimeException("Esperado token do tipo " + type +
-                " mas encontrado " + current().getType() + " valor: " + current().getValue());
-    }
-
-    public void eat(Token.TokenType type, String value) {
-        if (current().getType() == type && current().getValue().equals(value)) advance();
-        else throw new RuntimeException("Esperado token " + value + " do tipo " + type +
-                " mas encontrado " + current().getValue() + " tipo " + current().getType());
-    }
     public List<ASTNode> parse() {
         List<ASTNode> nodes = new ArrayList<>();
 
@@ -103,6 +47,7 @@ public class Parser {
 
             System.out.println("[parse] ✓ Statement parseado: " + stmt.getClass().getSimpleName());
             System.out.println();
+
             nodes.add(stmt);
         }
 
@@ -111,151 +56,126 @@ public class Parser {
     }
 
     public ASTNode parseStatement() {
-        Token tok = current();
-
-        if (tok.getType() == Token.TokenType.KEYWORD) {
-            String val = tok.getValue();
-            switch (val) {
-                case "int", "char", "double","float", "string", "boolean", "Map", "List", "var"-> {
-                    VarDeclarationParser varParser = new VarDeclarationParser(this);
-                    return varParser.parseVarDeclaration();
-                }
-                case "print" -> {
-
-                    PrintParser printParser = new PrintParser(this);
-                    return printParser.parsePrint();
-                }
-                case "if" -> {
-                    IfParser ifParser = new IfParser(this);
-                    return ifParser.parseIf();
-                }
-                case "while" -> {
-                    WhileParser whileParser = new WhileParser(this);
-                    return whileParser.parse();
-                }
-                case "main" -> {
-                    MainParser mainParser = new MainParser(this);
-                    return mainParser.parseMain();
-                }
-                case "Struct" -> {
-                    eat(Token.TokenType.KEYWORD, "Struct");
-
-                    String structName = current().getValue();
-                    eat(Token.TokenType.IDENTIFIER);
-                        StructParser structParser = new StructParser(this);
-                        return structParser.parseStructAfterKeyword(structName);
-                }
-                case "impl" -> {
-                    ImplementsParser implementsParser = new ImplementsParser(this);
-                    return implementsParser.implNode();
-                }
-                case "input" -> {
-                    InputParser inputParser = new InputParser(this);
-                    return inputParser.parse();
-                }
-                case "return" -> {
-                    advance();
-                    ASTNode expr = parseExpression();
-                    eat(Token.TokenType.DELIMITER, ";");
-                    return new ReturnNode(expr);
-                }
-                case "break" -> {
-                    advance();
-                    eat(Token.TokenType.DELIMITER, ";");
-                    return new BreakNode();
-                }
-                case "function" -> {
-                    FunctionParser functionParser = new FunctionParser(this);
-                    return functionParser.parseFunction();
-                }
-                case "call" -> {
-                    advance();
-                    // Começa a ler o identificador da função
-                    String funcName = current().getValue();
-                    advance();
-
-                    // Aceitar alias: se tiver '.', concatenar
-                    while (current().getValue().equals(".")) {
-                        advance(); // consome '.'
-                        String nextPart = current().getValue();
-                        advance();
-                        funcName += "." + nextPart; // concatena o alias
-                    }
-
-                    FunctionCallParser functionCallParser = new FunctionCallParser(this);
-                    return functionCallParser.parseFunctionCall(funcName);
-                }
-
-                case "import" -> {
-                    advance();
-                    Token pathToken = current();
-                    String path = pathToken.getValue();
-                    advance();
-                    eat(Token.TokenType.KEYWORD, "as");
-                    String alias = current().getValue();
-                    advance();
-                    eat(Token.TokenType.DELIMITER, ";");
-                    return new ImportNode(path, alias);
-                }
-
-            }
-        }
-        if (tok.getType() == Token.TokenType.IDENTIFIER) {
-
-            String name = tok.getValue();
-            advance(); // consome IDENTIFIER
-            IdentifierParser idParser = new IdentifierParser(this);
-            return idParser.parseAsStatement(name);
-        }
-        throw new RuntimeException("Comando inesperado: " + tok.getValue());
+        return statementParser.parse();
     }
 
     public ASTNode parseExpression() {
-        return new ExpressionParser(this).parseExpression();
+        return expressionParser.parseExpression();
     }
 
-    public Token peek() {
-        if (pos + 1 < tokens.size()) {
-            return tokens.get(pos + 1);
-        }
-        return new Token(Token.TokenType.EOF, "");
-    }
     public List<ASTNode> parseArguments() {
-        return new ExpressionParser(this).parseArguments();
+        return expressionParser.parseArguments();
     }
 
     public List<ASTNode> parseBlock() {
         List<ASTNode> nodes = new ArrayList<>();
         eat(Token.TokenType.DELIMITER, "{");
+
         while (!current().getValue().equals("}")) {
             nodes.add(parseStatement());
         }
+
         eat(Token.TokenType.DELIMITER, "}");
         return nodes;
     }
 
+    public void pushContext() {
+        variableStack.push(new HashMap<>());
+    }
+
+    public void popContext() {
+        variableStack.pop();
+    }
+
+    public void declareVariable(String name, String type) {
+        variableStack.peek().put(name, type);
+    }
+
+    public void declareVariableType(String name, String type) {
+        variableTypes.put(name, type);
+    }
+
+    public String getVariableType(String name) {
+        for (Map<String, String> ctx : variableStack) {
+            if (ctx.containsKey(name)) return ctx.get(name);
+        }
+        return variableTypes.get(name);
+    }
+
+    public void declareStruct(String name, Map<String, String> fields) {
+        structDefinitions.put(name, fields);
+    }
+
+    // manteve exatamente como pediu
+    public boolean isKnownStruct(String name) {
+        return structDefinitions.containsKey(name);
+    }
+
+    public Map<String, String> lookupStruct(String name) {
+        return structDefinitions.getOrDefault(name, Collections.emptyMap());
+    }
+
+    public String getStructFieldType(String structName, String field) {
+        Map<String, String> fields = structDefinitions.get(structName);
+        return fields != null ? fields.get(field) : null;
+    }
+
 
     public String getExpressionType(ASTNode node) {
+
         if (node instanceof VariableNode v) {
             return getVariableType(v.getName());
-        } else if (node instanceof StructFieldAccessNode f) {
+        }
+
+        if (node instanceof StructFieldAccessNode f) {
+
             String structType = getExpressionType(f.getStructInstance());
-            if (structType.startsWith("Struct<")) {
-                String structName = structType.substring("Struct<".length(), structType.length()-1);
+
+            if (structType != null && structType.startsWith("Struct<")) {
+
+                String structName =
+                        structType.substring(7, structType.length() - 1);
+
                 return getStructFieldType(structName, f.getFieldName());
             }
         }
+
         return null;
     }
 
-
-    public Map<String, String> lookupStruct(String name) {
-        Map<String, String> fields = structDefinitions.get(name);
-        return (fields != null) ? fields : Collections.emptyMap();
+    public Token current() {
+        if (pos < tokens.size()) return tokens.get(pos);
+        return new Token(Token.TokenType.EOF, "");
     }
 
-    public boolean hasStruct(String name) {
-        return structDefinitions.containsKey(name);
+    public void advance() {
+        if (pos < tokens.size()) pos++;
+    }
+
+    public void eat(Token.TokenType type) {
+        if (current().getType() == type) {
+            advance();
+        } else {
+            throw new RuntimeException(
+                    "Esperado token " + type + " mas encontrei: " +
+                            current().getType()
+            );
+        }
+    }
+
+    public void eat(Token.TokenType type, String value) {
+        if (current().getType() == type &&
+                current().getValue().equals(value)) {
+
+            advance();
+        } else {
+            throw new RuntimeException(
+                    "Esperado '" + value + "' mas encontrei '" + current().getValue() + "'"
+            );
+        }
+    }
+    public Token peek() {
+        return peek(1);
     }
 
     public Token peek(int k) {
@@ -266,14 +186,6 @@ public class Parser {
 
     public String peekValue(int k) {
         return peek(k).getValue();
-    }
-
-    public void declareVariableType(String name, String type) {
-        variableTypes.put(name, type);
-    }
-
-    public boolean isKnownStruct(String name) {
-        return structDefinitions.containsKey(name);
     }
 
 }

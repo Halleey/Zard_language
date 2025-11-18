@@ -11,42 +11,46 @@ print_Set:                              # @print_Set
 	.size	print_Set, .Lfunc_end0-print_Set
 	.cfi_endproc
                                         # -- End function
-	.globl	print_Set_string                # -- Begin function print_Set_string
+	.globl	print_Set_int                   # -- Begin function print_Set_int
 	.p2align	4, 0x90
-	.type	print_Set_string,@function
-print_Set_string:                       # @print_Set_string
+	.type	print_Set_int,@function
+print_Set_int:                          # @print_Set_int
 	.cfi_startproc
 # %bb.0:                                # %entry
 	pushq	%rax
 	.cfi_def_cfa_offset 16
 	movq	(%rdi), %rdi
-	callq	arraylist_print_string@PLT
+	callq	arraylist_print_int@PLT
 	popq	%rax
 	.cfi_def_cfa_offset 8
 	retq
 .Lfunc_end1:
-	.size	print_Set_string, .Lfunc_end1-print_Set_string
+	.size	print_Set_int, .Lfunc_end1-print_Set_int
 	.cfi_endproc
                                         # -- End function
-	.globl	Set_string_add                  # -- Begin function Set_string_add
+	.globl	Set_int_add                     # -- Begin function Set_int_add
 	.p2align	4, 0x90
-	.type	Set_string_add,@function
-Set_string_add:                         # @Set_string_add
+	.type	Set_int_add,@function
+Set_int_add:                            # @Set_int_add
 	.cfi_startproc
 # %bb.0:                                # %entry
-	pushq	%r15
+	pushq	%rbp
 	.cfi_def_cfa_offset 16
+	.cfi_offset %rbp, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register %rbp
+	pushq	%r15
 	pushq	%r14
-	.cfi_def_cfa_offset 24
+	pushq	%r12
 	pushq	%rbx
-	.cfi_def_cfa_offset 32
-	.cfi_offset %rbx, -32
-	.cfi_offset %r14, -24
-	.cfi_offset %r15, -16
-	movq	%rsi, %r14
+	.cfi_offset %rbx, -48
+	.cfi_offset %r12, -40
+	.cfi_offset %r14, -32
+	.cfi_offset %r15, -24
+	movl	%esi, %r14d
 	movq	%rdi, %rbx
 	movq	(%rdi), %rdi
-	callq	length@PLT
+	callq	arraylist_size_int@PLT
 	testl	%eax, %eax
 	movq	(%rbx), %rdi
 	jle	.LBB2_5
@@ -55,41 +59,42 @@ Set_string_add:                         # @Set_string_add
 	.p2align	4, 0x90
 .LBB2_3:                                # %while_body_1
                                         # =>This Inner Loop Header: Depth=1
+	movq	%rsp, %r12
+	leaq	-16(%r12), %rdx
+	movq	%rdx, %rsp
 	movq	%r15, %rsi
-	callq	arraylist_get_ptr@PLT
-	movq	%rax, %rdi
-	movq	%r14, %rsi
-	callq	strcmp_eq@PLT
-	testb	$1, %al
-	jne	.LBB2_4
+	callq	arraylist_get_int@PLT
+	cmpl	%r14d, -16(%r12)
+	je	.LBB2_4
 # %bb.2:                                # %while_cond_0
                                         #   in Loop: Header=BB2_3 Depth=1
 	movq	(%rbx), %rdi
-	callq	length@PLT
+	callq	arraylist_size_int@PLT
 	movq	(%rbx), %rdi
 	incq	%r15
 	cmpl	%eax, %r15d
 	jl	.LBB2_3
 .LBB2_5:                                # %while_end_2
-	movq	%r14, %rsi
-	callq	arraylist_add_String@PLT
+	movl	%r14d, %esi
+	callq	arraylist_add_int@PLT
 .LBB2_4:                                # %then_0
 	movq	%rbx, %rax
+	leaq	-32(%rbp), %rsp
 	popq	%rbx
-	.cfi_def_cfa_offset 24
+	popq	%r12
 	popq	%r14
-	.cfi_def_cfa_offset 16
 	popq	%r15
-	.cfi_def_cfa_offset 8
+	popq	%rbp
+	.cfi_def_cfa %rsp, 8
 	retq
 .Lfunc_end2:
-	.size	Set_string_add, .Lfunc_end2-Set_string_add
+	.size	Set_int_add, .Lfunc_end2-Set_int_add
 	.cfi_endproc
                                         # -- End function
-	.globl	Set_string_get                  # -- Begin function Set_string_get
+	.globl	Set_int_remove                  # -- Begin function Set_int_remove
 	.p2align	4, 0x90
-	.type	Set_string_get,@function
-Set_string_get:                         # @Set_string_get
+	.type	Set_int_remove,@function
+Set_int_remove:                         # @Set_int_remove
 	.cfi_startproc
 # %bb.0:                                # %entry
 	pushq	%rbx
@@ -98,38 +103,13 @@ Set_string_get:                         # @Set_string_get
 	movq	%rdi, %rbx
 	movq	(%rdi), %rdi
 	movl	%esi, %esi
-	callq	arraylist_get_ptr@PLT
-	movl	$.L.strStr, %edi
-	movq	%rax, %rsi
-	xorl	%eax, %eax
-	callq	printf@PLT
+	callq	arraylist_remove_int@PLT
 	movq	%rbx, %rax
 	popq	%rbx
 	.cfi_def_cfa_offset 8
 	retq
 .Lfunc_end3:
-	.size	Set_string_get, .Lfunc_end3-Set_string_get
-	.cfi_endproc
-                                        # -- End function
-	.globl	Set_string_remove               # -- Begin function Set_string_remove
-	.p2align	4, 0x90
-	.type	Set_string_remove,@function
-Set_string_remove:                      # @Set_string_remove
-	.cfi_startproc
-# %bb.0:                                # %entry
-	pushq	%rbx
-	.cfi_def_cfa_offset 16
-	.cfi_offset %rbx, -16
-	movq	%rdi, %rbx
-	movq	(%rdi), %rdi
-	movl	%esi, %esi
-	callq	removeItem@PLT
-	movq	%rbx, %rax
-	popq	%rbx
-	.cfi_def_cfa_offset 8
-	retq
-.Lfunc_end4:
-	.size	Set_string_remove, .Lfunc_end4-Set_string_remove
+	.size	Set_int_remove, .Lfunc_end3-Set_int_remove
 	.cfi_endproc
                                         # -- End function
 	.globl	main                            # -- Begin function main
@@ -143,25 +123,21 @@ main:                                   # @main
 	subq	$16, %rsp
 	.cfi_def_cfa_offset 32
 	.cfi_offset %rbx, -16
-	movl	$10, %edi
-	callq	arraylist_create@PLT
-	movq	%rax, 8(%rsp)
-	movl	$.L.str0, %edi
-	callq	createString@PLT
+	movl	$4, %edi
+	callq	arraylist_create_int@PLT
+	movq	%rax, %rbx
+	movl	$2, 4(%rsp)
+	leaq	4(%rsp), %rsi
+	movl	$1, %edx
+	movq	%rax, %rdi
+	callq	arraylist_addAll_int@PLT
+	movq	%rbx, 8(%rsp)
 	leaq	8(%rsp), %rbx
 	movq	%rbx, %rdi
-	movq	%rax, %rsi
-	callq	Set_string_add@PLT
-	movl	$.L.str1, %edi
-	callq	createString@PLT
+	movl	$2, %esi
+	callq	Set_int_add@PLT
 	movq	%rbx, %rdi
-	movq	%rax, %rsi
-	callq	Set_string_add@PLT
-	movq	%rbx, %rdi
-	xorl	%esi, %esi
-	callq	Set_string_get@PLT
-	movq	%rbx, %rdi
-	callq	print_Set_string@PLT
+	callq	print_Set_int@PLT
 	callq	getchar@PLT
 	xorl	%eax, %eax
 	addq	$16, %rsp
@@ -169,8 +145,8 @@ main:                                   # @main
 	popq	%rbx
 	.cfi_def_cfa_offset 8
 	retq
-.Lfunc_end5:
-	.size	main, .Lfunc_end5-main
+.Lfunc_end4:
+	.size	main, .Lfunc_end4-main
 	.cfi_endproc
                                         # -- End function
 	.type	.L.strChar,@object              # @.strChar
@@ -213,15 +189,5 @@ main:                                   # @main
 .L.strEmpty:
 	.zero	1
 	.size	.L.strEmpty, 1
-
-	.type	.L.str0,@object                 # @.str0
-.L.str0:
-	.asciz	"ook"
-	.size	.L.str0, 4
-
-	.type	.L.str1,@object                 # @.str1
-.L.str1:
-	.asciz	"yes"
-	.size	.L.str1, 4
 
 	.section	".note.GNU-stack","",@progbits

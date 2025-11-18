@@ -50,10 +50,16 @@ public class RuntimeContext {
     }
 
     public StructDefinition getStructType(String name) {
+        if (name.contains("<")) {
+            name = name.substring(0, name.indexOf('<'));
+        }
+
         if (structTypes.containsKey(name)) return structTypes.get(name);
         if (parent != null) return parent.getStructType(name);
+
         throw new RuntimeException("Struct não definida: " + name);
     }
+
 
 
     public void setVariable(String name, TypedValue value) {

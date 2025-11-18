@@ -48,7 +48,11 @@ public class StructMethodCallNode extends ASTNode {
     public TypedValue evaluate(RuntimeContext ctx) {
         TypedValue instanceVal = structInstance.evaluate(ctx);
 
-        FunctionNode method = ctx.getStructMethod(structName, methodName);
+        String baseName = structName.contains("<")
+                ? structName.substring(0, structName.indexOf('<'))
+                : structName;
+
+        FunctionNode method = ctx.getStructMethod(baseName, methodName);
         if (method == null) {
             throw new RuntimeException("Method " + methodName + " not found in Struct " + structName);
         }
@@ -60,7 +64,8 @@ public class StructMethodCallNode extends ASTNode {
 
         if (!method.getParamTypes().isEmpty()) {
             String firstType = method.getParamTypes().get(0);
-            if (firstType.startsWith("Struct<" + structName + ">")) {
+
+            if (firstType.startsWith("Struct<" + baseName + ">")) {
                 argValues.add(0, instanceVal);
             }
         }

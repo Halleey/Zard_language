@@ -6,8 +6,7 @@ import ast.runtime.RuntimeContext;
 import ast.variables.VariableDeclarationNode;
 import low.module.LLVMEmitVisitor;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.List;
 
 public class StructNode extends ASTNode {
@@ -20,6 +19,16 @@ public class StructNode extends ASTNode {
         this.fields = fields;
         this.llvmName = name;
     }
+
+    public Map<String, String> getFieldMap() {
+        Map<String, String> map = new LinkedHashMap<>();
+        for (VariableDeclarationNode f : fields) {
+            map.put(f.getName(), f.getType());
+        }
+        return map;
+    }
+
+
 
     public String getName() {
         return name;
@@ -70,6 +79,7 @@ public class StructNode extends ASTNode {
 
         StructNode clone = new StructNode(name + "_" + elemType, clonedFields);
         clone.setLLVMName(name + "_" + elemType);
+        System.out.println(clone + " debug");
         return clone;
     }
 }

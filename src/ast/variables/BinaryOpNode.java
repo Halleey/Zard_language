@@ -5,6 +5,9 @@ import ast.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class BinaryOpNode extends ASTNode {
     public final ASTNode left;
     public final String operator;
@@ -91,6 +94,15 @@ public class BinaryOpNode extends ASTNode {
         System.out.println(prefix + "  Right:");
         right.print(prefix + "    ");
     }
+
+    @Override
+    public List<ASTNode> getChildren() {
+        List<ASTNode> list = new ArrayList<>();
+        if (left != null) list.add(left);
+        if (right != null) list.add(right);
+        return list;
+    }
+
 
 
     private Object unwrap(TypedValue tv) {

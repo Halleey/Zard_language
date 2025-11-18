@@ -30,7 +30,28 @@ public class FunctionCallEmitter {
     public boolean isBeingDeduced(String functionName) {
         return beingDeduced.contains(functionName);
     }
+    private String resolveLLVMFuncName(String funcName, LLVisitorMain visitor) {
+        // exemplo "math.cos" → ["math", "cos"]
+        String[] parts = funcName.split("\\.");
 
+        if (parts.length == 2) {
+            String alias = parts[0];
+            String base = parts[1];
+
+            String full = alias + "_" + base;
+
+            if (visitor.getFunctionType(full) != null) {
+                return full;
+            }
+        }
+
+        String replaced = funcName.replace('.', '_');
+        if (visitor.getFunctionType(replaced) != null) {
+            return replaced;
+        }
+
+        return parts[parts.length - 1];
+    }
     public String emit(FunctionCallNode node, LLVisitorMain visitor) {
         StringBuilder sb = new StringBuilder();
         List<String> llvmArgs = new ArrayList<>();
@@ -40,8 +61,10 @@ public class FunctionCallEmitter {
         if (targetFn == null) {
             targetFn = visitor.importedFunctions.get(node.getName());
         }
+
         List<String> expectedParams = targetFn != null ? targetFn.getParamTypes() : null;
 
+        // Emitir argumentos
         for (int i = 0; i < node.getArgs().size(); i++) {
             ASTNode arg = node.getArgs().get(i);
             String argLLVM = arg.accept(visitor);
@@ -58,6 +81,7 @@ public class FunctionCallEmitter {
                 if ("string".equals(expectedType)) expectedType = "%String*";
             }
 
+            // Convertemos int → double quando esperado
             if (expectedType != null && !expectedType.equals(argType)) {
                 if (argType.equals("i32") && expectedType.equals("double")) {
                     String conv = visitor.getTemps().newTemp();
@@ -72,30 +96,20 @@ public class FunctionCallEmitter {
             llvmArgs.add(argType + " " + temp);
         }
 
+        // Nome correto da função com alias
         String funcName = node.getName();
-        String llvmFuncName = funcName.replace('.', '_');
+        String llvmFuncName = resolveLLVMFuncName(funcName, visitor);
 
-        TypeInfos retInfo = visitor.getFunctionType(funcName);
-        if (retInfo == null) retInfo = visitor.getFunctionType(funcName.replace('.', '_'));
-
-        if (retInfo == null && funcName.contains(".")) {
-            String simpleName = funcName.substring(funcName.indexOf('.') + 1);
-            retInfo = visitor.getFunctionType(simpleName);
-            if (retInfo == null) retInfo = visitor.getFunctionType(simpleName.replace('.', '_'));
-        }
-
+        // Tipo de retorno
+        TypeInfos retInfo = visitor.getFunctionType(llvmFuncName);
         if (retInfo == null) {
             throw new RuntimeException("Função não registrada: " + funcName);
         }
 
         String retType = retInfo.getLLVMType();
-
-        if ("any".equals(retInfo.getSourceType()) && beingDeduced.contains(funcName)) {
-            retType = "i32";
-        }
-
         if ("string".equals(retType)) retType = "%String*";
 
+        // Void call
         if ("void".equals(retType)) {
             sb.append("  call void @")
                     .append(llvmFuncName)

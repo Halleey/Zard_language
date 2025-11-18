@@ -3,6 +3,7 @@ package low.imports;
 import ast.ASTNode;
 import ast.functions.FunctionNode;
 import ast.imports.ImportNode;
+import ast.structs.ImplNode;
 import ast.structs.StructNode;
 import ast.variables.VariableDeclarationNode;
 import low.functions.FunctionEmitter;
@@ -26,7 +27,6 @@ import ast.lists.ListAddAllNode;
 import ast.lists.ListAddNode;
 import ast.lists.ListNode;
 import ast.loops.WhileNode;
-
 public class ImportEmitter {
     private final LLVisitorMain visitor;
     private final Set<String> tiposDeListasUsados;
@@ -36,69 +36,86 @@ public class ImportEmitter {
         this.tiposDeListasUsados = tiposDeListasUsados;
     }
 
-    public Set<String> getTiposDeListasUsados() {
-        return tiposDeListasUsados;
-    }
-
     public String emit(ImportNode node) {
         try {
-            String path = node.path();
-            String alias = node.alias();
-
-            String code = Files.readString(Path.of(path));
+            // ----- Carregar arquivo -----
+            String code = Files.readString(Path.of(node.path()));
             Lexer lexer = new Lexer(code);
             List<Token> tokens = lexer.tokenize();
             Parser parser = new Parser(tokens);
-            List<ASTNode> ast = parser.parse();
+            List<ASTNode> imported = parser.parse();
 
-            for (ASTNode n : ast) coletarListas(n);
+            StringBuilder ir = new StringBuilder();
 
-            StringBuilder moduleIR = new StringBuilder();
-            FunctionEmitter fnEmitter = new FunctionEmitter(visitor);
+            // ===============================
+            // 1) REGISTRA LISTAS INTERNAS
+            // ===============================
+            for (ASTNode n : imported) {
+                coletarListas(n);
+            }
 
-            for (ASTNode n : ast) {
-                if (n instanceof FunctionNode func) {
-                    String qualified = alias + "." + func.getName();
-                    String llvmName = qualified.replace('.', '_');
+            // ===============================
+            // 2) REGISTRA E EMITE STRUCTS
+            // ===============================
+            for (ASTNode n : imported) {
+                if (n instanceof StructNode struct) {
 
-                    String srcType = func.getReturnType();
-                    String llvmType = new TypeMapper().toLLVM(srcType);
-                    String elemType = (srcType.startsWith("List<") && srcType.endsWith(">"))
-                            ? srcType.substring(5, srcType.length() - 1)
-                            : null;
+                    // registrar com o nome NORMAL
+                    visitor.registerStructNode(struct.getName(), struct);
 
-                    visitor.registerImportedFunction(qualified, func);
-                    visitor.registerFunctionType(qualified,
-                            new TypeInfos(srcType, llvmType, elemType));
-
-                    String funcIR = fnEmitter.emit(func)
-                            .replace("@" + func.getName() + "(", "@" + llvmName + "(");
-
-                    moduleIR.append(funcIR).append("\n");
-
-                } else if (n instanceof StructNode struct) {
-                    String qualified = alias + "." + struct.getName();
-                    visitor.registerStructNode(qualified, struct);
-                    String llvmKey = qualified.replace('.', '_');
-                    visitor.registerStructNode(llvmKey, struct);
-
-                    StructEmitter structEmitter = new StructEmitter(visitor);
-                    String llvmDef = structEmitter.emit(struct);
-
-                    llvmDef = llvmDef.replace("%" + struct.getName(),
-                            "%" + qualified.replace('.', '_'));
-
+                    // emitir imediatamente a definição LLVM
+                    String llvmDef = new StructEmitter(visitor).emit(struct);
                     visitor.addStructDefinition(llvmDef);
                 }
             }
 
-            return moduleIR.toString();
+            // ===============================
+            // 3) REGISTRA E EMITE IMPLEMENTAÇÕES
+            // ===============================
+            for (ASTNode n : imported) {
+                if (n instanceof ImplNode impl) {
+                    ir.append(impl.accept(visitor));
+                }
+            }
+
+            // ===============================
+            // 4) REGISTRA E EMITE FUNÇÕES NORMAIS
+            // ===============================
+            for (ASTNode n : imported) {
+                if (n instanceof FunctionNode fn) {
+
+                    String name = fn.getName(); // sem módulo/alias
+                    String llvmName = name;
+
+                    visitor.registerImportedFunction(name, fn);
+
+                    String srcType = fn.getReturnType();
+                    String llvmType = new TypeMapper().toLLVM(srcType);
+                    String elemType = null;
+
+                    if (srcType.startsWith("List<") && srcType.endsWith(">")) {
+                        elemType = srcType.substring(5, srcType.length() - 1);
+                    }
+
+                    visitor.registerFunctionType(
+                            name,
+                            new TypeInfos(srcType, llvmType, elemType)
+                    );
+
+                    // Emitir IR
+                    ir.append(new FunctionEmitter(visitor).emit(fn))
+                            .append("\n");
+                }
+            }
+
+            return ir.toString();
 
         } catch (IOException e) {
             throw new RuntimeException("Failed to import module: " + node.path(), e);
         }
     }
 
+    // coletar listas (igual ao seu)
     private void coletarListas(ASTNode node) {
         if (node == null) return;
 
@@ -107,36 +124,44 @@ public class ImportEmitter {
             if (retType.startsWith("List<") && retType.endsWith(">")) {
                 tiposDeListasUsados.add(retType);
             }
-            for (String paramType : func.getParamTypes()) {
-                if (paramType.startsWith("List<") && paramType.endsWith(">")) {
-                    tiposDeListasUsados.add(paramType);
+            for (String param : func.getParamTypes()) {
+                if (param.startsWith("List<") && param.endsWith(">")) {
+                    tiposDeListasUsados.add(param);
                 }
             }
             func.getBody().forEach(this::coletarListas);
         }
 
-        if (node instanceof VariableDeclarationNode varDecl) {
-            if (varDecl.getType() != null && varDecl.getType().startsWith("List")) {
-                tiposDeListasUsados.add(varDecl.getType());
+        if (node instanceof VariableDeclarationNode v) {
+            if (v.getType().startsWith("List<")) {
+                tiposDeListasUsados.add(v.getType());
             }
-            if (varDecl.initializer != null) coletarListas(varDecl.initializer);
-        } else if (node instanceof ListNode listNode) {
-            String tipo = "List<" + listNode.getList().getElementType() + ">";
-            tiposDeListasUsados.add(tipo);
+            if (v.initializer != null) coletarListas(v.initializer);
+        }
 
-            listNode.getList().getElements().forEach(this::coletarListas);
-        } else if (node instanceof IfNode ifNode) {
-            coletarListas(ifNode.condition);
-            ifNode.thenBranch.forEach(this::coletarListas);
-            if (ifNode.elseBranch != null) ifNode.elseBranch.forEach(this::coletarListas);
-        } else if (node instanceof WhileNode whileNode) {
-            coletarListas(whileNode.condition);
-            whileNode.body.forEach(this::coletarListas);
-        } else if (node instanceof ListAddNode addNode) {
-            coletarListas(addNode.getListNode());
-            coletarListas(addNode.getValuesNode());
-        } else if (node instanceof ListAddAllNode addAllNode) {
-            addAllNode.getArgs().forEach(this::coletarListas);
+        if (node instanceof ListNode list) {
+            tiposDeListasUsados.add("List<" + list.getList().getElementType() + ">");
+            list.getList().getElements().forEach(this::coletarListas);
+        }
+
+        if (node instanceof IfNode i) {
+            coletarListas(i.condition);
+            i.thenBranch.forEach(this::coletarListas);
+            if (i.elseBranch != null) i.elseBranch.forEach(this::coletarListas);
+        }
+
+        if (node instanceof WhileNode w) {
+            coletarListas(w.condition);
+            w.body.forEach(this::coletarListas);
+        }
+
+        if (node instanceof ListAddNode add) {
+            coletarListas(add.getListNode());
+            coletarListas(add.getValuesNode());
+        }
+
+        if (node instanceof ListAddAllNode addAll) {
+            addAll.getArgs().forEach(this::coletarListas);
         }
     }
 }

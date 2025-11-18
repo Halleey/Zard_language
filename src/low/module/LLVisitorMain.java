@@ -32,11 +32,18 @@ import low.variables.*;
 import low.whiles.WhileEmitter;
 
 import java.util.*;
+
+
 public class LLVisitorMain implements LLVMEmitVisitor {
 
     // ==== TABELAS DE TIPOS / ESTADO LOCAL ====
     private final Map<String, TypeInfos> varTypes;
     private final Map<String, TypeInfos> functionTypes;
+
+    private final Set<String> usedStructs = new HashSet<>();
+    private final Set<String> importedStructs = new HashSet<>();
+
+
 
     private final TempManager temps;
     private final List<String> structDefinitions;
@@ -187,21 +194,54 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         );
     }
 
+    public void markStructUsed(String name) {
+        if (name == null) return;
+        usedStructs.add(name);
+    }
+
+    public void markStructImported(String name) {
+        if (name == null) return;
+        importedStructs.add(name);
+        usedStructs.add(name); // import implica uso!
+    }
+
+    public boolean isStructUsed(String name) {
+        return usedStructs.contains(name);
+    }
+
+
+
+
     // ==== LÓGICA DE STRUCTS ESPECIALIZADAS ====
     public StructNode getOrCreateSpecializedStruct(StructNode base, String elemType) {
+
         if (base == null || elemType == null) return null;
 
+        // *** PROTEÇÃO PRINCIPAL ***
+        // Se o nome já contém "_" (Set_int), NÃO reespecializar.
+        if (base.getName().contains("_")) {
+            // Já é especializado, apenas retorne ele mesmo
+            return base;
+        }
+
+        // Chave oficial do template especializado
         String key = base.getName() + "<" + elemType + ">";
+
         if (specializedStructs.containsKey(key)) {
             return specializedStructs.get(key);
         }
 
+        // Cria um clone especializado REAL
         StructNode clone = base.cloneWithType(elemType);
+
+        // *** GERAÇÃO CORRETA DO NOME LLVM ***
         String llvmName = LLVMNameUtils.llvmSafe(base.getName() + "_" + elemType);
         clone.setLLVMName(llvmName);
 
+        // Salva
         specializedStructs.put(key, clone);
 
+        // registros de lookup
         String baseName = base.getName();
         structNodes.put(key, clone);
         structNodes.put(baseName + "_" + elemType, clone);
@@ -209,11 +249,22 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         structNodes.put("%" + llvmName, clone);
         structNodes.put(baseName + "<" + elemType + ">", clone);
 
+        // Emitir definição apenas UMA vez
         String llvmDef = structEmitter.emit(clone);
         structDefinitions.add(llvmDef);
 
         return clone;
     }
+
+    public boolean hasSpecializationFor(String baseName) {
+        for (String key : specializedStructs.keySet()) {
+            if (key.startsWith(baseName + "<")) return true;
+            if (key.startsWith(baseName + "_")) return true;
+        }
+        return false;
+    }
+
+
 
     // ==== LIST TYPES INFERENCE ====
     public String inferListElementType(ASTNode node) {
@@ -292,6 +343,16 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         }
         return loopEndLabels.peek();
     }
+
+    /*
+      @Override
+    public String visit(StructNode node) {
+        registerStructNode(node);
+        return "";
+    }
+
+     */
+
 
     // ==== VISITORS DE NODES ====
     @Override

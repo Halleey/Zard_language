@@ -26,9 +26,18 @@ public class TypeMapper {
 
         if (type.startsWith("Struct<") && type.endsWith(">")) {
             String inner = type.substring(7, type.length() - 1).trim();
-            String llvmName = LLVMNameUtils.llvmSafe(inner);
-            return "%" + llvmName + "*";
+
+            if (inner.contains("<")) {
+                String base = inner.substring(0, inner.indexOf('<'));
+                String elem = inner.substring(inner.indexOf('<') + 1, inner.indexOf('>'));
+                String llvmName = LLVMNameUtils.llvmSafe(base + "_" + elem);
+                return "%" + llvmName + "*";
+            } else {
+                String llvmName = LLVMNameUtils.llvmSafe(inner);
+                return "%" + llvmName + "*";
+            }
         }
+
 
         if (type.startsWith("Struct ")) {
             String inner = type.substring("Struct ".length()).trim();

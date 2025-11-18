@@ -4,6 +4,7 @@ import ast.ASTNode;
 import ast.functions.FunctionNode;
 import ast.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
+import ast.structs.ImplNode;
 import ast.structs.StructNode;
 import low.module.LLVMEmitVisitor;
 import tokens.Lexer;

@@ -175,7 +175,6 @@ public class ImplEmitter {
         }
         visitor.putVarType(valueS, new TypeInfos(sourceType, llvmType, null));
 
-        // ================= Corpo da função =================
         if (fn.getBody() != null && !fn.getBody().isEmpty()) {
 
             // Fork do visitor para não sujar contexto global

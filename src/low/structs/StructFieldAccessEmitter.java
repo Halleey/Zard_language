@@ -48,6 +48,7 @@ public class StructFieldAccessEmitter {
                     " (LLVMType=" + structLLVMType + ")");
         }
         StructNode def = visitor.getStructNode(ownerType);
+
         if (def == null) {
             throw new RuntimeException("Acesso de campo em algo que não é struct: " + structLLVMType);
         }

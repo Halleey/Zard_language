@@ -86,12 +86,27 @@ public class Parser {
         else throw new RuntimeException("Esperado token " + value + " do tipo " + type +
                 " mas encontrado " + current().getValue() + " tipo " + current().getType());
     }
-
     public List<ASTNode> parse() {
         List<ASTNode> nodes = new ArrayList<>();
+
+        System.out.println("=== PARSE INICIADO ===");
+        System.out.println("Total tokens: " + tokens.size());
+        System.out.println();
+
         while (current().getType() != Token.TokenType.EOF) {
-            nodes.add(parseStatement());
+
+            System.out.println("[parse] pos=" + pos +
+                    " token=" + current().getValue() +
+                    " type=" + current().getType());
+
+            ASTNode stmt = parseStatement();
+
+            System.out.println("[parse] ✓ Statement parseado: " + stmt.getClass().getSimpleName());
+            System.out.println();
+            nodes.add(stmt);
         }
+
+        System.out.println("=== PARSE FINALIZADO ===");
         return nodes;
     }
 

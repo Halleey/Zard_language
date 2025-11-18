@@ -97,6 +97,7 @@ public class VariableDeclarationNode extends ASTNode {
     }
 
 
+
     private TypedValue evaluateList(RuntimeContext ctx, ListNode listNode, DynamicList list) {
         for (ASTNode elem : listNode.getList().getElements()) {
             list.add(elem.evaluate(ctx));

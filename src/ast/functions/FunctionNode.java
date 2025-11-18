@@ -10,7 +10,7 @@ import java.util.List;
 
 
 public class FunctionNode extends ASTNode {
-    private final String name;
+    private String name;
 
     public void setParams(List<String> params) {
         this.params = params;
@@ -28,6 +28,9 @@ public class FunctionNode extends ASTNode {
 
     public void setImplicitReceiverName(String implicitReceiverName) {
         this.implicitReceiverName = implicitReceiverName;
+    }
+    public void setName(String newName) {
+        this.name = newName;
     }
 
     public void setParamTypes(List<String> paramTypes) {

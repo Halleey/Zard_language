@@ -50,6 +50,9 @@ public class MainEmitter {
         StringBuilder llvm = new StringBuilder();
         ImportEmitter importEmitter = new ImportEmitter(visitor, this.tiposDeListasUsados);
 
+
+
+
         for (ASTNode stmt : node.body) {
             if (!(stmt instanceof ImportNode)) {
                 coletarStringsRecursivo(stmt);
@@ -89,6 +92,7 @@ public class MainEmitter {
         }
         boolean temImpls = node.body.stream().anyMatch(s -> s instanceof ImplNode);
         if (temImpls) {
+
             llvm.append(";; ==== Impl Definitions ====\n");
             for (ASTNode stmt : node.body) {
                 if (stmt instanceof ImplNode implNode) {

@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
 public class StructInstaceNode extends ASTNode {
     private final String structName;
     private final List<ASTNode> positionalValues;
@@ -87,6 +86,24 @@ public class StructInstaceNode extends ASTNode {
             if (ftype.startsWith("List<")) {
                 String innerType = ftype.substring(5, ftype.length() - 1);
 
+                // NOVO: Verifica se o tipo da lista é '?' e tenta inferir do tipo concreto da struct
+                if (innerType.equals("?") && this.concreteType != null) {
+                    String fullStructType = this.concreteType.substring("Struct<".length(), this.concreteType.length() - 1);
+
+                    if (fullStructType.contains("<") && fullStructType.endsWith(">")) {
+                        int open = fullStructType.indexOf('<');
+                        int close = fullStructType.lastIndexOf('>');
+                        String structInnerType = fullStructType.substring(open + 1, close);
+
+                        if (!structInnerType.trim().isEmpty()) {
+                            innerType = structInnerType;
+                            ftype = "List<" + innerType + ">"; // Atualiza o tipo da Lista
+                        }
+                    }
+                }
+                // Fim NOVO
+
+
                 if (astValue instanceof ListNode listNode) {
                     value = listNode.evaluate(ctx);
                 } else {
@@ -119,7 +136,7 @@ public class StructInstaceNode extends ASTNode {
 
     @Override
     public void print(String prefix) {
-        System.out.println(prefix + "StructInstance " + structName);
+        System.out.println(prefix + "StructInstance " + structName + (concreteType != null ? " (" + concreteType + ")" : ""));
 
         if (!namedValues.isEmpty()) {
             for (Map.Entry<String, ASTNode> e : namedValues.entrySet()) {

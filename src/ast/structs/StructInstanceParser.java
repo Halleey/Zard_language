@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+
 public class StructInstanceParser {
     private final Parser parser;
 
@@ -23,6 +24,16 @@ public class StructInstanceParser {
     public VariableDeclarationNode parseStructInstanceAfterKeyword(String structName, String varName) {
         List<ASTNode> positionalValues = null;
         Map<String, ASTNode> namedValues = null;
+
+        // Novo: Captura o tipo interno (ex: "int" em "Set<int>")
+        String innerType = null;
+
+        if(parser.current().getType() == Token.TokenType.OPERATOR && parser.current().getValue().equals("<")) {
+            parser.advance(); // Come o '<'
+            innerType = parser.current().getValue(); // Captura o tipo interno (ex: "int")
+            parser.advance(); // Come o tipo interno
+            parser.eat(Token.TokenType.OPERATOR, ">"); // Come o '>'
+        }
 
         if (parser.current().getType() == Token.TokenType.OPERATOR &&
                 parser.current().getValue().equals("=")) {
@@ -59,9 +70,20 @@ public class StructInstanceParser {
             parser.eat(Token.TokenType.DELIMITER, ";");
         }
 
+        // Construção do tipo final da variável (ex: "Struct<Set<int>>")
+        String structType = structName;
+        if (innerType != null) {
+            structType += "<" + innerType + ">";
+        }
+        String variableType = "Struct<" + structType + ">";
+
+
         StructInstaceNode instanceNode = new StructInstaceNode(structName, positionalValues, namedValues);
-        parser.declareVariable(varName, "Struct<" + structName + ">");
-        return new VariableDeclarationNode(varName, "Struct<" + structName + ">", instanceNode);
+        // Define o tipo concreto para ser usado no evaluate (inicialização de List<?>)
+        instanceNode.setConcreteType(variableType);
+
+        parser.declareVariable(varName, variableType);
+        return new VariableDeclarationNode(varName, variableType, instanceNode);
     }
 
     private List<ASTNode> parsePositionalInitializers() {
@@ -77,6 +99,10 @@ public class StructInstanceParser {
     }
 
     private Map<String, ASTNode> parseNamedInitializers(String structName) {
+        if (structName.contains("<")) {
+            structName = structName.substring(0, structName.indexOf('<'));
+        }
+
         Map<String, ASTNode> map = new LinkedHashMap<>();
         Map<String, String> fields = parser.lookupStruct(structName);
 
@@ -114,7 +140,7 @@ public class StructInstanceParser {
             } else if (isPrimitiveType(expectedType)) {
                 expr = parser.parseExpression();
             } else {
-                throw new RuntimeException("Tipo não suportado para campo '" + fieldName + "' em struct " + structName);
+                expr = parser.parseExpression();
             }
 
             if (map.containsKey(fieldName))

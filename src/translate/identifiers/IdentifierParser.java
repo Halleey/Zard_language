@@ -18,8 +18,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-
-
 public class IdentifierParser {
     private final Parser parser;
 
@@ -30,13 +28,25 @@ public class IdentifierParser {
         ASTNode receiver = new VariableNode(name);
         String tokenVal = parser.current().getValue();
 
+        String structName = name;
+        String innerType = null;
+
+        if (parser.current().getValue().equals("<")) {
+            parser.advance(); // '<'
+            innerType = parser.current().getValue();   // tipo interno
+            parser.advance();
+            parser.eat(Token.TokenType.OPERATOR, ">");
+
+            structName = name + "<" + innerType + ">"; // Set<int>
+        }
+
         if (parser.isKnownStruct(name)) {
-            String structName = name;
             String varName = parser.current().getValue();
             parser.eat(Token.TokenType.IDENTIFIER);
 
+            // Caso especial: inicialização com { }
             if (parser.current().getValue().equals("=")) {
-                parser.advance();
+                parser.eat(Token.TokenType.OPERATOR, "=");
 
                 if (parser.current().getValue().equals("{")) {
                     StructInstanceParser structParser = new StructInstanceParser(parser);
@@ -45,20 +55,41 @@ public class IdentifierParser {
 
                 ASTNode initializer = parser.parseExpression();
                 parser.eat(Token.TokenType.DELIMITER, ";");
-                return new VariableDeclarationNode("Struct<" + structName + ">", varName, initializer);
+                parser.declareVariable(varName, "Struct<" + structName + ">");
+
+                return new VariableDeclarationNode(varName, "Struct<" + structName + ">", initializer);
             }
 
+            // Instanciação direta com chaves:
             if (parser.current().getValue().equals("{")) {
                 StructInstanceParser structParser = new StructInstanceParser(parser);
                 return structParser.parseStructInstanceAfterKeyword(structName, varName);
             }
 
+            // Declaração simples:
             parser.eat(Token.TokenType.DELIMITER, ";");
             StructInstaceNode instanceNode = new StructInstaceNode(structName, null, null);
+
             parser.declareVariable(varName, "Struct<" + structName + ">");
             return new VariableDeclarationNode(varName, "Struct<" + structName + ">", instanceNode);
         }
 
+        if (parser.current().getType() == Token.TokenType.IDENTIFIER) {
+            String varName = parser.current().getValue();
+            Token afterVar = parser.peek(1);
+
+            if (afterVar.getType() == Token.TokenType.DELIMITER &&
+                    afterVar.getValue().equals(";")) {
+
+                parser.eat(Token.TokenType.IDENTIFIER);
+                parser.eat(Token.TokenType.DELIMITER, ";");
+
+                String finalType = "Struct<" + structName + ">";
+                parser.declareVariable(varName, finalType);
+
+                return new VariableDeclarationNode(varName, finalType, null);
+            }
+        }
         switch (tokenVal) {
             case "." -> {
                 parser.advance();
@@ -76,7 +107,6 @@ public class IdentifierParser {
                     if (parser.current().getValue().equals("(")) {
                         List<ASTNode> args = parser.parseArguments();
                         parser.eat(Token.TokenType.DELIMITER, ";");
-
                         String structType = receiverType.substring("Struct<".length(), receiverType.length() - 1);
                         return new StructMethodCallNode(receiver, structType, memberName, args);
                     }
@@ -89,34 +119,17 @@ public class IdentifierParser {
                     return listParser.parseStatementListMethod(receiver, memberName);
                 }
 
-                if (memberName.equals("Struct")) {
-                    parser.advance();
-                    String structName = parser.current().getValue();
-                    parser.eat(Token.TokenType.IDENTIFIER);
-                    String varName = parser.current().getValue();
-                    parser.eat(Token.TokenType.IDENTIFIER);
-
-                    StructInstanceParser structParser = new StructInstanceParser(parser);
-                    String qualifiedName = name + "." + structName;
-                    return structParser.parseStructInstanceAfterKeyword(qualifiedName, varName);
-                }
-
                 parser.advance();
                 String fullName = name + "." + memberName;
+
                 if (parser.current().getValue().equals("(")) {
                     List<ASTNode> args = parser.parseArguments();
-                    // Só consome ';' se realmente for um statement completo (fora de expressão)
-                    if (parser.current().getValue().equals(";")) {
-                        parser.eat(Token.TokenType.DELIMITER, ";");
-                    }
+                    if (parser.current().getValue().equals(";")) parser.eat(Token.TokenType.DELIMITER, ";");
                     return new FunctionCallNode(fullName, args);
                 } else {
-                    if (parser.current().getValue().equals(";")) {
-                        parser.eat(Token.TokenType.DELIMITER, ";");
-                    }
+                    if (parser.current().getValue().equals(";")) parser.eat(Token.TokenType.DELIMITER, ";");
                     return new VariableNode(fullName);
                 }
-
             }
 
             case "=" -> {
@@ -181,21 +194,19 @@ public class IdentifierParser {
             String memberName = parser.current().getValue();
             String receiverType = parser.getExpressionType(receiver);
 
-            // delega para Struct
             if (receiverType != null && receiverType.startsWith("Struct")) {
                 StructFieldParser structParser = new StructFieldParser(parser);
                 return structParser.parseAsExpression(receiver, memberName);
             }
 
-            // delega para List
             if (receiverType != null && receiverType.startsWith("List")) {
                 ListMethodParser listParser = new ListMethodParser(parser);
                 return listParser.parseExpressionListMethod(receiver, memberName);
             }
 
-            // caso geral
             parser.advance();
             String fullName = name + "." + memberName;
+
             if (parser.current().getValue().equals("(")) {
                 List<ASTNode> args = parser.parseArguments();
                 return new FunctionCallNode(fullName, args);
@@ -206,5 +217,4 @@ public class IdentifierParser {
 
         return receiver;
     }
-
 }

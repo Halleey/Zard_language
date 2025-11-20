@@ -23,10 +23,16 @@ main {
 
     }
 
+    print("salve mundo");
 
+    int x  = 3;
+    x ++;
+    print(x);
 
+        Set<string> t = {data :"teste"};
+        t.add("zard");
+        print(t);
 
-    # ==== uso ====
     Set<int> s = {data : 2};
     s.add(2);
     print(s);

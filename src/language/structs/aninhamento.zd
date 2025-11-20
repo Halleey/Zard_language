@@ -16,7 +16,7 @@ main {
     Pessoa p1;
     p1.nome = "Alice";
     p1.idade = 25;
-    Struct Endereco e1;
+    Endereco e1;
     e1.rua = "Rua A";
     e1.cidade = "São Paulo";
     p1.endereco = e1;

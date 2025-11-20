@@ -135,13 +135,10 @@ public class StructEmitter {
                 case "boolean", "bool" ->
                         sb.append("  call void @arraylist_print_bool(%struct.ArrayListBool* %val").append(i).append(")\n");
 
-                case "string", "String" -> {
-                    sb.append("  ; TODO: imprimir List<string> (nenhuma função runtime definida ainda)\n");
-                }
+                case "string", "String" -> sb.append("  call void @arraylist_print_string(%ArrayList* %val")
+                        .append(i).append(")\n");
 
-                case "?" -> {
-                    sb.append("  ; List<?> genérica: sem tipo concreto, não imprimindo este campo\n");
-                }
+                case "?" -> sb.append("  ; List<?> genérica: sem tipo concreto, não imprimindo este campo\n");
 
                 default ->
                         sb.append("  ; TODO: imprimir List<").append(elementType).append(">\n");

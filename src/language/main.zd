@@ -24,10 +24,8 @@ main {
     }
 
     # ==== uso ====
-    Set s;
-    s.add(1);
-    s.add(1);
-   #s.remove(0);
+    Set<int> s;
+
     print(s);
 
 }

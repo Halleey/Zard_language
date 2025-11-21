@@ -11,8 +11,6 @@ import ast.variables.VariableDeclarationNode;
 import helpers_ast.variables.AssignmentParser;
 import helpers_ast.variables.UnaryParser;
 import tokens.Token;
-import ast.variables.AssignmentNode;
-import ast.variables.UnaryOpNode;
 import ast.variables.VariableNode;
 import translate.front.Parser;
 

@@ -118,28 +118,16 @@ Set_int_remove:                         # @Set_int_remove
 main:                                   # @main
 	.cfi_startproc
 # %bb.0:
-	pushq	%rbx
+	pushq	%rax
 	.cfi_def_cfa_offset 16
-	subq	$16, %rsp
-	.cfi_def_cfa_offset 32
-	.cfi_offset %rbx, -16
 	movl	$10, %edi
 	callq	arraylist_create_int@PLT
-	movq	%rax, 8(%rsp)
-	leaq	8(%rsp), %rbx
-	movq	%rbx, %rdi
-	movl	$1, %esi
-	callq	Set_int_add@PLT
-	movq	%rbx, %rdi
-	movl	$1, %esi
-	callq	Set_int_add@PLT
-	movq	%rbx, %rdi
+	movq	%rax, (%rsp)
+	movq	%rsp, %rdi
 	callq	print_Set_int@PLT
 	callq	getchar@PLT
 	xorl	%eax, %eax
-	addq	$16, %rsp
-	.cfi_def_cfa_offset 16
-	popq	%rbx
+	popq	%rcx
 	.cfi_def_cfa_offset 8
 	retq
 .Lfunc_end4:

@@ -136,8 +136,6 @@ define i32 @main() {
   %tmp0 = alloca %Set_int, align 8
   %tmp1 = call ptr @arraylist_create_int(i64 10)
   store ptr %tmp1, ptr %tmp0, align 8
-  %tmp5 = call ptr @Set_int_add(ptr %tmp0, i32 1)
-  %tmp8 = call ptr @Set_int_add(ptr %tmp0, i32 1)
   call void @print_Set_int(ptr %tmp0)
   %1 = call i32 @getchar()
   ret i32 0

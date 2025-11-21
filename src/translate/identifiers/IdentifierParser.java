@@ -5,12 +5,14 @@ import ast.functions.FunctionCallNode;
 import ast.functions.FunctionReferenceNode;
 import ast.structs.StructInstaceNode;
 import ast.structs.StructInstanceParser;
-
+import ast.structs.StructMethodCallNode;
 import ast.structs.StructUpdateNode;
 import ast.variables.VariableDeclarationNode;
 import helpers_ast.variables.AssignmentParser;
 import helpers_ast.variables.UnaryParser;
 import tokens.Token;
+import ast.variables.AssignmentNode;
+import ast.variables.UnaryOpNode;
 import ast.variables.VariableNode;
 import translate.front.Parser;
 
@@ -92,17 +94,52 @@ public class IdentifierParser {
         }
         switch (tokenVal) {
             case "." -> {
-               translate.identifiers.DotStatementParser dotParser = new translate.identifiers.DotStatementParser(parser);
-                return dotParser.parse(receiver, name);
-            }
+                parser.advance();
+                String memberName = parser.current().getValue();
+                String receiverType = parser.getExpressionType(receiver);
 
+                if (receiverType != null && receiverType.startsWith("Struct")) {
+                    StructFieldParser structParser = new StructFieldParser(parser);
+                    ASTNode structAccess = structParser.parseAsStatement(receiver, memberName);
+
+                    if (parser.current().getValue().equals("{")) {
+                        return parseInlineStructUpdate(structAccess);
+                    }
+
+                    if (parser.current().getValue().equals("(")) {
+                        List<ASTNode> args = parser.parseArguments();
+                        parser.eat(Token.TokenType.DELIMITER, ";");
+                        String structType = receiverType.substring("Struct<".length(), receiverType.length() - 1);
+                        return new StructMethodCallNode(receiver, structType, memberName, args);
+                    }
+
+                    return structAccess;
+                }
+
+                if (receiverType != null && receiverType.startsWith("List")) {
+                    ListMethodParser listParser = new ListMethodParser(parser);
+                    return listParser.parseStatementListMethod(receiver, memberName);
+                }
+
+                parser.advance();
+                String fullName = name + "." + memberName;
+
+                if (parser.current().getValue().equals("(")) {
+                    List<ASTNode> args = parser.parseArguments();
+                    if (parser.current().getValue().equals(";")) parser.eat(Token.TokenType.DELIMITER, ";");
+                    return new FunctionCallNode(fullName, args);
+                } else {
+                    if (parser.current().getValue().equals(";")) parser.eat(Token.TokenType.DELIMITER, ";");
+                    return new VariableNode(fullName);
+                }
+            }
 
             case "=" -> {
                 return new AssignmentParser(parser).parse(name);
             }
 
             case "++", "--" -> {
-             return new UnaryParser(parser).parser(name, tokenVal);
+                return new UnaryParser(parser).parser(name, tokenVal);
             }
         }
 

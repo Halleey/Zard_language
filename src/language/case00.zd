@@ -6,7 +6,7 @@ main {
     }
 
 
-    Struct People p = {"Berk", 220};
+     People p = {"Berk", 220};
 
 
     string nome  = "delicia";

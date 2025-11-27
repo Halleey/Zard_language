@@ -9,7 +9,6 @@ import low.module.LLVisitorMain;
 import low.main.TypeInfos;
 
 import java.util.Map;
-
 public class ImplEmitter {
     private final LLVisitorMain visitor;
 
@@ -21,17 +20,11 @@ public class ImplEmitter {
         StringBuilder llvm = new StringBuilder();
         String baseStruct = node.getStructName();
 
-        boolean hasUsageForBase = visitor.specializedStructs.keySet().stream()
-                .anyMatch(name -> name.equals(baseStruct) || name.startsWith(baseStruct + "<"));
-
-        if (!hasUsageForBase) {
-            return "";
-        }
-
         llvm.append(";; ==== Impl Definitions ====\n");
 
         for (FunctionNode fn : node.getMethods()) {
             if (isListImplMethod(baseStruct, fn)) {
+                // Caminho para Set<T>
                 for (Map.Entry<String, StructNode> entry : visitor.specializedStructs.entrySet()) {
                     String name = entry.getKey();
                     if (name.startsWith(baseStruct + "<")) {
@@ -42,7 +35,7 @@ public class ImplEmitter {
                     }
                 }
             } else {
-
+                // Caminho simples (Pessoa, etc.)
                 llvm.append(emitSimpleMethod(baseStruct, fn));
             }
         }
@@ -64,29 +57,74 @@ public class ImplEmitter {
         String fnName = baseStruct + "_" + fn.getName();
         String structLLVM = "%" + baseStruct;
         String paramTypeLLVM = structLLVM + "*";
-        String retType = paramTypeLLVM;
+
+        // --- descobrir tipo de retorno LLVM ---
+        String declaredRet = fn.getReturnType();
+        if (declaredRet == null) {
+            declaredRet = "void";
+        }
+        declaredRet = declaredRet.trim();
+
+        String retType;
+        boolean returnsSelf = false;
+
+        if ("void".equals(declaredRet)) {
+            retType = "void";
+        } else if (declaredRet.startsWith("Struct<" + baseStruct)) {
+            // ex: function Struct<Pessoa> hello()
+            retType = paramTypeLLVM; // %Pessoa*
+            returnsSelf = true;
+        } else {
+            // casos futuros (int, double, etc.)
+            retType = mapToLLVMType(declaredRet);
+        }
+
+        // --- nome do receiver (geralmente "s" ou "self") ---
+        String receiverName = (fn.getParams() != null && !fn.getParams().isEmpty())
+                ? fn.getParams().get(0)
+                : "s";
 
         sb.append("; === Método: ").append(fnName).append(" ===\n");
         sb.append("define ").append(retType).append(" @").append(fnName)
-                .append("(").append(paramTypeLLVM).append(" %self) {\n");
+                .append("(").append(paramTypeLLVM).append(" %").append(receiverName).append(") {\n");
         sb.append("entry:\n");
 
+        // aloca receiver na pilha
+        String receiverPtr = "%" + receiverName + "_addr";
+        sb.append("  ").append(receiverPtr).append(" = alloca ").append(paramTypeLLVM).append("\n");
+        sb.append("  store ").append(paramTypeLLVM).append(" %").append(receiverName)
+                .append(", ").append(paramTypeLLVM).append("* ").append(receiverPtr).append("\n");
+
+        // registra tipo e ponteiro do receiver
+        visitor.getVariableEmitter().registerVarPtr(receiverName, receiverPtr);
+        visitor.putVarType(receiverName,
+                new TypeInfos("Struct<" + baseStruct + ">", paramTypeLLVM, null));
+
+        // corpo do método
         if (fn.getBody() != null) {
             for (ASTNode stmt : fn.getBody()) {
                 sb.append(stmt.accept(visitor));
             }
         }
 
-        sb.append("  ret ").append(retType).append(" %self\n");
-        sb.append("}\n\n");
+        // retorno
+        if ("void".equals(retType)) {
+            sb.append("  ret void\n");
+        } else if (returnsSelf) {
+            sb.append("  ret ").append(retType).append(" %").append(receiverName).append("\n");
+        } else {
+            // fallback simples (se um dia você suportar retorno não-self aqui)
+            sb.append("  ret ").append(retType).append(" undef\n");
+        }
 
+        sb.append("}\n\n");
         return sb.toString();
     }
 
     private String generateFunctionImpl(String baseStruct, FunctionNode fn, String specialized) {
         StringBuilder sb = new StringBuilder();
 
-        // Tipo declarado do segundo parâmetro (ex: ?, int, boolean, string)
+        // Tipo declarado do segundo arg (ex: ?, int, boolean, string)
         String declaredType = null;
         if (fn.getParamTypes() != null && fn.getParamTypes().size() > 1) {
             declaredType = fn.getParamTypes().get(1);
@@ -107,7 +145,7 @@ public class ImplEmitter {
             paramTypeLLVM = structLLVM + "*";
         }
 
-        // Tipo LLVM do "value" (segundo parâmetro)
+        // Tipo LLVM do "value" (segundo param)
         String valueTypeLLVM;
         boolean declaredIsGeneric = declaredType != null && declaredType.contains("?");
 
@@ -120,8 +158,26 @@ public class ImplEmitter {
             valueTypeLLVM = "i8*";
         }
 
-        String retType = paramTypeLLVM;
-        String paramS = fn.getParams().get(0);                      // ex: "s"
+        String declaredRet = fn.getReturnType();
+        if (declaredRet == null) {
+            declaredRet = "void";
+        }
+        declaredRet = declaredRet.trim();
+
+        String retType;
+        boolean returnsSelf = false;
+
+        if ("void".equals(declaredRet)) {
+            retType = "void";
+        } else if (declaredRet.startsWith("Struct<" + baseStruct)) {
+            // ex: function Struct<Set> add(...)
+            retType = paramTypeLLVM; // %Set_int*
+            returnsSelf = true;
+        } else {
+            retType = mapToLLVMType(declaredRet);
+        }
+
+        String paramS = fn.getParams().get(0);
         String valueS = fn.getParams().size() > 1 ? fn.getParams().get(1) : "value";
 
         sb.append("; === Função: ").append(fnName).append(" ===\n");
@@ -130,7 +186,7 @@ public class ImplEmitter {
                 .append(", ").append(valueTypeLLVM).append(" %").append(valueS).append(") {\n");
         sb.append("entry:\n");
 
-        // === Aloca parâmetros no stack ===
+        // === Aloca parametros no stack ===
         sb.append("  %").append(paramS).append("_addr = alloca ").append(paramTypeLLVM).append("\n");
         sb.append("  store ").append(paramTypeLLVM).append(" %").append(paramS)
                 .append(", ").append(paramTypeLLVM).append("* %").append(paramS).append("_addr\n");
@@ -146,7 +202,6 @@ public class ImplEmitter {
         visitor.getVariableEmitter().registerVarPtr(paramS, paramPtr);
         visitor.getVariableEmitter().registerVarPtr(valueS, valuePtr);
 
-        // ============= tipos de struct (self) =============
         String structSourceType;
         String structLLVMType;
         if (specialized != null) {
@@ -159,7 +214,6 @@ public class ImplEmitter {
 
         visitor.putVarType(paramS, new TypeInfos(structSourceType, structLLVMType, null));
 
-        // ============= tipos do value =============
         String sourceType;
         String llvmType;
 
@@ -175,6 +229,7 @@ public class ImplEmitter {
         }
         visitor.putVarType(valueS, new TypeInfos(sourceType, llvmType, null));
 
+        // corpo da função
         if (fn.getBody() != null && !fn.getBody().isEmpty()) {
 
             // Fork do visitor para não sujar contexto global
@@ -192,7 +247,6 @@ public class ImplEmitter {
                 isolated.enterTypeSpecialization(specialized);
             }
 
-            // *** AQUI é onde delegamos tudo pros emissores especializados ***
             for (ASTNode stmt : fn.getBody()) {
                 sb.append(stmt.accept(isolated));
             }
@@ -202,9 +256,16 @@ public class ImplEmitter {
             }
         }
 
-        sb.append("  ret ").append(retType).append(" %").append(paramS).append("\n");
-        sb.append("}\n\n");
+        // retorno
+        if ("void".equals(retType)) {
+            sb.append("  ret void\n");
+        } else if (returnsSelf) {
+            sb.append("  ret ").append(retType).append(" %").append(paramS).append("\n");
+        } else {
+            sb.append("  ret ").append(retType).append(" undef\n");
+        }
 
+        sb.append("}\n\n");
         return sb.toString();
     }
 

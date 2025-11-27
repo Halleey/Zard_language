@@ -1,31 +1,28 @@
 main {
-    Struct Set {
-        List<?> data;
+Struct Pessoa {
+    string nome;
+    int idade;
+}
+
+impl Pessoa {
+    function void hello() {
+        print("Olá do método hello()");
     }
-    impl Set {
-        # adiciona elemento e retorna o próprio Set (permite encadeamento)
-        function Struct<Set> add(Set s, ? value) {
-        int i = 0;
-        while(i < s.data.size()) {
-            if(s.data.get(i) == value){
-            return s;
-            }
-            i++;
-        }
-         s.data.add(value);
-            return s;
-        }
+    function Pessoa show() {
+        print(s.nome);
+        print(s.idade);
+   }
+}
 
-        function Struct<Set> remove(Set s, int index) {
-        s.data.remove(index);
-        return s;
-        }
+Pessoa p;
+p.nome = "Zard";
+p.idade = 19;
 
-    }
 
-    # ==== uso ====
-    Set<int> s;
+Pessoa t;
+t.nome = "angel";
+t.idade = 17;
 
-    print(s);
+t.show();
 
 }

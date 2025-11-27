@@ -33,25 +33,12 @@ public class Parser {
     public List<ASTNode> parse() {
         List<ASTNode> nodes = new ArrayList<>();
 
-        System.out.println("=== PARSE INICIADO ===");
-        System.out.println("Total tokens: " + tokens.size());
-        System.out.println();
 
         while (current().getType() != Token.TokenType.EOF) {
-
-            System.out.println("[parse] pos=" + pos +
-                    " token=" + current().getValue() +
-                    " type=" + current().getType());
-
             ASTNode stmt = parseStatement();
-
-            System.out.println("[parse] ✓ Statement parseado: " + stmt.getClass().getSimpleName());
-            System.out.println();
-
             nodes.add(stmt);
         }
 
-        System.out.println("=== PARSE FINALIZADO ===");
         return nodes;
     }
 
@@ -106,7 +93,6 @@ public class Parser {
         structDefinitions.put(name, fields);
     }
 
-    // manteve exatamente como pediu
     public boolean isKnownStruct(String name) {
         return structDefinitions.containsKey(name);
     }

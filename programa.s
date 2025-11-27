@@ -1,100 +1,9 @@
 	.text
 	.file	"programa.ll"
-	.globl	print_Set                       # -- Begin function print_Set
+	.globl	print_Pessoa                    # -- Begin function print_Pessoa
 	.p2align	4, 0x90
-	.type	print_Set,@function
-print_Set:                              # @print_Set
-	.cfi_startproc
-# %bb.0:                                # %entry
-	retq
-.Lfunc_end0:
-	.size	print_Set, .Lfunc_end0-print_Set
-	.cfi_endproc
-                                        # -- End function
-	.globl	print_Set_int                   # -- Begin function print_Set_int
-	.p2align	4, 0x90
-	.type	print_Set_int,@function
-print_Set_int:                          # @print_Set_int
-	.cfi_startproc
-# %bb.0:                                # %entry
-	pushq	%rax
-	.cfi_def_cfa_offset 16
-	movq	(%rdi), %rdi
-	callq	arraylist_print_int@PLT
-	popq	%rax
-	.cfi_def_cfa_offset 8
-	retq
-.Lfunc_end1:
-	.size	print_Set_int, .Lfunc_end1-print_Set_int
-	.cfi_endproc
-                                        # -- End function
-	.globl	Set_int_add                     # -- Begin function Set_int_add
-	.p2align	4, 0x90
-	.type	Set_int_add,@function
-Set_int_add:                            # @Set_int_add
-	.cfi_startproc
-# %bb.0:                                # %entry
-	pushq	%rbp
-	.cfi_def_cfa_offset 16
-	.cfi_offset %rbp, -16
-	movq	%rsp, %rbp
-	.cfi_def_cfa_register %rbp
-	pushq	%r15
-	pushq	%r14
-	pushq	%r12
-	pushq	%rbx
-	.cfi_offset %rbx, -48
-	.cfi_offset %r12, -40
-	.cfi_offset %r14, -32
-	.cfi_offset %r15, -24
-	movl	%esi, %r14d
-	movq	%rdi, %rbx
-	movq	(%rdi), %rdi
-	callq	arraylist_size_int@PLT
-	testl	%eax, %eax
-	movq	(%rbx), %rdi
-	jle	.LBB2_5
-# %bb.1:                                # %while_body_1.lr.ph
-	xorl	%r15d, %r15d
-	.p2align	4, 0x90
-.LBB2_3:                                # %while_body_1
-                                        # =>This Inner Loop Header: Depth=1
-	movq	%rsp, %r12
-	leaq	-16(%r12), %rdx
-	movq	%rdx, %rsp
-	movq	%r15, %rsi
-	callq	arraylist_get_int@PLT
-	cmpl	%r14d, -16(%r12)
-	je	.LBB2_4
-# %bb.2:                                # %while_cond_0
-                                        #   in Loop: Header=BB2_3 Depth=1
-	movq	(%rbx), %rdi
-	callq	arraylist_size_int@PLT
-	movq	(%rbx), %rdi
-	incq	%r15
-	cmpl	%eax, %r15d
-	jl	.LBB2_3
-.LBB2_5:                                # %while_end_2
-	movl	%r14d, %esi
-	callq	arraylist_add_int@PLT
-.LBB2_4:                                # %then_0
-	movq	%rbx, %rax
-	leaq	-32(%rbp), %rsp
-	popq	%rbx
-	popq	%r12
-	popq	%r14
-	popq	%r15
-	popq	%rbp
-	.cfi_def_cfa %rsp, 8
-	retq
-.Lfunc_end2:
-	.size	Set_int_add, .Lfunc_end2-Set_int_add
-	.cfi_endproc
-                                        # -- End function
-	.globl	Set_int_remove                  # -- Begin function Set_int_remove
-	.p2align	4, 0x90
-	.type	Set_int_remove,@function
-Set_int_remove:                         # @Set_int_remove
+	.type	print_Pessoa,@function
+print_Pessoa:                           # @print_Pessoa
 	.cfi_startproc
 # %bb.0:                                # %entry
 	pushq	%rbx
@@ -102,14 +11,58 @@ Set_int_remove:                         # @Set_int_remove
 	.cfi_offset %rbx, -16
 	movq	%rdi, %rbx
 	movq	(%rdi), %rdi
-	movl	%esi, %esi
-	callq	arraylist_remove_int@PLT
-	movq	%rbx, %rax
+	callq	printString@PLT
+	movl	8(%rbx), %esi
+	movl	$.L.strInt, %edi
+	xorl	%eax, %eax
+	callq	printf@PLT
 	popq	%rbx
 	.cfi_def_cfa_offset 8
 	retq
-.Lfunc_end3:
-	.size	Set_int_remove, .Lfunc_end3-Set_int_remove
+.Lfunc_end0:
+	.size	print_Pessoa, .Lfunc_end0-print_Pessoa
+	.cfi_endproc
+                                        # -- End function
+	.globl	Pessoa_hello                    # -- Begin function Pessoa_hello
+	.p2align	4, 0x90
+	.type	Pessoa_hello,@function
+Pessoa_hello:                           # @Pessoa_hello
+	.cfi_startproc
+# %bb.0:                                # %entry
+	pushq	%rax
+	.cfi_def_cfa_offset 16
+	movl	$.L.strStr, %edi
+	movl	$.L.str0, %esi
+	xorl	%eax, %eax
+	callq	printf@PLT
+	popq	%rax
+	.cfi_def_cfa_offset 8
+	retq
+.Lfunc_end1:
+	.size	Pessoa_hello, .Lfunc_end1-Pessoa_hello
+	.cfi_endproc
+                                        # -- End function
+	.globl	Pessoa_show                     # -- Begin function Pessoa_show
+	.p2align	4, 0x90
+	.type	Pessoa_show,@function
+Pessoa_show:                            # @Pessoa_show
+	.cfi_startproc
+# %bb.0:                                # %entry
+	pushq	%rbx
+	.cfi_def_cfa_offset 16
+	.cfi_offset %rbx, -16
+	movq	%rdi, %rbx
+	movq	(%rdi), %rdi
+	callq	printString@PLT
+	movl	8(%rbx), %esi
+	movl	$.L.strInt, %edi
+	xorl	%eax, %eax
+	callq	printf@PLT
+	popq	%rbx
+	.cfi_def_cfa_offset 8
+	retq
+.Lfunc_end2:
+	.size	Pessoa_show, .Lfunc_end2-Pessoa_show
 	.cfi_endproc
                                         # -- End function
 	.globl	main                            # -- Begin function main
@@ -118,20 +71,29 @@ Set_int_remove:                         # @Set_int_remove
 main:                                   # @main
 	.cfi_startproc
 # %bb.0:
-	pushq	%rax
-	.cfi_def_cfa_offset 16
-	movl	$10, %edi
-	callq	arraylist_create_int@PLT
-	movq	%rax, (%rsp)
-	movq	%rsp, %rdi
-	callq	print_Set_int@PLT
+	subq	$24, %rsp
+	.cfi_def_cfa_offset 32
+	xorl	%edi, %edi
+	callq	createString@PLT
+	movl	$.L.str1, %edi
+	callq	createString@PLT
+	xorl	%edi, %edi
+	callq	createString@PLT
+	movq	%rax, 8(%rsp)
+	movl	$0, 16(%rsp)
+	movl	$.L.str2, %edi
+	callq	createString@PLT
+	movq	%rax, 8(%rsp)
+	movl	$17, 16(%rsp)
+	leaq	8(%rsp), %rdi
+	callq	Pessoa_show@PLT
 	callq	getchar@PLT
 	xorl	%eax, %eax
-	popq	%rcx
+	addq	$24, %rsp
 	.cfi_def_cfa_offset 8
 	retq
-.Lfunc_end4:
-	.size	main, .Lfunc_end4-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
 	.cfi_endproc
                                         # -- End function
 	.type	.L.strChar,@object              # @.strChar
@@ -174,5 +136,21 @@ main:                                   # @main
 .L.strEmpty:
 	.zero	1
 	.size	.L.strEmpty, 1
+
+	.type	.L.str0,@object                 # @.str0
+	.p2align	4, 0x0
+.L.str0:
+	.asciz	"Ol\303\241 do m\303\251todo hello()"
+	.size	.L.str0, 24
+
+	.type	.L.str1,@object                 # @.str1
+.L.str1:
+	.asciz	"Zard"
+	.size	.L.str1, 5
+
+	.type	.L.str2,@object                 # @.str2
+.L.str2:
+	.asciz	"angel"
+	.size	.L.str2, 6
 
 	.section	".note.GNU-stack","",@progbits

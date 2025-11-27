@@ -1,7 +1,7 @@
 ; ModuleID = 'programa.ll'
 source_filename = "programa.ll"
 
-%Set_int = type { ptr }
+%Pessoa = type { ptr, i32 }
 
 @.strChar = private constant [3 x i8] c"%c\00"
 @.strTrue = private constant [6 x i8] c"true\0A\00"
@@ -11,6 +11,9 @@ source_filename = "programa.ll"
 @.strFloat = private constant [4 x i8] c"%f\0A\00"
 @.strStr = private constant [4 x i8] c"%s\0A\00"
 @.strEmpty = private constant [1 x i8] zeroinitializer
+@.str0 = private constant [24 x i8] c"Ol\C3\A1 do m\C3\A9todo hello()\00"
+@.str1 = private constant [5 x i8] c"Zard\00"
+@.str2 = private constant [6 x i8] c"angel\00"
 
 declare i32 @printf(ptr, ...)
 
@@ -28,115 +31,44 @@ declare i1 @strcmp_eq(ptr, ptr)
 
 declare i1 @strcmp_neq(ptr, ptr)
 
-declare ptr @arraylist_create(i64)
-
-declare void @clearList(ptr)
-
-declare void @freeList(ptr)
-
-declare void @arraylist_add_ptr(ptr, ptr)
-
-declare i32 @length(ptr)
-
-declare ptr @arraylist_get_ptr(ptr, i64)
-
-declare void @arraylist_print_ptr(ptr, ptr)
-
-declare ptr @arraylist_create_int(i64)
-
-declare void @arraylist_add_int(ptr, i32)
-
-declare void @arraylist_addAll_int(ptr, ptr, i64)
-
-declare void @arraylist_print_int(ptr)
-
-declare void @arraylist_clear_int(ptr)
-
-declare void @arraylist_free_int(ptr)
-
-declare i32 @arraylist_get_int(ptr, i64, ptr)
-
-declare void @arraylist_remove_int(ptr, i64)
-
-declare i32 @arraylist_size_int(ptr)
-
-define void @print_Set(ptr %p) {
-entry:
-  ret void
-}
-
-define void @print_Set_int(ptr %p) {
+define void @print_Pessoa(ptr %p) {
 entry:
   %v0 = load ptr, ptr %p, align 8
-  call void @arraylist_print_int(ptr %v0)
+  call void @printString(ptr %v0)
+  %f1 = getelementptr inbounds %Pessoa, ptr %p, i32 0, i32 1
+  %v1 = load i32, ptr %f1, align 4
+  %0 = call i32 (ptr, ...) @printf(ptr @.strInt, i32 %v1)
   ret void
 }
 
-define ptr @Set_int_add(ptr %s, i32 %value) {
+define void @Pessoa_hello(ptr %s) {
 entry:
-  %tmp72 = load ptr, ptr %s, align 8
-  %tmp83 = call i32 @arraylist_size_int(ptr %tmp72)
-  %tmp94 = icmp slt i32 0, %tmp83
-  %tmp155 = load ptr, ptr %s, align 8
-  br i1 %tmp94, label %while_body_1.lr.ph, label %while_end_2
-
-while_body_1.lr.ph:                               ; preds = %entry
-  br label %while_body_1
-
-while_cond_0:                                     ; preds = %while_body_1
-  %i.0 = phi i32 [ %tmp25, %while_body_1 ]
-  %tmp7 = load ptr, ptr %s, align 8
-  %tmp8 = call i32 @arraylist_size_int(ptr %tmp7)
-  %tmp9 = icmp slt i32 %i.0, %tmp8
-  %tmp15 = load ptr, ptr %s, align 8
-  br i1 %tmp9, label %while_body_1, label %while_cond_0.while_end_2_crit_edge
-
-while_body_1:                                     ; preds = %while_body_1.lr.ph, %while_cond_0
-  %tmp157 = phi ptr [ %tmp155, %while_body_1.lr.ph ], [ %tmp15, %while_cond_0 ]
-  %i.06 = phi i32 [ 0, %while_body_1.lr.ph ], [ %i.0, %while_cond_0 ]
-  %tmp17 = zext i32 %i.06 to i64
-  %tmp18 = alloca i32, align 4
-  %tmp19 = call i32 @arraylist_get_int(ptr %tmp157, i64 %tmp17, ptr %tmp18)
-  %tmp20 = load i32, ptr %tmp18, align 4
-  %tmp22 = icmp eq i32 %tmp20, %value
-  %tmp25 = add i32 %i.06, 1
-  br i1 %tmp22, label %then_0, label %while_cond_0
-
-then_0:                                           ; preds = %while_body_1
-  ret ptr %s
-
-0:                                                ; No predecessors!
-  unreachable
-
-while_cond_0.while_end_2_crit_edge:               ; preds = %while_cond_0
-  %split = phi ptr [ %tmp15, %while_cond_0 ]
-  br label %while_end_2
-
-while_end_2:                                      ; preds = %while_cond_0.while_end_2_crit_edge, %entry
-  %tmp15.lcssa = phi ptr [ %split, %while_cond_0.while_end_2_crit_edge ], [ %tmp155, %entry ]
-  call void @arraylist_add_int(ptr %tmp15.lcssa, i32 %value)
-  ret ptr %s
-
-1:                                                ; No predecessors!
-  ret ptr %s
+  %0 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str0)
+  ret void
 }
 
-define ptr @Set_int_remove(ptr %s, i32 %index) {
+define ptr @Pessoa_show(ptr %s) {
 entry:
-  %tmp5 = load ptr, ptr %s, align 8
-  %tmp7 = zext i32 %index to i64
-  call void @arraylist_remove_int(ptr %tmp5, i64 %tmp7)
-  ret ptr %s
-
-0:                                                ; No predecessors!
-  ret ptr %s
+  %tmp3 = load ptr, ptr %s, align 8
+  call void @printString(ptr %tmp3)
+  %tmp5 = getelementptr inbounds %Pessoa, ptr %s, i32 0, i32 1
+  %tmp6 = load i32, ptr %tmp5, align 4
+  %0 = call i32 (ptr, ...) @printf(ptr @.strInt, i32 %tmp6)
+  ret ptr undef
 }
 
 define i32 @main() {
-  %tmp0 = alloca %Set_int, align 8
-  %tmp1 = call ptr @arraylist_create_int(i64 10)
-  store ptr %tmp1, ptr %tmp0, align 8
-  call void @print_Set_int(ptr %tmp0)
+  %tmp8 = call ptr @createString(ptr null)
+  %tmp14 = call ptr @createString(ptr @.str1)
+  %tmp20 = alloca %Pessoa, align 8
+  %tmp21 = call ptr @createString(ptr null)
+  store ptr %tmp21, ptr %tmp20, align 8
+  %tmp23 = getelementptr inbounds %Pessoa, ptr %tmp20, i32 0, i32 1
+  store i32 0, ptr %tmp23, align 4
+  %tmp27 = call ptr @createString(ptr @.str2)
+  store ptr %tmp27, ptr %tmp20, align 8
+  store i32 17, ptr %tmp23, align 4
+  %tmp34 = call ptr @Pessoa_show(ptr %tmp20)
   %1 = call i32 @getchar()
   ret i32 0
 }

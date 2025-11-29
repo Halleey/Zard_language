@@ -17,10 +17,7 @@ public class ImplEmitter {
         this.visitor = visitor;
     }
 
-    /**
-     * Verifica se existe alguma especialização registrada para esse struct.
-     * Ex: "Set<int>", "Test<int>", "Pessoa<string>", etc.
-     */
+
     private boolean hasSpecializations(String baseStruct) {
         for (String name : visitor.specializedStructs.keySet()) {
             // esperamos algo como "Set<int>" ou "Test<int>"
@@ -37,6 +34,7 @@ public class ImplEmitter {
     public String emit(ImplNode node) {
         StringBuilder llvm = new StringBuilder();
         String baseStruct = node.getStructName();
+
 
         llvm.append(";; ==== Impl Definitions ====\n");
 
@@ -283,10 +281,7 @@ public class ImplEmitter {
         return sb.toString();
     }
 
-    /**
-     * Extrai o tipo interno de algo como "Set<int>", "Test<string>".
-     * Se não encontrar '<' ou '>', retorna "?".
-     */
+
     private String extractInnerType(String s) {
         int start = s.indexOf('<');
         int end = s.indexOf('>');

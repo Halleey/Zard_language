@@ -1,35 +1,19 @@
 main {
+Struct Pessoa {
+    string nome;
+    int idade;
+}
 
-
-    Struct Test {
-        List<?> data;
+impl Pessoa {
+    function void hello() {
+        print("Olá do método hello()");
     }
-    impl Test {
-        # adiciona elemento e retorna o próprio Set (permite encadeamento)
-        function add(? value) {
-        int i = 0;
-        while(i < s.data.size()) {
-            if(s.data.get(i) == value){
-            return s;
-            }
-            i++;
-        }
-         s.data.add(value);
-            return s;
-        }
+}
 
-        function remove( int index) {
-        s.data.remove(index);
-        return s;
-        }
+     Pessoa p;
+    p.nome = "Zard";
+    p.idade = 22;
 
-    }
-    string nome = input();
-
-    List nomes = ("zard", "teste", nome);
-    print(nomes.get(2));
-    Test teste;
-    teste.add("zard");
-    teste.add("zard");
-    print(teste);
+    # chamada de método do impl
+    p.hello();
 }

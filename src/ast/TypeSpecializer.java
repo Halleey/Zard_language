@@ -30,9 +30,7 @@ public class TypeSpecializer {
         this.visitor = visitor;
     }
 
-    // =========================================================
-    //             PIPELINE PRINCIPAL
-    // =========================================================
+
     public void specialize(List<ASTNode> ast) {
         collectInferences(ast);
         applySpecializations(ast);
@@ -51,15 +49,9 @@ public class TypeSpecializer {
         }
     }
 
-    // =========================================================
-    //             COLETA DE INFERÊNCIA
-    // =========================================================
     private void collectInferences(List<ASTNode> ast) {
         for (ASTNode node : ast) {
 
-            // ======================================================
-            //               DECLARAÇÃO DE VARIÁVEL
-            // ======================================================
             if (node instanceof VariableDeclarationNode decl) {
 
                 String varName = decl.getName();
@@ -67,7 +59,6 @@ public class TypeSpecializer {
 
                 variableTypes.put(varName, declType);
 
-                // Detectar declarações explícitas: Struct<Set<int>> s;
                 if (declType != null &&
                         declType.startsWith("Struct<") &&
                         declType.contains("<") &&
@@ -87,18 +78,7 @@ public class TypeSpecializer {
                             // elemento interno: "int"
                             String elemType = inner.substring("Set<".length(), inner.length() - 1).trim();
 
-                            StructInstaceNode si;
-
-                            if (decl.getInitializer() instanceof StructInstaceNode) {
-                                si = (StructInstaceNode) decl.getInitializer();
-                            } else {
-                                // Criar instância sintética para registrar inferência explícita
-                                si = new StructInstaceNode(
-                                        "Set",
-                                        new ArrayList<>(),
-                                        new LinkedHashMap<>()
-                                );
-                            }
+                            StructInstaceNode si = getStructInstaceNode(decl);
 
                             structVars.put(varName, si);
 
@@ -125,9 +105,6 @@ public class TypeSpecializer {
                 }
             }
 
-            // ======================================================
-            //               DEFINIÇÃO DE STRUCT
-            // ======================================================
             if (node instanceof StructNode struct) {
 
                 String name = struct.getName();
@@ -140,10 +117,6 @@ public class TypeSpecializer {
                     visitor.markStructUsed(name);
                 }
             }
-
-            // ======================================================
-            //      STRUCT INSTANCIADA COM VALOR DEFAULT EM data
-            // ======================================================
             if (node instanceof StructInstaceNode structNode) {
 
                 Map<String, ASTNode> named = structNode.getNamedValues();
@@ -212,13 +185,27 @@ public class TypeSpecializer {
             }
         }
     }
+
+    private static StructInstaceNode getStructInstaceNode(VariableDeclarationNode decl) {
+        StructInstaceNode si;
+
+        if (decl.getInitializer() instanceof StructInstaceNode) {
+            si = (StructInstaceNode) decl.getInitializer();
+        } else {
+            // Criar instância sintética para registrar inferência explícita
+            si = new StructInstaceNode(
+                    "Set",
+                    new ArrayList<>(),
+                    new LinkedHashMap<>()
+            );
+        }
+        return si;
+    }
+
     private void registerStructInference(StructInstaceNode node, String elemType, String origem) {
 
         inferredStructTypes.put(node, elemType);
 
-        // ==============================
-        // CRIAÇÃO DO concreteType CERTO
-        // ==============================
         String base = node.getName(); // "Set" ou "Set<int>"
 
         String concrete;
@@ -287,9 +274,6 @@ public class TypeSpecializer {
         return name.contains("_");
     }
 
-    // =========================================================
-    //     ESPECIALIZAÇÃO DE TIPOS EM FUNÇÕES
-    // =========================================================
     private void applySpecializations(List<ASTNode> ast) {
         for (ASTNode node : ast) {
 

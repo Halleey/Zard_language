@@ -1,28 +1,35 @@
 main {
-Struct Pessoa {
-    string nome;
-    int idade;
-}
 
-impl Pessoa {
-    function void hello() {
-        print("Olá do método hello()");
+
+    Struct Test {
+        List<?> data;
     }
-    function Pessoa show() {
-        print(s.nome);
-        print(s.idade);
-   }
-}
+    impl Test {
+        # adiciona elemento e retorna o próprio Set (permite encadeamento)
+        function add(? value) {
+        int i = 0;
+        while(i < s.data.size()) {
+            if(s.data.get(i) == value){
+            return s;
+            }
+            i++;
+        }
+         s.data.add(value);
+            return s;
+        }
 
-Pessoa p;
-p.nome = "Zard";
-p.idade = 19;
+        function remove( int index) {
+        s.data.remove(index);
+        return s;
+        }
 
+    }
+    string nome = input();
 
-Pessoa t;
-t.nome = "angel";
-t.idade = 17;
-
-t.show();
-
+    List nomes = ("zard", "teste", nome);
+    print(nomes.get(2));
+    Test teste;
+    teste.add("zard");
+    teste.add("zard");
+    print(teste);
 }

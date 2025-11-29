@@ -354,7 +354,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
      */
 
 
-    // ==== VISITORS DE NODES ====
     @Override
     public String visit(StructNode node) {
         // Evita redefinir structs que já foram emitidas

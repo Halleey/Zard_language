@@ -1,7 +1,7 @@
 ; ModuleID = 'programa.ll'
 source_filename = "programa.ll"
 
-%Pessoa = type { ptr, i32 }
+%Test_string = type { ptr }
 
 @.strChar = private constant [3 x i8] c"%c\00"
 @.strTrue = private constant [6 x i8] c"true\0A\00"
@@ -11,9 +11,9 @@ source_filename = "programa.ll"
 @.strFloat = private constant [4 x i8] c"%f\0A\00"
 @.strStr = private constant [4 x i8] c"%s\0A\00"
 @.strEmpty = private constant [1 x i8] zeroinitializer
-@.str0 = private constant [24 x i8] c"Ol\C3\A1 do m\C3\A9todo hello()\00"
-@.str1 = private constant [5 x i8] c"Zard\00"
-@.str2 = private constant [6 x i8] c"angel\00"
+@.str0 = private constant [1 x i8] zeroinitializer
+@.str1 = private constant [5 x i8] c"zard\00"
+@.str2 = private constant [6 x i8] c"teste\00"
 
 declare i32 @printf(ptr, ...)
 
@@ -31,44 +31,135 @@ declare i1 @strcmp_eq(ptr, ptr)
 
 declare i1 @strcmp_neq(ptr, ptr)
 
-define void @print_Pessoa(ptr %p) {
+declare ptr @arraylist_create(i64)
+
+declare void @clearList(ptr)
+
+declare void @freeList(ptr)
+
+declare void @arraylist_add_ptr(ptr, ptr)
+
+declare i32 @length(ptr)
+
+declare ptr @arraylist_get_ptr(ptr, i64)
+
+declare void @arraylist_print_ptr(ptr, ptr)
+
+declare i32 @inputInt(ptr)
+
+declare i8 @inputChar(i8)
+
+declare double @inputDouble(ptr)
+
+declare i1 @inputBool(ptr)
+
+declare ptr @inputString(ptr)
+
+declare void @arraylist_add_string(ptr, ptr)
+
+declare void @arraylist_addAll_string(ptr, ptr, i64)
+
+declare void @arraylist_print_string(ptr)
+
+declare void @arraylist_add_String(ptr, ptr)
+
+declare void @arraylist_addAll_String(ptr, ptr, i64)
+
+declare void @removeItem(ptr, i64)
+
+declare ptr @getItem(ptr, i64)
+
+define void @print_Test(ptr %p) {
+entry:
+  ret void
+}
+
+define void @print_Test_string(ptr %p) {
 entry:
   %v0 = load ptr, ptr %p, align 8
-  call void @printString(ptr %v0)
-  %f1 = getelementptr inbounds %Pessoa, ptr %p, i32 0, i32 1
-  %v1 = load i32, ptr %f1, align 4
-  %0 = call i32 (ptr, ...) @printf(ptr @.strInt, i32 %v1)
+  call void @arraylist_print_string(ptr %v0)
   ret void
 }
 
-define void @Pessoa_hello(ptr %s) {
+define ptr @Test_string_add(ptr %s, ptr %value) {
 entry:
-  %0 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str0)
-  ret void
+  %tmp42 = load ptr, ptr %s, align 8
+  %tmp63 = call i32 @length(ptr %tmp42)
+  %tmp74 = icmp slt i32 0, %tmp63
+  %tmp105 = load ptr, ptr %s, align 8
+  br i1 %tmp74, label %while_body_1.lr.ph, label %while_end_2
+
+while_body_1.lr.ph:                               ; preds = %entry
+  br label %while_body_1
+
+while_cond_0:                                     ; preds = %while_body_1
+  %i.0 = phi i32 [ %tmp21, %while_body_1 ]
+  %tmp4 = load ptr, ptr %s, align 8
+  %tmp6 = call i32 @length(ptr %tmp4)
+  %tmp7 = icmp slt i32 %i.0, %tmp6
+  %tmp10 = load ptr, ptr %s, align 8
+  br i1 %tmp7, label %while_body_1, label %while_cond_0.while_end_2_crit_edge
+
+while_body_1:                                     ; preds = %while_body_1.lr.ph, %while_cond_0
+  %tmp107 = phi ptr [ %tmp105, %while_body_1.lr.ph ], [ %tmp10, %while_cond_0 ]
+  %i.06 = phi i32 [ 0, %while_body_1.lr.ph ], [ %i.0, %while_cond_0 ]
+  %tmp12 = zext i32 %i.06 to i64
+  %tmp13 = call ptr @arraylist_get_ptr(ptr %tmp107, i64 %tmp12)
+  %tmp17 = call ptr @createString(ptr %tmp13)
+  %tmp18 = call i1 @strcmp_eq(ptr %tmp17, ptr %value)
+  %tmp21 = add i32 %i.06, 1
+  br i1 %tmp18, label %then_0, label %while_cond_0
+
+then_0:                                           ; preds = %while_body_1
+  ret ptr %s
+
+0:                                                ; No predecessors!
+  unreachable
+
+while_cond_0.while_end_2_crit_edge:               ; preds = %while_cond_0
+  %split = phi ptr [ %tmp10, %while_cond_0 ]
+  br label %while_end_2
+
+while_end_2:                                      ; preds = %while_cond_0.while_end_2_crit_edge, %entry
+  %tmp10.lcssa = phi ptr [ %split, %while_cond_0.while_end_2_crit_edge ], [ %tmp105, %entry ]
+  call void @arraylist_add_String(ptr %tmp10.lcssa, ptr %value)
+  ret ptr %s
+
+1:                                                ; No predecessors!
+  ret ptr %s
 }
 
-define ptr @Pessoa_show(ptr %s) {
+define ptr @Test_string_remove(ptr %s, i32 %index) {
 entry:
-  %tmp3 = load ptr, ptr %s, align 8
-  call void @printString(ptr %tmp3)
-  %tmp5 = getelementptr inbounds %Pessoa, ptr %s, i32 0, i32 1
-  %tmp6 = load i32, ptr %tmp5, align 4
-  %0 = call i32 (ptr, ...) @printf(ptr @.strInt, i32 %tmp6)
-  ret ptr undef
+  %tmp2 = load ptr, ptr %s, align 8
+  %tmp4 = zext i32 %index to i64
+  call void @removeItem(ptr %tmp2, i64 %tmp4)
+  ret ptr %s
+
+0:                                                ; No predecessors!
+  ret ptr %s
 }
 
 define i32 @main() {
-  %tmp8 = call ptr @createString(ptr null)
-  %tmp14 = call ptr @createString(ptr @.str1)
-  %tmp20 = alloca %Pessoa, align 8
-  %tmp21 = call ptr @createString(ptr null)
-  store ptr %tmp21, ptr %tmp20, align 8
-  %tmp23 = getelementptr inbounds %Pessoa, ptr %tmp20, i32 0, i32 1
-  store i32 0, ptr %tmp23, align 4
-  %tmp27 = call ptr @createString(ptr @.str2)
-  store ptr %tmp27, ptr %tmp20, align 8
-  store i32 17, ptr %tmp23, align 4
-  %tmp34 = call ptr @Pessoa_show(ptr %tmp20)
-  %1 = call i32 @getchar()
+  %tmp1 = call ptr @inputString(ptr null)
+  %tmp2 = call ptr @createString(ptr %tmp1)
+  %tmp3 = call ptr @arraylist_create(i64 4)
+  %tmp6 = call ptr @createString(ptr @.str1)
+  call void @arraylist_add_String(ptr %tmp3, ptr %tmp6)
+  %tmp8 = call ptr @createString(ptr @.str2)
+  call void @arraylist_add_String(ptr %tmp3, ptr %tmp8)
+  call void @arraylist_add_String(ptr %tmp3, ptr %tmp2)
+  %tmp14 = call ptr @arraylist_get_ptr(ptr %tmp3, i64 2)
+  %1 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr %tmp14)
+  %tmp16 = alloca %Test_string, align 8
+  %tmp17 = call ptr @arraylist_create(i64 10)
+  store ptr %tmp17, ptr %tmp16, align 8
+  %tmp22 = call ptr @createString(ptr @.str1)
+  %tmp23 = call ptr @Test_string_add(ptr %tmp16, ptr %tmp22)
+  %tmp26 = call ptr @createString(ptr @.str1)
+  %tmp27 = call ptr @Test_string_add(ptr %tmp16, ptr %tmp26)
+  call void @print_Test_string(ptr %tmp16)
+  call void @freeList(ptr %tmp3)
+  %2 = call i32 @getchar()
   ret i32 0
 }

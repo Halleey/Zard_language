@@ -9,11 +9,29 @@ import low.module.LLVisitorMain;
 import low.main.TypeInfos;
 
 import java.util.Map;
+
 public class ImplEmitter {
     private final LLVisitorMain visitor;
 
     public ImplEmitter(LLVisitorMain visitor, TempManager temps) {
         this.visitor = visitor;
+    }
+
+    /**
+     * Verifica se existe alguma especialização registrada para esse struct.
+     * Ex: "Set<int>", "Test<int>", "Pessoa<string>", etc.
+     */
+    private boolean hasSpecializations(String baseStruct) {
+        for (String name : visitor.specializedStructs.keySet()) {
+            // esperamos algo como "Set<int>" ou "Test<int>"
+            if (name.startsWith(baseStruct + "<")) {
+                String inner = extractInnerType(name);
+                if (inner != null && !inner.isEmpty() && !inner.equals("?")) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public String emit(ImplNode node) {
@@ -22,20 +40,28 @@ public class ImplEmitter {
 
         llvm.append(";; ==== Impl Definitions ====\n");
 
+        boolean hasSpecs = hasSpecializations(baseStruct);
+
         for (FunctionNode fn : node.getMethods()) {
-            if (isListImplMethod(baseStruct, fn)) {
-                // Caminho para Set<T>
+
+            if (hasSpecs) {
+                // Para QUALQUER struct que tenha versões especializadas: Set<int>, Test<int>...
                 for (Map.Entry<String, StructNode> entry : visitor.specializedStructs.entrySet()) {
                     String name = entry.getKey();
                     if (name.startsWith(baseStruct + "<")) {
-                        String inner = extractInnerType(name);
+                        String inner = extractInnerType(name);  // ex: "int" em "Test<int>"
+                        if (inner == null || inner.isEmpty() || "?".equals(inner)) {
+                            continue; // não gera especialização inválida
+                        }
+
                         llvm.append("; === Impl especializada para Struct<")
                                 .append(baseStruct).append("<").append(inner).append(">> ===\n");
                         llvm.append(generateFunctionImpl(baseStruct, fn, inner));
                     }
                 }
+
             } else {
-                // Caminho simples (Pessoa, etc.)
+                // Só cai aqui pra structs realmente não-genéricas
                 llvm.append(emitSimpleMethod(baseStruct, fn));
             }
         }
@@ -44,12 +70,6 @@ public class ImplEmitter {
         return llvm.toString();
     }
 
-
-    private boolean isListImplMethod(String baseStruct, FunctionNode fn) {
-        return "Set".equals(baseStruct)
-                && fn.getParams() != null
-                && fn.getParams().size() >= 2;
-    }
 
     private String emitSimpleMethod(String baseStruct, FunctionNode fn) {
         StringBuilder sb = new StringBuilder();
@@ -97,8 +117,10 @@ public class ImplEmitter {
 
         // registra tipo e ponteiro do receiver
         visitor.getVariableEmitter().registerVarPtr(receiverName, receiverPtr);
-        visitor.putVarType(receiverName,
-                new TypeInfos("Struct<" + baseStruct + ">", paramTypeLLVM, null));
+        visitor.putVarType(
+                receiverName,
+                new TypeInfos("Struct<" + baseStruct + ">", paramTypeLLVM, null)
+        );
 
         // corpo do método
         if (fn.getBody() != null) {
@@ -121,6 +143,9 @@ public class ImplEmitter {
         return sb.toString();
     }
 
+    /**
+     * Caminho especializado para structs com tipo interno: Set<int>, Test<int>, etc.
+     */
     private String generateFunctionImpl(String baseStruct, FunctionNode fn, String specialized) {
         StringBuilder sb = new StringBuilder();
 
@@ -135,15 +160,10 @@ public class ImplEmitter {
         String structLLVM;
         String paramTypeLLVM;
 
-        if (specialized == null) {
-            fnName = baseStruct + "_" + fn.getName();
-            structLLVM = "%" + baseStruct;
-            paramTypeLLVM = structLLVM + "*";
-        } else {
-            fnName = baseStruct + "_" + specialized + "_" + fn.getName();
-            structLLVM = "%" + baseStruct + "_" + specialized;
-            paramTypeLLVM = structLLVM + "*";
-        }
+        // Aqui SEMPRE queremos a forma especializada: %Set_int, %Test_int etc.
+        fnName = baseStruct + "_" + specialized + "_" + fn.getName();
+        structLLVM = "%" + baseStruct + "_" + specialized;
+        paramTypeLLVM = structLLVM + "*";
 
         // Tipo LLVM do "value" (segundo param)
         String valueTypeLLVM;
@@ -202,15 +222,9 @@ public class ImplEmitter {
         visitor.getVariableEmitter().registerVarPtr(paramS, paramPtr);
         visitor.getVariableEmitter().registerVarPtr(valueS, valuePtr);
 
-        String structSourceType;
-        String structLLVMType;
-        if (specialized != null) {
-            structSourceType = "Struct<" + baseStruct + "<" + specialized + ">>";
-            structLLVMType = "%" + baseStruct + "_" + specialized + "*";
-        } else {
-            structSourceType = "Struct<" + baseStruct + ">";
-            structLLVMType = "%" + baseStruct + "*";
-        }
+        // Tipos fonte / LLVM que vamos usar no ambiente do visitor
+        String structSourceType = "Struct<" + baseStruct + "<" + specialized + ">>";
+        String structLLVMType = "%" + baseStruct + "_" + specialized + "*";
 
         visitor.putVarType(paramS, new TypeInfos(structSourceType, structLLVMType, null));
 
@@ -269,10 +283,14 @@ public class ImplEmitter {
         return sb.toString();
     }
 
+    /**
+     * Extrai o tipo interno de algo como "Set<int>", "Test<string>".
+     * Se não encontrar '<' ou '>', retorna "?".
+     */
     private String extractInnerType(String s) {
         int start = s.indexOf('<');
         int end = s.indexOf('>');
-        if (start == -1 || end == -1) return "?";
+        if (start == -1 || end == -1 || end <= start + 1) return "?";
         return s.substring(start + 1, end).trim();
     }
 

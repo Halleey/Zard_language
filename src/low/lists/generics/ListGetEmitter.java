@@ -23,11 +23,7 @@ public class ListGetEmitter {
     public String emit(ListGetNode node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
 
-        // ⚠️ NÃO usa mais currentSpecializationType aqui.
-        // Vamos deixar a lógica toda baseada no tipo LLVM da lista,
-        // que já funciona tanto para listas normais quanto para Set<T> especializado.
 
-        // Gera o código da lista (ex.: s.data)
         String listCode = node.getListName().accept(visitor);
         appendCodePrefix(llvm, listCode);
 
@@ -64,11 +60,11 @@ public class ListGetEmitter {
         String castTemp = temps.newTemp();
 
         if ("string".equals(elemType)) {
-            llvm.append("  ").append(castTemp)
-                    .append(" = bitcast i8* ").append(rawTemp).append(" to %String*\n");
-            llvm.append(";;VAL:").append(castTemp).append("\n");
-            llvm.append(";;TYPE:%String*\n");
-        } else if ("int".equals(elemType)) {
+
+            llvm.append(";;VAL:").append(rawTemp).append("\n");
+            llvm.append(";;TYPE:i8*\n");
+        }
+        else if ("int".equals(elemType)) {
             String intPtr = temps.newTemp();
             llvm.append("  ").append(intPtr)
                     .append(" = bitcast i8* ").append(rawTemp).append(" to i32*\n");
@@ -107,8 +103,6 @@ public class ListGetEmitter {
 
         return llvm.toString();
     }
-
-    // ==== Auxiliares ====
 
     private String normalizeStructName(String elemType) {
         String s = elemType.trim();

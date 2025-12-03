@@ -27,6 +27,7 @@ import ast.lists.ListAddAllNode;
 import ast.lists.ListAddNode;
 import ast.lists.ListNode;
 import ast.loops.WhileNode;
+
 public class ImportEmitter {
     private final LLVisitorMain visitor;
     private final Set<String> tiposDeListasUsados;
@@ -38,7 +39,6 @@ public class ImportEmitter {
 
     public String emit(ImportNode node) {
         try {
-            // ----- Carregar arquivo -----
             String code = Files.readString(Path.of(node.path()));
             Lexer lexer = new Lexer(code);
             List<Token> tokens = lexer.tokenize();
@@ -47,46 +47,31 @@ public class ImportEmitter {
 
             StringBuilder ir = new StringBuilder();
 
-            // ===============================
-            // 1) REGISTRA LISTAS INTERNAS
-            // ===============================
             for (ASTNode n : imported) {
                 coletarListas(n);
             }
 
-            // ===============================
-            // 2) REGISTRA E EMITE STRUCTS
-            // ===============================
             for (ASTNode n : imported) {
                 if (n instanceof StructNode struct) {
-
-                    // registrar com o nome NORMAL
                     visitor.registerStructNode(struct.getName(), struct);
-
-                    // emitir imediatamente a definição LLVM
                     String llvmDef = new StructEmitter(visitor).emit(struct);
                     visitor.addStructDefinition(llvmDef);
                 }
             }
 
-            // ===============================
-            // 3) REGISTRA E EMITE IMPLEMENTAÇÕES
-            // ===============================
+            // 👇 AQUI! Agora que Set existe no visitor, criamos Set<int>
+            visitor.getTypeSpecializer().createSpecializedStructsFromInferences();
+
             for (ASTNode n : imported) {
                 if (n instanceof ImplNode impl) {
-                    ir.append(impl.accept(visitor));
+                    String codeImpl = impl.accept(visitor);
+                    visitor.addImplDefinition(codeImpl);
                 }
             }
 
-            // ===============================
-            // 4) REGISTRA E EMITE FUNÇÕES NORMAIS
-            // ===============================
             for (ASTNode n : imported) {
                 if (n instanceof FunctionNode fn) {
-
-                    String name = fn.getName(); // sem módulo/alias
-                    String llvmName = name;
-
+                    String name = fn.getName();
                     visitor.registerImportedFunction(name, fn);
 
                     String srcType = fn.getReturnType();
@@ -102,9 +87,7 @@ public class ImportEmitter {
                             new TypeInfos(srcType, llvmType, elemType)
                     );
 
-                    // Emitir IR
-                    ir.append(new FunctionEmitter(visitor).emit(fn))
-                            .append("\n");
+                    ir.append(new FunctionEmitter(visitor).emit(fn)).append("\n");
                 }
             }
 
@@ -115,7 +98,7 @@ public class ImportEmitter {
         }
     }
 
-    // coletar listas (igual ao seu)
+
     private void coletarListas(ASTNode node) {
         if (node == null) return;
 

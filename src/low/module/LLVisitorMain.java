@@ -36,6 +36,24 @@ import java.util.*;
 
 public class LLVisitorMain implements LLVMEmitVisitor {
 
+
+    // ==== TESTE PARA IMPLS NODE
+    private final List<String> implDefinitions = new ArrayList<>();
+
+    public void addImplDefinition(String ir) {
+        if (ir != null && !ir.isBlank()) {
+            implDefinitions.add(ir);
+        }
+    }
+
+    public String emitImplDefinitions() {
+        StringBuilder sb = new StringBuilder();
+        for (String s : implDefinitions) {
+            sb.append(s).append("\n");
+        }
+        return sb.toString();
+    }
+
     // ==== TABELAS DE TIPOS / ESTADO LOCAL ====
     private final Map<String, TypeInfos> varTypes;
     private final Map<String, TypeInfos> functionTypes;
@@ -120,6 +138,9 @@ public class LLVisitorMain implements LLVMEmitVisitor {
                 new GlobalStringManager()
         );
     }
+
+
+
 
     // ==== CONSTRUTOR INTERNO (USADO POR fork) ====
     private LLVisitorMain(
@@ -395,7 +416,14 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     }
 
     @Override
+    public String visit(ImportNode node) {
+        System.out.println("RODANDO IMPORT ----------");
+        return importEmitter.emit(node);
+    }
+
+    @Override
     public String visit(ImplNode node) {
+        System.out.println("rodou aqui primeiro");
         return implEmitter.emit(node);
     }
 
@@ -410,10 +438,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return new ReturnEmitter(this, temps).emit(node);
     }
 
-    @Override
-    public String visit(ImportNode node) {
-        return importEmitter.emit(node);
-    }
+
 
     @Override
     public String visit(MapNode node) {

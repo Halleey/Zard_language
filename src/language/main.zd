@@ -2,8 +2,8 @@ import "src/language/structs/impls/monomorfizacao.zd";
 
 main {
 
-    Set<int> names;
-    names.add(3);
-    names.add(2);
+    Set<string> names;
+    names.add("zard");
+    names.add("zard");
     print(names);
 }

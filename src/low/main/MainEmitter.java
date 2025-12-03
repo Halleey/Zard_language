@@ -28,7 +28,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-
 public class MainEmitter {
     private final GlobalStringManager globalStrings;
     private final TempManager tempManager;
@@ -49,9 +48,6 @@ public class MainEmitter {
         visitor.registrarStructs(node);
         StringBuilder llvm = new StringBuilder();
         ImportEmitter importEmitter = new ImportEmitter(visitor, this.tiposDeListasUsados);
-
-
-
 
         for (ASTNode stmt : node.body) {
             if (!(stmt instanceof ImportNode)) {
@@ -90,18 +86,20 @@ public class MainEmitter {
                 llvm.append(fnEmitter.emit(fn)).append("\n");
             }
         }
-        boolean temImpls = node.body.stream().anyMatch(s -> s instanceof ImplNode);
-        if (temImpls) {
 
-            llvm.append(";; ==== Impl Definitions ====\n");
-            for (ASTNode stmt : node.body) {
-                if (stmt instanceof ImplNode implNode) {
-                    String implIR = implNode.accept(visitor);
-                    if (implIR != null && !implIR.isBlank()) {
-                        llvm.append(implIR).append("\n");
-                    }
+        for (ASTNode stmt : node.body) {
+            if (stmt instanceof ImplNode implNode) {
+                String implIR = implNode.accept(visitor);
+                if (implIR != null && !implIR.isBlank()) {
+                    visitor.addImplDefinition(implIR);
                 }
             }
+        }
+
+        String impls = visitor.emitImplDefinitions();
+        if (impls != null && !impls.isBlank()) {
+            llvm.append(";; ==== Impl Definitions ====\n");
+            llvm.append(impls).append("\n");
         }
 
         llvm.append("define i32 @main() {\n");

@@ -85,11 +85,90 @@ public class VariableEmitter {
             }
         }
     }
-
     public String emitInit(VariableDeclarationNode node) {
         TypeInfos info = varTypes.get(node.getName());
+        String srcType = info.getSourceType();
         String llvmType = info.getLLVMType();
         String varPtr = getVarPtr(node.getName());
+
+        if (node.initializer == null && srcType != null && srcType.startsWith("Struct<")) {
+
+            String inner = srcType.substring("Struct<".length(), srcType.length() - 1).trim();
+
+            String baseName = inner;
+            String elemType = null;
+
+            int genericIdx = inner.indexOf('<');
+            if (genericIdx != -1) {
+                baseName = inner.substring(0, genericIdx).trim();
+                int close = inner.lastIndexOf('>');
+                elemType = inner.substring(genericIdx + 1, close).trim();
+            }
+
+            if (!llvmType.endsWith("*")) {
+                throw new RuntimeException("Esperado ponteiro para struct especializada: " + llvmType);
+            }
+
+            String structLLVM = llvmType.substring(0, llvmType.length() - 1); // %Set_int
+            String tmpObj   = temps.newTemp();
+            String tmpList  = temps.newTemp();
+            String fieldPtr = temps.newTemp();
+
+            String createListCall;
+            String arrayListPtrType;
+
+            switch (elemType) {
+                case "int" -> {
+                    createListCall = "%struct.ArrayListInt* @arraylist_create_int(i64 10)";
+                    arrayListPtrType = "%struct.ArrayListInt*";
+                }
+                case "double" -> {
+                    createListCall = "%struct.ArrayListDouble* @arraylist_create_double(i64 10)";
+                    arrayListPtrType = "%struct.ArrayListDouble*";
+                }
+                case "boolean" -> {
+                    createListCall = "%struct.ArrayListBool* @arraylist_create_bool(i64 10)";
+                    arrayListPtrType = "%struct.ArrayListBool*";
+                }
+                case "string" -> {
+                    createListCall = "%ArrayList* @arraylist_create(i64 10)";
+                    arrayListPtrType = "%ArrayList*";
+                }
+                default -> {
+
+                    createListCall = "%ArrayList* @arraylist_create(i64 10)";
+                    arrayListPtrType = "%ArrayList*";
+                }
+            }
+
+            visitor.registerListElementType(node.getName(), elemType);
+
+            StringBuilder sb = new StringBuilder();
+
+            sb.append("  ").append(tmpObj)
+                    .append(" = alloca ").append(structLLVM).append("\n")
+                    .append(";;VAL:").append(tmpObj)
+                    .append(";;TYPE:").append(structLLVM).append("\n");
+
+            sb.append("  ").append(tmpList)
+                    .append(" = call ").append(createListCall).append("\n")
+                    .append(";;VAL:").append(tmpList)
+                    .append(";;TYPE:").append(arrayListPtrType).append("\n");
+
+            sb.append("  ").append(fieldPtr)
+                    .append(" = getelementptr inbounds ").append(structLLVM)
+                    .append(", ").append(structLLVM).append("* ").append(tmpObj)
+                    .append(", i32 0, i32 0\n");
+
+            sb.append("  store ").append(arrayListPtrType)
+                    .append(" ").append(tmpList)
+                    .append(", ").append(arrayListPtrType).append("* ").append(fieldPtr).append("\n");
+
+            sb.append("  store ").append(structLLVM).append("* ").append(tmpObj)
+                    .append(", ").append(structLLVM).append("** ").append(varPtr).append("\n");
+
+            return sb.toString();
+        }
 
         if (node.initializer == null) {
             if (info.isList()) {
@@ -107,7 +186,6 @@ public class VariableEmitter {
             return "";
         }
 
-        // InputNode
         if (node.initializer instanceof InputNode inputNode) {
             InputEmitter inputEmitter = new InputEmitter(temps, visitor.getGlobalStrings());
             String code = inputEmitter.emit(inputNode, llvmType);
@@ -115,7 +193,6 @@ public class VariableEmitter {
             return code + emitStore(node.getName(), llvmType, temp);
         }
 
-        // Inicialização de List
         if (info.isList() && node.initializer instanceof ListNode listNode) {
             visitor.registerListElementType(node.getName(), info.getElementType());
 
@@ -152,13 +229,10 @@ public class VariableEmitter {
                 }
             }
         }
-
-        // String literal
         if (info.getSourceType().equals("string") && node.initializer instanceof LiteralNode lit) {
             return stringEmitter.createStringFromLiteral(varPtr, (String) lit.value.value());
         }
 
-        // Expressão geral
         String exprLLVM = node.initializer.accept(visitor);
         String temp = extractTemp(exprLLVM);
         String tempType = extractType(exprLLVM);

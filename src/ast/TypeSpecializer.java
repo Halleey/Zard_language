@@ -31,8 +31,6 @@ public class TypeSpecializer {
         applySpecializations(ast);
         propagateInferredTypes(ast);
 
-        createSpecializedStructsFromInferences();
-
         if (!inferredStructTypes.isEmpty()) {
             System.out.println("=== [TypeSpecializer] Tipos inferidos ===");
             for (var entry : inferredStructTypes.entrySet()) {
@@ -46,7 +44,8 @@ public class TypeSpecializer {
         }
     }
 
-    private void createSpecializedStructsFromInferences() {
+
+    public void createSpecializedStructsFromInferences() {
         if (visitor == null) {
             System.out.println("[TS.createSpecs] Visitor null, não posso materializar structs especializadas.");
             return;

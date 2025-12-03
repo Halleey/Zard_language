@@ -16,17 +16,17 @@ public class ExecutorLinux {
         var ast = frontend.process();
 
         TypePipeline typePipeline = new TypePipeline(frontend.getParser());
-//        LLVisitorMain visitor = typePipeline.process(ast);
-//
-//        LLVMGenerator llgen = new LLVMGenerator(visitor);
-//        System.out.println("[DEBUG ExecutorLinux] visitor no backend @"
-//                + System.identityHashCode(visitor));
-//
-//        String llvm = llgen.generate(ast);
-//        LLVMToolchain toolchain = new LLVMToolchain();
-//        String exePath = toolchain.buildExecutable(llvm);
-//
-//        toolchain.runExecutable(exePath);
+        LLVisitorMain visitor = typePipeline.process(ast);
+
+        LLVMGenerator llgen = new LLVMGenerator(visitor);
+        System.out.println("[DEBUG ExecutorLinux] visitor no backend @"
+                + System.identityHashCode(visitor));
+
+        String llvm = llgen.generate(ast);
+        LLVMToolchain toolchain = new LLVMToolchain();
+        String exePath = toolchain.buildExecutable(llvm);
+
+        toolchain.runExecutable(exePath);
 
         ASTInterpreter interpreter = new ASTInterpreter();
         interpreter.run(ast);

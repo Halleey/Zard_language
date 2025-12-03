@@ -2,6 +2,7 @@ package translate.front;
 
 import ast.ASTNode;
 
+import ast.prints.ASTPrinter;
 import tokens.Lexer;
 import tokens.Token;
 import translate.identifiers.MethodDesugarer;
@@ -9,7 +10,6 @@ import translate.identifiers.MethodDesugarer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-
 
 public class FrontendPipeline {
 
@@ -32,7 +32,7 @@ public class FrontendPipeline {
 
         parser = new Parser(tokens);
         List<ASTNode> ast = parser.parse();
-
+        ASTPrinter.printAST(ast);
         MethodDesugarer desugarer = new MethodDesugarer();
         desugarer.desugar(ast);
 

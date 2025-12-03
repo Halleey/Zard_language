@@ -8,8 +8,6 @@ import ast.structs.StructNode;
 import low.module.LLVisitorMain;
 
 import java.util.List;
-
-
 public class TypePipeline {
 
     private final Parser parser;
@@ -17,6 +15,7 @@ public class TypePipeline {
     public TypePipeline(Parser parser) {
         this.parser = parser;
     }
+
     public LLVisitorMain process(List<ASTNode> ast) {
         TypeSpecializer specializer = new TypeSpecializer();
         LLVisitorMain visitor = new LLVisitorMain(specializer);
@@ -25,7 +24,6 @@ public class TypePipeline {
         System.out.println("[DEBUG TypePipeline] visitor @" + System.identityHashCode(visitor));
         System.out.println("[DEBUG TypePipeline] specializer @" + System.identityHashCode(specializer));
 
-        // APENAS registrar structs e impls dentro do MainAST
         for (ASTNode node : ast) {
             if (node instanceof MainAST main) {
                 System.out.println("[DEBUG TypePipeline] Chamando registrarStructs(main)");
@@ -33,10 +31,8 @@ public class TypePipeline {
             }
         }
 
-        // agora especializar
         specializer.specialize(ast);
 
         return visitor;
     }
-
 }

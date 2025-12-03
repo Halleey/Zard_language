@@ -23,12 +23,10 @@ public class ImportNode extends ASTNode {
     private final String alias;
 
     public ImportNode(String path, String alias) {
-        if (alias == null || alias.isEmpty()) {
-            throw new RuntimeException("Alias obrigatório para import de " + path);
-        }
         this.path = path;
-        this.alias = alias;
+        this.alias = alias; // pode ser null ou vazio
     }
+
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
@@ -38,7 +36,6 @@ public class ImportNode extends ASTNode {
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
         try {
-
             String code = Files.readString(Path.of(path));
             Lexer lexer = new Lexer(code);
             List<Token> tokens = lexer.tokenize();
@@ -47,38 +44,95 @@ public class ImportNode extends ASTNode {
 
             RuntimeContext importCtx = new RuntimeContext();
 
+            boolean hasAlias = alias != null && !alias.isEmpty();
+
             for (ASTNode node : ast) {
 
                 if (node instanceof FunctionNode funcNode) {
-                    String qualifiedName = alias + "." + funcNode.getName();
-                    importCtx.declareVariable(funcNode.getName(), new TypedValue("function", funcNode));
-                    ctx.declareVariable(qualifiedName, new TypedValue("function", funcNode));
+                    // sempre coloca no contexto do módulo
+                    importCtx.declareVariable(funcNode.getName(),
+                            new TypedValue("function", funcNode));
 
-
+                    if (hasAlias) {
+                        String qualifiedName = alias + "." + funcNode.getName();
+                        ctx.declareVariable(qualifiedName,
+                                new TypedValue("function", funcNode));
+                    } else {
+                        // sem alias: nome direto no escopo global
+                        ctx.declareVariable(funcNode.getName(),
+                                new TypedValue("function", funcNode));
+                    }
                 }
 
                 else if (node instanceof StructNode structNode) {
-                    String qualifiedName = alias + "." + structNode.getName();
-                    importCtx.declareVariable(structNode.getName(), new TypedValue("struct", structNode));
-                    ctx.declareVariable(qualifiedName, new TypedValue("struct", structNode));
 
+                    // 1) registra o tipo de struct no contexto principal
+                    ctx.registerStructType(structNode.getName(), structNode.getFields());
+
+                    // (opcional, se quiser que o módulo importado também saiba de si mesmo)
+                    importCtx.registerStructType(structNode.getName(), structNode.getFields());
+
+                    // 2) mantém o que você já tinha (expor Struct como "valor" se quiser)
+                    importCtx.declareVariable(structNode.getName(),
+                            new TypedValue("struct", structNode));
+
+                    if (hasAlias) {
+                        String qualifiedName = alias + "." + structNode.getName();
+                        ctx.declareVariable(qualifiedName,
+                                new TypedValue("struct", structNode));
+                    } else {
+                        ctx.declareVariable(structNode.getName(),
+                                new TypedValue("struct", structNode));
+                    }
+
+                    // debug opcional
                     for (VariableDeclarationNode field : structNode.getFields()) {
                         System.out.println("         - " + field.getType() + " " + field.getName());
                     }
                 }
 
+
+                else if (node instanceof ImplNode implNode) {
+
+                    String targetStruct = implNode.getStructName();
+
+                    System.out.println("[IMPORT] Registrando métodos do impl para Struct<" + targetStruct + ">");
+
+                    for (FunctionNode fn : implNode.getMethods()) {
+
+                        String methodName = fn.getName();
+
+                        if (hasAlias) {
+                            // alias: math.Set.add
+                            ctx.registerStructMethod(alias + "." + targetStruct, methodName, fn);
+                            System.out.println("   -> Método registrado: " + alias + "." + targetStruct + "." + methodName);
+                        } else {
+                            // global: Set.add
+                            ctx.registerStructMethod(targetStruct, methodName, fn);
+                            System.out.println("   -> Método registrado: " + targetStruct + "." + methodName);
+                        }
+                    }
+                }
+
+
                 else if (node instanceof VariableDeclarationNode varNode) {
+                    // inicializa variável no contexto do módulo
                     varNode.evaluate(importCtx);
-                    String qualifiedName = alias + "." + varNode.getName();
                     TypedValue val = importCtx.getVariable(varNode.getName());
-                    ctx.declareVariable(qualifiedName, val);
 
-
+                    if (hasAlias) {
+                        String qualifiedName = alias + "." + varNode.getName();
+                        ctx.declareVariable(qualifiedName, val);
+                    } else {
+                        ctx.declareVariable(varNode.getName(), val);
+                    }
                 }
             }
 
-            ctx.declareVariable(alias, new TypedValue("namespace", importCtx));
-
+            // só cria o "namespace" se tiver alias
+            if (hasAlias) {
+                ctx.declareVariable(alias, new TypedValue("namespace", importCtx));
+            }
 
         } catch (IOException e) {
             throw new RuntimeException("Erro ao importar arquivo: " + path, e);

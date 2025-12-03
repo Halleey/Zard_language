@@ -20,10 +20,20 @@ public class RuntimeContext {
 
     public FunctionNode getStructMethod(String structName, String methodName) {
         Map<String, FunctionNode> table = structMethods.get(structName);
-        if (table == null) return null;
-        return table.get(methodName);
+        if (table != null && table.containsKey(methodName)) {
+            return table.get(methodName);
+        }
+
+        if (parent != null) return parent.getStructMethod(structName, methodName);
+
+        return null;
     }
 
+    public void registerStructMethod(String structName, String methodName, FunctionNode fn) {
+        structMethods
+                .computeIfAbsent(structName, k -> new HashMap<>())
+                .put(methodName, fn);
+    }
 
 
     public RuntimeContext() {

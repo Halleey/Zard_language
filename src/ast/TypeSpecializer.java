@@ -3,10 +3,7 @@ package ast;
 import ast.functions.FunctionNode;
 import ast.lists.ListAddNode;
 import ast.lists.ListNode;
-import ast.structs.StructInstaceNode;
-import ast.structs.StructMethodCallNode;
-import ast.structs.StructFieldAccessNode;
-import ast.structs.StructNode;
+import ast.structs.*;
 import ast.variables.LiteralNode;
 import ast.variables.VariableDeclarationNode;
 import ast.variables.VariableNode;
@@ -34,6 +31,8 @@ public class TypeSpecializer {
         applySpecializations(ast);
         propagateInferredTypes(ast);
 
+        createSpecializedStructsFromInferences();
+
         if (!inferredStructTypes.isEmpty()) {
             System.out.println("=== [TypeSpecializer] Tipos inferidos ===");
             for (var entry : inferredStructTypes.entrySet()) {
@@ -46,6 +45,40 @@ public class TypeSpecializer {
             System.out.println("[TypeSpecializer] Nenhum tipo inferido.");
         }
     }
+
+    private void createSpecializedStructsFromInferences() {
+        if (visitor == null) {
+            System.out.println("[TS.createSpecs] Visitor null, não posso materializar structs especializadas.");
+            return;
+        }
+
+        System.out.println("[TS.createSpecs] Materializando structs especializadas a partir das inferências...");
+
+        // inferredStructTypes: StructInstaceNode -> elemType ("int", "double", etc.)
+        for (var entry : inferredStructTypes.entrySet()) {
+            StructInstaceNode si = entry.getKey();
+            String elemType = entry.getValue();
+            String baseName = si.getName(); // "Set", "Pessoa", etc.
+
+            if (elemType == null || "?".equals(elemType)) {
+                continue;
+            }
+
+            StructNode baseNode = visitor.getStructNode(baseName);
+            if (baseNode == null) {
+                System.out.println("[TS.createSpecs] NÃO achei StructNode base para " + baseName);
+                continue;
+            }
+
+            System.out.println("[TS.createSpecs] Criando specialization para "
+                    + baseName + "<" + elemType + ">");
+
+            // Isso vai popular visitor.specializedStructs e structDefinitions
+            visitor.getOrCreateSpecializedStruct(baseNode, elemType);
+        }
+    }
+
+
 
     private void collectInferences(List<ASTNode> ast) {
         for (ASTNode node : ast) {
@@ -95,6 +128,13 @@ public class TypeSpecializer {
                     }
                 }
             }
+
+            if (node instanceof ImplNode impl) {
+                for (FunctionNode method : impl.getMethods()) {
+                    collectInferences(method.getBody());
+                }
+            }
+
 
             // StructNode — APENAS REGISTRO DE TIPO, NÃO USO
 
@@ -198,6 +238,12 @@ public class TypeSpecializer {
         if (visitor != null) {
             visitor.markStructUsed(node.getName()); // uso REAL
 
+            if (!elemType.equals("?")) {
+                String specName = node.getName() + "_" + elemType;
+                visitor.markStructUsed(specName);
+            }
+
+
             StructNode baseNode = visitor.getStructNode(node.getName());
             if (baseNode != null && !isAlreadySpecializedName(baseNode.getName())) {
                 visitor.getOrCreateSpecializedStruct(baseNode, elemType);
@@ -249,6 +295,13 @@ public class TypeSpecializer {
             if (node instanceof FunctionNode fn) {
                 specializeFunction(fn);
             }
+            if (node instanceof ImplNode impl) {
+                for (FunctionNode method : impl.getMethods()) {
+                    specializeFunction(method);
+                }
+            }
+
+
             for (ASTNode child : node.getChildren()) {
                 applySpecializations(Collections.singletonList(child));
             }
@@ -299,13 +352,17 @@ public class TypeSpecializer {
         }
         return null;
     }
-
-    // ======================================================================
-    // Propagação de tipos inferidos
-    // ======================================================================
     private void propagateInferredTypes(List<ASTNode> ast) {
 
         for (ASTNode node : ast) {
+
+
+            if (node instanceof ImplNode impl) {
+                for (FunctionNode method : impl.getMethods()) {
+                    propagateInferredTypes(method.getBody());
+                }
+            }
+
 
             if (node instanceof VariableDeclarationNode decl) {
 

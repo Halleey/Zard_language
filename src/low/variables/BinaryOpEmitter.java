@@ -170,7 +170,7 @@ public class BinaryOpEmitter {
                 default -> throw new RuntimeException("Operador inválido para %String*: " + op);
             }
         }
-
+        System.out.println("left type in AST "+ leftTypeAST);
         throw new RuntimeException("Tipos incompatíveis para operação: " + leftType + " " + op + " " + rightType);
     }
 

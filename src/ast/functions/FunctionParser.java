@@ -6,7 +6,6 @@ import translate.front.Parser;
 
 import java.util.ArrayList;
 import java.util.List;
-
 public class FunctionParser {
 
     private final Parser parser;
@@ -21,52 +20,42 @@ public class FunctionParser {
         this.implStructName = implStructName;
     }
 
-    private void debug(String msg) {
-        System.out.println("[FunctionParser] " + msg);
-    }
-
     private String parseType() {
-        StringBuilder typeBuilder = new StringBuilder();
-        int angleBrackets = 0;
+        StringBuilder sb = new StringBuilder();
+        int depth = 0;
 
         do {
             Token tok = parser.current();
+            sb.append(tok.getValue());
 
-            String val = tok.getValue();
-            typeBuilder.append(val);
-
-            if (val.equals("<")) angleBrackets++;
-            if (val.equals(">")) angleBrackets--;
+            if (tok.getValue().equals("<")) depth++;
+            if (tok.getValue().equals(">")) depth--;
 
             parser.advance();
 
-            if (angleBrackets == 0) {
-
+            if (depth == 0) {
                 Token next = parser.current();
-
                 if (next.getType() == Token.TokenType.IDENTIFIER ||
                         next.getType() == Token.TokenType.DELIMITER ||
                         next.getValue().equals("?")) {
-
                     break;
                 }
             }
+
         } while (true);
 
-        String type = typeBuilder.toString().trim();
-        return type;
+        return sb.toString().trim();
     }
 
-    private boolean isPrimitive(String type) {
-        return switch (type) {
-            case "int", "double", "bool", "string", "char", "void" -> true;
+    private boolean isPrimitive(String t) {
+        return switch (t) {
+            case "int","double","bool","string","char","void" -> true;
             default -> false;
         };
     }
 
-    private boolean isListType(String type) {
-
-        return type != null && type.startsWith("List");
+    private boolean isListType(String t) {
+        return t != null && t.startsWith("List");
     }
 
     public FunctionNode parseFunction() {
@@ -74,23 +63,19 @@ public class FunctionParser {
         parser.advance();
 
         String returnType = "?";
-
         Token cur = parser.current();
 
         if (cur.getType() == Token.TokenType.KEYWORD
                 || cur.getType() == Token.TokenType.IDENTIFIER
                 || "?".equals(cur.getValue())) {
 
-
             if (!parser.peek().getValue().equals("(")) {
                 returnType = parseType();
             }
         }
 
-
         String funcName = parser.current().getValue();
         parser.eat(Token.TokenType.IDENTIFIER);
-
         parser.eat(Token.TokenType.DELIMITER, "(");
 
         List<String> paramNames = new ArrayList<>();
@@ -99,25 +84,26 @@ public class FunctionParser {
         while (!parser.current().getValue().equals(")")) {
 
             StringBuilder typeBuilder = new StringBuilder();
-            int angleBrackets = 0;
+            int depth = 0;
 
             do {
                 Token t = parser.current();
-
                 String val = t.getValue();
+
                 typeBuilder.append(val);
-                if (val.equals("<")) angleBrackets++;
-                if (val.equals(">")) angleBrackets--;
+
+                if (val.equals("<")) depth++;
+                if (val.equals(">")) depth--;
+
                 parser.advance();
 
-            } while (angleBrackets > 0 ||
+            } while (depth > 0 ||
                     (parser.current().getType() != Token.TokenType.IDENTIFIER &&
                             !parser.current().getValue().equals(",") &&
-                            !parser.current().getValue().equals(")"))
-            );
+                            !parser.current().getValue().equals(")")
+                    ));
 
             String type = typeBuilder.toString().trim();
-
             String name = parser.current().getValue();
             parser.eat(Token.TokenType.IDENTIFIER);
 
@@ -133,9 +119,9 @@ public class FunctionParser {
 
         parser.pushContext();
 
+        // registrar parâmetros normais
         for (int i = 0; i < paramNames.size(); i++) {
             String type = paramTypes.get(i);
-
 
             if (parser.lookupStruct(type) != null
                     && !type.startsWith("Struct<")
@@ -144,18 +130,26 @@ public class FunctionParser {
                 type = "Struct<" + type + ">";
             }
 
+            // *** CORREÇÃO PRINCIPAL ***
+            if (type.equals("?")) {
+                type = "i8*"; // tipo genérico default
+            }
+
             parser.declareVariable(paramNames.get(i), type);
             paramTypes.set(i, type);
         }
 
-        if (implStructName != null && !paramNames.contains("s")) {
+        // registrar o "s" de métodos de impl
+        if (implStructName != null) {
             String receiverType = "Struct<" + implStructName + ">";
 
-            parser.declareVariable("s", receiverType);
-
+            if (!paramNames.contains("s")) {
+                paramNames.add(0, "s");
+                paramTypes.add(0, receiverType);
+                parser.declareVariable("s", receiverType);
+            }
         }
 
-        // PARSEIA CORPO
         List<ASTNode> body = parser.parseBlock();
 
         parser.popContext();
@@ -163,7 +157,6 @@ public class FunctionParser {
         if (returnType == null || returnType.isBlank()) {
             returnType = "void";
         }
-
 
         return new FunctionNode(funcName, paramNames, paramTypes, body, returnType);
     }

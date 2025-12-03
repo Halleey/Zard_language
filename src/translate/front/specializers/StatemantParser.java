@@ -83,31 +83,35 @@ public class StatemantParser {
                     return functionParser.parseFunction();
                 }
                 case "call" -> {
-                    parser.advance();
-                    // Começa a ler o identificador da função
-                    String funcName = parser.current().getValue();
+                    parser.advance(); // consome a palavra 'call'
+                    // Captura apenas o primeiro pedaço (nome da função)
+                    String first = parser.current().getValue();
                     parser.advance();
 
-                    // Aceitar alias: se tiver '.', concatenar
-                    while (parser.current().getValue().equals(".")) {
-                        parser.advance(); // consome '.'
-                        String nextPart = parser.current().getValue();
-                        parser.advance();
-                        funcName += "." + nextPart; // concatena o alias
-                    }
-
+                    // Deixa o restante do trabalho para o FunctionCallParser
                     FunctionCallParser functionCallParser = new FunctionCallParser(parser);
-                    return functionCallParser.parseFunctionCall(funcName);
+                    return functionCallParser.parseFunctionCall(first);
                 }
 
+
                 case "import" -> {
-                    parser.advance();
+                    parser.advance(); // consome 'import'
+
                     Token pathToken = parser.current();
                     String path = pathToken.getValue();
-                    parser.advance();
-                    parser.eat(Token.TokenType.KEYWORD, "as");
-                    String alias = parser.current().getValue();
-                    parser.advance();
+                    parser.advance(); // consome o caminho
+
+                    String alias = null;
+
+                    // se vier "as", lê o alias; se não, é import global
+                    if (parser.current().getType() == Token.TokenType.KEYWORD
+                            && parser.current().getValue().equals("as")) {
+
+                        parser.advance(); // consome 'as'
+                        alias = parser.current().getValue();
+                        parser.eat(Token.TokenType.IDENTIFIER); // garante que é IDENTIFIER
+                    }
+
                     parser.eat(Token.TokenType.DELIMITER, ";");
                     return new ImportNode(path, alias);
                 }

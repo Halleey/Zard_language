@@ -1,19 +1,9 @@
+import "src/language/structs/impls/monomorfizacao.zd";
+
 main {
-Struct Pessoa {
-    string nome;
-    int idade;
-}
 
-impl Pessoa {
-    function void hello() {
-        print("Olá do método hello()");
-    }
-}
-
-     Pessoa p;
-    p.nome = "Zard";
-    p.idade = 22;
-
-    # chamada de método do impl
-    p.hello();
+    Set<int> names;
+    names.add(3);
+    names.add(2);
+    print(names);
 }

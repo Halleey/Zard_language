@@ -20,19 +20,18 @@ public class StructMethodCallEmitter {
 
         String methodName = node.getMethodName();
 
-        // === Receiver
         ASTNode receiver = node.getStructInstance();
         String recvIR = receiver.accept(visitor);
         String recvVal = extractLastVal(recvIR);
         String recvType = extractLastType(recvIR);
-
+        System.out.println("Dentro do struct method call");
+        System.out.println(recvIR);
+        System.out.println(recvVal);
+        System.out.println(recvType);
         llvm.append(recvIR);
 
-        // ==========================================================
-        // INTERCEPTAÇÃO: DETECTAR SE É UMA LISTA
-        // ==========================================================
         if (recvType.startsWith("%struct.ArrayList")) {
-            // tipo exemplo: %struct.ArrayListInt*
+
             String elementType = "";
 
             if (recvType.contains("ArrayListInt")) elementType = "int";
@@ -131,13 +130,7 @@ public class StructMethodCallEmitter {
                 }
             }
         }
-        // ==========================================================
-        // FIM DO SUPORTE A LISTAS
-        // ==========================================================
 
-        // =====================================================================
-        // Caso NÃO SEJA LISTA → código antigo continua valendo para Structs
-        // =====================================================================
 
         String cleanType = recvType.replace("%", "").replace("*", "");
         String llvmSafe = cleanType

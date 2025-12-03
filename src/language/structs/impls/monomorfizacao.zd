@@ -1,9 +1,9 @@
-main {
+
     Struct Set {
         List<?> data;
     }
     impl Set {
-        # adiciona elemento e retorna o próprio Set (permite encadeamento)
+
         function add(? value) {
         int i = 0;
         while(i < s.data.size()) {
@@ -23,11 +23,4 @@ main {
 
     }
 
-    # ==== uso ====
-    Set s;
-    s.add(1);
-    s.add(1);
-    s.remove(0);
-    print(s);
 
-}

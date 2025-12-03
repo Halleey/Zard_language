@@ -9,28 +9,12 @@ import low.module.LLVMEmitVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
-
 public class StructMethodCallNode extends ASTNode {
+
     private final ASTNode structInstance;
     private final String structName;
     private final String methodName;
     private final List<ASTNode> args;
-
-    public ASTNode getStructInstance() {
-        return structInstance;
-    }
-
-    public String getStructName() {
-        return structName;
-    }
-
-    public String getMethodName() {
-        return methodName;
-    }
-
-    public List<ASTNode> getArgs() {
-        return args;
-    }
 
     public StructMethodCallNode(ASTNode structInstance, String structName, String methodName, List<ASTNode> args) {
         this.structInstance = structInstance;
@@ -39,6 +23,11 @@ public class StructMethodCallNode extends ASTNode {
         this.args = args;
     }
 
+    public ASTNode getStructInstance() { return structInstance; }
+    public String getStructName() { return structName; }
+    public String getMethodName() { return methodName; }
+    public List<ASTNode> getArgs() { return args; }
+
     @Override
     public String accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
@@ -46,34 +35,41 @@ public class StructMethodCallNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
+
         TypedValue instanceVal = structInstance.evaluate(ctx);
 
-        String baseName = structName.contains("<")
+        String base = structName.contains("<")
                 ? structName.substring(0, structName.indexOf('<'))
                 : structName;
 
-        FunctionNode method = ctx.getStructMethod(baseName, methodName);
-        if (method == null) {
+        FunctionNode method = ctx.getStructMethod(base, methodName);
+        if (method == null)
             throw new RuntimeException("Method " + methodName + " not found in Struct " + structName);
-        }
 
-        List<TypedValue> argValues = new ArrayList<>();
+        List<TypedValue> evaluatedArgs = new ArrayList<>();
         for (ASTNode arg : args) {
-            argValues.add(arg.evaluate(ctx));
+            evaluatedArgs.add(arg.evaluate(ctx));
         }
 
         if (!method.getParamTypes().isEmpty()) {
-            String firstType = method.getParamTypes().get(0);
-
-            if (firstType.startsWith("Struct<" + baseName + ">")) {
-                argValues.add(0, instanceVal);
+            String first = method.getParamTypes().get(0);
+            if (first.startsWith("Struct<" + base + ">")) {
+                evaluatedArgs.add(0, instanceVal);
             }
         }
 
         RuntimeContext local = new RuntimeContext(ctx);
-        return method.invoke(local, argValues);
+        local.declareVariable("s", instanceVal);
+
+        return method.invoke(local, evaluatedArgs);
     }
 
+    public String getReceiverName() {
+        if (structInstance instanceof VariableNode v) {
+            return v.getName();
+        }
+        return null;
+    }
 
     @Override
     public void print(String prefix) {
@@ -82,19 +78,7 @@ public class StructMethodCallNode extends ASTNode {
         System.out.println(prefix + "  Method: " + methodName);
         if (!args.isEmpty()) {
             System.out.println(prefix + "  Args:");
-            for (ASTNode arg : args) {
-                arg.print(prefix + "    ");
-            }
+            for (ASTNode a : args) a.print(prefix + "    ");
         }
     }
-
-    public String getReceiverName() {
-        if (structInstance instanceof VariableNode v) {
-            return v.getName(); //gambiarra basica para extrair o real nome da estrutura
-        }
-        return null;
-    }
-
-
 }
-

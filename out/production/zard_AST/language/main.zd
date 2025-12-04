@@ -1,9 +1,102 @@
-import "src/language/structs/impls/monomorfizacao.zd";
 
 main {
+function void bubbleSort(List<int> arr) {
 
-    Set<string> names;
-    names.add("zard");
-    names.add("zard");
-    print(names);
+    # Guarda o tamanho inicial da lista
+    int n = arr.size();
+
+    # Variável externa do laço do Bubble Sort
+    int i = 0;
+
+    # Loop externo → controla quantas passagens já fizemos
+    while (i < n - 1) {
+
+        # Loop interno (comparações adjacentes)
+        int j = 0;
+
+        while (j < n - i - 1) {
+
+            # Pega o elemento atual
+            int a = arr.get(j);
+
+            # Pega o próximo elemento
+            int b = arr.get(j+1);
+
+            # Se estão fora de ordem → precisamos trocar
+            if (a > b) {
+
+                # ETAPA 1 — Remover os dois
+
+                # Remove o elemento 'a' na posição j
+                arr.remove(j);
+
+                # Agora o antigo b passou a ser o índice j,
+                # então remover j novamente remove b
+                arr.remove(j);
+
+                # ETAPA 2 — Criar lista temporária
+
+                # Lista temporária para reconstruir os valores
+                List<int> temp;
+
+                # Copiar todos os elementos anteriores a j
+                int k = 0;
+                while (k < j) {
+                    temp.add(arr.get(k));   # copia início
+                    k++;
+                }
+
+                # Inserir primeiro o menor (b)
+                temp.add(b);
+
+                # Depois o maior (a)
+                temp.add(a);
+
+                # Copiar os elementos que ficaram após j
+                while (k < arr.size()) {
+                    temp.add(arr.get(k));
+                    k++;
+                }
+
+                # ============================
+                # ETAPA 3 — Substituir arr pelo temp
+                # ============================
+
+                # Limpar a lista original
+                arr.clear();
+
+                # Reiniciar k
+                k = 0;
+
+                # Recolocar tudo de temp para arr
+                while (k < temp.size()) {
+                    arr.add(temp.get(k));
+                    k++;
+                }
+            }
+
+            # Próxima comparação
+            j++;
+        }
+
+        # Passagem completa do bubble sort
+        i++;
+    }
+}
+
+
+  # Exemplo de lista
+    List<int> nums = (5, 1, 4, 2, 8);
+
+   call  bubbleSort(nums);
+
+    print("Lista ordenada:");
+    int i = 0;
+    while (i < nums.size()) {
+        print(nums.get(i));
+        i++;
+    }
+
+
+
 }

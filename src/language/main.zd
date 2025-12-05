@@ -1,29 +1,14 @@
 
 main {
 
-  # If instantiated empty, type must be declared
-  List<int> numbers;
+int x  =3;
 
-  # If initialized with values, type is inferred
-  List nomes = ("zard", "angel");
-
-  # Adding values
-  numbers.add(3);
-  int x = 2;
-  numbers.addAll(3,4,5,x);
-
-  # Getting size
-  int z = numbers.size();
-  print(z);
-  print(numbers.size());
-
-  # Removing
-  numbers.remove(0);
-
-  # Accessing
-  print(numbers.get(1));
-
-  # Clearing
-  numbers.clear();
+if(x == 3) {
+return 0;
 }
-    
+else{
+print("não era igual");
+
+}
+print("continuação do programa");
+}

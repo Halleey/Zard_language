@@ -34,13 +34,13 @@ public class WhileEmitter {
 
         // --- corpo ---
         llvm.append(bodyLabel).append(":\n");
-        visitor.pushLoopEnd(endLabel);
+        visitor.getControlFlow().pushLoopEnd(endLabel);
 
         for (ASTNode stmt : node.body) {
             llvm.append(stmt.accept(visitor)); // já gera store/load com ponteiro correto
         }
 
-        visitor.popLoopEnd();
+        visitor.getControlFlow().popLoopEnd();
         llvm.append("  br label %").append(condLabel).append("\n");
         llvm.append(endLabel).append(":\n");
 

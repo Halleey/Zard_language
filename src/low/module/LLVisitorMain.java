@@ -25,6 +25,7 @@ import low.lists.generics.*;
 import low.main.GlobalStringManager;
 import low.main.MainEmitter;
 import low.main.TypeInfos;
+import low.module.flow.FlowControllVisitor;
 import low.module.imports.ImportRegistry;
 import low.module.lists.ListVisitor;
 import low.module.structs.SpecializedStructManager;
@@ -33,7 +34,6 @@ import low.module.structs.StructTypeResolver;
 import low.prints.PrintEmitter;
 import low.structs.*;
 import low.variables.*;
-import low.whiles.WhileEmitter;
 import java.util.*;
 
 
@@ -69,7 +69,8 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final TempManager temps;
     private final List<String> structDefinitions;
     private final GlobalStringManager globalStrings;
-    private final Deque<String> loopEndLabels;
+    private final FlowControllVisitor controlFlow;
+
 
     private final Map<String, String> listElementTypesLegacyView = new HashMap<>(); // NÃO usado diretamente, só compat
 
@@ -80,8 +81,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final UnaryOpEmitter unaryOpEmitter;
     private final LiteralEmitter literalEmitter;
     private final BinaryOpEmitter binaryEmitter;
-    private final IfEmitter ifEmitter;
-    private final WhileEmitter whileEmitter;
     private final FunctionCallEmitter callEmiter;
     private final StructUpdateEmitter updateEmitter;
 
@@ -159,7 +158,8 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         this.specializedStructs = specializedStructs;
 
         this.temps = new TempManager();
-        this.loopEndLabels = new ArrayDeque<>();
+        this.controlFlow = new FlowControllVisitor(this, temps);
+
 
         // Registries
         this.structRegistry = new StructRegistry(structNodes, new HashSet<>(), new HashSet<>());
@@ -177,8 +177,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         this.unaryOpEmitter = new UnaryOpEmitter(varTypesView, temps, varEmitter);
         this.literalEmitter = new LiteralEmitter(temps, globalStrings);
         this.binaryEmitter = new BinaryOpEmitter(temps, this);
-        this.ifEmitter = new IfEmitter(temps, this);
-        this.whileEmitter = new WhileEmitter(temps, this);
         this.callEmiter = new FunctionCallEmitter(temps);
         this.updateEmitter = new StructUpdateEmitter(temps, this);
         this.importEmitter = new ImportEmitter(this, this.tiposDeListasUsados);
@@ -211,6 +209,10 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         );
     }
 
+
+    public FlowControllVisitor getControlFlow() {
+        return controlFlow;
+    }
 
     // ==== STRUCTS USO / IMPORT ====
     public void markStructUsed(String name) {
@@ -287,21 +289,21 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return types.getVarType(name);
     }
 
-    // ==== LOOP CONTROL ====
-    public void pushLoopEnd(String label) {
-        loopEndLabels.push(label);
-    }
-
-    public void popLoopEnd() {
-        loopEndLabels.pop();
-    }
-
-    public String currentLoopEnd() {
-        if (loopEndLabels.isEmpty()) {
-            throw new RuntimeException("Break fora de loop!");
-        }
-        return loopEndLabels.peek();
-    }
+//    // ==== LOOP CONTROL ====
+//    public void pushLoopEnd(String label) {
+//        loopEndLabels.push(label);
+//    }
+//
+//    public void popLoopEnd() {
+//        loopEndLabels.pop();
+//    }
+//
+//    public String currentLoopEnd() {
+//        if (loopEndLabels.isEmpty()) {
+//            throw new RuntimeException("Break fora de loop!");
+//        }
+//        return loopEndLabels.peek();
+//    }
 
     // ==== VISITORS DE STRUCTS / IMPORT / IMPL ====
 
@@ -395,12 +397,17 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public String visit(WhileNode node) {
-        return whileEmitter.emit(node);
+        return controlFlow.visit(node);
+    }
+
+    @Override
+    public String visit(IfNode node) {
+        return controlFlow.visit(node);
     }
 
     @Override
     public String visit(BreakNode node) {
-        return "  br label %" + currentLoopEnd() + "\n";
+        return "  br label %" + controlFlow.currentLoopEnd() + "\n";
     }
 
     @Override
@@ -436,11 +443,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     @Override
     public String visit(ListAddAllNode node) {
         return listVisitor.visit(node);
-    }
-
-    @Override
-    public String visit(IfNode node) {
-        return ifEmitter.emit(node);
     }
 
     @Override

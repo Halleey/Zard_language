@@ -25,6 +25,11 @@ import low.lists.generics.*;
 import low.main.GlobalStringManager;
 import low.main.MainEmitter;
 import low.main.TypeInfos;
+import low.module.imports.ImportRegistry;
+import low.module.lists.ListVisitor;
+import low.module.structs.SpecializedStructManager;
+import low.module.structs.StructRegistry;
+import low.module.structs.StructTypeResolver;
 import low.prints.PrintEmitter;
 import low.structs.*;
 import low.variables.*;
@@ -68,7 +73,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     private final Map<String, String> listElementTypesLegacyView = new HashMap<>(); // NÃO usado diretamente, só compat
 
-    // ==== EMITTERS ====
+    // ==== EMITTERS GENÉRICOS ====
     public final VariableEmitter varEmitter;
     public final PrintEmitter printEmitter;
     private final AssignmentEmitter assignmentEmitter;
@@ -77,15 +82,11 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final BinaryOpEmitter binaryEmitter;
     private final IfEmitter ifEmitter;
     private final WhileEmitter whileEmitter;
-    private final ListEmitter listEmitter;
-    private final ListAddEmitter listAddEmitter;
-    private final ListRemoveEmitter listRemoveEmitter;
-    private final ListClearEmitter clearEmitter;
-    private final ListSizeEmitter sizeEmitter;
-    private final ListGetEmitter getEmitter;
-    private final ListAddAllEmitter allEmitter;
     private final FunctionCallEmitter callEmiter;
     private final StructUpdateEmitter updateEmitter;
+
+    // ==== LISTA: AGORA CONTROLADA POR ListVisitor ====
+    private final ListVisitor listVisitor;
 
     // ==== FUNÇÕES / STRUCTS / IMPORTS ====
     public final Map<String, FunctionNode> functions;
@@ -122,21 +123,21 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     }
 
     // ==== CONSTRUTOR PÚBLICO (USO NORMAL) ====
+    // TypePipeline chama ESTE.
     public LLVisitorMain(TypeSpecializer typeSpecializer) {
         this(
                 typeSpecializer,
-                new TypeTable(),   // varTypes (local) + functionTypes (compartilhado)
-                new HashMap<>(),   // functions
-                new HashMap<>(),   // importedFunctions
-                new HashMap<>(),   // structNodes
-                new HashMap<>(),   // specializedStructs
-                new HashSet<>(),   // tiposDeListasUsados
-                new ArrayList<>(), // structDefinitions
+                new TypeTable(),
+                new HashMap<>(),
+                new HashMap<>(),
+                new HashMap<>(),
+                new HashMap<>(),
+                new HashSet<>(),
+                new ArrayList<>(),
                 new GlobalStringManager()
         );
     }
 
-    // ==== CONSTRUTOR INTERNO (USADO POR fork) ====
     private LLVisitorMain(
             TypeSpecializer typeSpecializer,
             TypeTable types,
@@ -160,14 +161,14 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         this.temps = new TempManager();
         this.loopEndLabels = new ArrayDeque<>();
 
-        // Registries / managers
+        // Registries
         this.structRegistry = new StructRegistry(structNodes, new HashSet<>(), new HashSet<>());
         this.structEmitter = new StructEmitter(this);
         this.specializedManager = new SpecializedStructManager(specializedStructs, structEmitter, structRegistry, structDefinitions);
         this.importRegistry = new ImportRegistry(importedFunctions, structRegistry);
         this.structTypeResolver = new StructTypeResolver(types, structRegistry);
 
-        // Emitters dependem de varTypes → usamos o map interno do TypeTable
+        // Var types
         Map<String, TypeInfos> varTypesView = types.getVarTypesMap();
 
         this.varEmitter = new VariableEmitter(varTypesView, temps, this);
@@ -178,13 +179,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         this.binaryEmitter = new BinaryOpEmitter(temps, this);
         this.ifEmitter = new IfEmitter(temps, this);
         this.whileEmitter = new WhileEmitter(temps, this);
-        this.listEmitter = new ListEmitter(temps);
-        this.listAddEmitter = new ListAddEmitter(temps, globalStrings);
-        this.listRemoveEmitter = new ListRemoveEmitter(temps);
-        this.clearEmitter = new ListClearEmitter(temps);
-        this.sizeEmitter = new ListSizeEmitter(temps);
-        this.getEmitter = new ListGetEmitter(temps);
-        this.allEmitter = new ListAddAllEmitter(temps, globalStrings);
         this.callEmiter = new FunctionCallEmitter(temps);
         this.updateEmitter = new StructUpdateEmitter(temps, this);
         this.importEmitter = new ImportEmitter(this, this.tiposDeListasUsados);
@@ -192,11 +186,13 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         this.structFieldAccessEmitter = new StructFieldAccessEmitter(temps);
         this.methodCallEmitter = new StructMethodCallEmitter(temps);
         this.implEmitter = new ImplEmitter(this, temps);
+
+        this.listVisitor = new ListVisitor(this, temps, globalStrings);
+
     }
 
-    // ==== fork: VISITOR ISOLADO PARA IMPLS ESPECIALIZADAS ====
     public LLVisitorMain fork() {
-        // functionTypes compartilha, varTypes é novo
+
         TypeTable forkTypes = new TypeTable(
                 new HashMap<>(),
                 this.types.getFunctionTypesMap()
@@ -214,6 +210,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
                 this.globalStrings
         );
     }
+
 
     // ==== STRUCTS USO / IMPORT ====
     public void markStructUsed(String name) {
@@ -408,22 +405,37 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public String visit(ListNode node) {
-        return listEmitter.emit(node, this);
+        return listVisitor.visit(node);
     }
 
     @Override
     public String visit(ListAddNode node) {
-        return listAddEmitter.emit(node, this);
+        return listVisitor.visit(node);
     }
 
     @Override
     public String visit(ListRemoveNode node) {
-        return listRemoveEmitter.emit(node, this);
+        return listVisitor.visit(node);
     }
 
     @Override
     public String visit(ListClearNode node) {
-        return clearEmitter.emit(node, this);
+        return listVisitor.visit(node);
+    }
+
+    @Override
+    public String visit(ListSizeNode node) {
+        return listVisitor.visit(node);
+    }
+
+    @Override
+    public String visit(ListGetNode node) {
+        return listVisitor.visit(node);
+    }
+
+    @Override
+    public String visit(ListAddAllNode node) {
+        return listVisitor.visit(node);
     }
 
     @Override
@@ -444,21 +456,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     @Override
     public String visit(AssignmentNode node) {
         return assignmentEmitter.emit(node);
-    }
-
-    @Override
-    public String visit(ListSizeNode node) {
-        return sizeEmitter.emit(node, this);
-    }
-
-    @Override
-    public String visit(ListGetNode node) {
-        return getEmitter.emit(node, this);
-    }
-
-    @Override
-    public String visit(ListAddAllNode node) {
-        return allEmitter.emit(node, this);
     }
 
     @Override

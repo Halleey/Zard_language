@@ -1,20 +1,11 @@
-package low.module;
-// package low.module;
+package low.module.imports;
 
 import ast.functions.FunctionNode;
+import low.module.structs.StructRegistry;
 
 import java.util.Map;
 
-public class ImportRegistry {
-
-    private final Map<String, FunctionNode> importedFunctions;
-    private final StructRegistry structRegistry;
-
-    public ImportRegistry(Map<String, FunctionNode> importedFunctions,
-                          StructRegistry structRegistry) {
-        this.importedFunctions = importedFunctions;
-        this.structRegistry = structRegistry;
-    }
+public record ImportRegistry(Map<String, FunctionNode> importedFunctions, StructRegistry structRegistry) {
 
     public void registerImportedFunction(String qualifiedName, FunctionNode func) {
         if (qualifiedName == null || func == null) return;

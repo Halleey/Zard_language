@@ -1,7 +1,4 @@
-package low.module;
-
-// package low.module;
-
+package low.module.structs;
 import ast.structs.StructNode;
 
 import java.util.HashMap;

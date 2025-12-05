@@ -1,9 +1,5 @@
 package low.module;
-// Ajuste o package se precisar
-// package low.module;
-
 import low.main.TypeInfos;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,7 +18,6 @@ public class TypeTable {
         this.functionTypes = functionTypes;
     }
 
-    // ===== VAR TYPES =====
     public void putVarType(String name, TypeInfos type) {
         varTypes.put(name, type);
     }
@@ -35,7 +30,6 @@ public class TypeTable {
         return varTypes;
     }
 
-    // ===== FUNCTION TYPES =====
     public void putFunctionType(String name, TypeInfos type) {
         functionTypes.put(name, type);
     }

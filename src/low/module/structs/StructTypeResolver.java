@@ -1,5 +1,4 @@
-package low.module;
-// package low.module;
+package low.module.structs;
 
 import ast.ASTNode;
 import ast.lists.ListGetNode;
@@ -8,6 +7,7 @@ import ast.structs.StructNode;
 import ast.variables.VariableDeclarationNode;
 import ast.variables.VariableNode;
 import low.main.TypeInfos;
+import low.module.TypeTable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,7 +23,6 @@ public class StructTypeResolver {
         this.structRegistry = structRegistry;
     }
 
-    // ==== LIST TYPES INFERENCE ====
     public String inferListElementType(ASTNode node) {
         if (node instanceof VariableNode v) {
             return getListElementType(v.getName());
@@ -51,7 +50,6 @@ public class StructTypeResolver {
         return listElementTypes.get(varName);
     }
 
-    // ==== RESOLUÇÃO DE TIPOS DE CAMPOS DE STRUCT ====
     public String getStructFieldType(StructFieldAccessNode node) {
         String structName;
 
@@ -97,7 +95,6 @@ public class StructTypeResolver {
         throw new RuntimeException("Field not found: " + node.getFieldName() + " in struct " + structName);
     }
 
-    // ==== RESOLVE STRUCT NAME FROM NODE ====
     public String resolveStructName(ASTNode node) {
         // variável simples
         if (node instanceof VariableNode varNode) {
@@ -115,7 +112,6 @@ public class StructTypeResolver {
             throw new RuntimeException("Unknown variable struct type: " + varNode.getName());
         }
 
-        // acesso a campo de struct
         if (node instanceof StructFieldAccessNode sfa) {
             String parentType = getStructFieldType(sfa);
             if (parentType.startsWith("Struct<") && parentType.endsWith(">")) {
@@ -127,7 +123,6 @@ public class StructTypeResolver {
             return parentType.replace("%", "").replace("*", "");
         }
 
-        // retorno de List.get() contendo struct
         if (node instanceof ListGetNode lg) {
             String elem = inferListElementType(lg.getListName());
             if (elem == null) {

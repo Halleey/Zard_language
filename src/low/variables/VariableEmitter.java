@@ -15,7 +15,8 @@ import ast.variables.VariableDeclarationNode;
 
 import java.util.HashMap;
 import java.util.Map;
-
+import java.util.HashMap;
+import java.util.Map;
 
 public class VariableEmitter {
     private final Map<String, TypeInfos> varTypes;
@@ -36,7 +37,8 @@ public class VariableEmitter {
     }
 
     public String emitAlloca(VariableDeclarationNode node) {
-        String ptr = "%" + node.getName();
+        // right now o ponteiro é centralizado pelo TempManager
+        String ptr = temps.newNamedVar(node.getName());
         localVars.put(node.getName(), ptr);
 
         String srcType = node.getType();
@@ -85,11 +87,12 @@ public class VariableEmitter {
             }
         }
     }
+
     public String emitInit(VariableDeclarationNode node) {
         TypeInfos info = varTypes.get(node.getName());
         String srcType = info.getSourceType();
         String llvmType = info.getLLVMType();
-        String varPtr = getVarPtr(node.getName());
+        String varPtr = getVarPtr(node.getName()); // ponteiro REAL da variável
 
         if (node.initializer == null && srcType != null && srcType.startsWith("Struct<")) {
 
@@ -100,7 +103,6 @@ public class VariableEmitter {
 
             int genericIdx = inner.indexOf('<');
             if (genericIdx != -1) {
-                baseName = inner.substring(0, genericIdx).trim();
                 int close = inner.lastIndexOf('>');
                 elemType = inner.substring(genericIdx + 1, close).trim();
             }
@@ -135,7 +137,6 @@ public class VariableEmitter {
                     arrayListPtrType = "%ArrayList*";
                 }
                 default -> {
-
                     createListCall = "%ArrayList* @arraylist_create(i64 10)";
                     arrayListPtrType = "%ArrayList*";
                 }
@@ -170,6 +171,7 @@ public class VariableEmitter {
             return sb.toString();
         }
 
+        // =============== Inicialização padrão =================
         if (node.initializer == null) {
             if (info.isList()) {
                 return switch (info.getSourceType()) {
@@ -186,6 +188,7 @@ public class VariableEmitter {
             return "";
         }
 
+        // =============== input(...) =================
         if (node.initializer instanceof InputNode inputNode) {
             InputEmitter inputEmitter = new InputEmitter(temps, visitor.getGlobalStrings());
             String code = inputEmitter.emit(inputNode, llvmType);
@@ -193,6 +196,7 @@ public class VariableEmitter {
             return code + emitStore(node.getName(), llvmType, temp);
         }
 
+        // =============== List com initializer literal =================
         if (info.isList() && node.initializer instanceof ListNode listNode) {
             visitor.registerListElementType(node.getName(), info.getElementType());
 
@@ -229,6 +233,7 @@ public class VariableEmitter {
                 }
             }
         }
+
         if (info.getSourceType().equals("string") && node.initializer instanceof LiteralNode lit) {
             return stringEmitter.createStringFromLiteral(varPtr, (String) lit.value.value());
         }
@@ -275,12 +280,14 @@ public class VariableEmitter {
                 ";;VAL:" + tmp + ";;TYPE:%struct.ArrayListInt*\n" +
                 "  store %struct.ArrayListInt* " + tmp + ", %struct.ArrayListInt** " + varPtr + "\n";
     }
+
     private String callArrayListCreateDoubleAndStore(String varPtr) {
         String tmp = temps.newTemp();
         return "  " + tmp + " = call %struct.ArrayListDouble* @arraylist_create_double(i64 4)\n" +
                 ";;VAL:" + tmp + ";;TYPE:%struct.ArrayListDouble*\n" +
                 "  store %struct.ArrayListDouble* " + tmp + ", %struct.ArrayListDouble** " + varPtr + "\n";
     }
+
     private String callArrayListCreateBoolAndStore(String varPtr) {
         String tmp = temps.newTemp();
         return "  " + tmp + " = call %struct.ArrayListBool* @arraylist_create_bool(i64 4)\n" +
@@ -289,37 +296,49 @@ public class VariableEmitter {
     }
 
     private String emitStore(String name, String type, String value) {
+        // String continua delegando pro StringEmitter, que já sabe achar o ponteiro
         return switch (type) {
             case "%String*", "%String" -> stringEmitter.emitStore(name, value);
             case "%struct.ArrayListInt*" ->
-                    "  store %struct.ArrayListInt* " + value + ", %struct.ArrayListInt** %" + name + "\n";
+                    "  store %struct.ArrayListInt* " + value + ", %struct.ArrayListInt** " + getVarPtr(name) + "\n";
             case "%struct.ArrayListDouble*" ->
-                    "  store %struct.ArrayListDouble* " + value + ", %struct.ArrayListDouble** %" + name + "\n";
+                    "  store %struct.ArrayListDouble* " + value + ", %struct.ArrayListDouble** " + getVarPtr(name) + "\n";
             case "%struct.ArrayListBool*" ->
-                    "  store %struct.ArrayListBool* " + value + ", %struct.ArrayListBool** %" + name + "\n";
+                    "  store %struct.ArrayListBool* " + value + ", %struct.ArrayListBool** " + getVarPtr(name) + "\n";
             case "%ArrayList*" ->
-                    "  store %ArrayList* " + value + ", %ArrayList** %" + name + "\n";
-            default -> "  store " + type + " " + value + ", " + type + "* %" + name + "\n";
+                    "  store %ArrayList* " + value + ", %ArrayList** " + getVarPtr(name) + "\n";
+            default ->
+                    "  store " + type + " " + value + ", " + type + "* " + getVarPtr(name) + "\n";
         };
     }
 
     public String emitLoad(String name) {
         TypeInfos info = varTypes.get(name);
         String llvmType = info.getLLVMType();
-        String ptr = localVars.get(name);
+        String ptr = getVarPtr(name);
         String tmp = temps.newTemp();
         return "  " + tmp + " = load " + llvmType + ", " + llvmType + "* " + ptr +
                 "\n;;VAL:" + tmp + ";;TYPE:" + llvmType + "\n";
     }
 
-    public String getVarPtr(String name) { return localVars.get(name); }
-    public void registerVarPtr(String name, String ptr) { localVars.put(name, ptr); }
+    public String getVarPtr(String name) {
+        String ptr = localVars.get(name);
+        if (ptr == null) {
+            throw new RuntimeException("Ptr não encontrado para variável: " + name);
+        }
+        return ptr;
+    }
+
+    public void registerVarPtr(String name, String ptr) {
+        localVars.put(name, ptr);
+    }
 
     private String extractTemp(String code) {
         int lastValIdx = code.lastIndexOf(";;VAL:");
         int typeIdx = code.indexOf(";;TYPE:", lastValIdx);
         return code.substring(lastValIdx + 6, typeIdx).trim();
     }
+
     private String extractType(String code) {
         int lastTypeIdx = code.lastIndexOf(";;TYPE:");
         return code.substring(lastTypeIdx + 7).trim();

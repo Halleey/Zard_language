@@ -1,4 +1,4 @@
-package low.whiles;
+package low.loops;
 
 import ast.ASTNode;
 import ast.loops.WhileNode;

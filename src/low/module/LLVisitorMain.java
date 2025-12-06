@@ -8,6 +8,7 @@ import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
 import ast.imports.ImportNode;
+import ast.loops.ForNode;
 import ast.structs.*;
 import ast.lists.*;
 import ast.loops.WhileNode;
@@ -335,6 +336,11 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public String visit(ImplNode node) {
         System.out.println("rodou aqui primeiro");
         return implEmitter.emit(node);
+    }
+
+    @Override
+    public String visit(ForNode node) {
+        return controlFlow.visit(node);
     }
 
     @Override

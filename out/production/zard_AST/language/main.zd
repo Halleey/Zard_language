@@ -1,6 +1,4 @@
 main {
-
-
 function void bubbleSort(List<int> arr) {
     # Tamanho inicial da lista
     int n = arr.size();
@@ -51,8 +49,6 @@ function void bubbleSort(List<int> arr) {
         }
     }
 }
-
-print("oi");
 
 List numeros = (23,13,9,40,80);
 call bubbleSort(numeros);

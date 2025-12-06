@@ -14,6 +14,22 @@ public class ForNode extends ASTNode {
     private final ASTNode increment;
     private final List<ASTNode> body;
 
+    public ASTNode getInit() {
+        return init;
+    }
+
+    public ASTNode getCondition() {
+        return condition;
+    }
+
+    public ASTNode getIncrement() {
+        return increment;
+    }
+
+    public List<ASTNode> getBody() {
+        return body;
+    }
+
     public ForNode(ASTNode init, ASTNode condition, ASTNode increment, List<ASTNode> body) {
         this.init = init;
         this.condition = condition;
@@ -23,7 +39,7 @@ public class ForNode extends ASTNode {
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
-        return "";
+        return visitor.visit(this);
     }
 
     @Override

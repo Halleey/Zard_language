@@ -1,5 +1,4 @@
 package low.module;
-
 import ast.ASTNode;
 import ast.TypeSpecializer;
 import ast.exceptions.BreakNode;
@@ -19,7 +18,6 @@ import low.TempManager;
 import low.exceptions.ReturnEmitter;
 import low.functions.FunctionCallEmitter;
 import low.functions.FunctionEmitter;
-import low.ifs.IfEmitter;
 import low.imports.ImportEmitter;
 import low.lists.generics.*;
 import low.main.GlobalStringManager;
@@ -208,8 +206,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
                 this.globalStrings
         );
     }
-
-
     public FlowControllVisitor getControlFlow() {
         return controlFlow;
     }
@@ -288,24 +284,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public TypeInfos getVarType(String name) {
         return types.getVarType(name);
     }
-
-//    // ==== LOOP CONTROL ====
-//    public void pushLoopEnd(String label) {
-//        loopEndLabels.push(label);
-//    }
-//
-//    public void popLoopEnd() {
-//        loopEndLabels.pop();
-//    }
-//
-//    public String currentLoopEnd() {
-//        if (loopEndLabels.isEmpty()) {
-//            throw new RuntimeException("Break fora de loop!");
-//        }
-//        return loopEndLabels.peek();
-//    }
-
-    // ==== VISITORS DE STRUCTS / IMPORT / IMPL ====
 
     @Override
     public String visit(StructNode node) {
@@ -471,6 +449,11 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return callEmiter.emit(node, this);
     }
 
+
+    public FunctionCallEmitter getCallEmitter() {
+        return callEmiter;
+    }
+
     public TempManager getTemps() {
         return temps;
     }
@@ -483,9 +466,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return varEmitter;
     }
 
-    public FunctionCallEmitter getCallEmitter() {
-        return callEmiter;
-    }
+
 
     public void registrarStructs(MainAST node) {
         for (ASTNode stmt : node.body) {

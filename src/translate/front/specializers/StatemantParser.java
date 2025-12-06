@@ -9,6 +9,7 @@ import ast.home.MainParser;
 import ast.ifstatements.IfParser;
 import ast.imports.ImportNode;
 import ast.inputs.InputParser;
+import ast.loops.ForParser;
 import ast.loops.WhileParser;
 import ast.prints.PrintParser;
 import ast.structs.ImplementsParser;
@@ -47,6 +48,12 @@ public class StatemantParser {
                     WhileParser whileParser = new WhileParser(parser);
                     return whileParser.parse();
                 }
+                case "for" -> {
+                    ForParser forParser = new ForParser(parser);
+                    return forParser.parse();
+
+                }
+
                 case "main" -> {
                     MainParser mainParser = new MainParser(parser);
                     return mainParser.parseMain();

@@ -7,7 +7,8 @@ import low.TempManager;
 import ast.variables.VariableNode;
 import low.main.TypeInfos;
 
-import java.util.Map;public class UnaryOpEmitter {
+import java.util.Map;
+public class UnaryOpEmitter {
     private final Map<String, TypeInfos> varTypes; // nome -> infos de tipo
     private final TempManager temps;
     private final VariableEmitter varEmitter;

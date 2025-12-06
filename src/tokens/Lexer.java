@@ -62,7 +62,7 @@ public class Lexer {
 
         return switch (identifier) {
             case "int", "string", "double", "float", "boolean","char", "print", "if", "else", "else if", "input", "function", "return",
-                 "main", "while", "call", "List", "Map",  "break", "import", "var", "as", "Struct", "impl" ->
+                 "main", "while", "for", "call", "List", "Map",  "break", "import", "var", "as", "Struct", "impl" ->
                     new Token(Token.TokenType.KEYWORD, identifier);
             case "new" -> new Token(Token.TokenType.INSTANCE, identifier);
             case "true", "false" -> new Token(Token.TokenType.BOOLEAN, identifier); // true e false como BOOLEAN

@@ -3,6 +3,7 @@ package low.main;
 import ast.ASTNode;
 import ast.exceptions.ReturnNode;
 import ast.functions.FunctionNode;
+import ast.functions.ParamInfo;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
 import ast.imports.ImportNode;
@@ -188,11 +189,16 @@ public class MainEmitter {
                 if (retType.startsWith("List<") && retType.endsWith(">")) {
                     registrarTipoDeLista(retType);
                 }
-                for (String paramType : m.getParamTypes()) {
-                    if (paramType.startsWith("List<") && paramType.endsWith(">")) {
+
+                for (ParamInfo p : m.getParameters()) {
+                    String paramType = p.type();
+                    if (paramType != null
+                            && paramType.startsWith("List<")
+                            && paramType.endsWith(">")) {
                         registrarTipoDeLista(paramType);
                     }
                 }
+
                 for (ASTNode stmt : m.getBody()) {
                     coletarStringsRecursivo(stmt);
                 }
@@ -201,15 +207,21 @@ public class MainEmitter {
         }
 
         if (node instanceof FunctionNode func) {
+
             String retType = func.getReturnType();
             if (retType.startsWith("List<") && retType.endsWith(">")) {
                 registrarTipoDeLista(retType);
             }
-            for (String paramType : func.getParamTypes()) {
-                if (paramType.startsWith("List<") && paramType.endsWith(">")) {
+
+            for (ParamInfo p : func.getParameters()) {
+                String paramType = p.type();
+                if (paramType != null
+                        && paramType.startsWith("List<")
+                        && paramType.endsWith(">")) {
                     registrarTipoDeLista(paramType);
                 }
             }
+
             func.getBody().forEach(this::coletarStringsRecursivo);
             return;
         }

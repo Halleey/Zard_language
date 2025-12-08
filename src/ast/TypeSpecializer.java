@@ -1,6 +1,7 @@
 package ast;
 
 import ast.functions.FunctionNode;
+import ast.functions.ParamInfo;
 import ast.lists.ListAddNode;
 import ast.lists.ListNode;
 import ast.structs.*;
@@ -254,9 +255,6 @@ public class TypeSpecializer {
         return name.contains("_");
     }
 
-    // ======================================================================
-    // Helpers
-    // ======================================================================
     private String extractElementType(String type) {
         if (type == null || type.equals("?")) return null;
         if (type.startsWith("List<") && type.endsWith(">")) {
@@ -309,12 +307,20 @@ public class TypeSpecializer {
 
     private void specializeFunction(FunctionNode fn) {
 
-        for (int i = 0; i < fn.getParamTypes().size(); i++) {
-            String t = fn.getParamTypes().get(i);
-            if ("?".equals(t)) {
+        List<ParamInfo> params = fn.getParameters();
+
+        for (int i = 0; i < params.size(); i++) {
+            ParamInfo p = params.get(i);
+
+            if ("?".equals(p.type())) {
                 String inferred = inferTypeFromBody(fn.getBody());
                 if (inferred != null) {
-                    fn.getParamTypes().set(i, inferred);
+                    // substitui o ParamInfo por outro com tipo inferido
+                    params.set(i, new ParamInfo(
+                            p.name(),
+                            inferred,
+                            p.isRef()
+                    ));
                 }
             }
         }

@@ -8,7 +8,6 @@ import low.module.LLVMEmitVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
-
 public class FunctionCallNode extends ASTNode {
     private final String name;
     private final List<ASTNode> args;
@@ -32,26 +31,23 @@ public class FunctionCallNode extends ASTNode {
         for (int i = 0; i < parts.length - 1; i++) {
             String nsName = parts[i];
             TypedValue nsVal = currentCtx.getVariable(nsName);
-            if (!nsVal.type().equals("namespace")) {
+
+            if (!nsVal.isNamespace()) {
                 throw new RuntimeException(nsName + " não é um namespace");
             }
+
             currentCtx = (RuntimeContext) nsVal.value();
         }
 
         String funcShortName = parts[parts.length - 1];
         TypedValue funcVal = currentCtx.getVariable(funcShortName);
 
-        if (!funcVal.type().equals("function")) {
+        if (!funcVal.isFunction()) {
             throw new RuntimeException(funcShortName + " não é uma função");
         }
 
         FunctionNode func = funcVal.getFunction();
-
-        List<TypedValue> argValues = new ArrayList<>();
-        for (ASTNode arg : args) {
-            argValues.add(arg.evaluate(ctx));
-        }
-        return func.invoke(currentCtx, argValues);
+        return func.invoke(currentCtx, args);
     }
 
     @Override
@@ -64,7 +60,6 @@ public class FunctionCallNode extends ASTNode {
             System.out.println(prefix + "  <no args>");
         }
     }
-
     public String getName() { return name; }
     public List<ASTNode> getArgs() { return args; }
 }

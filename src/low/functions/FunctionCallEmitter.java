@@ -3,6 +3,8 @@ package low.functions;
 import ast.ASTNode;
 import ast.functions.FunctionCallNode;
 import ast.functions.FunctionNode;
+import ast.functions.ParamInfo;
+import ast.variables.VariableNode;
 import low.TempManager;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
@@ -20,18 +22,26 @@ public class FunctionCallEmitter {
     }
 
     public void markBeingDeduced(String functionName) {
+        System.out.println("[FCall] markBeingDeduced: " + functionName);
         beingDeduced.add(functionName);
+        System.out.println("[FCall] beingDeduced agora = " + beingDeduced);
     }
 
     public void unmarkBeingDeduced(String functionName) {
+        System.out.println("[FCall] unmarkBeingDeduced: " + functionName);
         beingDeduced.remove(functionName);
+        System.out.println("[FCall] beingDeduced agora = " + beingDeduced);
     }
 
     public boolean isBeingDeduced(String functionName) {
-        return beingDeduced.contains(functionName);
+        boolean contains = beingDeduced.contains(functionName);
+        System.out.println("[FCall] isBeingDeduced(" + functionName + ") = " + contains);
+        return contains;
     }
+
     private String resolveLLVMFuncName(String funcName, LLVisitorMain visitor) {
-        // exemplo "math.cos" → ["math", "cos"]
+        System.out.println("[FCall] resolveLLVMFuncName para: " + funcName);
+
         String[] parts = funcName.split("\\.");
 
         if (parts.length == 2) {
@@ -39,105 +49,242 @@ public class FunctionCallEmitter {
             String base = parts[1];
 
             String full = alias + "_" + base;
+            System.out.println("[FCall]  tentando alias+base: " + full);
 
             if (visitor.getFunctionType(full) != null) {
+                System.out.println("[FCall]  achou functionType para alias+base: " + full);
                 return full;
             }
         }
 
         String replaced = funcName.replace('.', '_');
+        System.out.println("[FCall]  tentando com dots->underscore: " + replaced);
         if (visitor.getFunctionType(replaced) != null) {
+            System.out.println("[FCall]  achou functionType para replaced: " + replaced);
             return replaced;
         }
 
-        return parts[parts.length - 1];
+        String fallback = parts[parts.length - 1];
+        System.out.println("[FCall]  fallback para último pedaço: " + fallback);
+        return fallback;
     }
+
+    private void debugDumpFunctions(LLVisitorMain visitor) {
+        System.out.println("[FCall] ==== DUMP visitor.functions ====");
+        if (visitor.functions == null || visitor.functions.isEmpty()) {
+            System.out.println("[FCall]  (vazio)");
+        } else {
+            for (String k : visitor.functions.keySet()) {
+                System.out.println("[FCall]  key=" + k + " -> FunctionNode=" + visitor.functions.get(k));
+            }
+        }
+
+        System.out.println("[FCall] ==== DUMP visitor.importedFunctions ====");
+        if (visitor.importedFunctions == null || visitor.importedFunctions.isEmpty()) {
+            System.out.println("[FCall]  (vazio)");
+        } else {
+            for (String k : visitor.importedFunctions.keySet()) {
+                System.out.println("[FCall]  key=" + k + " -> FunctionNode=" + visitor.importedFunctions.get(k));
+            }
+        }
+    }
+
     public String emit(FunctionCallNode node, LLVisitorMain visitor) {
         StringBuilder sb = new StringBuilder();
         List<String> llvmArgs = new ArrayList<>();
         TypeMapper typeMapper = new TypeMapper();
 
-        FunctionNode targetFn = visitor.functions.get(node.getName());
-        if (targetFn == null) {
-            targetFn = visitor.importedFunctions.get(node.getName());
+        String originalName = node.getName();
+        System.out.println("==========================================");
+        System.out.println("[FCall] emit() INÍCIO");
+        System.out.println("[FCall] node.getName() = " + originalName);
+        System.out.println("[FCall] quantidade de args = " + node.getArgs().size());
+
+        String llvmFuncName = resolveLLVMFuncName(originalName, visitor);
+        System.out.println("[FCall] llvmFuncName resolvido: " + llvmFuncName);
+
+        FunctionNode targetFn;
+
+        System.out.println("[FCall] tentando visitor.functions.get(" + originalName + ")");
+        targetFn = visitor.functions.get(originalName);
+        if (targetFn != null) {
+            System.out.println("[FCall] alvo encontrado em functions (originalName): " + originalName);
+        } else {
+            System.out.println("[FCall] tentando visitor.functions.get(" + llvmFuncName + ")");
+            targetFn = visitor.functions.get(llvmFuncName);
+            if (targetFn != null) {
+                System.out.println("[FCall] alvo encontrado em functions (llvmName): " + llvmFuncName);
+            }
         }
 
-        List<String> expectedParams = targetFn != null ? targetFn.getParamTypes() : null;
+        if (targetFn == null) {
+            // 3) tentar importadas
+            System.out.println("[FCall] tentando importedFunctions.get(" + originalName + ")");
+            targetFn = visitor.importedFunctions.get(originalName);
+            if (targetFn != null) {
+                System.out.println("[FCall] alvo encontrado em importedFunctions (originalName): " + originalName);
+            } else {
+                System.out.println("[FCall] tentando importedFunctions.get(" + llvmFuncName + ")");
+                targetFn = visitor.importedFunctions.get(llvmFuncName);
+                if (targetFn != null) {
+                    System.out.println("[FCall] alvo encontrado em importedFunctions (llvmName): " + llvmFuncName);
+                }
+            }
+        }
 
-        // Emitir argumentos
+        if (targetFn == null) {
+            System.out.println("[FCall] targetFn CONTINUA null para " + originalName + "/" + llvmFuncName);
+            debugDumpFunctions(visitor);
+        } else {
+            System.out.println("[FCall] targetFn FINAL = " + targetFn.getName()
+                    + " implStruct=" + targetFn.getImplStructName());
+        }
+
+        List<ParamInfo> expectedParams =
+                targetFn != null ? targetFn.getParameters() : null;
+
+        if (expectedParams != null) {
+            System.out.println("[FCall] parâmetros esperados:");
+            for (int i = 0; i < expectedParams.size(); i++) {
+                ParamInfo p = expectedParams.get(i);
+                System.out.println("  idx=" + i + " name=" + p.name() +
+                        " type=" + p.type() + " ref=" + p.isRef());
+            }
+        } else {
+            System.out.println("[FCall] expectedParams == null para " + originalName);
+        }
+
         for (int i = 0; i < node.getArgs().size(); i++) {
+
             ASTNode arg = node.getArgs().get(i);
-            String argLLVM = arg.accept(visitor);
-            String temp = extractTemp(argLLVM);
-            String argType = typeMapper.toLLVM(extractType(argLLVM));
+            ParamInfo param =
+                    (expectedParams != null && i < expectedParams.size())
+                            ? expectedParams.get(i)
+                            : null;
 
-            if ("string".equals(argType)) argType = "%String*";
+            System.out.println("[FCall] Arg idx=" + i +
+                    " node=" + arg.getClass().getSimpleName() +
+                    " param=" + (param != null ? param.name() : "null") +
+                    " ref=" + (param != null && param.isRef()));
 
-            sb.append(argLLVM);
+            if (param != null && param.isRef()) {
 
-            String expectedType = null;
-            if (expectedParams != null && i < expectedParams.size()) {
-                expectedType = typeMapper.toLLVM(expectedParams.get(i));
-                if ("string".equals(expectedType)) expectedType = "%String*";
+                if (!(arg instanceof VariableNode var)) {
+                    throw new RuntimeException(
+                            "Parâmetro '&" + param.name() + "' exige uma variável"
+                    );
+                }
+
+                String varName = var.getName();
+                System.out.println("[FCall] &param – trabalhando com varName=" + varName);
+
+                String varPtr = visitor
+                        .getVariableEmitter()
+                        .getVarPtr(varName);
+
+                System.out.println("[FCall]  getVarPtr(" + varName + ") -> " + varPtr);
+
+                TypeInfos info = visitor.getVarType(varName);
+                if (info == null) {
+                    throw new RuntimeException("Tipo não registrado para variável: " + varName);
+                }
+
+                String valueLLVMType = info.getLLVMType();
+                String paramLLVMType = valueLLVMType + "*";
+
+                System.out.println("[FCall] &param: varName=" + varName +
+                        " valueLLVMType=" + valueLLVMType +
+                        " passando como " + paramLLVMType + " " + varPtr);
+
+                llvmArgs.add(paramLLVMType + " " + varPtr);
+                continue;
             }
 
-            // Convertemos int → double quando esperado
-            if (expectedType != null && !expectedType.equals(argType)) {
-                if (argType.equals("i32") && expectedType.equals("double")) {
-                    String conv = visitor.getTemps().newTemp();
-                    sb.append("  ").append(conv).append(" = sitofp i32 ")
-                            .append(temp).append(" to double\n")
-                            .append(";;VAL:").append(conv).append(";;TYPE:double\n");
-                    temp = conv;
-                    argType = "double";
-                }
+            System.out.println("[FCall] parâmetro normal, emitindo arg idx=" + i);
+            String argLLVM = arg.accept(visitor);
+            sb.append(argLLVM);
+
+            String temp = extractTemp(argLLVM);
+            String argType = extractType(argLLVM); // já é LLVM type (ex: i32, double, %String*)
+
+            System.out.println("[FCall] valor arg idx=" + i +
+                    " temp=" + temp +
+                    " type=" + argType);
+
+            String expectedLLVMType = null;
+            if (param != null && param.type() != null) {
+                expectedLLVMType = typeMapper.toLLVM(param.type());
+                System.out.println("[FCall] expectedLLVMType para idx=" + i + " = " + expectedLLVMType);
+            }
+
+            // conversão implícita i32 → double
+            if (expectedLLVMType != null &&
+                    "i32".equals(argType) &&
+                    "double".equals(expectedLLVMType)) {
+
+                String conv = visitor.getTemps().newTemp();
+                sb.append("  ").append(conv)
+                        .append(" = sitofp i32 ").append(temp)
+                        .append(" to double\n")
+                        .append(";;VAL:").append(conv)
+                        .append(";;TYPE:double\n");
+
+                temp = conv;
+                argType = "double";
+
+                System.out.println("[FCall] conversão implícita i32 -> double em idx=" + i +
+                        " novoTemp=" + conv);
             }
 
             llvmArgs.add(argType + " " + temp);
         }
 
-        // Nome correto da função com alias
-        String funcName = node.getName();
-        String llvmFuncName = resolveLLVMFuncName(funcName, visitor);
-
-        // Tipo de retorno
+        System.out.println("[FCall] consultando getFunctionType(" + llvmFuncName + ")");
         TypeInfos retInfo = visitor.getFunctionType(llvmFuncName);
         if (retInfo == null) {
-            throw new RuntimeException("Função não registrada: " + funcName);
+            System.out.println("[FCall] getFunctionType(" + llvmFuncName + ") retornou null!");
+            debugDumpFunctions(visitor);
+            throw new RuntimeException("Função não registrada: " + originalName);
         }
 
         String retType = retInfo.getLLVMType();
-        if ("string".equals(retType)) retType = "%String*";
+        System.out.println("[FCall] retType LLVM = " + retType);
 
-        // Void call
         if ("void".equals(retType)) {
+            System.out.println("[FCall] Emitindo call void @" + llvmFuncName);
             sb.append("  call void @")
                     .append(llvmFuncName)
                     .append("(").append(String.join(", ", llvmArgs)).append(")\n")
                     .append(";;VAL:void;;TYPE:void\n");
         } else {
-            String retTemp = temps.newTemp();
+            System.out.println("[FCall] Emitindo call com retorno @" + llvmFuncName);
+            String retTemp = visitor.getTemps().newTemp();
             sb.append("  ").append(retTemp)
                     .append(" = call ").append(retType).append(" @")
-                    .append(llvmFuncName).append("(")
-                    .append(String.join(", ", llvmArgs)).append(")\n")
+                    .append(llvmFuncName)
+                    .append("(").append(String.join(", ", llvmArgs)).append(")\n")
                     .append(";;VAL:").append(retTemp)
                     .append(";;TYPE:").append(retType).append("\n");
         }
 
+        System.out.println("[FCall] emit() FIM para " + originalName);
+        System.out.println("==========================================");
         return sb.toString();
     }
 
-    private String extractTemp(String code) {
-        int valIdx = code.lastIndexOf(";;VAL:");
-        if (valIdx == -1) throw new RuntimeException("Não encontrou ;;VAL: em: " + code);
-        int typeIdx = code.indexOf(";;TYPE:", valIdx);
-        return code.substring(valIdx + 6, typeIdx).trim();
+    private String extractTemp(String ir) {
+
+        int idx = ir.lastIndexOf(";;VAL:");
+        if (idx < 0) return null;
+        int end = ir.indexOf(";;TYPE:", idx);
+        return ir.substring(idx + 6, end).trim();
     }
 
-    private String extractType(String code) {
-        int typeIdx = code.lastIndexOf(";;TYPE:");
-        if (typeIdx == -1) throw new RuntimeException("Não encontrou ;;TYPE: em: " + code);
-        return code.substring(typeIdx + 7).trim();
+    private String extractType(String ir) {
+        int idx = ir.lastIndexOf(";;TYPE:");
+        if (idx < 0) return null;
+        int end = ir.indexOf("\n", idx);
+        if (end < 0) end = ir.length();
+        return ir.substring(idx + 7, end).trim();
     }
 }

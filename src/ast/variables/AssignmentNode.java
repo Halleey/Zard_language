@@ -29,19 +29,19 @@ public class AssignmentNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        // precisa existir
         if (!ctx.hasVariable(name)) {
             throw new RuntimeException("Variável não declarada: " + name);
         }
 
         TypedValue value = valueNode.evaluate(ctx);
 
-        String existingType = ctx.getVariable(name).type();
-        if (!existingType.equals(value.type())) {
+        String expectedType = ctx.getVariable(name).type();
+        if (!expectedType.equals(value.type())) {
             throw new RuntimeException(
-                    "Erro de tipo: esperado " + existingType + " mas encontrado " + value.type()
+                    "Erro de tipo: esperado " + expectedType + " mas encontrado " + value.type()
             );
         }
+
         ctx.setVariable(name, value);
         return value;
     }

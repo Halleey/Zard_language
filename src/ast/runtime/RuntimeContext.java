@@ -3,13 +3,15 @@ package ast.runtime;
 import ast.expressions.TypedValue;
 import ast.functions.FunctionNode;
 import ast.variables.VariableDeclarationNode;
+import ast.variables.VariableSlot;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class RuntimeContext {
-    private final Map<String, TypedValue> variables = new HashMap<>();
+    private final Map<String, VariableSlot> variables = new HashMap<>();
+
     private final RuntimeContext parent;
     private final Map<String, StructDefinition> structTypes = new HashMap<>();
     private final Map<String, Map<String, FunctionNode>> structMethods = new HashMap<>();
@@ -48,8 +50,39 @@ public class RuntimeContext {
         if (variables.containsKey(name)) {
             throw new RuntimeException("Variável já declarada: " + name);
         }
-        variables.put(name, value);
+        variables.put(name, new VariableSlot(value));
     }
+
+    public void bindSlot(String name, VariableSlot slot) {
+        variables.put(name, slot); // alias real
+    }
+
+    public VariableSlot getSlot(String name) {
+        if (variables.containsKey(name)) return variables.get(name);
+        if (parent != null) return parent.getSlot(name);
+        throw new RuntimeException("Variável não definida: " + name);
+    }
+
+    public TypedValue getVariable(String name) {
+        return getSlot(name).typedValue;
+    }
+
+    public void setVariable(String name, TypedValue value) {
+        getSlot(name).typedValue = value;
+    }
+
+    public boolean hasVariable(String name) {
+        return variables.containsKey(name) || (parent != null && parent.hasVariable(name));
+    }
+
+    public Map<String, TypedValue> snapshotVariables() {
+        Map<String, TypedValue> out = new HashMap<>();
+        for (var entry : variables.entrySet()) {
+            out.put(entry.getKey(), entry.getValue().typedValue);
+        }
+        return out;
+    }
+
 
 
     public void registerStructType(String name, List<VariableDeclarationNode> fields) {
@@ -70,29 +103,4 @@ public class RuntimeContext {
         throw new RuntimeException("Struct não definida: " + name);
     }
 
-
-
-    public void setVariable(String name, TypedValue value) {
-        if (variables.containsKey(name)) {
-            variables.put(name, value);
-        } else if (parent != null) {
-            parent.setVariable(name, value);
-        } else {
-            throw new RuntimeException("Variável não definida: " + name);
-        }
-    }
-
-    public TypedValue getVariable(String name) {
-        if (variables.containsKey(name)) return variables.get(name);
-        if (parent != null) return parent.getVariable(name);
-        throw new RuntimeException("Variável não definida: " + name);
-    }
-
-    public boolean hasVariable(String name) {
-        return variables.containsKey(name) || (parent != null && parent.hasVariable(name));
-    }
-
-    public Map<String, TypedValue> getVariables() {
-        return variables;
-    }
 }

@@ -2,6 +2,7 @@ package low.imports;
 
 import ast.ASTNode;
 import ast.functions.FunctionNode;
+import ast.functions.ParamInfo;
 import ast.imports.ImportNode;
 import ast.structs.ImplNode;
 import ast.structs.StructNode;
@@ -103,16 +104,34 @@ public class ImportEmitter {
         if (node == null) return;
 
         if (node instanceof FunctionNode func) {
+
+            // ===== tipo de retorno =====
             String retType = func.getReturnType();
-            if (retType.startsWith("List<") && retType.endsWith(">")) {
+            if (retType != null
+                    && retType.startsWith("List<")
+                    && retType.endsWith(">")) {
                 tiposDeListasUsados.add(retType);
             }
-            for (String param : func.getParamTypes()) {
-                if (param.startsWith("List<") && param.endsWith(">")) {
-                    tiposDeListasUsados.add(param);
+
+            // ===== tipos de parâmetros =====
+            for (ParamInfo param : func.getParameters()) {
+                String type = param.type();
+                if (type != null
+                        && type.startsWith("List<")
+                        && type.endsWith(">")) {
+                    tiposDeListasUsados.add(type);
                 }
             }
-            func.getBody().forEach(this::coletarListas);
+
+            // ===== corpo da função =====
+            for (ASTNode stmt : func.getBody()) {
+                coletarListas(stmt);
+            }
+        }
+
+        // continua descendo a AST para outros nós
+        for (ASTNode child : node.getChildren()) {
+            coletarListas(child);
         }
 
         if (node instanceof VariableDeclarationNode v) {

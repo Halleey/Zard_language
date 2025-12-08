@@ -3,6 +3,7 @@ package ast.structs;
 import ast.ASTNode;
 import ast.expressions.TypedValue;
 import ast.functions.FunctionNode;
+import ast.functions.ParamInfo;
 import ast.runtime.RuntimeContext;
 import ast.variables.VariableNode;
 import low.module.LLVMEmitVisitor;
@@ -36,33 +37,36 @@ public class StructMethodCallNode extends ASTNode {
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
 
-        TypedValue instanceVal = structInstance.evaluate(ctx);
+        ASTNode instanceExpr = structInstance;
 
         String base = structName.contains("<")
                 ? structName.substring(0, structName.indexOf('<'))
                 : structName;
 
         FunctionNode method = ctx.getStructMethod(base, methodName);
-        if (method == null)
-            throw new RuntimeException("Method " + methodName + " not found in Struct " + structName);
-
-        List<TypedValue> evaluatedArgs = new ArrayList<>();
-        for (ASTNode arg : args) {
-            evaluatedArgs.add(arg.evaluate(ctx));
+        if (method == null) {
+            throw new RuntimeException(
+                    "Method " + methodName + " not found in Struct " + structName
+            );
         }
 
-        if (!method.getParamTypes().isEmpty()) {
-            String first = method.getParamTypes().get(0);
-            if (first.startsWith("Struct<" + base + ">")) {
-                evaluatedArgs.add(0, instanceVal);
+        List<ASTNode> callArgs = new ArrayList<>();
+        List<ParamInfo> params = method.getParameters();
+
+        if (!params.isEmpty()) {
+            String firstType = params.get(0).type();
+            if (firstType != null && firstType.startsWith("Struct<" + base + ">")) {
+                callArgs.add(instanceExpr);
             }
         }
 
-        RuntimeContext local = new RuntimeContext(ctx);
-        local.declareVariable("s", instanceVal);
+        if (args != null) {
+            callArgs.addAll(args);
+        }
 
-        return method.invoke(local, evaluatedArgs);
+        return method.invoke(ctx, callArgs);
     }
+
 
     public String getReceiverName() {
         if (structInstance instanceof VariableNode v) {

@@ -22,10 +22,13 @@ TypedValue(String type, Object value) {
     }
 
     public Map<String, TypedValue> getNamespace() {
-        if (!isNamespace()) throw new RuntimeException("TypedValue is not a namespace");
+        if (!isNamespace()) {
+            throw new RuntimeException("TypedValue is not a namespace");
+        }
         RuntimeContext ctx = (RuntimeContext) value;
-        return ctx.getVariables();
+        return ctx.snapshotVariables();
     }
+
 
     public FunctionNode getFunction() {
         if (!isFunction()) throw new RuntimeException("TypedValue is not a function");

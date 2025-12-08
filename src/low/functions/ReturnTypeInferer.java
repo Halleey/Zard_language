@@ -4,6 +4,7 @@ import ast.ASTNode;
 import ast.exceptions.ReturnNode;
 import ast.functions.FunctionCallNode;
 import ast.functions.FunctionNode;
+import ast.functions.ParamInfo;
 import ast.ifstatements.IfNode;
 import ast.loops.WhileNode;
 import ast.variables.BinaryOpNode;
@@ -24,20 +25,25 @@ public class ReturnTypeInferer {
         this.visitor = visitor;
         this.typeMapper = typeMapper;
     }
-
     public TypeInfos deduceReturnType(FunctionNode fn) {
+
 
         Map<String, TypeInfos> localVars = new HashMap<>();
 
-        for (int i = 0; i < fn.getParams().size(); i++) {
-            String sourceType = fn.getParamTypes().get(i);
-            String llvmType   = typeMapper.toLLVM(sourceType);
-            String elemType   = (sourceType.startsWith("List<") && sourceType.endsWith(">"))
-                    ? sourceType.substring(5, sourceType.length() - 1)
-                    : null;
+        for (ParamInfo p : fn.getParameters()) {
 
-            localVars.put(fn.getParams().get(i),
-                    new TypeInfos(sourceType, llvmType, elemType));
+            String sourceType = p.type();
+            String llvmType   = typeMapper.toLLVM(sourceType);
+
+            String elemType = null;
+            if (sourceType.startsWith("List<") && sourceType.endsWith(">")) {
+                elemType = sourceType.substring(5, sourceType.length() - 1);
+            }
+
+            localVars.put(
+                    p.name(),
+                    new TypeInfos(sourceType, llvmType, elemType)
+            );
         }
 
         for (ASTNode stmt : fn.getBody()) {
@@ -50,7 +56,6 @@ public class ReturnTypeInferer {
 
         return new TypeInfos("void", "void", null);
     }
-
     private void collectVarDecls(ASTNode node, Map<String, TypeInfos> localVars) {
         if (node instanceof VariableDeclarationNode decl) {
             String srcType  = decl.getType();

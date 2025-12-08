@@ -6,6 +6,7 @@ import translate.front.Parser;
 
 import java.util.ArrayList;
 import java.util.List;
+
 public class FunctionParser {
 
     private final Parser parser;
@@ -37,7 +38,7 @@ public class FunctionParser {
                 Token next = parser.current();
                 if (next.getType() == Token.TokenType.IDENTIFIER ||
                         next.getType() == Token.TokenType.DELIMITER ||
-                        next.getValue().equals("?")) {
+                        "?".equals(next.getValue())) {
                     break;
                 }
             }
@@ -49,7 +50,7 @@ public class FunctionParser {
 
     private boolean isPrimitive(String t) {
         return switch (t) {
-            case "int","double","bool","string","char","void" -> true;
+            case "int", "double", "bool", "string", "char", "void" -> true;
             default -> false;
         };
     }
@@ -78,10 +79,19 @@ public class FunctionParser {
         parser.eat(Token.TokenType.IDENTIFIER);
         parser.eat(Token.TokenType.DELIMITER, "(");
 
-        List<String> paramNames = new ArrayList<>();
-        List<String> paramTypes = new ArrayList<>();
+        List<ParamInfo> params = new ArrayList<>();
+
+        parser.pushContext();
 
         while (!parser.current().getValue().equals(")")) {
+
+            boolean isRef = false;
+
+            if (parser.current().getType() == Token.TokenType.OPERATOR
+                    && parser.current().getValue().equals("&")) {
+                isRef = true;
+                parser.advance();
+            }
 
             StringBuilder typeBuilder = new StringBuilder();
             int depth = 0;
@@ -104,24 +114,9 @@ public class FunctionParser {
                     ));
 
             String type = typeBuilder.toString().trim();
+
             String name = parser.current().getValue();
             parser.eat(Token.TokenType.IDENTIFIER);
-
-            paramTypes.add(type);
-            paramNames.add(name);
-
-            if (parser.current().getValue().equals(",")) {
-                parser.advance();
-            }
-        }
-
-        parser.eat(Token.TokenType.DELIMITER, ")");
-
-        parser.pushContext();
-
-        // registrar parâmetros normais
-        for (int i = 0; i < paramNames.size(); i++) {
-            String type = paramTypes.get(i);
 
             if (parser.lookupStruct(type) != null
                     && !type.startsWith("Struct<")
@@ -130,23 +125,30 @@ public class FunctionParser {
                 type = "Struct<" + type + ">";
             }
 
-            // *** CORREÇÃO PRINCIPAL ***
-            if (type.equals("?")) {
+            if ("?".equals(type)) {
                 type = "i8*"; // tipo genérico default
             }
 
-            parser.declareVariable(paramNames.get(i), type);
-            paramTypes.set(i, type);
+            // registra no escopo do parser para o corpo da função
+            parser.declareVariable(name, type);
+
+            params.add(new ParamInfo(name, type, isRef));
+
+            if (parser.current().getValue().equals(",")) {
+                parser.advance();
+            }
         }
 
-        // registrar o "s" de métodos de impl
+        parser.eat(Token.TokenType.DELIMITER, ")");
+
+        // registrar o "s" de métodos de impl (receiver), por valor
         if (implStructName != null) {
             String receiverType = "Struct<" + implStructName + ">";
 
-            if (!paramNames.contains("s")) {
-                paramNames.add(0, "s");
-                paramTypes.add(0, receiverType);
+            boolean hasS = params.stream().anyMatch(p -> p.name().equals("s"));
+            if (!hasS) {
                 parser.declareVariable("s", receiverType);
+                params.add(0, new ParamInfo("s", receiverType, false));
             }
         }
 
@@ -158,6 +160,6 @@ public class FunctionParser {
             returnType = "void";
         }
 
-        return new FunctionNode(funcName, paramNames, paramTypes, body, returnType);
+        return new FunctionNode(funcName, params, body, returnType);
     }
 }

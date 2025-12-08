@@ -2,6 +2,7 @@ package translate.identifiers;
 
 import ast.ASTNode;
 import ast.functions.FunctionNode;
+import ast.functions.ParamInfo;
 import ast.structs.ImplNode;
 import ast.structs.StructFieldAccessNode;
 import ast.variables.VariableNode;
@@ -14,6 +15,7 @@ import java.util.*;
  * - Adiciona como primeiro parâmetro do tipo Struct<NomeDaStructDoImpl>.
  * - Garante tipo de retorno padrão Struct<NomeDaStructDoImpl> se estiver "?" ou vazio.
  */
+
 public class MethodDesugarer {
 
     public void desugar(List<ASTNode> ast) {
@@ -43,35 +45,24 @@ public class MethodDesugarer {
     }
 
     private void normalizeMethod(String structName, FunctionNode fn) {
-        List<String> names = fn.getParams();
-        List<String> types = fn.getParamTypes();
 
-        if (names == null) {
-            names = new ArrayList<>();
-            fn.setParams(names);
-        }
-        if (types == null) {
-            types = new ArrayList<>(Collections.nCopies(names.size(), "?"));
-            fn.setParamTypes(types);
-        }
+        List<ParamInfo> params = fn.getParameters();
 
-        // 1) Já tem receiver explícito? (ex: function add(Struct<Set> s, ? value))
-        if (hasExplicitReceiver(structName, fn)) {
+        // 1) Já tem receiver explícito?
+        if (hasExplicitReceiver(structName, params)) {
             ensureReturnType(structName, fn);
             return;
         }
 
-        // 2) Tentar descobrir receiver implícito pelo corpo
-        String implicit = findImplicitReceiverCandidate(fn);
-
-        // Se não achar nada, cai em um default ("s")
-        if (implicit == null || implicit.isBlank()) {
-            implicit = "s";
+        // 2) Descobrir nome do receiver implícito
+        String receiverName = findImplicitReceiverCandidate(fn);
+        if (receiverName == null || receiverName.isBlank()) {
+            receiverName = "s";
         }
 
-        // Evitar conflito de nome com outros parâmetros
-        if (names.contains(implicit)) {
-            // Se já tem "s" como param, tenta "self", depois "this", etc.
+        // Evitar conflito de nomes
+        String finalReceiverName = receiverName;
+        if (params.stream().anyMatch(p -> p.name().equals(finalReceiverName))) {
             List<String> alternatives = Arrays.asList(
                     structName.toLowerCase(),
                     "self",
@@ -79,35 +70,43 @@ public class MethodDesugarer {
                     "_" + structName.toLowerCase()
             );
             for (String alt : alternatives) {
-                if (!names.contains(alt)) {
-                    implicit = alt;
+                boolean free = params.stream().noneMatch(p -> p.name().equals(alt));
+                if (free) {
+                    receiverName = alt;
                     break;
                 }
             }
         }
 
-        // Adiciona como primeiro parâmetro
-        names.add(0, implicit);
-        types.add(0, "Struct<" + structName + ">");
-        fn.setParams(names);
-        fn.setParamTypes(types);
-        fn.setImplicitReceiverName(implicit);
+        // 3) Inserir receiver como PRIMEIRO parâmetro
+        List<ParamInfo> newParams = new ArrayList<>();
+        newParams.add(new ParamInfo(
+                receiverName,
+                "Struct<" + structName + ">",
+                false // receiver NÃO é & por padrão
+        ));
+        newParams.addAll(params);
 
+        fn.getParameters().clear();
+        fn.getParameters().addAll(newParams);
+
+        fn.setImplicitReceiverName(receiverName);
         ensureReturnType(structName, fn);
     }
 
-    private boolean hasExplicitReceiver(String structName, FunctionNode fn) {
-        List<String> types = fn.getParamTypes();
-        if (types == null || types.isEmpty()) return false;
+    private boolean hasExplicitReceiver(String structName, List<ParamInfo> params) {
+        if (params == null || params.isEmpty()) return false;
 
-        String first = types.get(0);
-        if (first == null) return false;
+        ParamInfo first = params.get(0);
+        String type = first.type();
+        if (type == null) return false;
 
-        first = first.trim();
-        if (first.equals(structName)) return true;
-        if (first.equals("Struct<" + structName + ">")) return true;
-        // ex: Struct<Set<string>> ainda é "receiver desta struct"
-        if (first.startsWith("Struct<" + structName + "<")) return true;
+        type = type.trim();
+
+        if (type.equals(structName)) return true;
+        if (type.equals("Struct<" + structName + ">")) return true;
+        // ex: Struct<Set<int>>
+        if (type.startsWith("Struct<" + structName + "<")) return true;
 
         return false;
     }

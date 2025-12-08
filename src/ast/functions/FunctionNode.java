@@ -11,16 +11,49 @@ import java.util.List;
 
 public class FunctionNode extends ASTNode {
     private String name;
+    private final List<ParamInfo> parameters;
+    private final List<ASTNode> body;
+    private String returnType;
+    private String implicitReceiverName; // "s" em métodos de impl
+    private String implStructName;       // null se não for método de impl
 
-    public void setParams(List<String> params) {
-        this.params = params;
+    public FunctionNode(String name,
+                        List<ParamInfo> parameters,
+                        List<ASTNode> body,
+                        String returnType) {
+        this.name = name;
+        this.parameters = parameters;
+        this.body = body;
+        this.returnType = (returnType != null && !returnType.isBlank())
+                ? returnType
+                : "void";
+        this.implStructName = null;
     }
 
-    private  List<String> params;
-    private  List<String> paramTypes;
-    private final List<ASTNode> body;
-    private  String returnType;
-    private String implicitReceiverName;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String newName) {
+        this.name = newName;
+    }
+
+    public List<ParamInfo> getParameters() {
+        return parameters;
+    }
+
+    public String getReturnType() {
+        return returnType;
+    }
+
+    public void setReturnType(String type) {
+        this.returnType = type;
+    }
+
+    public List<ASTNode> getBody() {
+        return body;
+    }
 
     public String getImplicitReceiverName() {
         return implicitReceiverName;
@@ -28,31 +61,6 @@ public class FunctionNode extends ASTNode {
 
     public void setImplicitReceiverName(String implicitReceiverName) {
         this.implicitReceiverName = implicitReceiverName;
-    }
-    public void setName(String newName) {
-        this.name = newName;
-    }
-
-    public void setParamTypes(List<String> paramTypes) {
-        this.paramTypes = paramTypes;
-    }
-
-    public void setReturnType(String type) { this.returnType = type; }
-
-    @Override
-    public List<ASTNode> getChildren() { return body; }
-
-
-    private String implStructName; // null se não for função de impl
-
-    public FunctionNode(String name, List<String> params, List<String> paramTypes,
-                        List<ASTNode> body, String returnType) {
-        this.name = name;
-        this.params = params;
-        this.paramTypes = paramTypes;
-        this.body = body;
-        this.returnType = returnType != null ? returnType : "void";
-        this.implStructName = null;
     }
 
     public void setImplStructName(String structName) {
@@ -63,11 +71,10 @@ public class FunctionNode extends ASTNode {
         return implStructName;
     }
 
-    public List<String> getParamTypes() { return paramTypes; }
-    public String getReturnType() { return returnType; }
-    public String getName() { return name; }
-    public List<String> getParams() { return params; }
-    public List<ASTNode> getBody() { return body; }
+    @Override
+    public List<ASTNode> getChildren() {
+        return body;
+    }
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
@@ -76,20 +83,39 @@ public class FunctionNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
+        // registra a própria função no contexto como valor
         ctx.declareVariable(name, new TypedValue("function", this));
         return null;
     }
 
-    public TypedValue invoke(RuntimeContext parentCtx, List<TypedValue> args) {
+    public TypedValue invoke(RuntimeContext parentCtx, List<ASTNode> argNodes) {
         RuntimeContext localCtx = new RuntimeContext(parentCtx);
 
-        for (int i = 0; i < params.size(); i++) {
-            String paramName = params.get(i);
-            TypedValue argValue = i < args.size() ? args.get(i) : new TypedValue("void", null);
-            String paramType = i < paramTypes.size() ? paramTypes.get(i) : "any";
+        if (argNodes.size() < parameters.size()) {
+            throw new RuntimeException("Argumentos insuficientes para função " + name);
+        }
 
-            argValue = promoteTypeIfNeeded(argValue, paramType);
-            localCtx.declareVariable(paramName, argValue);
+        for (int i = 0; i < parameters.size(); i++) {
+            ParamInfo param = parameters.get(i);
+            ASTNode argNode = argNodes.get(i);
+
+            if (param.isRef()) {
+                // &param: precisa ser uma variável simples
+                if (!(argNode instanceof ast.variables.VariableNode var)) {
+                    throw new RuntimeException(
+                            "Parâmetro por referência '&" + param.name() + "' exige uma variável, não uma expressão"
+                    );
+                }
+
+                // pega o slot da variável no contexto do chamador
+                var slot = parentCtx.getSlot(var.getName());
+                // e liga o nome do parâmetro ao MESMO slot (aliasing)
+                localCtx.bindSlot(param.name(), slot);
+
+            } else {
+                TypedValue value = argNode.evaluate(parentCtx);
+                localCtx.declareVariable(param.name(), value);
+            }
         }
 
         try {
@@ -97,38 +123,48 @@ public class FunctionNode extends ASTNode {
                 node.evaluate(localCtx);
             }
         } catch (ReturnValue rv) {
-            TypedValue retVal = rv.value;
-            return promoteTypeIfNeeded(retVal, returnType);
+            return rv.value;
         }
 
         return null;
     }
 
-    private TypedValue promoteTypeIfNeeded(TypedValue value, String targetType) {
-        if (value == null) return null;
-        String valueType = value.type();
 
-        if (valueType.equals(targetType)) return value;
+    //talvez tenha uso futuro
+//    private TypedValue promoteTypeIfNeeded(TypedValue value, String targetType) {
+//        if (value == null) return null;
+//        String valueType = value.type();
+//
+//        if (valueType.equals(targetType)) return value;
+//
+//        if ("double".equals(targetType) && "int".equals(valueType)) {
+//            return new TypedValue("double", ((Integer) value.value()).doubleValue());
+//        }
+//
+//        if (targetType.startsWith("List<") && "List".equals(valueType)) {
+//            return new TypedValue(targetType, value.value());
+//        }
+//
+//        return value;
+//    }
 
-        if (targetType.equals("double") && valueType.equals("int")) {
-            return new TypedValue("double", ((Integer) value.value()).doubleValue());
-        }
-
-        if (targetType.startsWith("List<") && valueType.equals("List")) {
-            return new TypedValue(targetType, value.value());
-        }
-
-        return value;
-    }
 
     @Override
     public void print(String prefix) {
         StringBuilder sig = new StringBuilder();
         sig.append(prefix).append("Function ").append(name).append("(");
-        for (int i = 0; i < params.size(); i++) {
-            sig.append(params.get(i)).append(": ").append(paramTypes.get(i));
-            if (i < params.size() - 1) sig.append(", ");
+
+        for (int i = 0; i < parameters.size(); i++) {
+            ParamInfo p = parameters.get(i);
+            if (p.isRef()) {
+                sig.append("&");
+            }
+            sig.append(p.name())
+                    .append(": ")
+                    .append(p.type());
+            if (i < parameters.size() - 1) sig.append(", ");
         }
+
         sig.append(") -> ").append(returnType);
         System.out.println(sig);
 

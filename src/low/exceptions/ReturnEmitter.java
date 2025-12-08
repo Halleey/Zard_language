@@ -2,10 +2,9 @@ package low.exceptions;
 
 import ast.exceptions.ReturnNode;
 import ast.variables.LiteralNode;
+import ast.variables.VariableNode;
 import low.TempManager;
 import low.module.LLVisitorMain;
-
-
 public class ReturnEmitter {
     private final LLVisitorMain visitor;
     private final TempManager temps;
@@ -23,20 +22,35 @@ public class ReturnEmitter {
             return sb.toString();
         }
 
-        // gera código da expressão (pode criar markers ;;VAL:;;TYPE:)
         String exprCode = node.expr.accept(visitor);
         sb.append(exprCode);
 
-        // extrai temp e tipo do código gerado
         String temp = extractTemp(exprCode);
         String type = extractType(exprCode);
 
-        // caso 1: função já retorna %String* (apenas repassa)
+        if (node.expr instanceof VariableNode
+                && ("i32*".equals(type) || "double*".equals(type) || "i1*".equals(type))) {
+
+            String baseType = type.substring(0, type.length() - 1); // i32, double, i1
+            String loadTmp = temps.newTemp();
+
+            sb.append("  ").append(loadTmp)
+                    .append(" = load ").append(baseType)
+                    .append(", ").append(type).append(" ").append(temp).append("\n")
+                    .append(";;VAL:").append(loadTmp)
+                    .append(";;TYPE:").append(baseType).append("\n");
+
+            temp = loadTmp;
+            type = baseType;
+        }
+
+        // função já retorna %String* (apenas repassa)
         if ("%String*".equals(type)) {
             sb.append("  ret %String* ").append(temp).append("\n");
             return sb.toString();
         }
 
+        // literal string → construir %String na hora
         if (node.expr instanceof LiteralNode lit && "string".equals(lit.value.type())) {
             int len = ((String) lit.value.value()).length();
 
@@ -59,6 +73,7 @@ public class ReturnEmitter {
             return sb.toString();
         }
 
+        // i8* genérico → embrulha em %String (length desconhecido)
         if ("i8*".equals(type)) {
             String sAlloca = temps.newTemp();
             sb.append("  ").append(sAlloca).append(" = alloca %String\n");
@@ -79,6 +94,7 @@ public class ReturnEmitter {
             return sb.toString();
         }
 
+        // caso geral
         sb.append("  ret ").append(type).append(" ").append(temp).append("\n");
         return sb.toString();
     }

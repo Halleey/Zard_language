@@ -82,4 +82,30 @@ public class StructNode extends ASTNode {
         System.out.println(clone + " debug");
         return clone;
     }
+
+    public int getLLVMSizeBytes() {
+        int size = 0;
+        for (VariableDeclarationNode field : fields) {
+            size += llvmSizeOf(field.getType());
+        }
+        return size;
+    }
+
+    private int llvmSizeOf(String t) {
+        switch (t) {
+            case "int": return 4;
+            case "double": return 8;
+            case "float": return 4;
+            case "boolean": return 1;
+            case "string": return 8;        // ponteiro: %String*
+        }
+
+        if (t.startsWith("List<")) return 8;
+
+        if (t.startsWith("Struct")) return 8;
+
+        // fallback
+        return 8;
+    }
+
 }

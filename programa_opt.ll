@@ -2,7 +2,6 @@
 source_filename = "programa.ll"
 
 %Item = type { i32, ptr }
-%Set_Item = type { ptr }
 
 @.strChar = private constant [3 x i8] c"%c\00"
 @.strTrue = private constant [6 x i8] c"true\0A\00"
@@ -76,15 +75,15 @@ entry:
 
 define ptr @Set_Item_addItem(ptr %s, i32 %id, ptr %name) {
 entry:
-  %tmp0 = alloca %Item, align 8
+  %tmp0 = call ptr @malloc(i64 12)
   store i32 0, ptr %tmp0, align 4
-  %tmp2 = call ptr @createString(ptr null)
-  %tmp3 = getelementptr inbounds %Item, ptr %tmp0, i32 0, i32 1
-  store ptr %tmp2, ptr %tmp3, align 8
+  %tmp3 = call ptr @createString(ptr null)
+  %tmp4 = getelementptr inbounds %Item, ptr %tmp0, i32 0, i32 1
+  store ptr %tmp3, ptr %tmp4, align 8
   store i32 %id, ptr %tmp0, align 4
-  store ptr %name, ptr %tmp3, align 8
-  %tmp14 = load ptr, ptr %s, align 8
-  call void @arraylist_add_ptr(ptr %tmp14, ptr %tmp0)
+  store ptr %name, ptr %tmp4, align 8
+  %tmp15 = load ptr, ptr %s, align 8
+  call void @arraylist_add_ptr(ptr %tmp15, ptr %tmp0)
   ret ptr %s
 
 0:                                                ; No predecessors!
@@ -205,15 +204,17 @@ while_end_2:                                      ; preds = %while_cond_0.while_
 }
 
 define i32 @main() {
-  %tmp0 = alloca %Set_Item, align 8
-  %tmp1 = call ptr @arraylist_create(i64 10)
-  store ptr %tmp1, ptr %tmp0, align 8
-  %tmp6 = call ptr @createString(ptr null)
-  %tmp10 = call ptr @Set_Item_addItem(ptr %tmp0, i32 1)
-  %tmp13 = call ptr @Set_Item_addItem(ptr %tmp0, i32 2)
-  %tmp16 = call ptr @Set_Item_addItem(ptr %tmp0, i32 3)
-  %tmp19 = call ptr @Set_Item_removeItemById(ptr %tmp0, i32 2)
-  %tmp21 = call ptr @Set_Item_prints(ptr %tmp0)
+  %tmp0 = call ptr @malloc(i64 8)
+  %tmp2 = call ptr @arraylist_create(i64 10)
+  store ptr %tmp2, ptr %tmp0, align 8
+  %tmp8 = call ptr @createString(ptr @.str6)
+  %tmp9 = call ptr @Set_Item_addItem(ptr %tmp0, i32 1, ptr %tmp8)
+  %tmp13 = call ptr @createString(ptr @.str7)
+  %tmp14 = call ptr @Set_Item_addItem(ptr %tmp0, i32 2, ptr %tmp13)
+  %tmp18 = call ptr @createString(ptr @.str8)
+  %tmp19 = call ptr @Set_Item_addItem(ptr %tmp0, i32 3, ptr %tmp18)
+  %tmp22 = call ptr @Set_Item_removeItemById(ptr %tmp0, i32 2)
+  %tmp24 = call ptr @Set_Item_prints(ptr %tmp0)
   %1 = call i32 @getchar()
   ret i32 0
 }

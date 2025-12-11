@@ -10,35 +10,31 @@ import low.lists.generics.ListGetEmitter;
 import low.lists.generics.ListSizeEmitter;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
-
-
 public class ExprPrintHandler {
     private final TempManager temps;
-
-
-    /*
-    need fix -> list print emitter
-     if -> flag for Struct -> true
-     condition will be evaluated in i8 *
-     */
 
     public ExprPrintHandler(TempManager temps) {
         this.temps = temps;
     }
+
     public String emitExprOrElement(String exprLLVM, LLVisitorMain visitor, ASTNode node) {
-        int markerIdx = exprLLVM.lastIndexOf(";;VAL:");
-        if (markerIdx == -1) {
+
+        String valTypeLine = findLastValTypeMarkerOfExpression(exprLLVM);
+        if (valTypeLine == null) {
             return exprLLVM;
         }
 
-        String codePart = exprLLVM.substring(0, markerIdx);
-        String valTypePart = exprLLVM.substring(markerIdx);
-        String temp = extractTemp(valTypePart);
-        String type = extractType(valTypePart);
+        String temp = extractTemp(valTypeLine);
+        String type = extractType(valTypeLine);
+
+        int cutIndex = exprLLVM.lastIndexOf(valTypeLine);
+        String codePart = (cutIndex >= 0) ? exprLLVM.substring(0, cutIndex) : exprLLVM;
 
         StringBuilder llvm = new StringBuilder();
-        if (!codePart.isEmpty()) {
-            if (!codePart.endsWith("\n")) codePart += "\n";
+        if (!codePart.isBlank()) {
+            if (!codePart.endsWith("\n")) {
+                codePart += "\n";
+            }
             llvm.append(codePart);
         }
 
@@ -50,12 +46,14 @@ public class ExprPrintHandler {
                         .append("i32 ").append(temp).append(")\n");
                 return llvm.toString();
             }
+
             case "double" -> {
                 llvm.append("  call i32 (i8*, ...) @printf(")
                         .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), ")
                         .append("double ").append(temp).append(")\n");
                 return llvm.toString();
             }
+
             case "float" -> {
                 String tmpExt = temps.newTemp();
                 llvm.append("  ").append(tmpExt)
@@ -66,18 +64,21 @@ public class ExprPrintHandler {
                         .append("double ").append(tmpExt).append(")\n");
                 return llvm.toString();
             }
+
             case "i1" -> {
                 new PrimitivePrintHandler(temps).emitBoolPrint(llvm, temp);
                 return llvm.toString();
             }
-            case "%String*" -> {
 
+            case "%String*" -> {
                 llvm.append("  call void @printString(%String* ").append(temp).append(")\n");
                 return llvm.toString();
             }
+
             case "i8" -> {
                 String castTmp = temps.newTemp();
-                llvm.append("  ").append(castTmp).append(" = sext i8 ").append(temp).append(" to i32\n");
+                llvm.append("  ").append(castTmp)
+                        .append(" = sext i8 ").append(temp).append(" to i32\n");
                 llvm.append("  call i32 (i8*, ...) @printf(")
                         .append("i8* getelementptr ([3 x i8], [3 x i8]* @.strChar, i32 0, i32 0), ")
                         .append("i32 ").append(castTmp).append(")\n");
@@ -85,16 +86,13 @@ public class ExprPrintHandler {
             }
 
             case "i8*" -> {
-                // se for chamada de função, checar tipo de retorno
                 if (node instanceof FunctionCallNode callNode) {
                     TypeInfos fnType = visitor.getFunctionType(callNode.getName());
                     if (fnType != null && fnType.isList()) {
-                        // imprime como lista
                         return new ListPrintHandler(temps).emit(node, visitor);
                     }
                 }
 
-                // fallback: tratar como string normal
                 llvm.append("  call i32 (i8*, ...) @printf(")
                         .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), ")
                         .append("i8* ").append(temp).append(")\n");
@@ -108,8 +106,7 @@ public class ExprPrintHandler {
                     return handler.emit(node, visitor);
                 }
 
-                if(type.startsWith("%struct.ArrayList")) {
-
+                if (type.startsWith("%struct.ArrayList")) {
                     ListPrintHandler handler = new ListPrintHandler(temps);
                     return handler.emit(node, visitor);
                 }
@@ -126,29 +123,14 @@ public class ExprPrintHandler {
                             new ListGetPrintHandler(temps, new ListGetEmitter(temps));
                     return handler.emit(node, visitor);
                 }
-                if(node instanceof ListNode) {
+
+                if (node instanceof ListNode) {
                     ListPrintHandler handler = new ListPrintHandler(temps);
                     return handler.emit(node, visitor);
                 }
 
                 if (isStructLLVMType(type)) {
-                    String structName = toStructName(type);
-                    String structNameSym = structName.replace('.', '_').replace(' ', '_');
-
-                    String cast = temps.newTemp();
-                    llvm.append("  ")
-                            .append(cast)
-                            .append(" = bitcast ")
-                            .append(type).append(" ").append(temp)
-                            .append(" to i8*\n");
-
-                    llvm.append("  call void @print_")
-                            .append(structNameSym)
-                            .append("(i8* ")
-                            .append(cast)
-                            .append(")\n");
-
-                    return llvm.toString();
+                    return new StructPrintHandler(temps).emit(node, visitor);
                 }
 
                 throw new RuntimeException("Unsupported type in print: " + type);
@@ -156,48 +138,48 @@ public class ExprPrintHandler {
         }
     }
 
-
-    private String extractTemp(String valTypePart) {
-        int v = valTypePart.indexOf(";;VAL:");
-        int t = valTypePart.indexOf(";;TYPE:", v);
-        return valTypePart.substring(v + 6, t).trim();
+    private String findLastValTypeMarkerOfExpression(String exprLLVM) {
+        String[] lines = exprLLVM.split("\n");
+        for (int i = lines.length - 1; i >= 0; i--) {
+            String line = lines[i].trim();
+            if (line.startsWith(";;VAL:") && line.contains(";;TYPE:")) {
+                return line;
+            }
+        }
+        return null;
     }
 
-    private String extractType(String valTypePart) {
-        int t = valTypePart.indexOf(";;TYPE:");
-        int end = valTypePart.indexOf("\n", t);
-        if (end == -1) end = valTypePart.length();
-        return valTypePart.substring(t + 7, end).trim();
+    private String extractTemp(String valTypeLine) {
+        int v = valTypeLine.indexOf(";;VAL:");
+        int t = valTypeLine.indexOf(";;TYPE:", v);
+        if (v == -1 || t == -1) return "";
+        return valTypeLine.substring(v + 6, t).trim();
+    }
+
+    private String extractType(String valTypeLine) {
+        int t = valTypeLine.indexOf(";;TYPE:");
+        if (t == -1) return "";
+        int end = valTypeLine.indexOf("\n", t);
+        if (end == -1) end = valTypeLine.length();
+        return valTypeLine.substring(t + 7, end).trim();
     }
 
     private boolean isStructLLVMType(String llvmType) {
         if (llvmType == null) return false;
         String t = llvmType.trim();
 
-        if (t.endsWith("*")) t = t.substring(0, t.length() - 1);
-        if (t.startsWith("%")) t = t.substring(1);
-
-        if (t.equals("i32") || t.equals("i1") || t.equals("i8") || t.equals("double") || t.equals("String") || t.equals("String*"))
-            return false;
-
-        return t.startsWith("Struct") || (!t.isEmpty() && Character.isUpperCase(t.charAt(0)));
-    }
-
-
-    private String toStructName(String llvmType) {
-        String s = llvmType.trim();
-        if (s.endsWith("*")) s = s.substring(0, s.length() - 1);
-
-        if (s.startsWith("%")) s = s.substring(1);
-
-        if (s.startsWith("Struct<") && s.endsWith(">")) {
-            s = s.substring("Struct<".length(), s.length() - 1).trim();
-        } else if (s.startsWith("Struct.")) {
-            s = s.substring("Struct.".length()).trim();
-        } else if (s.startsWith("Struct ")) {
-            s = s.substring("Struct ".length()).trim();
+        while (t.endsWith("*")) {
+            t = t.substring(0, t.length() - 1);
+        }
+        if (t.startsWith("%")) {
+            t = t.substring(1);
         }
 
-        return s;
+        if (t.equals("i32") || t.equals("i1") || t.equals("i8") ||
+                t.equals("double") || t.equals("String") || t.equals("String*")) {
+            return false;
+        }
+
+        return t.startsWith("Struct") || (!t.isEmpty() && Character.isUpperCase(t.charAt(0)));
     }
 }

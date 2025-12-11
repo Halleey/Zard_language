@@ -29,38 +29,41 @@ public class StructInstanceEmitter {
         String concreteType = node.getConcreteType();
 
         TypeMapper mapper = new TypeMapper();
-        String structLLVMType;
-        if (concreteType != null && !concreteType.isEmpty()) {
-            structLLVMType = mapper.toLLVM(concreteType);
-        } else {
-            structLLVMType = mapper.toLLVM("Struct<" + baseStructName + ">");
-        }
+        String structLLVMType =
+                (concreteType != null && !concreteType.isEmpty())
+                        ? mapper.toLLVM(concreteType)
+                        : mapper.toLLVM("Struct<" + baseStructName + ">");
+
+        // remover * extra
         if (structLLVMType.endsWith("*")) {
             structLLVMType = structLLVMType.substring(0, structLLVMType.length() - 1);
         }
 
+        // ==== RESOLVER elemType ====
         String elemType = null;
+
         if (concreteType != null && concreteType.startsWith("Struct<")) {
-            int firstLt  = concreteType.indexOf('<');
-            int secondLt = concreteType.indexOf('<', firstLt + 1);
-            int innerGt  = concreteType.indexOf('>', secondLt + 1);
-            if (secondLt != -1 && innerGt != -1 && secondLt + 1 < innerGt) {
-                elemType = concreteType.substring(secondLt + 1, innerGt).trim();
+            int lt1 = concreteType.indexOf('<');
+            int lt2 = concreteType.indexOf('<', lt1 + 1);
+            int gt = concreteType.indexOf('>', lt2 + 1);
+            if (lt2 != -1 && gt != -1 && lt2 + 1 < gt) {
+                elemType = concreteType.substring(lt2 + 1, gt).trim();
             }
         }
+
+        // fallback
         if (elemType == null) {
             String shortName = structLLVMType.startsWith("%")
                     ? structLLVMType.substring(1)
                     : structLLVMType;
+
             String prefix = baseStructName + "_";
-            if (shortName.startsWith(prefix) && shortName.length() > prefix.length()) {
+            if (shortName.startsWith(prefix)) {
                 elemType = shortName.substring(prefix.length());
             }
         }
 
-        String structPtr = tempManager.newTemp();
-        llvm.append("  ").append(structPtr).append(" = alloca ").append(structLLVMType).append("\n");
-
+        // ==== RESOLVER STRUCTNODE ====
         StructNode def;
         if (elemType != null) {
             StructNode base = visitor.getStructNode(baseStructName);
@@ -70,16 +73,32 @@ public class StructInstanceEmitter {
         }
 
         if (def == null) {
-            throw new RuntimeException("Struct não encontrada: " + baseStructName + " (elemType=" + elemType + ")");
+            throw new RuntimeException("Struct não encontrada: " + baseStructName);
         }
 
+        // ==== CALCULAR TAMANHO ====
+        int structSize = def.getLLVMSizeBytes();
+
+        // ==== malloc ====
+        String mallocTmp = tempManager.newTemp();
+        llvm.append("  ").append(mallocTmp)
+                .append(" = call i8* @malloc(i64 ").append(structSize).append(")\n");
+
+        String structPtr = tempManager.newTemp();
+        llvm.append("  ").append(structPtr)
+                .append(" = bitcast i8* ").append(mallocTmp)
+                .append(" to ").append(structLLVMType).append("*\n");
+
+        // ==== inicializar campos ====
 
         List<VariableDeclarationNode> fields = def.getFields();
         List<ASTNode> posValues = node.getPositionalValues();
         Map<String, ASTNode> namedValues = node.getNamedValues();
-        int providedPos = (posValues == null) ? 0 : posValues.size();
+
+        int providedPos = (posValues == null ? 0 : posValues.size());
 
         for (int i = 0; i < fields.size(); i++) {
+
             VariableDeclarationNode field = fields.get(i);
             String fname = field.getName();
             String fieldType = field.getType();
@@ -90,30 +109,30 @@ public class StructInstanceEmitter {
             }
 
             ASTNode providedValue = null;
-            if (!namedValues.isEmpty() && namedValues.containsKey(fname)) {
+
+            if (namedValues.containsKey(fname)) {
                 providedValue = namedValues.get(fname);
-            } else if (posValues != null && i < providedPos) {
+            } else if (i < providedPos) {
                 providedValue = posValues.get(i);
             }
 
             String fieldLLVMType = mapFieldTypeForStruct(effectiveFieldType);
 
-
             String valueTemp;
-            String codeBefore = "";
+            String before = "";
+
             if (providedValue != null) {
-                codeBefore = providedValue.accept(visitor);
-                valueTemp = extractTemp(codeBefore);
+                before = providedValue.accept(visitor);
+                valueTemp = extractTemp(before);
             } else {
                 valueTemp = emitDefaultValue(effectiveFieldType, fieldLLVMType, llvm);
             }
 
-            if (!codeBefore.isEmpty()) {
-                llvm.append(codeBefore);
-            }
+            llvm.append(before);
 
             String fieldPtr = tempManager.newTemp();
-            llvm.append("  ").append(fieldPtr).append(" = getelementptr inbounds ")
+            llvm.append("  ").append(fieldPtr)
+                    .append(" = getelementptr inbounds ")
                     .append(structLLVMType).append(", ").append(structLLVMType)
                     .append("* ").append(structPtr).append(", i32 0, i32 ").append(i).append("\n");
 
@@ -124,6 +143,7 @@ public class StructInstanceEmitter {
         llvm.append(";;VAL:").append(structPtr).append(";;TYPE:").append(structLLVMType).append("*\n");
         return llvm.toString();
     }
+
 
     private String mapFieldTypeForStruct(String type) {
         if (type.startsWith("List<")) {

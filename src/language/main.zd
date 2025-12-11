@@ -57,11 +57,9 @@ Struct Item {
 
 # ==== Item ====
   Set<Item> items;
-  Item teste;
   items.addItem(1, "Sword");
   items.addItem(2, "Shield");
   items.addItem(3, "Potion");
   items.removeItemById(2);
-
   items.prints();
  }

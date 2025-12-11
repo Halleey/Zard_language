@@ -1,6 +1,7 @@
 package low.variables;
 
 
+import ast.structs.StructInstaceNode;
 import ast.variables.VariableDeclarationNode;
 import low.TempManager;
 import low.main.TypeInfos;
@@ -26,9 +27,17 @@ public class ExpressionInitEmitter {
     public String emit(VariableDeclarationNode node, TypeInfos info) {
 
         String llvmType = info.getLLVMType();
+        String varName  = node.getName();
+
+        if (node.initializer instanceof StructInstaceNode
+                && visitor.escapesVar(varName)
+                && llvmType.endsWith("*")) {
+
+            return emitEscapingStructInit(node, info);
+        }
 
         String exprLLVM = node.initializer.accept(visitor);
-        String temp = extractor.extractTemp(exprLLVM);
+        String temp     = extractor.extractTemp(exprLLVM);
         String tempType = extractor.extractType(exprLLVM);
 
         StringBuilder sb = new StringBuilder(exprLLVM);
@@ -53,7 +62,45 @@ public class ExpressionInitEmitter {
             }
         }
 
-        sb.append(store.emit(node.getName(), llvmType, temp));
+        sb.append(store.emit(varName, llvmType, temp));
+
+        return sb.toString();
+    }
+
+    private String emitEscapingStructInit(VariableDeclarationNode node, TypeInfos info) {
+
+        String llvmType    = info.getLLVMType();      // ex: %Item*
+        String varName     = node.getName();
+        String structPtrTy = llvmType;                // %Item*
+        String structTy    = structPtrTy.substring(0, structPtrTy.length() - 1); // %Item
+
+        String sizeGep = temps.newTemp();
+        String sizeInt = temps.newTemp();
+        String raw     = temps.newTemp();
+        String heapPtr = temps.newTemp();
+
+        StringBuilder sb = new StringBuilder();
+
+        // calcula sizeof(%Item) via GEP null,1 + ptrtoint
+        sb.append("  ").append(sizeGep)
+                .append(" = getelementptr ").append(structTy)
+                .append(", ").append(structTy).append("* null, i32 1\n");
+
+        sb.append("  ").append(sizeInt)
+                .append(" = ptrtoint ").append(structTy)
+                .append("* ").append(sizeGep).append(" to i64\n");
+
+        // malloc(i64 size)
+        sb.append("  ").append(raw)
+                .append(" = call i8* @malloc(i64 ").append(sizeInt).append(")\n");
+
+        // bitcast i8* -> %Item*
+        sb.append("  ").append(heapPtr)
+                .append(" = bitcast i8* ").append(raw)
+                .append(" to ").append(structPtrTy).append("\n");
+
+        // guarda o ponteiro HEAP na variável
+        sb.append(store.emit(varName, llvmType, heapPtr));
 
         return sb.toString();
     }

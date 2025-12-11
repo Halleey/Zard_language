@@ -7,6 +7,8 @@ import ast.structs.StructMethodCallNode;
 import low.TempManager;
 
 import low.module.LLVisitorMain;
+
+
 public class StructMethodCallEmitter {
 
     private final TempManager temps;
@@ -144,13 +146,13 @@ public class StructMethodCallEmitter {
         StringBuilder callArgs = new StringBuilder();
         callArgs.append(recvType).append(" ").append(recvVal);
 
-        if (!node.getArgs().isEmpty()) {
-            ASTNode arg = node.getArgs().get(0);
-            String argIR = arg.accept(visitor);
+        for (ASTNode argNode : node.getArgs()) {
+            String argIR = argNode.accept(visitor);
             llvm.append(argIR);
 
             String argVal = extractLastVal(argIR);
             String argType = extractLastType(argIR);
+
             callArgs.append(", ").append(argType).append(" ").append(argVal);
         }
 

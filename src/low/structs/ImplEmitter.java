@@ -9,6 +9,7 @@ import low.TempManager;
 import low.module.LLVisitorMain;
 import low.main.TypeInfos;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -161,35 +162,42 @@ public class ImplEmitter {
         sb.append("}\n\n");
         return sb.toString();
     }
+
     private String generateFunctionImpl(String baseStruct, FunctionNode fn, String specialized) {
 
         StringBuilder sb = new StringBuilder();
 
         List<ParamInfo> params = fn.getParameters();
-
-        // ===== tipo declarado do "value" (segundo parâmetro) =====
-        String declaredType = null;
-        if (params.size() > 1) {
-            declaredType = params.get(1).type();
-            if (declaredType != null) {
-                declaredType = declaredType.trim();
-            }
+        if (params.isEmpty()) {
+            // impl sem receiver não faz sentido, mas evita crash
+            return "; [ImplEmitter] Ignorando função sem parâmetros em impl de " + baseStruct + "\n\n";
         }
+
+        // ====== Receiver (primeiro parâmetro) ======
+        ParamInfo receiverParam = params.get(0);
+        String paramS = receiverParam.name(); // normalmente "s"
 
         String fnName = baseStruct + "_" + specialized + "_" + fn.getName();
         String structLLVM = "%" + baseStruct + "_" + specialized;
         String paramTypeLLVM = structLLVM + "*";
 
+        // ====== Inferência do tipo do "value" (segundo parâmetro genérico) ======
+        String declaredType = null;
+        if (params.size() > 1) {
+            declaredType = params.get(1).type();
+            if (declaredType != null) declaredType = declaredType.trim();
+        }
         boolean declaredIsGeneric = declaredType != null && declaredType.contains("?");
 
         String valueTypeLLVM;
         if (declaredType != null && !declaredIsGeneric) {
             valueTypeLLVM = mapToLLVMType(declaredType);
         } else {
+            // se for genérico (List<?> / T), usa o tipo especializado
             valueTypeLLVM = mapToLLVMType(specialized);
         }
 
-        // ===== retorno =====
+        // ====== Retorno ======
         String declaredRet = fn.getReturnType();
         if (declaredRet == null) declaredRet = "void";
         declaredRet = declaredRet.trim();
@@ -200,72 +208,128 @@ public class ImplEmitter {
         if ("void".equals(declaredRet)) {
             retType = "void";
         } else if (declaredRet.startsWith("Struct<" + baseStruct)) {
+            // ex: Struct<Set<int>> -> %Set_int*
             retType = paramTypeLLVM;
             returnsSelf = true;
         } else {
             retType = mapToLLVMType(declaredRet);
         }
 
-        // ===== nomes dos parâmetros =====
-        String paramS = params.get(0).name();
-        String valueS = params.size() > 1 ? params.get(1).name() : "value";
+        // ====== Montar lista de parâmetros da função ======
+        StringBuilder paramList = new StringBuilder();
+        paramList.append(paramTypeLLVM).append(" %").append(paramS);
 
-        sb.append("; === Função: ").append(fnName).append(" ===\n");
-        sb.append("define ").append(retType).append(" @").append(fnName)
-                .append("(").append(paramTypeLLVM).append(" %").append(paramS)
-                .append(", ").append(valueTypeLLVM).append(" %").append(valueS)
-                .append(") {\n");
-        sb.append("entry:\n");
+        // Guarda o tipo LLVM de cada parâmetro por índice (0 = receiver)
+        List<String> llvmParamTypes = new ArrayList<>();
+        llvmParamTypes.add(paramTypeLLVM);
 
-        // ===== receiver =====
-        sb.append("  %").append(paramS).append("_addr = alloca ").append(paramTypeLLVM).append("\n");
-        sb.append("  store ").append(paramTypeLLVM).append(" %").append(paramS)
-                .append(", ").append(paramTypeLLVM).append("* %")
-                .append(paramS).append("_addr\n");
+        for (int i = 1; i < params.size(); i++) {
+            ParamInfo p = params.get(i);
+            String pName = p.name();
+            String srcType = p.type();
+            if (srcType != null) srcType = srcType.trim();
 
-        // ===== value =====
-        sb.append("  %").append(valueS).append("_addr = alloca ").append(valueTypeLLVM).append("\n");
-        sb.append("  store ").append(valueTypeLLVM).append(" %").append(valueS)
-                .append(", ").append(valueTypeLLVM).append("* %")
-                .append(valueS).append("_addr\n");
+            String llvmType;
 
-        String paramPtr = "%" + paramS + "_addr";
-        String valuePtr = "%" + valueS + "_addr";
+            if (i == 1) {
+                // segundo parâmetro respeita a lógica genérica (valueTypeLLVM)
+                llvmType = valueTypeLLVM;
+            } else {
+                // demais usam o tipo declarado normalmente
+                llvmType = mapToLLVMType(srcType);
+            }
 
-        visitor.getVariableEmitter().registerVarPtr(paramS, paramPtr);
-        visitor.getVariableEmitter().registerVarPtr(valueS, valuePtr);
-
-        String structSourceType = "Struct<" + baseStruct + "<" + specialized + ">>";
-        String structLLVMType = "%" + baseStruct + "_" + specialized + "*";
-
-        visitor.putVarType(paramS,
-                new TypeInfos(structSourceType, structLLVMType, null));
-
-        String sourceType;
-        String llvmType;
-
-        if (declaredType != null && !declaredIsGeneric) {
-            sourceType = declaredType;
-            llvmType = mapToLLVMType(declaredType);
-        } else {
-            sourceType = specialized;
-            llvmType = mapToLLVMType(specialized);
+            llvmParamTypes.add(llvmType);
+            paramList.append(", ").append(llvmType).append(" %").append(pName);
         }
 
-        visitor.putVarType(valueS, new TypeInfos(sourceType, llvmType, null));
+        // ====== Cabeçalho da função ======
+        sb.append("; === Função: ").append(fnName).append(" ===\n");
+        sb.append("define ").append(retType).append(" @").append(fnName)
+                .append("(").append(paramList).append(") {\n");
+        sb.append("entry:\n");
 
-        // ===== corpo =====
+        // ====== Aloca receiver ======
+        String receiverPtr = "%" + paramS + "_addr";
+        sb.append("  ").append(receiverPtr)
+                .append(" = alloca ").append(paramTypeLLVM).append("\n");
+        sb.append("  store ").append(paramTypeLLVM).append(" %").append(paramS)
+                .append(", ").append(paramTypeLLVM).append("* ").append(receiverPtr).append("\n");
+
+        String structSourceType = "Struct<" + baseStruct + "<" + specialized + ">>";
+        String structLLVMType = paramTypeLLVM;
+
+        // Registra receiver no visitor principal (mas vamos usar um fork para o corpo)
+        visitor.getVariableEmitter().registerVarPtr(paramS, receiverPtr);
+        visitor.putVarType(paramS, new TypeInfos(structSourceType, structLLVMType, null));
+
+        // ====== Aloca e registra todos os outros parâmetros ======
+        // i = índice do parâmetro na lista original
+        for (int i = 1; i < params.size(); i++) {
+
+            ParamInfo p = params.get(i);
+            String pName = p.name();
+            String srcType = p.type();
+            if (srcType != null) srcType = srcType.trim();
+
+            String llvmType;
+            String sourceType;
+
+            if (i == 1) {
+                // parâmetro "genérico" (id / v / etc.)
+                if (declaredType != null && !declaredIsGeneric) {
+                    sourceType = declaredType;
+                    llvmType = valueTypeLLVM;
+                } else {
+                    sourceType = specialized;
+                    llvmType = valueTypeLLVM;
+                }
+            } else {
+                sourceType = srcType;
+                llvmType = llvmParamTypes.get(i);
+            }
+
+            String ptr = "%" + pName + "_addr";
+
+            sb.append("  ").append(ptr)
+                    .append(" = alloca ").append(llvmType).append("\n");
+            sb.append("  store ").append(llvmType).append(" %").append(pName)
+                    .append(", ").append(llvmType).append("* ").append(ptr).append("\n");
+
+            visitor.getVariableEmitter().registerVarPtr(pName, ptr);
+            visitor.putVarType(pName, new TypeInfos(sourceType, llvmType, null));
+        }
+
+        // ====== Corpo usando um visitor isolado ======
         if (fn.getBody() != null && !fn.getBody().isEmpty()) {
 
             LLVisitorMain isolated = visitor.fork();
 
-            isolated.putVarType(paramS,
-                    new TypeInfos(structSourceType, structLLVMType, null));
-            isolated.putVarType(valueS,
-                    new TypeInfos(sourceType, llvmType, null));
+            // Copia tipos e ponteiros dos parâmetros para o fork
+            isolated.putVarType(paramS, new TypeInfos(structSourceType, structLLVMType, null));
+            isolated.getVariableEmitter().registerVarPtr(paramS, receiverPtr);
 
-            isolated.getVariableEmitter().registerVarPtr(paramS, paramPtr);
-            isolated.getVariableEmitter().registerVarPtr(valueS, valuePtr);
+            for (int i = 1; i < params.size(); i++) {
+                ParamInfo p = params.get(i);
+                String pName = p.name();
+                String llvmType = llvmParamTypes.get(i);
+
+                String srcType;
+                if (i == 1) {
+                    // genérico
+                    if (declaredType != null && !declaredIsGeneric) {
+                        srcType = declaredType;
+                    } else {
+                        srcType = specialized;
+                    }
+                } else {
+                    srcType = p.type();
+                }
+                String ptr = "%" + pName + "_addr";
+
+                isolated.putVarType(pName, new TypeInfos(srcType, llvmType, null));
+                isolated.getVariableEmitter().registerVarPtr(pName, ptr);
+            }
 
             if (specialized != null) {
                 isolated.enterTypeSpecialization(specialized);
@@ -280,11 +344,11 @@ public class ImplEmitter {
             }
         }
 
+        // ====== Retorno default ======
         if ("void".equals(retType)) {
             sb.append("  ret void\n");
         } else if (returnsSelf) {
-            sb.append("  ret ").append(retType)
-                    .append(" %").append(paramS).append("\n");
+            sb.append("  ret ").append(retType).append(" %").append(paramS).append("\n");
         } else {
             sb.append("  ret ").append(retType).append(" undef\n");
         }
@@ -295,6 +359,15 @@ public class ImplEmitter {
 
 
     private String mapToLLVMType(String inner) {
+        if (inner == null) return "i8*";
+        inner = inner.trim();
+
+        // Struct<Nome> → %Nome*
+        if (inner.startsWith("Struct<") && inner.endsWith(">")) {
+            String name = inner.substring("Struct<".length(), inner.length() - 1).trim();
+            return "%" + name + "*";
+        }
+
         return switch (inner) {
             case "int" -> "i32";
             case "double" -> "double";
@@ -303,4 +376,5 @@ public class ImplEmitter {
             default -> "i8*";
         };
     }
+
 }

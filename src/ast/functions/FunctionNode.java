@@ -81,6 +81,7 @@ public class FunctionNode extends ASTNode {
         return visitor.visit(this);
     }
 
+
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
         // registra a própria função no contexto como valor
@@ -113,7 +114,9 @@ public class FunctionNode extends ASTNode {
                 localCtx.bindSlot(param.name(), slot);
 
             } else {
+
                 TypedValue value = argNode.evaluate(parentCtx);
+
                 localCtx.declareVariable(param.name(), value);
             }
         }
@@ -123,31 +126,29 @@ public class FunctionNode extends ASTNode {
                 node.evaluate(localCtx);
             }
         } catch (ReturnValue rv) {
+
             return rv.value;
         }
 
         return null;
     }
 
+    private TypedValue promoteTypeIfNeeded(TypedValue value, String targetType) {
+        if (value == null) return null;
+        String valueType = value.type();
 
-    //talvez tenha uso futuro
-//    private TypedValue promoteTypeIfNeeded(TypedValue value, String targetType) {
-//        if (value == null) return null;
-//        String valueType = value.type();
-//
-//        if (valueType.equals(targetType)) return value;
-//
-//        if ("double".equals(targetType) && "int".equals(valueType)) {
-//            return new TypedValue("double", ((Integer) value.value()).doubleValue());
-//        }
-//
-//        if (targetType.startsWith("List<") && "List".equals(valueType)) {
-//            return new TypedValue(targetType, value.value());
-//        }
-//
-//        return value;
-//    }
+        if (valueType.equals(targetType)) return value;
 
+        if ("double".equals(targetType) && "int".equals(valueType)) {
+            return new TypedValue("double", ((Integer) value.value()).doubleValue());
+        }
+
+        if (targetType.startsWith("List<") && "List".equals(valueType)) {
+            return new TypedValue(targetType, value.value());
+        }
+
+        return value;
+    }
 
     @Override
     public void print(String prefix) {

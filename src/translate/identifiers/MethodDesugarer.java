@@ -9,13 +9,6 @@ import ast.variables.VariableNode;
 
 import java.util.*;
 
-/**
- * Reescreve métodos de impl:
- * - Descobre receiver implícito (ex: s, teste, self) olhando campos: s.data, teste.x, etc.
- * - Adiciona como primeiro parâmetro do tipo Struct<NomeDaStructDoImpl>.
- * - Garante tipo de retorno padrão Struct<NomeDaStructDoImpl> se estiver "?" ou vazio.
- */
-
 public class MethodDesugarer {
 
     public void desugar(List<ASTNode> ast) {
@@ -48,13 +41,13 @@ public class MethodDesugarer {
 
         List<ParamInfo> params = fn.getParameters();
 
-        // 1) Já tem receiver explícito?
+        //  Já tem receiver explícito?
         if (hasExplicitReceiver(structName, params)) {
             ensureReturnType(structName, fn);
             return;
         }
 
-        // 2) Descobrir nome do receiver implícito
+        //Descobrir nome do receiver implícito
         String receiverName = findImplicitReceiverCandidate(fn);
         if (receiverName == null || receiverName.isBlank()) {
             receiverName = "s";
@@ -78,7 +71,7 @@ public class MethodDesugarer {
             }
         }
 
-        // 3) Inserir receiver como PRIMEIRO parâmetro
+        // Inserir receiver como PRIMEIRO parâmetro
         List<ParamInfo> newParams = new ArrayList<>();
         newParams.add(new ParamInfo(
                 receiverName,
@@ -118,11 +111,7 @@ public class MethodDesugarer {
         }
     }
 
-    /**
-     * Procura no corpo da função acessos do tipo:
-     *   <ident>.campo
-     * e devolve o identificador (<ident>) mais provável para ser o receiver.
-     */
+
     private String findImplicitReceiverCandidate(FunctionNode fn) {
         Set<String> candidates = new LinkedHashSet<>();
 
@@ -132,7 +121,7 @@ public class MethodDesugarer {
 
         if (candidates.isEmpty()) return null;
 
-        // Heurística: se tiver "s", "self" ou "this", preferir esses
+
         List<String> preferred = Arrays.asList("s", "self", "this");
         for (String p : preferred) {
             if (candidates.contains(p)) {
@@ -140,14 +129,10 @@ public class MethodDesugarer {
             }
         }
 
-        // Senão, pega o primeiro que apareceu
         return candidates.iterator().next();
     }
 
-    /**
-     * Percorre a árvore procurando StructFieldAccessNode,
-     * e coleta o nome da variável que está antes do ponto.
-     */
+
     private void collectReceiverCandidates(ASTNode node, Set<String> candidates) {
         if (node == null) return;
 
@@ -157,10 +142,6 @@ public class MethodDesugarer {
                 candidates.add(var.getName());
             }
         }
-
-        // Se tiver um nó de StructMethodCall no seu AST, pode tratar aqui também:
-        // if (node instanceof StructMethodCallNode call) { ... }
-
         for (ASTNode child : node.getChildren()) {
             collectReceiverCandidates(child, candidates);
         }

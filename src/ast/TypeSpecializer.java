@@ -33,13 +33,10 @@ public class TypeSpecializer {
         propagateInferredTypes(ast);
 
         if (!inferredStructTypes.isEmpty()) {
-            System.out.println("=== [TypeSpecializer] Tipos inferidos ===");
             for (var entry : inferredStructTypes.entrySet()) {
                 StructInstaceNode node = entry.getKey();
                 String elemType = entry.getValue();
-                System.out.println("→ Struct<" + node.getName() + "> (" + findVarName(node) + ") : " + elemType);
             }
-            System.out.println("=========================================");
         } else {
             System.out.println("[TypeSpecializer] Nenhum tipo inferido.");
         }
@@ -48,11 +45,9 @@ public class TypeSpecializer {
 
     public void createSpecializedStructsFromInferences() {
         if (visitor == null) {
-            System.out.println("[TS.createSpecs] Visitor null, não posso materializar structs especializadas.");
             return;
         }
 
-        System.out.println("[TS.createSpecs] Materializando structs especializadas a partir das inferências...");
 
         // inferredStructTypes: StructInstaceNode -> elemType ("int", "double", etc.)
         for (var entry : inferredStructTypes.entrySet()) {
@@ -66,13 +61,8 @@ public class TypeSpecializer {
 
             StructNode baseNode = visitor.getStructNode(baseName);
             if (baseNode == null) {
-                System.out.println("[TS.createSpecs] NÃO achei StructNode base para " + baseName);
                 continue;
             }
-
-            System.out.println("[TS.createSpecs] Criando specialization para "
-                    + baseName + "<" + elemType + ">");
-
             // Isso vai popular visitor.specializedStructs e structDefinitions
             visitor.getOrCreateSpecializedStruct(baseNode, elemType);
         }
@@ -232,8 +222,6 @@ public class TypeSpecializer {
 
         node.setConcreteType(concrete);
 
-        System.out.println("[TypeSpecializer] Struct<" + node.getName() + "> inferida como " +
-                elemType + " via " + origem + " (concreteType=" + concrete + ")");
 
         if (visitor != null) {
             visitor.markStructUsed(node.getName()); // uso REAL

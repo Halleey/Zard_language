@@ -1,7 +1,9 @@
 package translate.executors;
 
+import ast.TypeSpecializer;
 import low.module.LLVMGenerator;
 import low.module.LLVisitorMain;
+import memory_manager.EscapeInfo;
 import translate.front.ASTInterpreter;
 import translate.front.FrontendPipeline;
 import translate.front.TypePipeline;
@@ -15,22 +17,29 @@ public class ExecutorLinux {
         FrontendPipeline frontend = new FrontendPipeline(filePath);
         var ast = frontend.process();
 
+        EscapeInfo escapeInfo = frontend.getEscapeInfo();
+
+// Type pipeline
         TypePipeline typePipeline = new TypePipeline(frontend.getParser());
-        LLVisitorMain visitor = typePipeline.process(ast);
+        LLVisitorMain tempVisitor = typePipeline.process(ast);
 
-        LLVMGenerator llgen = new LLVMGenerator(visitor);
+// 👉 cria o visitor REAL copiando tudo
+        LLVisitorMain llvmVisitor = tempVisitor.fork();
+
+// 👉 adiciona escape info
+        llvmVisitor.setEscapeInfo(escapeInfo);
+
         System.out.println("[DEBUG ExecutorLinux] visitor no backend @"
-                + System.identityHashCode(visitor));
+                + System.identityHashCode(llvmVisitor));
 
+        LLVMGenerator llgen = new LLVMGenerator(llvmVisitor);
         String llvm = llgen.generate(ast);
+
         LLVMToolchain toolchain = new LLVMToolchain();
         String exePath = toolchain.buildExecutable(llvm);
-
-         toolchain.runExecutable(exePath);
-
-//        ASTInterpreter interpreter = new ASTInterpreter();
-//        interpreter.run(ast);
+        toolchain.runExecutable(exePath);
     }
+
 }
 
 

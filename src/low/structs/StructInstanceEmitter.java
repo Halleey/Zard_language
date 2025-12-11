@@ -22,6 +22,7 @@ public class StructInstanceEmitter {
     }
 
     public String emit(StructInstaceNode node, LLVisitorMain visitor) {
+
         StringBuilder llvm = new StringBuilder();
 
         String baseStructName = node.getName();

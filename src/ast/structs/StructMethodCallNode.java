@@ -10,6 +10,8 @@ import low.module.LLVMEmitVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
+
+
 public class StructMethodCallNode extends ASTNode {
 
     private final ASTNode structInstance;

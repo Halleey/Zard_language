@@ -33,6 +33,8 @@ import low.module.structs.StructTypeResolver;
 import low.prints.PrintEmitter;
 import low.structs.*;
 import low.variables.*;
+import memory_manager.EscapeInfo;
+
 import java.util.*;
 
 
@@ -120,8 +122,22 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return currentSpecializationType;
     }
 
-    // ==== CONSTRUTOR PÚBLICO (USO NORMAL) ====
-    // TypePipeline chama ESTE.
+
+    private EscapeInfo escapeInfo;
+
+    public void setEscapeInfo(EscapeInfo info) {
+        this.escapeInfo = info;
+    }
+
+    // novo construtor público
+    public LLVisitorMain(TypeSpecializer typeSpecializer, EscapeInfo escapeInfo) {
+        this(typeSpecializer);
+        this.escapeInfo = escapeInfo;
+    }
+
+    public boolean escapesVar(String name) {
+        return escapeInfo != null && escapeInfo.escapes(name);
+    }
     public LLVisitorMain(TypeSpecializer typeSpecializer) {
         this(
                 typeSpecializer,
@@ -481,6 +497,28 @@ public class LLVisitorMain implements LLVMEmitVisitor {
             }
         }
     }
+
+
+
+    public int getStructSizeInBytes(StructNode def) {
+        int size = 0;
+        for (VariableDeclarationNode f : def.getFields()) {
+            size += sizeOf(f.getType());
+        }
+        return size;
+    }
+
+    private int sizeOf(String type) {
+        return switch (type) {
+            case "int" -> 4;
+            case "boolean" -> 1;
+            case "double", "float" -> 8;
+            case "string" -> 8; // ponteiro
+            default -> 8; // List, Struct, qualquer ponteiro
+        };
+    }
+
+
 
     public String getStructFieldType(StructFieldAccessNode node) {
         return structTypeResolver.getStructFieldType(node);

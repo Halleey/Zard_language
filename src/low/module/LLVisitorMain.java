@@ -20,7 +20,6 @@ import low.exceptions.ReturnEmitter;
 import low.functions.FunctionCallEmitter;
 import low.functions.FunctionEmitter;
 import low.imports.ImportEmitter;
-import low.lists.generics.*;
 import low.main.GlobalStringManager;
 import low.main.MainEmitter;
 import low.main.TypeInfos;
@@ -33,6 +32,9 @@ import low.module.structs.StructTypeResolver;
 import low.prints.PrintEmitter;
 import low.structs.*;
 import low.variables.*;
+import low.variables.exps.AssignmentEmitter;
+import low.variables.exps.BinaryOpEmitter;
+import low.variables.exps.UnaryOpEmitter;
 import memory_manager.EscapeInfo;
 
 import java.util.*;

@@ -1,4 +1,4 @@
-package low.variables;
+package low.variables.exps;
 
 import ast.inputs.InputNode;
 import ast.lists.ListNode;
@@ -10,6 +10,7 @@ import low.lists.generics.ListEmitter;
 import low.main.GlobalStringManager;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
+import low.variables.structs.StructCopyEmitter;
 
 import java.util.Map;
 

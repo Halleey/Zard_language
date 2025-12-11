@@ -1,4 +1,4 @@
-package low.variables;
+package low.variables.exps;
 
 
 import ast.variables.VariableDeclarationNode;

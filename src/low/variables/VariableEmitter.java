@@ -10,6 +10,8 @@ import low.main.TypeInfos;
 import low.module.LLVisitorMain;
 import low.TempManager;
 import ast.variables.VariableDeclarationNode;
+import low.variables.exps.AllocaEmitter;
+import low.variables.structs.StructInitEmitter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +25,9 @@ public class VariableEmitter {
     private final AllocaEmitter allocaEmitter;
     private final StoreEmitter storeEmitter;
     private final StructInitEmitter structInitEmitter;
+    private final ExpressionInitEmitter expressionInitEmitter;
+    private final TempExtractor tempExtractor  = new TempExtractor();
+
 
     public VariableEmitter(Map<String, TypeInfos> varTypes, TempManager temps, LLVisitorMain visitor) {
         this.varTypes = varTypes;
@@ -32,6 +37,7 @@ public class VariableEmitter {
         this.allocaEmitter = new AllocaEmitter(varTypes, temps, visitor, localVars);
         this.storeEmitter = new StoreEmitter(stringEmitter, localVars);
         this.structInitEmitter =  new StructInitEmitter(temps,visitor,localVars);
+        this.expressionInitEmitter = new ExpressionInitEmitter(temps,visitor,storeEmitter,tempExtractor);
     }
 
     public String emitAlloca(VariableDeclarationNode node) {
@@ -62,43 +68,8 @@ public class VariableEmitter {
         return handleNormalExpressionInit(node, info);
     }
 
-    private String handleNormalExpressionInit(
-            VariableDeclarationNode node,
-            TypeInfos info
-    ) {
-
-        String llvmType = info.getLLVMType();
-        String varPtr = getVarPtr(node.getName());
-
-        String exprLLVM = node.initializer.accept(visitor);
-        String temp = extractTemp(exprLLVM);
-        String tempType = extractType(exprLLVM);
-
-        StringBuilder sb = new StringBuilder(exprLLVM);
-
-        if (!tempType.equals(llvmType)) {
-            String castTmp = temps.newTemp();
-
-            if (tempType.equals("double") && llvmType.equals("float")) {
-                sb.append("  ").append(castTmp)
-                        .append(" = fptrunc double ").append(temp).append(" to float\n");
-                temp = castTmp;
-            }
-            else if (tempType.equals("i32") && llvmType.equals("double")) {
-                sb.append("  ").append(castTmp)
-                        .append(" = sitofp i32 ").append(temp).append(" to double\n");
-                temp = castTmp;
-            }
-            else if (tempType.equals("double") && llvmType.equals("i32")) {
-                sb.append("  ").append(castTmp)
-                        .append(" = fptosi double ").append(temp).append(" to i32\n");
-                temp = castTmp;
-            }
-        }
-
-        sb.append(emitStore(node.getName(), llvmType, temp));
-
-        return sb.toString();
+    private String handleNormalExpressionInit(VariableDeclarationNode node, TypeInfos info) {
+        return  expressionInitEmitter.emit(node,info);
     }
 
 

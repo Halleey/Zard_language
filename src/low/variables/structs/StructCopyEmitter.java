@@ -1,4 +1,4 @@
-package low.variables;
+package low.variables.structs;
 
 import ast.structs.StructNode;
 import ast.variables.AssignmentNode;

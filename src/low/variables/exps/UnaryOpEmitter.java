@@ -1,4 +1,4 @@
-package low.variables;
+package low.variables.exps;
 
 import ast.ASTNode;
 import ast.expressions.TypedValue;
@@ -6,6 +6,7 @@ import ast.variables.LiteralNode;
 import low.TempManager;
 import ast.variables.VariableNode;
 import low.main.TypeInfos;
+import low.variables.VariableEmitter;
 
 import java.util.Map;
 public class UnaryOpEmitter {

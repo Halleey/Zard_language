@@ -22,7 +22,7 @@ public class VariableEmitter {
     private final Map<String, String> localVars = new HashMap<>(); // nome -> ponteiro (alloca)
     private final AllocaEmitter allocaEmitter;
     private final StoreEmitter storeEmitter;
-
+    private final StructInitEmitter structInitEmitter;
 
     public VariableEmitter(Map<String, TypeInfos> varTypes, TempManager temps, LLVisitorMain visitor) {
         this.varTypes = varTypes;
@@ -31,6 +31,7 @@ public class VariableEmitter {
         this.stringEmitter = new StringEmitter(temps, visitor.getGlobalStrings());
         this.allocaEmitter = new AllocaEmitter(varTypes, temps, visitor, localVars);
         this.storeEmitter = new StoreEmitter(stringEmitter, localVars);
+        this.structInitEmitter =  new StructInitEmitter(temps,visitor,localVars);
     }
 
     public String emitAlloca(VariableDeclarationNode node) {
@@ -101,78 +102,8 @@ public class VariableEmitter {
     }
 
 
-    private String handleSpecializedStructDefaultInit(
-            VariableDeclarationNode node,
-            TypeInfos info
-    ) {
-
-        String srcType = info.getSourceType();
-        String llvmType = info.getLLVMType();
-        String varPtr = getVarPtr(node.getName());
-
-        // extrai T de Struct<T>
-        String inner = srcType.substring("Struct<".length(), srcType.length() - 1).trim();
-        String elemType = null;
-
-        int genericIdx = inner.indexOf('<');
-        if (genericIdx != -1) {
-            int close = inner.lastIndexOf('>');
-            elemType = inner.substring(genericIdx + 1, close).trim();
-        }
-
-        String structLLVM = llvmType.substring(0, llvmType.length() - 1);
-        String tmpObj = temps.newTemp();
-        String tmpList = temps.newTemp();
-        String fieldPtr = temps.newTemp();
-
-        visitor.registerListElementType(node.getName(), elemType);
-
-        String createListCall;
-        String listPtrType;
-
-        switch (elemType) {
-            case "int" -> {
-                createListCall = "%struct.ArrayListInt* @arraylist_create_int(i64 10)";
-                listPtrType = "%struct.ArrayListInt*";
-            }
-            case "double" -> {
-                createListCall = "%struct.ArrayListDouble* @arraylist_create_double(i64 10)";
-                listPtrType = "%struct.ArrayListDouble*";
-            }
-            case "boolean" -> {
-                createListCall = "%struct.ArrayListBool* @arraylist_create_bool(i64 10)";
-                listPtrType = "%struct.ArrayListBool*";
-            }
-            case "string" -> {
-                createListCall = "%ArrayList* @arraylist_create(i64 10)";
-                listPtrType = "%ArrayList*";
-            }
-            default -> {
-                createListCall = "%ArrayList* @arraylist_create(i64 10)";
-                listPtrType = "%ArrayList*";
-            }
-        }
-
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("  ").append(tmpObj).append(" = alloca ").append(structLLVM).append("\n");
-        sb.append(";;VAL:").append(tmpObj).append(";;TYPE:").append(structLLVM).append("*\n");
-
-        sb.append("  ").append(tmpList).append(" = call ").append(createListCall).append("\n");
-        sb.append(";;VAL:").append(tmpList).append(";;TYPE:").append(listPtrType).append("\n");
-
-        sb.append("  ").append(fieldPtr)
-                .append(" = getelementptr inbounds ")
-                .append(structLLVM).append(", ").append(structLLVM)
-                .append("* ").append(tmpObj).append(", i32 0, i32 0\n");
-
-        sb.append("  store ").append(listPtrType).append(" ").append(tmpList)
-                .append(", ").append(listPtrType).append("* ").append(fieldPtr).append("\n");
-
-        sb.append("  store ").append(structLLVM).append("* ").append(tmpObj)
-                .append(", ").append(structLLVM).append("** ").append(varPtr).append("\n");
-
-        return sb.toString();
+    private String handleSpecializedStructDefaultInit(VariableDeclarationNode node, TypeInfos info) {
+    return structInitEmitter.emit(node, info);
     }
 
 

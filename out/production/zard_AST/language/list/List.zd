@@ -1,4 +1,0 @@
-    function List<string> addNames(List<String> nomes) {
-        nomes.addAll("bulbassaur", "charmander", "squirtle");
-        return nomes;
-    }       

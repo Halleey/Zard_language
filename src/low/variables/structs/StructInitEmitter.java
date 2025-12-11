@@ -53,8 +53,8 @@ public class StructInitEmitter {
         boolean escapes = visitor.escapesVar(node.getName());
 
         String tmpObj;
-        String rawPtr = null;
-        String sizeTmp = null;
+        String rawPtr;
+        String sizeTmp;
 
         if (escapes) {
             sizeTmp = temps.newTemp();

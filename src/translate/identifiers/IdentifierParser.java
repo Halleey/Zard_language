@@ -13,6 +13,8 @@ import helpers_ast.variables.UnaryParser;
 import tokens.Token;
 import ast.variables.VariableNode;
 import translate.front.Parser;
+import translate.identifiers.structs.StructFieldParser;
+import translate.identifiers.structs.StructTyped;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,24 +22,27 @@ import java.util.Map;
 
 public class IdentifierParser {
     private final Parser parser;
-
+    private final StructTyped structTyped;
     public IdentifierParser(Parser parser) {
         this.parser = parser;
+        this.structTyped = new StructTyped(parser);
     }
     public ASTNode parseAsStatement(String name) {
         ASTNode receiver = new VariableNode(name);
         String tokenVal = parser.current().getValue();
 
-        String structName = name;
-        String innerType = null;
+        String structName = structTyped.parseIfSpecialized(name);
+
+        String innerType;
 
         if (parser.current().getValue().equals("<")) {
             parser.advance(); // '<'
             innerType = parser.current().getValue();   // tipo interno
             parser.advance();
             parser.eat(Token.TokenType.OPERATOR, ">");
-
+            System.out.printf("Criamos uma struct ?");
             structName = name + "<" + innerType + ">"; // Set<int>
+            System.out.println(structName);
         }
 
         if (parser.isKnownStruct(name)) {

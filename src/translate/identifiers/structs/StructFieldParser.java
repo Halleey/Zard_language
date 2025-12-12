@@ -1,9 +1,10 @@
-package translate.identifiers;
+package translate.identifiers.structs;
 
 import translate.front.Parser;
 
 import ast.ASTNode;
 import ast.structs.StructFieldAccessNode;
+import translate.identifiers.ListMethodParser;
 
 public class StructFieldParser {
     private final Parser parser;

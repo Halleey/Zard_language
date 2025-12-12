@@ -18,27 +18,17 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class IdentifierParser {
-    private final Parser parser;
+    public class IdentifierParser {
+        private final Parser parser;
 
-    public IdentifierParser(Parser parser) {
-        this.parser = parser;
-    }
-    public ASTNode parseAsStatement(String name) {
-        ASTNode receiver = new VariableNode(name);
-        String tokenVal = parser.current().getValue();
-
-        String structName = name;
-        String innerType = null;
-
-        if (parser.current().getValue().equals("<")) {
-            parser.advance(); // '<'
-            innerType = parser.current().getValue();   // tipo interno
-            parser.advance();
-            parser.eat(Token.TokenType.OPERATOR, ">");
-
-            structName = name + "<" + innerType + ">"; // Set<int>
+        public IdentifierParser(Parser parser) {
+            this.parser = parser;
         }
+        public ASTNode parseAsStatement(String name) {
+            ASTNode receiver = new VariableNode(name);
+            String tokenVal = parser.current().getValue();
+
+            String structName = parseTypeStruct(name);
 
         if (parser.isKnownStruct(name)) {
             String varName = parser.current().getValue();
@@ -212,4 +202,30 @@ public class IdentifierParser {
 
         return receiver;
     }
-}
+        private String parseTypeStruct(String baseName) {
+
+            if (!parser.current().getValue().equals("<")) {
+                return baseName;
+            }
+
+            parser.advance();
+
+            Token typeToken = parser.current();
+
+            if (typeToken.getType() != Token.TokenType.IDENTIFIER &&
+                    typeToken.getType() != Token.TokenType.KEYWORD) {
+
+                throw new RuntimeException(
+                        "Tipo inválido em especialização de struct: " + typeToken
+                );
+            }
+
+            String innerType = typeToken.getValue();
+            parser.advance();
+
+            parser.eat(Token.TokenType.OPERATOR, ">");
+
+            return baseName + "<" + innerType + ">";
+        }
+
+    }

@@ -3,6 +3,7 @@ package translate.executors;
 import low.module.LLVMGenerator;
 import low.module.LLVisitorMain;
 import memory_manager.EscapeInfo;
+import translate.front.ASTInterpreter;
 import translate.front.FrontendPipeline;
 import translate.front.TypePipeline;
 import translate.llvm.LLVMToolchain;
@@ -33,8 +34,10 @@ public class ExecutorLinux {
         LLVMToolchain toolchain = new LLVMToolchain();
         String exePath = toolchain.buildExecutable(llvm);
         toolchain.runExecutable(exePath);
-    }
+//        ASTInterpreter interpreter = new ASTInterpreter();
+//        interpreter.run(ast);
 
+    }
 }
 
 

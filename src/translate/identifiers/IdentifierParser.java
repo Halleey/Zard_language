@@ -13,37 +13,22 @@ import helpers_ast.variables.UnaryParser;
 import tokens.Token;
 import ast.variables.VariableNode;
 import translate.front.Parser;
-import translate.identifiers.structs.StructFieldParser;
-import translate.identifiers.structs.StructTyped;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class IdentifierParser {
-    private final Parser parser;
-    private final StructTyped structTyped;
-    public IdentifierParser(Parser parser) {
-        this.parser = parser;
-        this.structTyped = new StructTyped(parser);
-    }
-    public ASTNode parseAsStatement(String name) {
-        ASTNode receiver = new VariableNode(name);
-        String tokenVal = parser.current().getValue();
+    public class IdentifierParser {
+        private final Parser parser;
 
-        String structName = structTyped.parseIfSpecialized(name);
-
-        String innerType;
-
-        if (parser.current().getValue().equals("<")) {
-            parser.advance(); // '<'
-            innerType = parser.current().getValue();   // tipo interno
-            parser.advance();
-            parser.eat(Token.TokenType.OPERATOR, ">");
-            System.out.printf("Criamos uma struct ?");
-            structName = name + "<" + innerType + ">"; // Set<int>
-            System.out.println(structName);
+        public IdentifierParser(Parser parser) {
+            this.parser = parser;
         }
+        public ASTNode parseAsStatement(String name) {
+            ASTNode receiver = new VariableNode(name);
+            String tokenVal = parser.current().getValue();
+
+            String structName = parseTypeStruct(name);
 
         if (parser.isKnownStruct(name)) {
             String varName = parser.current().getValue();
@@ -217,4 +202,30 @@ public class IdentifierParser {
 
         return receiver;
     }
-}
+        private String parseTypeStruct(String baseName) {
+
+            if (!parser.current().getValue().equals("<")) {
+                return baseName;
+            }
+
+            parser.advance();
+
+            Token typeToken = parser.current();
+
+            if (typeToken.getType() != Token.TokenType.IDENTIFIER &&
+                    typeToken.getType() != Token.TokenType.KEYWORD) {
+
+                throw new RuntimeException(
+                        "Tipo inválido em especialização de struct: " + typeToken
+                );
+            }
+
+            String innerType = typeToken.getValue();
+            parser.advance();
+
+            parser.eat(Token.TokenType.OPERATOR, ">");
+
+            return baseName + "<" + innerType + ">";
+        }
+
+    }

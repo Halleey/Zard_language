@@ -7,7 +7,6 @@ import translate.front.Parser;
 
 import java.util.ArrayList;
 import java.util.List;
-
 public class ImplementsParser {
     private final Parser parser;
 
@@ -26,9 +25,12 @@ public class ImplementsParser {
 
         while (!parser.current().getValue().equals("}")) {
 
-            FunctionParser functionParser = new FunctionParser(parser, structName);
+            FunctionParser functionParser =
+                    new FunctionParser(parser, structName);
 
             FunctionNode fn = functionParser.parseFunction();
+
+            parser.registerStructMethod(structName, fn);
 
             methods.add(fn);
         }

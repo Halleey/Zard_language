@@ -1,6 +1,7 @@
 package translate.front;
 
 import ast.ASTNode;
+import ast.functions.FunctionNode;
 import ast.structs.StructFieldAccessNode;
 import ast.variables.ExpressionParser;
 import ast.variables.VariableNode;
@@ -17,9 +18,45 @@ public class Parser {
     private final Map<String, String> variableTypes = new HashMap<>();
     private final Deque<Map<String, String>> variableStack = new ArrayDeque<>();
     private final Map<String, Map<String, String>> structDefinitions = new HashMap<>();
+    private final Map<String, Map<String, FunctionNode>> structMethods = new HashMap<>();
+
 
     private final StatemantParser statementParser;
     private final ExpressionParser expressionParser;
+
+
+    public void registerStructMethod(String structName, FunctionNode fn) {
+        String base = baseStructName(structName);
+        structMethods
+                .computeIfAbsent(base, k -> new HashMap<>())
+                .put(fn.getName(), fn);
+    }
+
+    public boolean hasStructMethod(String structName, String methodName) {
+
+        Map<String, FunctionNode> methods = structMethods.get(structName);
+        if (methods != null && methods.containsKey(methodName)) {
+            return true;
+        }
+
+        int genericIdx = structName.indexOf('<');
+        if (genericIdx != -1) {
+            String base = structName.substring(0, genericIdx);
+            Map<String, FunctionNode> baseMethods = structMethods.get(base);
+            return baseMethods != null && baseMethods.containsKey(methodName);
+        }
+
+        return false;
+    }
+
+
+    private String baseStructName(String name) {
+        if (name == null) return null;
+        int idx = name.indexOf('<');
+        if (idx != -1) return name.substring(0, idx);
+        return name;
+    }
+
 
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
@@ -102,9 +139,11 @@ public class Parser {
     }
 
     public String getStructFieldType(String structName, String field) {
-        Map<String, String> fields = structDefinitions.get(structName);
+        String base = baseStructName(structName);
+        Map<String, String> fields = structDefinitions.get(base);
         return fields != null ? fields.get(field) : null;
     }
+
 
 
     public String getExpressionType(ASTNode node) {
@@ -114,20 +153,18 @@ public class Parser {
         }
 
         if (node instanceof StructFieldAccessNode f) {
-
             String structType = getExpressionType(f.getStructInstance());
 
             if (structType != null && structType.startsWith("Struct<")) {
-
-                String structName =
-                        structType.substring(7, structType.length() - 1);
-
-                return getStructFieldType(structName, f.getFieldName());
+                String inside = structType.substring(7, structType.length() - 1);
+                String base = baseStructName(inside);
+                return getStructFieldType(base, f.getFieldName());
             }
         }
 
         return null;
     }
+
 
     public Token current() {
         if (pos < tokens.size()) return tokens.get(pos);
@@ -173,5 +210,7 @@ public class Parser {
     public String peekValue(int k) {
         return peek(k).getValue();
     }
+
+
 
 }

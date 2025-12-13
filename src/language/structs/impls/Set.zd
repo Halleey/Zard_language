@@ -12,15 +12,9 @@ main {
     }
 
     # ==== uso ====
-     Set s;
+
      Set t = {name : "zard", data : 3,4,5};
     # adiciona elementos (sem this, passando s explicitamente)
     t.add(2);
-    s.add(1);
-    s.add(22);
-    s.add(99);
-
-    print("=== Conteúdo do Set ===");
-    print(s);
     print(t);
 }

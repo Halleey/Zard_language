@@ -9,8 +9,6 @@ import translate.front.Parser;
 
 
 import java.util.List;
-
-
 public class ListMethodParser {
     private final Parser parser;
 
@@ -18,99 +16,129 @@ public class ListMethodParser {
         this.parser = parser;
     }
 
+    private void dbg(String msg) {
+        System.out.println("[ListMethodParser] " + msg +
+                " | current=" + parser.current());
+    }
+
     private ASTNode consumeArg() {
-        parser.advance();
+        dbg("consumeArg() start");
+
+        parser.advance(); // método
+        dbg("after method advance");
+
         parser.eat(Token.TokenType.DELIMITER, "(");
+        dbg("after '('");
 
         ASTNode arg = null;
         if (!parser.current().getValue().equals(")")) {
+            dbg("parsing argument expression");
             arg = parser.parseExpression();
         }
 
         parser.eat(Token.TokenType.DELIMITER, ")");
+        dbg("after ')'");
+
         return arg;
     }
 
     public ASTNode parseStatementListMethod(ASTNode receiver, String method) {
-        ASTNode arg;
+        dbg("parseStatementListMethod method=" + method +
+                " receiverType=" + parser.getExpressionType(receiver));
 
         return switch (method) {
-            case "add" -> {
-                arg = consumeArg();
-                if (arg == null) throw new RuntimeException("Método add requer argumento");
 
-                // resolve tipo do elemento
+            case "add" -> {
+                ASTNode arg = consumeArg();
+                dbg("add arg=" + arg);
+
+                if (arg == null) {
+                    throw new RuntimeException("add requer exatamente 1 argumento");
+                }
+
                 String elementType = "unknown";
                 String listType = parser.getExpressionType(receiver);
-                if (listType != null && listType.startsWith("List<") && listType.endsWith(">")) {
+                dbg("listType=" + listType);
+
+                if (listType != null && listType.startsWith("List<")) {
                     elementType = listType.substring(5, listType.length() - 1);
                 }
 
                 ASTNode node = new ListAddNode(receiver, arg, elementType);
                 parser.eat(Token.TokenType.DELIMITER, ";");
+                dbg("add statement finished");
+
                 yield node;
             }
 
             case "addAll" -> {
-                parser.advance(); // consome método
+                parser.advance();
+                dbg("addAll advance");
+
                 ExpressionParser exprParser = new ExpressionParser(parser);
                 List<ASTNode> argsList = exprParser.parseArguments();
+
+                dbg("addAll args count=" + argsList.size());
+
                 ASTNode node = new ListAddAllNode(receiver, argsList);
                 parser.eat(Token.TokenType.DELIMITER, ";");
                 yield node;
             }
 
             case "remove" -> {
-                arg = consumeArg();
-                if (arg == null) throw new RuntimeException("Método remove requer argumento");
+                ASTNode arg = consumeArg();
+                dbg("remove arg=" + arg);
+
+                if (arg == null)
+                    throw new RuntimeException("remove requer argumento");
+
                 ASTNode node = new ListRemoveNode(receiver, arg);
                 parser.eat(Token.TokenType.DELIMITER, ";");
                 yield node;
             }
 
             case "clear" -> {
-                parser.advance(); // consome método
+                parser.advance();
+                dbg("clear advance");
+
                 parser.eat(Token.TokenType.DELIMITER, "(");
-                ASTNode node = new ListClearNode(receiver);
                 parser.eat(Token.TokenType.DELIMITER, ")");
+
+                ASTNode node = new ListClearNode(receiver);
                 parser.eat(Token.TokenType.DELIMITER, ";");
                 yield node;
             }
 
-            default -> throw new RuntimeException("Método de lista inválido em statement: " + method);
+            default -> throw new RuntimeException(
+                    "Método de lista inválido em statement: " + method);
         };
     }
 
     public ASTNode parseExpressionListMethod(ASTNode receiver, String method) {
-        parser.advance(); // consome nome do método
-        parser.eat(Token.TokenType.DELIMITER, "(");
 
         ASTNode arg = null;
-        if (!parser.current().getValue().equals(")")) {
-            arg = parser.parseExpression();
-        }
 
-        parser.eat(Token.TokenType.DELIMITER, ")");
+        // se houver parênteses, delega corretamente
+        if (parser.current().getValue().equals("(")) {
+            parser.eat(Token.TokenType.DELIMITER, "(");
 
-        ASTNode node;
-        switch (method) {
-            case "size" -> node = new ListSizeNode(receiver);
-            case "get" -> {
-                if (arg == null) throw new RuntimeException("get requer índice");
-                node = new ListGetNode(receiver, arg);
+            if (!parser.current().getValue().equals(")")) {
+                arg = parser.parseExpression();
             }
-            default -> throw new RuntimeException("Método de lista não permitido em expressão: " + method);
+
+            parser.eat(Token.TokenType.DELIMITER, ")");
         }
 
-        // suporte a encadeamento: ex. lista.get(0).campo
-        while (parser.current().getValue().equals(".")) {
-            parser.advance();
-            String memberName = parser.current().getValue();
-            parser.advance();
-
-            node = new StructFieldAccessNode(node, memberName, null);
-        }
-
-        return node;
+        return switch (method) {
+            case "size" -> new ListSizeNode(receiver);
+            case "get" -> {
+                if (arg == null)
+                    throw new RuntimeException("get requer índice");
+                yield new ListGetNode(receiver, arg);
+            }
+            default -> throw new RuntimeException(
+                    "Método de lista não permitido em expressão: " + method);
+        };
     }
+
 }

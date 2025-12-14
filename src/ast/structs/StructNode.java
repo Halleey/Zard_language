@@ -108,4 +108,28 @@ public class StructNode extends ASTNode {
         return 8;
     }
 
+    public boolean isGeneric() {
+
+        for (VariableDeclarationNode field : fields) {
+            String type = field.getType();
+            if (type == null) continue;
+
+            type = type.trim();
+
+            if (type.equals("?")) {
+                return true;
+            }
+
+            if (type.startsWith("List<") && type.contains("?")) {
+                return true;
+            }
+
+            if (type.startsWith("Struct<") && type.contains("?")) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 }

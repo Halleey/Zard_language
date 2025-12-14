@@ -18,7 +18,7 @@ public class StructMethodCallNode extends ASTNode {
     private final String structName;
     private final String methodName;
     private final List<ASTNode> args;
-
+    private String returnType;
     public StructMethodCallNode(ASTNode structInstance, String structName, String methodName, List<ASTNode> args) {
         this.structInstance = structInstance;
         this.structName = structName;
@@ -76,7 +76,13 @@ public class StructMethodCallNode extends ASTNode {
         }
         return null;
     }
+    public void setReturnType(String returnType) {
+        this.returnType = returnType;
+    }
 
+    public String getReturnType() {
+        return returnType;
+    }
     @Override
     public void print(String prefix) {
         System.out.println(prefix + "StructMethodCall:");

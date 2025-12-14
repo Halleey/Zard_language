@@ -1,16 +1,19 @@
 main {
 Struct Item {
- int id; string name;
+ int id;
+ string name;
+ List<int> quantidade;
 }
  Struct Set{
   List<Item> data;
  }
 
  impl Set {
- function  addItem(int id, string name) {
+ function  addItem(int id, string name, int quantidade) {
    Item it;
    it.id = id;
    it.name = name;
+   it.quantidade.add(quantidade);
    s.data.add(it);
    return s;
   }
@@ -58,9 +61,9 @@ Struct Item {
 # ==== Item ====
   Set<Item> items;
   Item teste;
-  items.addItem(1, "Sword");
-  items.addItem(2, "Shield");
-  items.addItem(3, "Potion");
+  items.addItem(1, "Sword",3);
+  items.addItem(2, "Shield",2);
+  items.addItem(3, "Potion",6);
   items.removeItemById(2);
 
   items.prints();

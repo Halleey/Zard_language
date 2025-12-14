@@ -60,7 +60,6 @@ public class ImportEmitter {
                 }
             }
 
-            // 👇 AQUI! Agora que Set existe no visitor, criamos Set<int>
             visitor.getTypeSpecializer().createSpecializedStructsFromInferences();
 
             for (ASTNode n : imported) {

@@ -211,6 +211,15 @@ public class Parser {
         return peek(k).getValue();
     }
 
+    public FunctionNode getStructMethod(String structName, String methodName) {
+
+        String base = baseStructName(structName);
+
+        Map<String, FunctionNode> methods = structMethods.get(base);
+        if (methods == null) return null;
+
+        return methods.get(methodName);
+    }
 
 
 }

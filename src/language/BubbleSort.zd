@@ -1,5 +1,3 @@
-import "src/language/structs/impls/monomorfizacao.zd";
-
 main {
 function void bubbleSort(List<int> arr) {
 
@@ -100,14 +98,4 @@ function void bubbleSort(List<int> arr) {
         i++;
     }
 
-
-    Set<int> numeros;
-    numeros.add(3);
-    numeros.add(3);
-    print(numeros);
-
-    Set<string> names;
-    names.add("zard");
-    names.add("zard");
-    print(names);
 }

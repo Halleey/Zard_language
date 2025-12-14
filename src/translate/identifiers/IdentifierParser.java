@@ -2,11 +2,9 @@ package translate.identifiers;
 
 import ast.ASTNode;
 import ast.functions.FunctionCallNode;
+import ast.functions.FunctionNode;
 import ast.functions.FunctionReferenceNode;
-import ast.structs.StructInstaceNode;
-import ast.structs.StructInstanceParser;
-import ast.structs.StructMethodCallNode;
-import ast.structs.StructUpdateNode;
+import ast.structs.*;
 import ast.variables.VariableDeclarationNode;
 import helpers_ast.variables.AssignmentParser;
 import helpers_ast.variables.UnaryParser;
@@ -164,44 +162,77 @@ import java.util.Map;
         parser.eat(Token.TokenType.DELIMITER, "}");
         return new StructUpdateNode(target, fieldUpdates, nestedUpdates);
     }
+        public ASTNode parseAsExpression(String name) {
 
-    public ASTNode parseAsExpression(String name) {
-        ASTNode receiver = new VariableNode(name);
-        Token current = parser.current();
+            ASTNode node = new VariableNode(name);
 
-        if (current.getValue().equals("(")) {
-            List<ASTNode> args = parser.parseArguments();
-            return new FunctionCallNode(name, args);
-        }
 
-        if (current.getValue().equals(".")) {
-            parser.advance();
-            String memberName = parser.current().getValue();
-            String receiverType = parser.getExpressionType(receiver);
-
-            if (receiverType != null && receiverType.startsWith("Struct")) {
-                StructFieldParser structParser = new StructFieldParser(parser);
-                return structParser.parseAsExpression(receiver, memberName);
-            }
-
-            if (receiverType != null && receiverType.startsWith("List")) {
-                ListMethodParser listParser = new ListMethodParser(parser);
-                return listParser.parseExpressionListMethod(receiver, memberName);
-            }
-
-            parser.advance();
-            String fullName = name + "." + memberName;
-
+            // chamada direta: f(...)
             if (parser.current().getValue().equals("(")) {
                 List<ASTNode> args = parser.parseArguments();
-                return new FunctionCallNode(fullName, args);
-            } else {
-                return new FunctionReferenceNode(fullName);
+                return new FunctionCallNode(name, args);
             }
+
+            // encadeamento
+            while (parser.current().getValue().equals(".")) {
+
+                parser.advance(); // '.'
+                String memberName = parser.current().getValue();
+                parser.eat(Token.TokenType.IDENTIFIER);
+
+                String receiverType = parser.getExpressionType(node);
+
+
+
+                if (receiverType != null && receiverType.startsWith("Struct")) {
+
+                    if (parser.current().getValue().equals("(")) {
+                        List<ASTNode> args = parser.parseArguments();
+
+                        String structType =
+                                receiverType.substring("Struct<".length(), receiverType.length() - 1);
+
+                        StructMethodCallNode call =
+                                new StructMethodCallNode(node, structType, memberName, args);
+
+                        FunctionNode method =
+                                parser.getStructMethod(structType, memberName);
+
+                        if (method == null) {
+                            throw new RuntimeException(
+                                    "Método '" + memberName + "' não encontrado em Struct " + structType
+                            );
+                        }
+
+                        call.setReturnType(method.getReturnType());
+
+                        node = call;
+
+                        continue;
+                    }
+
+                    node = new StructFieldAccessNode(node, memberName, null);
+                    continue;
+                }
+
+                if (receiverType != null && receiverType.startsWith("List")) {
+                    ListMethodParser listParser = new ListMethodParser(parser);
+                    node = listParser.parseExpressionListMethod(node, memberName);
+                    continue;
+                }
+
+                if (parser.current().getValue().equals("(")) {
+                    List<ASTNode> args = parser.parseArguments();
+                    node = new FunctionCallNode(node.toString() + "." + memberName, args);
+                } else {
+                    node = new StructFieldAccessNode(node, memberName, null);
+                }
+
+            }
+
+            return node;
         }
 
-        return receiver;
-    }
         private String parseTypeStruct(String baseName) {
 
             if (!parser.current().getValue().equals("<")) {

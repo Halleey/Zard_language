@@ -1,0 +1,19 @@
+import "src/language/structs/impls/monomorfizacao.zd";
+
+main {
+    Set<int> numeros;
+    numeros.add(3);
+    numeros.add(3);
+    print(numeros);
+
+    Set<boolean> real;
+    real.add(true);
+    real.add(false);
+    real.add(true);
+    print(real);
+
+    Set<string> names;
+    names.add("zard");
+    names.add("zard");
+    print(names);
+}

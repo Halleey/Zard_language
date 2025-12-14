@@ -11,6 +11,7 @@ import helpers_ast.variables.UnaryParser;
 import tokens.Token;
 import ast.variables.VariableNode;
 import translate.front.Parser;
+import translate.identifiers.structs.StructVariableDeclarationParser;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -28,39 +29,11 @@ import java.util.Map;
 
             String structName = parseTypeStruct(name);
 
-        if (parser.isKnownStruct(name)) {
-            String varName = parser.current().getValue();
-            parser.eat(Token.TokenType.IDENTIFIER);
-
-            // Caso especial: inicialização com { }
-            if (parser.current().getValue().equals("=")) {
-                parser.eat(Token.TokenType.OPERATOR, "=");
-
-                if (parser.current().getValue().equals("{")) {
-                    StructInstanceParser structParser = new StructInstanceParser(parser);
-                    return structParser.parseStructInstanceAfterKeyword(structName, varName);
-                }
-
-                ASTNode initializer = parser.parseExpression();
-                parser.eat(Token.TokenType.DELIMITER, ";");
-                parser.declareVariable(varName, "Struct<" + structName + ">");
-
-                return new VariableDeclarationNode(varName, "Struct<" + structName + ">", initializer);
+            if (parser.isKnownStruct(name)) {
+                StructVariableDeclarationParser structDecl =
+                        new StructVariableDeclarationParser(parser);
+                return structDecl.parse(structName);
             }
-
-            // Instanciação direta com chaves:
-            if (parser.current().getValue().equals("{")) {
-                StructInstanceParser structParser = new StructInstanceParser(parser);
-                return structParser.parseStructInstanceAfterKeyword(structName, varName);
-            }
-
-            // Declaração simples:
-            parser.eat(Token.TokenType.DELIMITER, ";");
-            StructInstaceNode instanceNode = new StructInstaceNode(structName, null, null);
-
-            parser.declareVariable(varName, "Struct<" + structName + ">");
-            return new VariableDeclarationNode(varName, "Struct<" + structName + ">", instanceNode);
-        }
 
         if (parser.current().getType() == Token.TokenType.IDENTIFIER) {
             String varName = parser.current().getValue();

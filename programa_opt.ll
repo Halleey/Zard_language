@@ -1,6 +1,10 @@
 ; ModuleID = 'programa.ll'
 source_filename = "programa.ll"
 
+%Endereco = type { ptr, ptr, ptr }
+%Pessoa = type { ptr, i32, ptr, ptr }
+%Pais = type { ptr }
+
 @.strChar = private constant [3 x i8] c"%c\00"
 @.strInt = private constant [3 x i8] c"%d\00"
 @.strDouble = private constant [3 x i8] c"%f\00"
@@ -10,10 +14,21 @@ source_filename = "programa.ll"
 @.strFalse = private constant [6 x i8] c"false\00"
 @.strNewLine = private constant [2 x i8] c"\0A\00"
 @.strEmpty = private constant [1 x i8] zeroinitializer
-@.str0 = private constant [2 x i8] c" \00"
-@.str1 = private constant [1 x i8] zeroinitializer
-@.str2 = private constant [8 x i8] c"Matriz:\00"
-@.str3 = private constant [12 x i8] c"Soma total:\00"
+@.str0 = private constant [7 x i8] c"Brasil\00"
+@.str1 = private constant [6 x i8] c"Rua A\00"
+@.str2 = private constant [11 x i8] c"S\C3\A3o Paulo\00"
+@.str3 = private constant [6 x i8] c"Alice\00"
+@.str4 = private constant [14 x i8] c"11 99999-1111\00"
+@.str5 = private constant [14 x i8] c"11 22222-3333\00"
+@.str6 = private constant [5 x i8] c"Zard\00"
+@.str7 = private constant [14 x i8] c"21 44444-5555\00"
+@.str8 = private constant [6 x i8] c"teste\00"
+@.str9 = private constant [13 x i8] c"Santo andr\C3\A9\00"
+@.str10 = private constant [9 x i8] c"Nova Rua\00"
+@.str11 = private constant [8 x i8] c"Zurique\00"
+@.str12 = private constant [8 x i8] c"Su\C3\AD\C3\A7a\00"
+@.str13 = private constant [20 x i8] c"=== Original p1 ===\00"
+@.str14 = private constant [17 x i8] c"=== Clone p2 ===\00"
 
 declare i32 @printf(ptr, ...)
 
@@ -47,226 +62,177 @@ declare void @arraylist_print_ptr(ptr, ptr)
 
 declare void @removeItem(ptr, i64)
 
-declare ptr @arraylist_create_int(i64)
+declare void @arraylist_add_string(ptr, ptr)
 
-declare void @arraylist_add_int(ptr, i32)
+declare void @arraylist_addAll_string(ptr, ptr, i64)
 
-declare void @arraylist_addAll_int(ptr, ptr, i64)
+declare void @arraylist_print_string(ptr)
 
-declare void @arraylist_print_int(ptr)
+declare void @arraylist_add_String(ptr, ptr)
 
-declare void @arraylist_clear_int(ptr)
+declare void @arraylist_addAll_String(ptr, ptr, i64)
 
-declare void @arraylist_free_int(ptr)
+declare ptr @getItem(ptr, i64)
 
-declare i32 @arraylist_get_int(ptr, i64, ptr)
-
-declare void @arraylist_remove_int(ptr, i64)
-
-declare i32 @arraylist_size_int(ptr)
-
-define void @print_Row(ptr %p) {
+define void @print_Pais(ptr %p) {
 entry:
   %v0 = load ptr, ptr %p, align 8
-  call void @arraylist_print_int(ptr %v0)
+  call void @printString(ptr %v0)
   ret void
 }
 
-define void @print_Matrix(ptr %p) {
+define void @print_Endereco(ptr %p) {
 entry:
+  %v0 = load ptr, ptr %p, align 8
+  call void @printString(ptr %v0)
+  %f1 = getelementptr inbounds %Endereco, ptr %p, i32 0, i32 1
+  %v1 = load ptr, ptr %f1, align 8
+  call void @printString(ptr %v1)
+  %f2 = getelementptr inbounds %Endereco, ptr %p, i32 0, i32 2
+  %v2 = load ptr, ptr %f2, align 8
+  call void @print_Pais(ptr %v2)
   ret void
 }
 
-define ptr @Matrix_adRow(ptr %s, i32 %a, i32 %b, i32 %c) {
+define void @print_Pessoa(ptr %p) {
 entry:
-  %tmp0 = call ptr @malloc(i64 8)
-  %tmp2 = call ptr @arraylist_create_int(i64 10)
-  store ptr %tmp2, ptr %tmp0, align 8
-  call void @arraylist_add_int(ptr %tmp2, i32 %a)
-  %tmp18 = load ptr, ptr %tmp0, align 8
-  call void @arraylist_add_int(ptr %tmp18, i32 %b)
-  %tmp26 = load ptr, ptr %tmp0, align 8
-  call void @arraylist_add_int(ptr %tmp26, i32 %c)
-  %tmp30 = load ptr, ptr %s, align 8
-  call void @arraylist_add_ptr(ptr %tmp30, ptr %tmp0)
-  ret ptr %s
-
-0:                                                ; No predecessors!
-  ret ptr %s
-}
-
-define ptr @Matrix_printMatrix(ptr %s) {
-entry:
-  %tmp396 = load ptr, ptr %s, align 8
-  %tmp417 = call i32 @length(ptr %tmp396)
-  %tmp428 = icmp slt i32 0, %tmp417
-  br i1 %tmp428, label %while_body_1.lr.ph, label %while_end_2
-
-while_body_1.lr.ph:                               ; preds = %entry
-  br label %while_body_1
-
-while_body_1:                                     ; preds = %while_body_1.lr.ph, %while_end_5
-  %i.09 = phi i32 [ 0, %while_body_1.lr.ph ], [ %tmp78, %while_end_5 ]
-  %r_1 = alloca ptr, align 8
-  %tmp45 = load ptr, ptr %s, align 8
-  %tmp47 = zext i32 %i.09 to i64
-  %tmp48 = call ptr @arraylist_get_ptr(ptr %tmp45, i64 %tmp47)
-  store ptr %tmp48, ptr %r_1, align 8
-  %j = alloca i32, align 4
-  store i32 0, ptr %j, align 4
-  %tmp511 = load i32, ptr %j, align 4
-  %tmp552 = load ptr, ptr %r_1, align 8
-  %tmp573 = load ptr, ptr %tmp552, align 8
-  %tmp584 = call i32 @arraylist_size_int(ptr %tmp573)
-  %tmp595 = icmp slt i32 %tmp511, %tmp584
-  br i1 %tmp595, label %while_body_4.lr.ph, label %while_end_5
-
-while_body_4.lr.ph:                               ; preds = %while_body_1
-  br label %while_body_4
-
-while_body_4:                                     ; preds = %while_body_4.lr.ph, %while_body_4
-  %tmp63 = load ptr, ptr %r_1, align 8
-  %tmp65 = load ptr, ptr %tmp63, align 8
-  %tmp66 = load i32, ptr %j, align 4
-  %tmp67 = zext i32 %tmp66 to i64
-  %tmp68 = alloca i32, align 4
-  %tmp69 = call i32 @arraylist_get_int(ptr %tmp65, i64 %tmp67, ptr %tmp68)
-  %tmp70 = load i32, ptr %tmp68, align 4
-  %0 = call i32 (ptr, ...) @printf(ptr @.strInt, i32 %tmp70)
-  %1 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str0)
-  %tmp72 = load i32, ptr %j, align 4
-  %tmp74 = add i32 %tmp72, 1
-  store i32 %tmp74, ptr %j, align 4
-  %tmp51 = load i32, ptr %j, align 4
-  %tmp55 = load ptr, ptr %r_1, align 8
-  %tmp57 = load ptr, ptr %tmp55, align 8
-  %tmp58 = call i32 @arraylist_size_int(ptr %tmp57)
-  %tmp59 = icmp slt i32 %tmp51, %tmp58
-  br i1 %tmp59, label %while_body_4, label %while_cond_3.while_end_5_crit_edge
-
-while_cond_3.while_end_5_crit_edge:               ; preds = %while_body_4
-  br label %while_end_5
-
-while_end_5:                                      ; preds = %while_cond_3.while_end_5_crit_edge, %while_body_1
-  %2 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str1)
-  %3 = call i32 (ptr, ...) @printf(ptr @.strNewLine)
-  %tmp78 = add i32 %i.09, 1
-  %tmp39 = load ptr, ptr %s, align 8
-  %tmp41 = call i32 @length(ptr %tmp39)
-  %tmp42 = icmp slt i32 %tmp78, %tmp41
-  br i1 %tmp42, label %while_body_1, label %while_cond_0.while_end_2_crit_edge
-
-while_cond_0.while_end_2_crit_edge:               ; preds = %while_end_5
-  br label %while_end_2
-
-while_end_2:                                      ; preds = %while_cond_0.while_end_2_crit_edge, %entry
-  ret ptr %s
-
-4:                                                ; No predecessors!
-  ret ptr %s
-}
-
-define i32 @Matrix_somar(ptr %s, i32 %b, i32 %c) {
-entry:
-  %tmp82 = add i32 %c, %b
-  ret i32 %tmp82
-
-0:                                                ; No predecessors!
-  ret i32 undef
-}
-
-define i32 @Matrix_sum(ptr %s) {
-entry:
-  %tmp887 = load ptr, ptr %s, align 8
-  %tmp908 = call i32 @length(ptr %tmp887)
-  %tmp919 = icmp slt i32 0, %tmp908
-  br i1 %tmp919, label %while_body_7.lr.ph, label %while_end_8
-
-while_body_7.lr.ph:                               ; preds = %entry
-  br label %while_body_7
-
-while_body_7:                                     ; preds = %while_body_7.lr.ph, %while_end_11
-  %i_1.011 = phi i32 [ 0, %while_body_7.lr.ph ], [ %tmp127, %while_end_11 ]
-  %total.010 = phi i32 [ 0, %while_body_7.lr.ph ], [ %total.1.lcssa, %while_end_11 ]
-  %r_2 = alloca ptr, align 8
-  %tmp94 = load ptr, ptr %s, align 8
-  %tmp96 = zext i32 %i_1.011 to i64
-  %tmp97 = call ptr @arraylist_get_ptr(ptr %tmp94, i64 %tmp96)
-  store ptr %tmp97, ptr %r_2, align 8
-  %j_1 = alloca i32, align 4
-  store i32 0, ptr %j_1, align 4
-  %tmp1001 = load i32, ptr %j_1, align 4
-  %tmp1042 = load ptr, ptr %r_2, align 8
-  %tmp1063 = load ptr, ptr %tmp1042, align 8
-  %tmp1074 = call i32 @arraylist_size_int(ptr %tmp1063)
-  %tmp1085 = icmp slt i32 %tmp1001, %tmp1074
-  br i1 %tmp1085, label %while_body_10.lr.ph, label %while_end_11
-
-while_body_10.lr.ph:                              ; preds = %while_body_7
-  br label %while_body_10
-
-while_body_10:                                    ; preds = %while_body_10.lr.ph, %while_body_10
-  %total.16 = phi i32 [ %total.010, %while_body_10.lr.ph ], [ %tmp121, %while_body_10 ]
-  %tmp113 = load ptr, ptr %r_2, align 8
-  %tmp115 = load ptr, ptr %tmp113, align 8
-  %tmp116 = load i32, ptr %j_1, align 4
-  %tmp117 = zext i32 %tmp116 to i64
-  %tmp118 = alloca i32, align 4
-  %tmp119 = call i32 @arraylist_get_int(ptr %tmp115, i64 %tmp117, ptr %tmp118)
-  %tmp120 = load i32, ptr %tmp118, align 4
-  %tmp121 = add i32 %tmp120, %total.16
-  %tmp122 = load i32, ptr %j_1, align 4
-  %tmp124 = add i32 %tmp122, 1
-  store i32 %tmp124, ptr %j_1, align 4
-  %tmp100 = load i32, ptr %j_1, align 4
-  %tmp104 = load ptr, ptr %r_2, align 8
-  %tmp106 = load ptr, ptr %tmp104, align 8
-  %tmp107 = call i32 @arraylist_size_int(ptr %tmp106)
-  %tmp108 = icmp slt i32 %tmp100, %tmp107
-  br i1 %tmp108, label %while_body_10, label %while_cond_9.while_end_11_crit_edge
-
-while_cond_9.while_end_11_crit_edge:              ; preds = %while_body_10
-  %split = phi i32 [ %tmp121, %while_body_10 ]
-  br label %while_end_11
-
-while_end_11:                                     ; preds = %while_cond_9.while_end_11_crit_edge, %while_body_7
-  %total.1.lcssa = phi i32 [ %split, %while_cond_9.while_end_11_crit_edge ], [ %total.010, %while_body_7 ]
-  %tmp127 = add i32 %i_1.011, 1
-  %tmp88 = load ptr, ptr %s, align 8
-  %tmp90 = call i32 @length(ptr %tmp88)
-  %tmp91 = icmp slt i32 %tmp127, %tmp90
-  br i1 %tmp91, label %while_body_7, label %while_cond_6.while_end_8_crit_edge
-
-while_cond_6.while_end_8_crit_edge:               ; preds = %while_end_11
-  %split12 = phi i32 [ %total.1.lcssa, %while_end_11 ]
-  br label %while_end_8
-
-while_end_8:                                      ; preds = %while_cond_6.while_end_8_crit_edge, %entry
-  %total.0.lcssa = phi i32 [ %split12, %while_cond_6.while_end_8_crit_edge ], [ 0, %entry ]
-  ret i32 %total.0.lcssa
-
-0:                                                ; No predecessors!
-  ret i32 undef
+  %v0 = load ptr, ptr %p, align 8
+  call void @printString(ptr %v0)
+  %f1 = getelementptr inbounds %Pessoa, ptr %p, i32 0, i32 1
+  %v1 = load i32, ptr %f1, align 4
+  %0 = call i32 (ptr, ...) @printf(ptr @.strInt, i32 %v1)
+  %f2 = getelementptr inbounds %Pessoa, ptr %p, i32 0, i32 2
+  %v2 = load ptr, ptr %f2, align 8
+  call void @print_Endereco(ptr %v2)
+  %f3 = getelementptr inbounds %Pessoa, ptr %p, i32 0, i32 3
+  %v3 = load ptr, ptr %f3, align 8
+  call void @arraylist_print_string(ptr %v3)
+  ret void
 }
 
 define i32 @main() {
-  %tmp129 = call ptr @malloc(i64 8)
-  %tmp131 = call ptr @arraylist_create(i64 10)
-  store ptr %tmp131, ptr %tmp129, align 8
-  call void @Matrix_adRow(ptr %tmp129, i32 1, i32 2, i32 3)
-  call void @Matrix_adRow(ptr %tmp129, i32 4, i32 5, i32 6)
-  call void @Matrix_adRow(ptr %tmp129, i32 7, i32 8, i32 9)
-  %tmp149 = call i32 @Matrix_somar(ptr %tmp129, i32 3, i32 5)
-  %1 = call i32 (ptr, ...) @printf(ptr @.strInt, i32 %tmp149)
-  %2 = call i32 (ptr, ...) @printf(ptr @.strNewLine)
-  %3 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str2)
+  %1 = call i32 (ptr, ...) @printf(ptr @.strFloat, double 0x40091EB860000000)
+  %tmp4 = call ptr @malloc(i64 8)
+  %tmp6 = call ptr @createString(ptr null)
+  store ptr %tmp6, ptr %tmp4, align 8
+  %tmp11 = call ptr @createString(ptr @.str0)
+  store ptr %tmp11, ptr %tmp4, align 8
+  %tmp13 = call ptr @malloc(i64 24)
+  %tmp15 = call ptr @createString(ptr null)
+  store ptr %tmp15, ptr %tmp13, align 8
+  %tmp17 = call ptr @createString(ptr null)
+  %tmp18 = getelementptr inbounds %Endereco, ptr %tmp13, i32 0, i32 1
+  store ptr %tmp17, ptr %tmp18, align 8
+  %tmp19 = getelementptr inbounds %Endereco, ptr %tmp13, i32 0, i32 2
+  store ptr null, ptr %tmp19, align 8
+  %tmp23 = call ptr @createString(ptr @.str1)
+  store ptr %tmp23, ptr %tmp13, align 8
+  %tmp28 = call ptr @createString(ptr @.str2)
+  store ptr %tmp28, ptr %tmp18, align 8
+  store ptr %tmp4, ptr %tmp19, align 8
+  %tmp34 = call ptr @malloc(i64 28)
+  %tmp36 = call ptr @createString(ptr null)
+  store ptr %tmp36, ptr %tmp34, align 8
+  %tmp38 = getelementptr inbounds %Pessoa, ptr %tmp34, i32 0, i32 1
+  store i32 0, ptr %tmp38, align 4
+  %tmp39 = getelementptr inbounds %Pessoa, ptr %tmp34, i32 0, i32 2
+  store ptr null, ptr %tmp39, align 8
+  %tmp40 = call ptr @arraylist_create(i64 4)
+  %tmp42 = getelementptr inbounds %Pessoa, ptr %tmp34, i32 0, i32 3
+  store ptr %tmp40, ptr %tmp42, align 8
+  %tmp46 = call ptr @createString(ptr @.str3)
+  store ptr %tmp46, ptr %tmp34, align 8
+  store i32 25, ptr %tmp38, align 4
+  store ptr %tmp13, ptr %tmp39, align 8
+  %tmp58 = load ptr, ptr %tmp42, align 8
+  %tmp60 = call ptr @createString(ptr @.str4)
+  call void @arraylist_add_String(ptr %tmp58, ptr %tmp60)
+  %tmp64 = load ptr, ptr %tmp42, align 8
+  %tmp66 = call ptr @createString(ptr @.str5)
+  call void @arraylist_add_String(ptr %tmp64, ptr %tmp66)
+  %tmp68 = call ptr @malloc(i64 28)
+  %tmp70 = call ptr @createString(ptr null)
+  store ptr %tmp70, ptr %tmp68, align 8
+  %tmp72 = getelementptr inbounds %Pessoa, ptr %tmp68, i32 0, i32 1
+  store i32 0, ptr %tmp72, align 4
+  %tmp73 = getelementptr inbounds %Pessoa, ptr %tmp68, i32 0, i32 2
+  store ptr null, ptr %tmp73, align 8
+  %tmp74 = call ptr @arraylist_create(i64 4)
+  %tmp76 = getelementptr inbounds %Pessoa, ptr %tmp68, i32 0, i32 3
+  store ptr %tmp74, ptr %tmp76, align 8
+  %tmp81 = load ptr, ptr %tmp34, align 8
+  store ptr %tmp81, ptr %tmp68, align 8
+  %tmp84 = load i32, ptr %tmp38, align 4
+  store i32 %tmp84, ptr %tmp72, align 4
+  %tmp87 = load ptr, ptr %tmp39, align 8
+  %tmp88 = alloca %Endereco, align 8
+  %tmp91 = load ptr, ptr %tmp87, align 8
+  store ptr %tmp91, ptr %tmp88, align 8
+  %tmp92 = getelementptr inbounds %Endereco, ptr %tmp87, i32 0, i32 1
+  %tmp93 = getelementptr inbounds %Endereco, ptr %tmp88, i32 0, i32 1
+  %tmp94 = load ptr, ptr %tmp92, align 8
+  store ptr %tmp94, ptr %tmp93, align 8
+  %tmp95 = getelementptr inbounds %Endereco, ptr %tmp87, i32 0, i32 2
+  %tmp96 = getelementptr inbounds %Endereco, ptr %tmp88, i32 0, i32 2
+  %tmp97 = load ptr, ptr %tmp95, align 8
+  %tmp98 = alloca %Pais, align 8
+  %tmp101 = load ptr, ptr %tmp97, align 8
+  store ptr %tmp101, ptr %tmp98, align 8
+  store ptr %tmp98, ptr %tmp96, align 8
+  store ptr %tmp88, ptr %tmp73, align 8
+  %tmp104 = load ptr, ptr %tmp42, align 8
+  %tmp105 = call i32 @length(ptr %tmp104)
+  %tmp106 = zext i32 %tmp105 to i64
+  %tmp107 = call ptr @arraylist_create(i64 %tmp106)
+  %tmp1121 = icmp ult i64 0, %tmp106
+  br i1 %tmp1121, label %list_copy_body_tmp110.lr.ph, label %list_copy_end_tmp110
+
+list_copy_body_tmp110.lr.ph:                      ; preds = %0
+  br label %list_copy_body_tmp110
+
+list_copy_body_tmp110:                            ; preds = %list_copy_body_tmp110.lr.ph, %list_copy_body_tmp110
+  %tmp109.02 = phi i64 [ 0, %list_copy_body_tmp110.lr.ph ], [ %tmp115, %list_copy_body_tmp110 ]
+  %tmp113 = call ptr @arraylist_get_ptr(ptr %tmp104, i64 %tmp109.02)
+  %tmp114 = call ptr @createString(ptr %tmp113)
+  call void @arraylist_add_String(ptr %tmp107, ptr %tmp114)
+  %tmp115 = add i64 %tmp109.02, 1
+  %tmp112 = icmp ult i64 %tmp115, %tmp106
+  br i1 %tmp112, label %list_copy_body_tmp110, label %list_copy_cond_tmp110.list_copy_end_tmp110_crit_edge
+
+list_copy_cond_tmp110.list_copy_end_tmp110_crit_edge: ; preds = %list_copy_body_tmp110
+  br label %list_copy_end_tmp110
+
+list_copy_end_tmp110:                             ; preds = %list_copy_cond_tmp110.list_copy_end_tmp110_crit_edge, %0
+  store ptr %tmp107, ptr %tmp76, align 8
+  %tmp119 = call ptr @createString(ptr @.str6)
+  store ptr %tmp119, ptr %tmp68, align 8
+  %tmp123 = load ptr, ptr %tmp76, align 8
+  %tmp125 = call ptr @createString(ptr @.str7)
+  call void @arraylist_add_String(ptr %tmp123, ptr %tmp125)
+  %tmp130 = call ptr @createString(ptr @.str8)
+  store ptr %tmp130, ptr %tmp13, align 8
+  %tmp135 = call ptr @createString(ptr @.str9)
+  store ptr %tmp135, ptr %tmp18, align 8
+  %tmp139 = load ptr, ptr %tmp76, align 8
+  call void @removeItem(ptr %tmp139, i64 0)
+  %tmp144 = load ptr, ptr %tmp73, align 8
+  %tmp146 = call ptr @createString(ptr @.str10)
+  store ptr %tmp146, ptr %tmp144, align 8
+  %tmp149 = call ptr @createString(ptr @.str11)
+  %tmp150 = getelementptr inbounds %Endereco, ptr %tmp144, i32 0, i32 1
+  store ptr %tmp149, ptr %tmp150, align 8
+  %tmp151 = getelementptr inbounds %Endereco, ptr %tmp144, i32 0, i32 2
+  %tmp152 = load ptr, ptr %tmp151, align 8
+  %tmp154 = call ptr @createString(ptr @.str12)
+  store ptr %tmp154, ptr %tmp152, align 8
+  %2 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str13)
+  %3 = call i32 (ptr, ...) @printf(ptr @.strNewLine)
+  call void @print_Pessoa(ptr %tmp34)
   %4 = call i32 (ptr, ...) @printf(ptr @.strNewLine)
-  call void @Matrix_printMatrix(ptr %tmp129)
-  %5 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str3)
+  %5 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str14)
   %6 = call i32 (ptr, ...) @printf(ptr @.strNewLine)
-  %tmp154 = call i32 @Matrix_sum(ptr %tmp129)
-  %7 = call i32 (ptr, ...) @printf(ptr @.strInt, i32 %tmp154)
-  %8 = call i32 (ptr, ...) @printf(ptr @.strNewLine)
-  %9 = call i32 @getchar()
+  call void @print_Pessoa(ptr %tmp68)
+  %7 = call i32 (ptr, ...) @printf(ptr @.strNewLine)
+  %8 = call i32 @getchar()
   ret i32 0
 }

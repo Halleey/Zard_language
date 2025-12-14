@@ -16,26 +16,26 @@ public class ExecutorLinux {
         FrontendPipeline frontend = new FrontendPipeline(filePath);
         var ast = frontend.process();
 //
-//        EscapeInfo escapeInfo = frontend.getEscapeInfo();
-//
-//        TypePipeline typePipeline = new TypePipeline(frontend.getParser());
-//        LLVisitorMain tempVisitor = typePipeline.process(ast);
-//
-//        LLVisitorMain llvmVisitor = tempVisitor.fork();
-//
-//        llvmVisitor.setEscapeInfo(escapeInfo);
-//
-//        System.out.println("[DEBUG ExecutorLinux] visitor no backend @"
-//                + System.identityHashCode(llvmVisitor));
-//
-//        LLVMGenerator llgen = new LLVMGenerator(llvmVisitor);
-//        String llvm = llgen.generate(ast);
-//
-//        LLVMToolchain toolchain = new LLVMToolchain();
-//        String exePath = toolchain.buildExecutable(llvm);
-//        toolchain.runExecutable(exePath);
-        ASTInterpreter interpreter = new ASTInterpreter();
-        interpreter.run(ast);
+        EscapeInfo escapeInfo = frontend.getEscapeInfo();
+
+        TypePipeline typePipeline = new TypePipeline(frontend.getParser());
+        LLVisitorMain tempVisitor = typePipeline.process(ast);
+
+        LLVisitorMain llvmVisitor = tempVisitor.fork();
+
+        llvmVisitor.setEscapeInfo(escapeInfo);
+
+        System.out.println("[DEBUG ExecutorLinux] visitor no backend @"
+                + System.identityHashCode(llvmVisitor));
+
+        LLVMGenerator llgen = new LLVMGenerator(llvmVisitor);
+        String llvm = llgen.generate(ast);
+
+        LLVMToolchain toolchain = new LLVMToolchain();
+        String exePath = toolchain.buildExecutable(llvm);
+        toolchain.runExecutable(exePath);
+//        ASTInterpreter interpreter = new ASTInterpreter();
+//        interpreter.run(ast);
 
     }
 }

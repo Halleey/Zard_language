@@ -1,78 +1,64 @@
 main {
 
-Struct Row {
-    List<int> values;
-}
-
-Struct Matrix {
-    List<Row> rows;
-}
-
-impl Matrix {
-
-    function adRow(int a, int b, int c) {
-        Row r;
-        r.values.add(a);
-        r.values.add(b);
-        r.values.add(c);
-
-        s.rows.add(r);
-        return s;
+    Struct Pais {
+        string nome;
     }
 
-    function printMatrix() {
-        int i = 0;
 
-        while (i < s.rows.size()) {
-            Row r = s.rows.get(i);
-            int j = 0;
+    float teste = 3.14;
+    print(teste);
+    Struct Endereco {
+        string rua;
+        string cidade;
+        Struct Pais pais;
+    }
 
-            while (j < r.values.size()) {
-                print(r.values.get(j));
-                print(" ");          # espaço entre colunas
-                j = j + 1;
-            }
+    Struct Pessoa {
+        string nome;
+        int idade;
+        Struct Endereco endereco;
+        List<string> telefones;
+    }
 
-            println("");             # quebra de linha ao fim da linha
-            i = i + 1;
+    # ---- Instâncias base ----
+    Pais brasil;
+    brasil.nome = "Brasil";
+
+    Endereco e1;
+    e1.rua = "Rua A";
+    e1.cidade = "São Paulo";
+    e1.pais = brasil;
+
+    Pessoa p1;
+    p1.nome = "Alice";
+    p1.idade = 25;
+    p1.endereco = e1;
+    p1.telefones.add("11 99999-1111");
+    p1.telefones.add("11 22222-3333");
+
+    # === Cópia profunda ===
+    Pessoa p2;
+    p2 = p1;
+
+    # === Alterações independentes ===
+    p2.nome = "Zard";
+    p2.telefones.add("21 44444-5555");
+
+    e1.rua = "teste";
+    e1.cidade = "Santo andré";
+    p2.telefones.remove(0);
+
+
+    # Atualização inline aninhada com lista e sub-struct
+    p2.endereco {
+        rua: "Nova Rua";
+        cidade: "Zurique";
+        pais {
+            nome: "Suíça";
         }
-        return s;
     }
-
-    function int somar(int b, int c) {
-        return b + c;
-    }
-
-    function int sum() {
-        int total = 0;
-        int i = 0;
-
-        while (i < s.rows.size()) {
-            Row r = s.rows.get(i);
-            int j = 0;
-
-            while (j < r.values.size()) {
-                total = total + r.values.get(j);
-                j = j + 1;
-            }
-
-            i = i + 1;
-        }
-        return total;
-    }
-}
-
-    Matrix mat;
-
-    mat.adRow(1, 2, 3);
-    mat.adRow(4, 5, 6);
-    mat.adRow(7, 8, 9);
-
-    println(mat.somar(3, 5));
-
-    println("Matriz:");
-    mat.printMatrix();
-
-    println("Soma total:");
-    println(mat.sum());
+    println("=== Original p1 ===");
+    println(p1);
+    println("=== Clone p2 ===");
+    println(p2);
 }

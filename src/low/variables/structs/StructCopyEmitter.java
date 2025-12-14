@@ -10,6 +10,8 @@ import low.main.TypeInfos;
 import low.module.LLVisitorMain;
 
 import java.util.Map;
+
+
 public class StructCopyEmitter {
     private final Map<String, TypeInfos> varTypes;
     private final TempManager temps;
@@ -77,12 +79,8 @@ public class StructCopyEmitter {
                         .append(", %").append(innerStructName).append("** ").append(dstFieldPtr).append("\n");
             }
 
-            else if (fieldType.startsWith("List<string>") || fieldType.startsWith("List<String>")) {
-                String val = temps.newTemp();
-                llvm.append("  ").append(val)
-                        .append(" = load %ArrayList*, %ArrayList** ").append(srcFieldPtr).append("\n");
-                llvm.append("  store %ArrayList* ").append(val)
-                        .append(", %ArrayList** ").append(dstFieldPtr).append("\n");
+            else if (fieldType.startsWith("List<")) {
+                llvm.append(emitListDeepCopy(fieldType, srcFieldPtr, dstFieldPtr));
             }
 
             else if (llvmFieldType.equals("%String*")) {
@@ -113,6 +111,205 @@ public class StructCopyEmitter {
         return llvm.toString();
     }
 
+    private String emitListDeepCopy(String fieldType, String srcFieldPtr, String dstFieldPtr) {
+        StringBuilder sb = new StringBuilder();
+
+        String inner = fieldType.substring(
+                fieldType.indexOf('<') + 1,
+                fieldType.lastIndexOf('>')
+        ).trim();
+        if (inner.equals("int")) {
+            String srcList = temps.newTemp();
+            sb.append("  ").append(srcList)
+                    .append(" = load %struct.ArrayListInt*, %struct.ArrayListInt** ")
+                    .append(srcFieldPtr).append("\n");
+
+            String dataPtrPtr = temps.newTemp();
+            String dataPtr = temps.newTemp();
+            sb.append("  ").append(dataPtrPtr)
+                    .append(" = getelementptr inbounds %struct.ArrayListInt, %struct.ArrayListInt* ")
+                    .append(srcList).append(", i32 0, i32 0\n");
+            sb.append("  ").append(dataPtr)
+                    .append(" = load i32*, i32** ").append(dataPtrPtr).append("\n");
+
+            String sizePtr = temps.newTemp();
+            String size = temps.newTemp();
+            sb.append("  ").append(sizePtr)
+                    .append(" = getelementptr inbounds %struct.ArrayListInt, %struct.ArrayListInt* ")
+                    .append(srcList).append(", i32 0, i32 1\n");
+            sb.append("  ").append(size)
+                    .append(" = load i64, i64* ").append(sizePtr).append("\n");
+
+            String newList = temps.newTemp();
+            sb.append("  ").append(newList)
+                    .append(" = call %struct.ArrayListInt* @arraylist_create_int(i64 ")
+                    .append(size).append(")\n");
+
+            sb.append("  call void @arraylist_addAll_int(%struct.ArrayListInt* ")
+                    .append(newList).append(", i32* ").append(dataPtr)
+                    .append(", i64 ").append(size).append(")\n");
+
+            sb.append("  store %struct.ArrayListInt* ").append(newList)
+                    .append(", %struct.ArrayListInt** ").append(dstFieldPtr).append("\n");
+
+            return sb.toString();
+        }
+
+        if (inner.equals("double")) {
+            String srcList = temps.newTemp();
+            sb.append("  ").append(srcList)
+                    .append(" = load %struct.ArrayListDouble*, %struct.ArrayListDouble** ")
+                    .append(srcFieldPtr).append("\n");
+
+            String dataPtrPtr = temps.newTemp();
+            String dataPtr = temps.newTemp();
+            sb.append("  ").append(dataPtrPtr)
+                    .append(" = getelementptr inbounds %struct.ArrayListDouble, %struct.ArrayListDouble* ")
+                    .append(srcList).append(", i32 0, i32 0\n");
+            sb.append("  ").append(dataPtr)
+                    .append(" = load double*, double** ").append(dataPtrPtr).append("\n");
+
+            String sizePtr = temps.newTemp();
+            String size = temps.newTemp();
+            sb.append("  ").append(sizePtr)
+                    .append(" = getelementptr inbounds %struct.ArrayListDouble, %struct.ArrayListDouble* ")
+                    .append(srcList).append(", i32 0, i32 1\n");
+            sb.append("  ").append(size)
+                    .append(" = load i64, i64* ").append(sizePtr).append("\n");
+
+            String newList = temps.newTemp();
+            sb.append("  ").append(newList)
+                    .append(" = call %struct.ArrayListDouble* @arraylist_create_double(i64 ")
+                    .append(size).append(")\n");
+
+            sb.append("  call void @arraylist_addAll_double(%struct.ArrayListDouble* ")
+                    .append(newList).append(", double* ").append(dataPtr)
+                    .append(", i64 ").append(size).append(")\n");
+
+            sb.append("  store %struct.ArrayListDouble* ").append(newList)
+                    .append(", %struct.ArrayListDouble** ").append(dstFieldPtr).append("\n");
+
+            return sb.toString();
+        }
+
+        if (inner.equals("string") || inner.equals("String")) {
+
+            String srcList = temps.newTemp();
+            sb.append("  ").append(srcList)
+                    .append(" = load %ArrayList*, %ArrayList** ")
+                    .append(srcFieldPtr).append("\n");
+
+            String len32 = temps.newTemp();
+            sb.append("  ").append(len32)
+                    .append(" = call i32 @length(%ArrayList* ")
+                    .append(srcList).append(")\n");
+
+            String len64 = temps.newTemp();
+            sb.append("  ").append(len64)
+                    .append(" = zext i32 ").append(len32).append(" to i64\n");
+            String rawNew = temps.newTemp();
+            sb.append("  ").append(rawNew)
+                    .append(" = call i8* @arraylist_create(i64 ")
+                    .append(len64).append(")\n");
+
+            String newList = temps.newTemp();
+            sb.append("  ").append(newList)
+                    .append(" = bitcast i8* ").append(rawNew)
+                    .append(" to %ArrayList*\n");
+
+            String idx = temps.newTemp();
+            sb.append("  ").append(idx).append(" = alloca i64\n");
+            sb.append("  store i64 0, i64* ").append(idx).append("\n");
+
+            String id = temps.newTemp().replace("%", "");
+            String cond = "list_copy_cond_" + id;
+            String body = "list_copy_body_" + id;
+            String end  = "list_copy_end_"  + id;
+
+            sb.append("  br label %").append(cond).append("\n");
+
+            sb.append(cond).append(":\n");
+            String cur = temps.newTemp();
+            sb.append("  ").append(cur)
+                    .append(" = load i64, i64* ").append(idx).append("\n");
+
+            String cmp = temps.newTemp();
+            sb.append("  ").append(cmp)
+                    .append(" = icmp ult i64 ").append(cur)
+                    .append(", ").append(len64).append("\n");
+
+            sb.append("  br i1 ").append(cmp)
+                    .append(", label %").append(body)
+                    .append(", label %").append(end).append("\n");
+
+            sb.append(body).append(":\n");
+
+            String rawChar = temps.newTemp();
+            sb.append("  ").append(rawChar)
+                    .append(" = call i8* @arraylist_get_ptr(%ArrayList* ")
+                    .append(srcList).append(", i64 ").append(cur).append(")\n");
+
+            String newStr = temps.newTemp();
+            sb.append("  ").append(newStr)
+                    .append(" = call %String* @createString(i8* ")
+                    .append(rawChar).append(")\n");
+
+            sb.append("  call void @arraylist_add_String(%ArrayList* ")
+                    .append(newList).append(", %String* ").append(newStr).append(")\n");
+
+            String next = temps.newTemp();
+            sb.append("  ").append(next)
+                    .append(" = add i64 ").append(cur).append(", 1\n");
+            sb.append("  store i64 ").append(next).append(", i64* ").append(idx).append("\n");
+            sb.append("  br label %").append(cond).append("\n");
+
+            sb.append(end).append(":\n");
+            sb.append("  store %ArrayList* ").append(newList)
+                    .append(", %ArrayList** ").append(dstFieldPtr).append("\n");
+
+            return sb.toString();
+        }
+
+        if (inner.equals("boolean") || inner.equals("bool")) {
+
+            String srcList = temps.newTemp();
+            sb.append("  ").append(srcList)
+                    .append(" = load %struct.ArrayListBool*, %struct.ArrayListBool** ")
+                    .append(srcFieldPtr).append("\n");
+
+            String dataPtrPtr = temps.newTemp();
+            String dataPtr = temps.newTemp();
+            sb.append("  ").append(dataPtrPtr)
+                    .append(" = getelementptr inbounds %struct.ArrayListBool, %struct.ArrayListBool* ")
+                    .append(srcList).append(", i32 0, i32 0\n");
+            sb.append("  ").append(dataPtr)
+                    .append(" = load i1*, i1** ").append(dataPtrPtr).append("\n");
+
+            String sizePtr = temps.newTemp();
+            String size = temps.newTemp();
+            sb.append("  ").append(sizePtr)
+                    .append(" = getelementptr inbounds %struct.ArrayListBool, %struct.ArrayListBool* ")
+                    .append(srcList).append(", i32 0, i32 1\n");
+            sb.append("  ").append(size)
+                    .append(" = load i64, i64* ").append(sizePtr).append("\n");
+
+            String newList = temps.newTemp();
+            sb.append("  ").append(newList)
+                    .append(" = call %struct.ArrayListBool* @arraylist_create_bool(i64 ")
+                    .append(size).append(")\n");
+
+            sb.append("  call void @arraylist_addAll_bool(%struct.ArrayListBool* ")
+                    .append(newList).append(", i8* ").append(dataPtr)
+                    .append(", i64 ").append(size).append(")\n");
+
+            sb.append("  store %struct.ArrayListBool* ").append(newList)
+                    .append(", %struct.ArrayListBool** ").append(dstFieldPtr).append("\n");
+
+            return sb.toString();
+        }
+
+        throw new RuntimeException("Deep copy not supported for List<" + inner + ">");
+    }
 
 
     private String emitRecursiveCopy(String structName, String srcTemp, String dstTemp) {
@@ -161,13 +358,10 @@ public class StructCopyEmitter {
                         .append(", %").append(innerStruct).append("** ").append(dstFieldPtr).append("\n");
             }
 
-            else if (fieldType.startsWith("List<string>") || fieldType.startsWith("List<String>")) {
-                String val = temps.newTemp();
-                llvm.append("  ").append(val)
-                        .append(" = load %ArrayList*, %ArrayList** ").append(srcFieldPtr).append("\n");
-                llvm.append("  store %ArrayList* ").append(val)
-                        .append(", %ArrayList** ").append(dstFieldPtr).append("\n");
+            else if (fieldType.startsWith("List<")) {
+                llvm.append(emitListDeepCopy(fieldType, srcFieldPtr, dstFieldPtr));
             }
+
 
             else if (llvmFieldType.equals("%String*")) {
                 String val = temps.newTemp();

@@ -60,7 +60,7 @@ main {
     pessoas.add(p3);
 
     # ---- Busca por todos que moram no Brasil ----
-    print("=== Pessoas que moram no Brasil ===");
+    println("=== Pessoas que moram no Brasil ===");
     int i = 0;
     while (i < pessoas.size()) {
         if (pessoas.get(i).endereco.pais.nome == "Brasil") {
@@ -78,8 +78,8 @@ main {
         i = i + 1;
     }
     int media = soma / pessoas.size();
-    print("Idade média:");
-    print(media);
+    println("Idade média:");
+    println(media);
 
     # ---- Verificação complexa ----
     if (pessoas.get(2).endereco.pais.nome == "Argentina" && pessoas.get(2).idade > 30) {

@@ -35,6 +35,8 @@ import low.variables.*;
 import low.variables.exps.AssignmentEmitter;
 import low.variables.exps.BinaryOpEmitter;
 import low.variables.exps.UnaryOpEmitter;
+
+import low.variables.structs.StructCopyEmitter;
 import memory_manager.EscapeInfo;
 
 import java.util.*;
@@ -100,6 +102,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final StructFieldAccessEmitter structFieldAccessEmitter;
     private final StructMethodCallEmitter methodCallEmitter;
     private final ImplEmitter implEmitter;
+    private final StructCopyEmitter structCopyEmitter;
 
     // ==== TYPE SPECIALIZER ====
     private final TypeSpecializer typeSpecializer;
@@ -153,6 +156,10 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         );
     }
 
+    public StructCopyEmitter getStructCopyEmitter() {
+        return structCopyEmitter;
+    }
+
     private LLVisitorMain(
             TypeSpecializer typeSpecializer,
             TypeTable types,
@@ -176,6 +183,8 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         this.temps = new TempManager();
         this.controlFlow = new FlowControllVisitor(this, temps);
 
+
+        this.structCopyEmitter = new StructCopyEmitter(types.getVarTypesMap(), temps,globalStrings, this);
 
         // Registries
         this.structRegistry = new StructRegistry(structNodes, new HashSet<>(), new HashSet<>());
@@ -325,8 +334,9 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public String visit(StructInstaceNode node) {
-        return instanceEmitter.emit(node, this);
+        return instanceEmitter.emit(node, this, true);
     }
+
 
     @Override
     public String visit(StructFieldAccessNode node) {
@@ -532,4 +542,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public Map<String, String> getListElementTypesLegacyView() {
         return listElementTypesLegacyView;
     }
+
+
 }

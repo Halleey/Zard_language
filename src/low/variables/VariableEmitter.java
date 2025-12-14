@@ -2,6 +2,7 @@ package low.variables;
 import ast.inputs.InputNode;
 import ast.lists.ListNode;
 import ast.structs.StructInstaceNode;
+import ast.variables.AssignmentNode;
 import low.inputs.InputEmitter;
 import low.lists.generics.ListEmitter;
 import low.lists.bool.ListBoolEmitter;
@@ -12,6 +13,7 @@ import low.module.LLVisitorMain;
 import low.TempManager;
 import ast.variables.VariableDeclarationNode;
 import low.variables.exps.AllocaEmitter;
+import low.variables.structs.StructCopyEmitter;
 import low.variables.structs.StructInitEmitter;
 
 import java.util.HashMap;
@@ -44,7 +46,6 @@ public class VariableEmitter {
     public String emitAlloca(VariableDeclarationNode node) {
         return allocaEmitter.emit(node);
     }
-
     public String emitInit(VariableDeclarationNode node) {
 
         TypeInfos info = varTypes.get(node.getName());
@@ -52,28 +53,33 @@ public class VariableEmitter {
         String varPtr  = getVarPtr(node.getName());
 
         if (srcType != null && srcType.startsWith("Struct<")) {
-
             if (node.initializer == null) {
                 return structInitEmitter.emit(node, info);
             }
 
-            if (node.initializer instanceof StructInstaceNode) {
+            if (node.initializer instanceof StructInstaceNode sin) {
                 String code = node.initializer.accept(visitor);
-                String tmp = extractTemp(code);
+                String tmp  = extractTemp(code);
 
                 return code
                         + "  store " + info.getLLVMType() + " " + tmp
                         + ", " + info.getLLVMType() + "* " + varPtr + "\n";
             }
-
             String exprCode = node.initializer.accept(visitor);
             String tmp = extractTemp(exprCode);
+
+            boolean escapes = visitor.escapesVar(node.getName());
+
+            if (!escapes) {
+                StructCopyEmitter copier = visitor.getStructCopyEmitter();
+                return exprCode
+                        + copier.emit(null, tmp, varPtr, srcType);
+            }
 
             return exprCode
                     + "  store " + info.getLLVMType() + " " + tmp
                     + ", " + info.getLLVMType() + "* " + varPtr + "\n";
         }
-
         if (node.initializer == null) {
             return handleDefaultInit(node, info);
         }

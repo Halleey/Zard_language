@@ -33,14 +33,16 @@ public class StructInitEmitter {
         }
         return ptr;
     }
-
     public String emit(VariableDeclarationNode node, TypeInfos info) {
 
         StringBuilder sb = new StringBuilder();
 
+        String varName  = node.getName();
         String srcType  = info.getSourceType();   // Struct<Row>
         String llvmType = info.getLLVMType();     // %Row*
-        String varPtr   = getVarPtr(node.getName());
+        String varPtr   = getVarPtr(varName);
+
+        boolean escapes = visitor.escapesVar(varName);
 
         // ==== resolver nome da struct ====
         String structName = srcType.substring("Struct<".length(), srcType.length() - 1).trim();
@@ -55,29 +57,43 @@ public class StructInitEmitter {
         // %Row
         String structLLVM = structLLVMPtr.substring(0, structLLVMPtr.length() - 1);
 
-        String gepTmp  = temps.newTemp();
-        String sizeTmp = temps.newTemp();
-        String rawPtr  = temps.newTemp();
-        String objPtr  = temps.newTemp();
+        String objPtr = temps.newTemp();
 
-        sb.append("  ").append(gepTmp)
-                .append(" = getelementptr ").append(structLLVM)
-                .append(", ").append(structLLVM).append("* null, i32 1\n");
+    /* ===============================
+       ALOCAÇÃO: STACK vs HEAP
+       =============================== */
+        if (!escapes) {
+            // STACK
+            sb.append("  ").append(objPtr)
+                    .append(" = alloca ").append(structLLVM).append("\n");
+        } else {
+            // HEAP
+            String gepTmp  = temps.newTemp();
+            String sizeTmp = temps.newTemp();
+            String rawPtr  = temps.newTemp();
 
-        sb.append("  ").append(sizeTmp)
-                .append(" = ptrtoint ").append(structLLVM)
-                .append("* ").append(gepTmp).append(" to i64\n");
+            sb.append("  ").append(gepTmp)
+                    .append(" = getelementptr ").append(structLLVM)
+                    .append(", ").append(structLLVM).append("* null, i32 1\n");
 
-        sb.append("  ").append(rawPtr)
-                .append(" = call i8* @malloc(i64 ").append(sizeTmp).append(")\n");
+            sb.append("  ").append(sizeTmp)
+                    .append(" = ptrtoint ").append(structLLVM)
+                    .append("* ").append(gepTmp).append(" to i64\n");
 
-        sb.append("  ").append(objPtr)
-                .append(" = bitcast i8* ").append(rawPtr)
-                .append(" to ").append(structLLVM).append("*\n");
+            sb.append("  ").append(rawPtr)
+                    .append(" = call i8* @malloc(i64 ").append(sizeTmp).append(")\n");
+
+            sb.append("  ").append(objPtr)
+                    .append(" = bitcast i8* ").append(rawPtr)
+                    .append(" to ").append(structLLVM).append("*\n");
+        }
 
         sb.append(";;VAL:").append(objPtr)
                 .append(";;TYPE:").append(structLLVM).append("*\n");
 
+    /* ===============================
+       INICIALIZA CAMPOS (listas)
+       =============================== */
         var fields = structDef.getFields();
 
         for (int i = 0; i < fields.size(); i++) {
@@ -88,7 +104,7 @@ public class StructInitEmitter {
             if (!fieldType.startsWith("List<")) continue;
 
             String elemType = fieldType.substring(5, fieldType.length() - 1).trim();
-            visitor.registerListElementType(node.getName(), elemType);
+            visitor.registerListElementType(varName, elemType);
 
             String listLLVMType;
             String listCreateFn;
@@ -115,16 +131,11 @@ public class StructInitEmitter {
             String listTmp  = temps.newTemp();
             String fieldPtr = temps.newTemp();
 
-            // criar lista
             sb.append("  ").append(listTmp)
                     .append(" = call ").append(listLLVMType)
                     .append(" ").append(listCreateFn)
                     .append("(i64 10)\n");
 
-            sb.append(";;VAL:").append(listTmp)
-                    .append(";;TYPE:").append(listLLVMType).append("\n");
-
-            // ponteiro para campo
             sb.append("  ").append(fieldPtr)
                     .append(" = getelementptr inbounds ")
                     .append(structLLVM).append(", ").append(structLLVM)
@@ -140,4 +151,5 @@ public class StructInitEmitter {
 
         return sb.toString();
     }
+
 }

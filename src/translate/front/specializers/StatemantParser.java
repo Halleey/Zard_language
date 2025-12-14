@@ -36,10 +36,14 @@ public class StatemantParser {
                     return varParser.parseVarDeclaration();
                 }
                 case "print" -> {
-
-                    PrintParser printParser = new PrintParser(parser);
+                    PrintParser printParser = new PrintParser(parser, false);
                     return printParser.parsePrint();
                 }
+                case "println" -> {
+                    PrintParser printParser = new PrintParser(parser, true);
+                    return printParser.parsePrint();
+                }
+
                 case "if" -> {
                     IfParser ifParser = new IfParser(parser);
                     return ifParser.parseIf();

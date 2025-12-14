@@ -1,5 +1,5 @@
-
 main {
+
 Struct Row {
     List<int> values;
 }
@@ -8,7 +8,6 @@ Struct Matrix {
     List<Row> rows;
 }
 
-
 impl Matrix {
 
     function adRow(int a, int b, int c) {
@@ -16,6 +15,7 @@ impl Matrix {
         r.values.add(a);
         r.values.add(b);
         r.values.add(c);
+
         s.rows.add(r);
         return s;
     }
@@ -29,21 +29,24 @@ impl Matrix {
 
             while (j < r.values.size()) {
                 print(r.values.get(j));
+                print(" ");          # espaço entre colunas
                 j = j + 1;
             }
 
-            print("---");
+            println("");             # quebra de linha ao fim da linha
             i = i + 1;
         }
         return s;
     }
+
     function int somar(int b, int c) {
-        return b +c;
+        return b + c;
     }
+
     function int sum() {
         int total = 0;
         int i = 0;
-        Row r = s.rows.get(i);
+
         while (i < s.rows.size()) {
             Row r = s.rows.get(i);
             int j = 0;
@@ -53,12 +56,11 @@ impl Matrix {
                 j = j + 1;
             }
 
-            i++;
+            i = i + 1;
         }
         return total;
     }
 }
-
 
     Matrix mat;
 
@@ -66,10 +68,11 @@ impl Matrix {
     mat.adRow(4, 5, 6);
     mat.adRow(7, 8, 9);
 
-    print(mat.somar(3,5));
-    print("Matriz:");
+    println(mat.somar(3, 5));
+
+    println("Matriz:");
     mat.printMatrix();
 
-    print("Soma total:");
-    print(mat.sum());
+    println("Soma total:");
+    println(mat.sum());
 }

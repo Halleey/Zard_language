@@ -21,9 +21,6 @@ public class ImplEmitter {
     }
 
     private boolean hasSpecializations(String baseStruct) {
-        System.out.println("[DEBUG hasSpecializations] baseStruct=" + baseStruct);
-        System.out.println("[DEBUG hasSpecializations] specializedStructs keys="
-                + visitor.specializedStructs.keySet());
 
         for (String key : visitor.specializedStructs.keySet()) {
             // Esperado: "Set<int>", "Pessoa<double>"...
@@ -99,15 +96,28 @@ public class ImplEmitter {
 
         List<ParamInfo> params = fn.getParameters();
 
-        // === receiver ===
-        String receiverName = !params.isEmpty()
-                ? params.get(0).name()
-                : "s";
+// === receiver ===
+        String receiverName = !params.isEmpty() ? params.get(0).name() : "s";
+
+// monta assinatura: (%Matrix* %s, i32 %b, i32 %c, ...)
+        StringBuilder paramList = new StringBuilder();
+        paramList.append(paramTypeLLVM).append(" %").append(receiverName);
+
+        for (int i = 1; i < params.size(); i++) {
+            ParamInfo p = params.get(i);
+            String pName = p.name();
+            String srcType = p.type();
+            if (srcType == null || "?".equals(srcType)) srcType = "?";
+
+            String llvmType = mapToLLVMType(srcType);
+            paramList.append(", ").append(llvmType).append(" %").append(pName);
+        }
 
         sb.append("; === Método: ").append(fnName).append(" ===\n");
         sb.append("define ").append(retType).append(" @").append(fnName)
-                .append("(").append(paramTypeLLVM).append(" %").append(receiverName).append(") {\n");
+                .append("(").append(paramList).append(") {\n");
         sb.append("entry:\n");
+
 
         String receiverPtr = "%" + receiverName + "_addr";
         sb.append("  ").append(receiverPtr)

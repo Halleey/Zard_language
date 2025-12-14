@@ -97,39 +97,16 @@ public class StructNode extends ASTNode {
             case "double": return 8;
             case "float": return 4;
             case "boolean": return 1;
-            case "string": return 8;        // ponteiro: %String*
+            case "string": return 8;
         }
 
         if (t.startsWith("List<")) return 8;
 
         if (t.startsWith("Struct")) return 8;
 
-        // fallback
         return 8;
     }
 
-    public boolean isGeneric() {
 
-        for (VariableDeclarationNode field : fields) {
-            String type = field.getType();
-            if (type == null) continue;
-
-            type = type.trim();
-
-            if (type.equals("?")) {
-                return true;
-            }
-
-            if (type.startsWith("List<") && type.contains("?")) {
-                return true;
-            }
-
-            if (type.startsWith("Struct<") && type.contains("?")) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 
 }

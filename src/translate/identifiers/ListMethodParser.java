@@ -22,43 +22,33 @@ public class ListMethodParser {
     }
 
     private ASTNode consumeArg() {
-        dbg("consumeArg() start");
 
         parser.advance(); // método
-        dbg("after method advance");
 
         parser.eat(Token.TokenType.DELIMITER, "(");
-        dbg("after '('");
 
         ASTNode arg = null;
         if (!parser.current().getValue().equals(")")) {
-            dbg("parsing argument expression");
             arg = parser.parseExpression();
         }
 
         parser.eat(Token.TokenType.DELIMITER, ")");
-        dbg("after ')'");
 
         return arg;
     }
 
     public ASTNode parseStatementListMethod(ASTNode receiver, String method) {
-        dbg("parseStatementListMethod method=" + method +
-                " receiverType=" + parser.getExpressionType(receiver));
 
         return switch (method) {
 
             case "add" -> {
                 ASTNode arg = consumeArg();
-                dbg("add arg=" + arg);
-
                 if (arg == null) {
                     throw new RuntimeException("add requer exatamente 1 argumento");
                 }
 
                 String elementType = "unknown";
                 String listType = parser.getExpressionType(receiver);
-                dbg("listType=" + listType);
 
                 if (listType != null && listType.startsWith("List<")) {
                     elementType = listType.substring(5, listType.length() - 1);
@@ -66,7 +56,6 @@ public class ListMethodParser {
 
                 ASTNode node = new ListAddNode(receiver, arg, elementType);
                 parser.eat(Token.TokenType.DELIMITER, ";");
-                dbg("add statement finished");
 
                 yield node;
             }
@@ -78,7 +67,6 @@ public class ListMethodParser {
                 ExpressionParser exprParser = new ExpressionParser(parser);
                 List<ASTNode> argsList = exprParser.parseArguments();
 
-                dbg("addAll args count=" + argsList.size());
 
                 ASTNode node = new ListAddAllNode(receiver, argsList);
                 parser.eat(Token.TokenType.DELIMITER, ";");
@@ -87,7 +75,6 @@ public class ListMethodParser {
 
             case "remove" -> {
                 ASTNode arg = consumeArg();
-                dbg("remove arg=" + arg);
 
                 if (arg == null)
                     throw new RuntimeException("remove requer argumento");
@@ -99,7 +86,6 @@ public class ListMethodParser {
 
             case "clear" -> {
                 parser.advance();
-                dbg("clear advance");
 
                 parser.eat(Token.TokenType.DELIMITER, "(");
                 parser.eat(Token.TokenType.DELIMITER, ")");

@@ -1,75 +1,26 @@
 
 main {
-Struct Row {
-    List<int> values;
-}
+
 
 Struct Matrix {
-    List<Row> rows;
+    List<int> rows;
 }
 
 
 impl Matrix {
 
-    function adRow(int a, int b, int c) {
-        Row r;
-        r.values.add(a);
-        r.values.add(b);
-        r.values.add(c);
-        s.rows.add(r);
-        return s;
-    }
-
-    function printMatrix() {
-        int i = 0;
-
-        while (i < s.rows.size()) {
-            Row r = s.rows.get(i);
-            int j = 0;
-
-            while (j < r.values.size()) {
-                print(r.values.get(j));
-                j = j + 1;
-            }
-
-            print("---");
-            i = i + 1;
-        }
-        return s;
-    }
     function int somar(int b, int c) {
         return b +c;
     }
-    function int sum() {
-        int total = 0;
-        int i = 0;
-        Row r = s.rows.get(i);
-        while (i < s.rows.size()) {
-            Row r = s.rows.get(i);
-            int j = 0;
 
-            while (j < r.values.size()) {
-                total = total + r.values.get(j);
-                j = j + 1;
-            }
-
-            i++;
-        }
-        return total;
+    function void ola() {
+        print("hello world");
     }
+
 }
 
 
     Matrix mat;
-
-    mat.adRow(1, 2, 3);
-    mat.adRow(4, 5, 6);
-    mat.adRow(7, 8, 9);
-
-
-    print("Matriz:");
-    mat.printMatrix();
-
-    print("Soma total:");
-    print(mat.sum());
+    print(mat.somar(3,2));
+    mat.ola();
 }

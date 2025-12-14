@@ -3,12 +3,11 @@ package low.structs;
 
 
 import ast.ASTNode;
+import ast.functions.FunctionNode;
 import ast.structs.StructMethodCallNode;
 import low.TempManager;
 
 import low.module.LLVisitorMain;
-
-
 public class StructMethodCallEmitter {
 
     private final TempManager temps;
@@ -22,16 +21,17 @@ public class StructMethodCallEmitter {
 
         String methodName = node.getMethodName();
 
+        // === Receiver ===
         ASTNode receiver = node.getStructInstance();
         String recvIR = receiver.accept(visitor);
         String recvVal = extractLastVal(recvIR);
         String recvType = extractLastType(recvIR);
-        System.out.println("Dentro do struct method call");
-        System.out.println(recvIR);
-        System.out.println(recvVal);
-        System.out.println(recvType);
+
         llvm.append(recvIR);
 
+        // ============================================================
+        // === MÉTODOS DE LISTA (ArrayList runtime) ===================
+        // ============================================================
         if (recvType.startsWith("%struct.ArrayList")) {
 
             String elementType = "";
@@ -41,8 +41,8 @@ public class StructMethodCallEmitter {
             if (recvType.contains("ArrayListBool")) elementType = "bool";
             if (recvType.contains("ArrayListString")) elementType = "string";
 
-            // Agora mapeia o método
             switch (methodName) {
+
                 case "add" -> {
                     ASTNode arg = node.getArgs().get(0);
                     String argIR = arg.accept(visitor);
@@ -51,12 +51,11 @@ public class StructMethodCallEmitter {
                     String argVal = extractLastVal(argIR);
                     String argType = extractLastType(argIR);
 
-                    // Runtime correto
                     String rtAdd = switch (elementType) {
                         case "int" -> "arraylist_add_int";
                         case "double" -> "arraylist_add_double";
                         case "bool" -> "arraylist_add_bool";
-                        case "string" -> "arraylist_add_ptr"; // strings são ponteiros
+                        case "string" -> "arraylist_add_ptr";
                         default -> throw new RuntimeException("Tipo de lista não suportado: " + elementType);
                     };
 
@@ -65,9 +64,9 @@ public class StructMethodCallEmitter {
                             .append(", ").append(argType).append(" ").append(argVal)
                             .append(")\n");
 
-                    // retorna o próprio receiver (sem criar temp!)
                     llvm.append(";;VAL:").append(recvVal)
                             .append(";;TYPE:").append(recvType).append("\n");
+
                     return llvm.toString();
                 }
 
@@ -80,9 +79,11 @@ public class StructMethodCallEmitter {
                     };
 
                     String tmp = temps.newTemp();
-                    llvm.append("  ").append(tmp).append(" = call i32 @").append(rtSize)
+                    llvm.append("  ").append(tmp)
+                            .append(" = call i32 @").append(rtSize)
                             .append("(").append(recvType).append(" ").append(recvVal).append(")\n")
                             .append(";;VAL:").append(tmp).append(";;TYPE:i32\n");
+
                     return llvm.toString();
                 }
 
@@ -106,6 +107,7 @@ public class StructMethodCallEmitter {
                             .append("(").append(recvType).append(" ").append(recvVal)
                             .append(", i64 ").append(argVal).append(", i32* null)\n")
                             .append(";;VAL:").append(tmp).append(";;TYPE:i32\n");
+
                     return llvm.toString();
                 }
 
@@ -128,11 +130,15 @@ public class StructMethodCallEmitter {
                             .append(", i64 ").append(argVal).append(")\n")
                             .append(";;VAL:").append(recvVal)
                             .append(";;TYPE:").append(recvType).append("\n");
+
                     return llvm.toString();
                 }
             }
         }
 
+        // ============================================================
+        // === MÉTODOS DE STRUCT (impl) ===============================
+        // ============================================================
 
         String cleanType = recvType.replace("%", "").replace("*", "");
         String llvmSafe = cleanType
@@ -141,6 +147,7 @@ public class StructMethodCallEmitter {
                 .replace("<", "_")
                 .replace(",", "_")
                 .replace(" ", "_");
+
         String llvmFuncName = llvmSafe + "_" + methodName;
 
         StringBuilder callArgs = new StringBuilder();
@@ -156,15 +163,58 @@ public class StructMethodCallEmitter {
             callArgs.append(", ").append(argType).append(" ").append(argVal);
         }
 
-        String retType = recvType;
-        String tmp = temps.newTemp();
-        llvm.append("  ").append(tmp)
-                .append(" = call ").append(retType)
-                .append(" @").append(llvmFuncName)
-                .append("(").append(callArgs).append(")\n")
-                .append(";;VAL:").append(tmp).append(";;TYPE:").append(retType).append("\n");
+        // 🔥 AQUI ESTÁ A CORREÇÃO PRINCIPAL
+        String retSource = node.getReturnType();
+        String retLLVM;
+
+        if (retSource == null || "void".equals(retSource)) {
+            retLLVM = "void";
+        } else if (retSource.startsWith("Struct<")) {
+            String inner = retSource.substring("Struct<".length(), retSource.length() - 1);
+            retLLVM = "%" + inner + "*";
+        } else {
+            retLLVM = mapToLLVMType(retSource);
+        }
+
+        if ("void".equals(retLLVM)) {
+
+            llvm.append("  call void @")
+                    .append(llvmFuncName)
+                    .append("(").append(callArgs).append(")\n")
+                    .append(";;VAL:0;;TYPE:void\n");
+
+        } else {
+
+            String tmp = temps.newTemp();
+            llvm.append("  ").append(tmp)
+                    .append(" = call ").append(retLLVM)
+                    .append(" @").append(llvmFuncName)
+                    .append("(").append(callArgs).append(")\n")
+                    .append(";;VAL:").append(tmp)
+                    .append(";;TYPE:").append(retLLVM).append("\n");
+        }
 
         return llvm.toString();
+    }
+
+    // ============================================================
+
+    private String mapToLLVMType(String type) {
+        if (type == null) return "i8*";
+        type = type.trim();
+
+        if (type.startsWith("Struct<") && type.endsWith(">")) {
+            String inner = type.substring("Struct<".length(), type.length() - 1).trim();
+            return "%" + inner + "*";
+        }
+
+        return switch (type) {
+            case "int" -> "i32";
+            case "double" -> "double";
+            case "bool", "boolean" -> "i1";
+            case "string", "String" -> "%String*";
+            default -> "i8*";
+        };
     }
 
     private String extractLastVal(String code) {

@@ -42,7 +42,6 @@ import java.util.*;
 
 public class LLVisitorMain implements LLVMEmitVisitor {
 
-    // ==== TESTE PARA IMPLS NODE
     private final List<String> implDefinitions = new ArrayList<>();
 
     public void addImplDefinition(String ir) {

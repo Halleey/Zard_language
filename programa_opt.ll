@@ -77,95 +77,92 @@ entry:
 
 define ptr @Matrix_adRow(ptr %s, i32 %a, i32 %b, i32 %c) {
 entry:
-  %tmp2 = call ptr @malloc(i64 8)
-  %tmp4 = call ptr @arraylist_create_int(i64 10)
-  store ptr %tmp4, ptr %tmp2, align 8
-  call void @arraylist_add_int(ptr %tmp4, i32 %a)
-  %tmp20 = load ptr, ptr %tmp2, align 8
-  call void @arraylist_add_int(ptr %tmp20, i32 %b)
-  %tmp28 = load ptr, ptr %tmp2, align 8
-  call void @arraylist_add_int(ptr %tmp28, i32 %c)
-  %tmp32 = load ptr, ptr %s, align 8
-  call void @arraylist_add_ptr(ptr %tmp32, ptr %tmp2)
+  %tmp0 = call ptr @malloc(i64 8)
+  %tmp2 = call ptr @arraylist_create_int(i64 10)
+  store ptr %tmp2, ptr %tmp0, align 8
+  call void @arraylist_add_int(ptr %tmp2, i32 %a)
+  %tmp18 = load ptr, ptr %tmp0, align 8
+  call void @arraylist_add_int(ptr %tmp18, i32 %b)
+  %tmp26 = load ptr, ptr %tmp0, align 8
+  call void @arraylist_add_int(ptr %tmp26, i32 %c)
+  %tmp30 = load ptr, ptr %s, align 8
+  call void @arraylist_add_ptr(ptr %tmp30, ptr %tmp0)
   ret ptr %s
 
 0:                                                ; No predecessors!
   ret ptr %s
 }
 
-define ptr @Matrix_printMatrix(ptr %s) {
+define void @Matrix_printMatrix(ptr %s) {
 entry:
-  %tmp416 = load ptr, ptr %s, align 8
-  %tmp437 = call i32 @length(ptr %tmp416)
-  %tmp448 = icmp slt i32 0, %tmp437
-  br i1 %tmp448, label %while_body_1.lr.ph, label %while_end_2
+  %tmp396 = load ptr, ptr %s, align 8
+  %tmp417 = call i32 @length(ptr %tmp396)
+  %tmp428 = icmp slt i32 0, %tmp417
+  br i1 %tmp428, label %while_body_1.lr.ph, label %while_end_2
 
 while_body_1.lr.ph:                               ; preds = %entry
   br label %while_body_1
 
 while_body_1:                                     ; preds = %while_body_1.lr.ph, %while_end_5
-  %i.09 = phi i32 [ 0, %while_body_1.lr.ph ], [ %tmp79, %while_end_5 ]
+  %i.09 = phi i32 [ 0, %while_body_1.lr.ph ], [ %tmp77, %while_end_5 ]
   %r_1 = alloca ptr, align 8
-  %tmp47 = load ptr, ptr %s, align 8
-  %tmp49 = zext i32 %i.09 to i64
-  %tmp50 = call ptr @arraylist_get_ptr(ptr %tmp47, i64 %tmp49)
-  store ptr %tmp50, ptr %r_1, align 8
+  %tmp45 = load ptr, ptr %s, align 8
+  %tmp47 = zext i32 %i.09 to i64
+  %tmp48 = call ptr @arraylist_get_ptr(ptr %tmp45, i64 %tmp47)
+  store ptr %tmp48, ptr %r_1, align 8
   %j = alloca i32, align 4
   store i32 0, ptr %j, align 4
-  %tmp531 = load i32, ptr %j, align 4
-  %tmp572 = load ptr, ptr %r_1, align 8
-  %tmp593 = load ptr, ptr %tmp572, align 8
-  %tmp604 = call i32 @arraylist_size_int(ptr %tmp593)
-  %tmp615 = icmp slt i32 %tmp531, %tmp604
-  br i1 %tmp615, label %while_body_4.lr.ph, label %while_end_5
+  %tmp511 = load i32, ptr %j, align 4
+  %tmp552 = load ptr, ptr %r_1, align 8
+  %tmp573 = load ptr, ptr %tmp552, align 8
+  %tmp584 = call i32 @arraylist_size_int(ptr %tmp573)
+  %tmp595 = icmp slt i32 %tmp511, %tmp584
+  br i1 %tmp595, label %while_body_4.lr.ph, label %while_end_5
 
 while_body_4.lr.ph:                               ; preds = %while_body_1
   br label %while_body_4
 
 while_body_4:                                     ; preds = %while_body_4.lr.ph, %while_body_4
-  %tmp65 = load ptr, ptr %r_1, align 8
-  %tmp67 = load ptr, ptr %tmp65, align 8
-  %tmp68 = load i32, ptr %j, align 4
-  %tmp69 = zext i32 %tmp68 to i64
-  %tmp70 = alloca i32, align 4
-  %tmp71 = call i32 @arraylist_get_int(ptr %tmp67, i64 %tmp69, ptr %tmp70)
-  %tmp72 = load i32, ptr %tmp70, align 4
-  %0 = call i32 (ptr, ...) @printf(ptr @.strInt, i32 %tmp72)
-  %tmp73 = load i32, ptr %j, align 4
-  %tmp75 = add i32 %tmp73, 1
-  store i32 %tmp75, ptr %j, align 4
-  %tmp53 = load i32, ptr %j, align 4
-  %tmp57 = load ptr, ptr %r_1, align 8
-  %tmp59 = load ptr, ptr %tmp57, align 8
-  %tmp60 = call i32 @arraylist_size_int(ptr %tmp59)
-  %tmp61 = icmp slt i32 %tmp53, %tmp60
-  br i1 %tmp61, label %while_body_4, label %while_cond_3.while_end_5_crit_edge
+  %tmp63 = load ptr, ptr %r_1, align 8
+  %tmp65 = load ptr, ptr %tmp63, align 8
+  %tmp66 = load i32, ptr %j, align 4
+  %tmp67 = zext i32 %tmp66 to i64
+  %tmp68 = alloca i32, align 4
+  %tmp69 = call i32 @arraylist_get_int(ptr %tmp65, i64 %tmp67, ptr %tmp68)
+  %tmp70 = load i32, ptr %tmp68, align 4
+  %0 = call i32 (ptr, ...) @printf(ptr @.strInt, i32 %tmp70)
+  %tmp71 = load i32, ptr %j, align 4
+  %tmp73 = add i32 %tmp71, 1
+  store i32 %tmp73, ptr %j, align 4
+  %tmp51 = load i32, ptr %j, align 4
+  %tmp55 = load ptr, ptr %r_1, align 8
+  %tmp57 = load ptr, ptr %tmp55, align 8
+  %tmp58 = call i32 @arraylist_size_int(ptr %tmp57)
+  %tmp59 = icmp slt i32 %tmp51, %tmp58
+  br i1 %tmp59, label %while_body_4, label %while_cond_3.while_end_5_crit_edge
 
 while_cond_3.while_end_5_crit_edge:               ; preds = %while_body_4
   br label %while_end_5
 
 while_end_5:                                      ; preds = %while_cond_3.while_end_5_crit_edge, %while_body_1
   %1 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str0)
-  %tmp79 = add i32 %i.09, 1
-  %tmp41 = load ptr, ptr %s, align 8
-  %tmp43 = call i32 @length(ptr %tmp41)
-  %tmp44 = icmp slt i32 %tmp79, %tmp43
-  br i1 %tmp44, label %while_body_1, label %while_cond_0.while_end_2_crit_edge
+  %tmp77 = add i32 %i.09, 1
+  %tmp39 = load ptr, ptr %s, align 8
+  %tmp41 = call i32 @length(ptr %tmp39)
+  %tmp42 = icmp slt i32 %tmp77, %tmp41
+  br i1 %tmp42, label %while_body_1, label %while_cond_0.while_end_2_crit_edge
 
 while_cond_0.while_end_2_crit_edge:               ; preds = %while_end_5
   br label %while_end_2
 
 while_end_2:                                      ; preds = %while_cond_0.while_end_2_crit_edge, %entry
-  ret ptr %s
-
-2:                                                ; No predecessors!
-  ret ptr %s
+  ret void
 }
 
 define i32 @Matrix_somar(ptr %s, i32 %b, i32 %c) {
 entry:
-  %tmp83 = add i32 %c, %b
-  ret i32 %tmp83
+  %tmp80 = add i32 %c, %b
+  ret i32 %tmp80
 
 0:                                                ; No predecessors!
   ret i32 undef
@@ -173,67 +170,65 @@ entry:
 
 define i32 @Matrix_sum(ptr %s) {
 entry:
-  %tmp88 = load ptr, ptr %s, align 8
-  %tmp91 = call ptr @arraylist_get_ptr(ptr %tmp88, i64 0)
-  %tmp967 = load ptr, ptr %s, align 8
-  %tmp988 = call i32 @length(ptr %tmp967)
-  %tmp999 = icmp slt i32 0, %tmp988
-  br i1 %tmp999, label %while_body_7.lr.ph, label %while_end_8
+  %tmp867 = load ptr, ptr %s, align 8
+  %tmp888 = call i32 @length(ptr %tmp867)
+  %tmp899 = icmp slt i32 0, %tmp888
+  br i1 %tmp899, label %while_body_7.lr.ph, label %while_end_8
 
 while_body_7.lr.ph:                               ; preds = %entry
   br label %while_body_7
 
 while_body_7:                                     ; preds = %while_body_7.lr.ph, %while_end_11
-  %i_1.011 = phi i32 [ 0, %while_body_7.lr.ph ], [ %tmp134, %while_end_11 ]
+  %i_1.011 = phi i32 [ 0, %while_body_7.lr.ph ], [ %tmp125, %while_end_11 ]
   %total.010 = phi i32 [ 0, %while_body_7.lr.ph ], [ %total.1.lcssa, %while_end_11 ]
-  %r_3 = alloca ptr, align 8
-  %tmp102 = load ptr, ptr %s, align 8
-  %tmp104 = zext i32 %i_1.011 to i64
-  %tmp105 = call ptr @arraylist_get_ptr(ptr %tmp102, i64 %tmp104)
-  store ptr %tmp105, ptr %r_3, align 8
+  %r_2 = alloca ptr, align 8
+  %tmp92 = load ptr, ptr %s, align 8
+  %tmp94 = zext i32 %i_1.011 to i64
+  %tmp95 = call ptr @arraylist_get_ptr(ptr %tmp92, i64 %tmp94)
+  store ptr %tmp95, ptr %r_2, align 8
   %j_1 = alloca i32, align 4
   store i32 0, ptr %j_1, align 4
-  %tmp1081 = load i32, ptr %j_1, align 4
-  %tmp1122 = load ptr, ptr %r_3, align 8
-  %tmp1143 = load ptr, ptr %tmp1122, align 8
-  %tmp1154 = call i32 @arraylist_size_int(ptr %tmp1143)
-  %tmp1165 = icmp slt i32 %tmp1081, %tmp1154
-  br i1 %tmp1165, label %while_body_10.lr.ph, label %while_end_11
+  %tmp981 = load i32, ptr %j_1, align 4
+  %tmp1022 = load ptr, ptr %r_2, align 8
+  %tmp1043 = load ptr, ptr %tmp1022, align 8
+  %tmp1054 = call i32 @arraylist_size_int(ptr %tmp1043)
+  %tmp1065 = icmp slt i32 %tmp981, %tmp1054
+  br i1 %tmp1065, label %while_body_10.lr.ph, label %while_end_11
 
 while_body_10.lr.ph:                              ; preds = %while_body_7
   br label %while_body_10
 
 while_body_10:                                    ; preds = %while_body_10.lr.ph, %while_body_10
-  %total.16 = phi i32 [ %total.010, %while_body_10.lr.ph ], [ %tmp129, %while_body_10 ]
-  %tmp121 = load ptr, ptr %r_3, align 8
-  %tmp123 = load ptr, ptr %tmp121, align 8
-  %tmp124 = load i32, ptr %j_1, align 4
-  %tmp125 = zext i32 %tmp124 to i64
-  %tmp126 = alloca i32, align 4
-  %tmp127 = call i32 @arraylist_get_int(ptr %tmp123, i64 %tmp125, ptr %tmp126)
-  %tmp128 = load i32, ptr %tmp126, align 4
-  %tmp129 = add i32 %tmp128, %total.16
-  %tmp130 = load i32, ptr %j_1, align 4
-  %tmp132 = add i32 %tmp130, 1
-  store i32 %tmp132, ptr %j_1, align 4
-  %tmp108 = load i32, ptr %j_1, align 4
-  %tmp112 = load ptr, ptr %r_3, align 8
-  %tmp114 = load ptr, ptr %tmp112, align 8
-  %tmp115 = call i32 @arraylist_size_int(ptr %tmp114)
-  %tmp116 = icmp slt i32 %tmp108, %tmp115
-  br i1 %tmp116, label %while_body_10, label %while_cond_9.while_end_11_crit_edge
+  %total.16 = phi i32 [ %total.010, %while_body_10.lr.ph ], [ %tmp119, %while_body_10 ]
+  %tmp111 = load ptr, ptr %r_2, align 8
+  %tmp113 = load ptr, ptr %tmp111, align 8
+  %tmp114 = load i32, ptr %j_1, align 4
+  %tmp115 = zext i32 %tmp114 to i64
+  %tmp116 = alloca i32, align 4
+  %tmp117 = call i32 @arraylist_get_int(ptr %tmp113, i64 %tmp115, ptr %tmp116)
+  %tmp118 = load i32, ptr %tmp116, align 4
+  %tmp119 = add i32 %tmp118, %total.16
+  %tmp120 = load i32, ptr %j_1, align 4
+  %tmp122 = add i32 %tmp120, 1
+  store i32 %tmp122, ptr %j_1, align 4
+  %tmp98 = load i32, ptr %j_1, align 4
+  %tmp102 = load ptr, ptr %r_2, align 8
+  %tmp104 = load ptr, ptr %tmp102, align 8
+  %tmp105 = call i32 @arraylist_size_int(ptr %tmp104)
+  %tmp106 = icmp slt i32 %tmp98, %tmp105
+  br i1 %tmp106, label %while_body_10, label %while_cond_9.while_end_11_crit_edge
 
 while_cond_9.while_end_11_crit_edge:              ; preds = %while_body_10
-  %split = phi i32 [ %tmp129, %while_body_10 ]
+  %split = phi i32 [ %tmp119, %while_body_10 ]
   br label %while_end_11
 
 while_end_11:                                     ; preds = %while_cond_9.while_end_11_crit_edge, %while_body_7
   %total.1.lcssa = phi i32 [ %split, %while_cond_9.while_end_11_crit_edge ], [ %total.010, %while_body_7 ]
-  %tmp134 = add i32 %i_1.011, 1
-  %tmp96 = load ptr, ptr %s, align 8
-  %tmp98 = call i32 @length(ptr %tmp96)
-  %tmp99 = icmp slt i32 %tmp134, %tmp98
-  br i1 %tmp99, label %while_body_7, label %while_cond_6.while_end_8_crit_edge
+  %tmp125 = add i32 %i_1.011, 1
+  %tmp86 = load ptr, ptr %s, align 8
+  %tmp88 = call i32 @length(ptr %tmp86)
+  %tmp89 = icmp slt i32 %tmp125, %tmp88
+  br i1 %tmp89, label %while_body_7, label %while_cond_6.while_end_8_crit_edge
 
 while_cond_6.while_end_8_crit_edge:               ; preds = %while_end_11
   %split12 = phi i32 [ %total.1.lcssa, %while_end_11 ]
@@ -248,17 +243,19 @@ while_end_8:                                      ; preds = %while_cond_6.while_
 }
 
 define i32 @main() {
-  %tmp138 = call ptr @malloc(i64 8)
-  %tmp140 = call ptr @arraylist_create(i64 10)
-  store ptr %tmp140, ptr %tmp138, align 8
-  call void @Matrix_adRow(ptr %tmp138, i32 1, i32 2, i32 3)
-  call void @Matrix_adRow(ptr %tmp138, i32 4, i32 5, i32 6)
-  call void @Matrix_adRow(ptr %tmp138, i32 7, i32 8, i32 9)
-  %1 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str1)
-  call void @Matrix_printMatrix(ptr %tmp138)
-  %2 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str2)
-  %tmp158 = call i32 @Matrix_sum(ptr %tmp138)
-  %3 = call i32 (ptr, ...) @printf(ptr @.strInt, i32 %tmp158)
-  %4 = call i32 @getchar()
+  %tmp127 = call ptr @malloc(i64 8)
+  %tmp129 = call ptr @arraylist_create(i64 10)
+  store ptr %tmp129, ptr %tmp127, align 8
+  call void @Matrix_adRow(ptr %tmp127, i32 1, i32 2, i32 3)
+  call void @Matrix_adRow(ptr %tmp127, i32 4, i32 5, i32 6)
+  call void @Matrix_adRow(ptr %tmp127, i32 7, i32 8, i32 9)
+  %tmp147 = call i32 @Matrix_somar(ptr %tmp127, i32 3, i32 5)
+  %1 = call i32 (ptr, ...) @printf(ptr @.strInt, i32 %tmp147)
+  %2 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str1)
+  call void @Matrix_printMatrix(ptr %tmp127)
+  %3 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str2)
+  %tmp152 = call i32 @Matrix_sum(ptr %tmp127)
+  %4 = call i32 (ptr, ...) @printf(ptr @.strInt, i32 %tmp152)
+  %5 = call i32 @getchar()
   ret i32 0
 }

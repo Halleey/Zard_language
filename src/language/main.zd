@@ -66,7 +66,7 @@ impl Matrix {
     mat.adRow(4, 5, 6);
     mat.adRow(7, 8, 9);
 
-
+    print(mat.somar(3,5));
     print("Matriz:");
     mat.printMatrix();
 

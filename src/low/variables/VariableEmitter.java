@@ -1,6 +1,7 @@
 package low.variables;
 import ast.inputs.InputNode;
 import ast.lists.ListNode;
+import ast.structs.StructInstaceNode;
 import low.inputs.InputEmitter;
 import low.lists.generics.ListEmitter;
 import low.lists.bool.ListBoolEmitter;
@@ -48,9 +49,29 @@ public class VariableEmitter {
 
         TypeInfos info = varTypes.get(node.getName());
         String srcType = info.getSourceType();
+        String varPtr  = getVarPtr(node.getName());
 
-        if (node.initializer == null && srcType != null && srcType.startsWith("Struct<")) {
-            return handleSpecializedStructDefaultInit(node, info);
+        if (srcType != null && srcType.startsWith("Struct<")) {
+
+            if (node.initializer == null) {
+                return structInitEmitter.emit(node, info);
+            }
+
+            if (node.initializer instanceof StructInstaceNode) {
+                String code = node.initializer.accept(visitor);
+                String tmp = extractTemp(code);
+
+                return code
+                        + "  store " + info.getLLVMType() + " " + tmp
+                        + ", " + info.getLLVMType() + "* " + varPtr + "\n";
+            }
+
+            String exprCode = node.initializer.accept(visitor);
+            String tmp = extractTemp(exprCode);
+
+            return exprCode
+                    + "  store " + info.getLLVMType() + " " + tmp
+                    + ", " + info.getLLVMType() + "* " + varPtr + "\n";
         }
 
         if (node.initializer == null) {

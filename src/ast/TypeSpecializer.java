@@ -14,6 +14,7 @@ import java.util.*;
 
 
 import java.util.*;
+import java.util.*;
 
 public class TypeSpecializer {
 
@@ -32,91 +33,33 @@ public class TypeSpecializer {
         applySpecializations(ast);
         propagateInferredTypes(ast);
 
-        if (!inferredStructTypes.isEmpty()) {
-            for (var entry : inferredStructTypes.entrySet()) {
-                StructInstaceNode node = entry.getKey();
-                String elemType = entry.getValue();
-            }
-        } else {
+        if (inferredStructTypes.isEmpty()) {
             System.out.println("[TypeSpecializer] Nenhum tipo inferido.");
         }
     }
 
-
     public void createSpecializedStructsFromInferences() {
-        if (visitor == null) {
-            return;
-        }
+        if (visitor == null) return;
 
-
-        // inferredStructTypes: StructInstaceNode -> elemType ("int", "double", etc.)
         for (var entry : inferredStructTypes.entrySet()) {
             StructInstaceNode si = entry.getKey();
             String elemType = entry.getValue();
-            String baseName = si.getName(); // "Set", "Pessoa", etc.
+            String baseName = si.getName();
 
-            if (elemType == null || "?".equals(elemType)) {
-                continue;
-            }
+            if (elemType == null || "?".equals(elemType)) continue;
 
             StructNode baseNode = visitor.getStructNode(baseName);
-            if (baseNode == null) {
-                continue;
-            }
-            // Isso vai popular visitor.specializedStructs e structDefinitions
+            if (baseNode == null) continue;
+
             visitor.getOrCreateSpecializedStruct(baseNode, elemType);
         }
     }
-
-
 
     private void collectInferences(List<ASTNode> ast) {
         for (ASTNode node : ast) {
 
             if (node instanceof VariableDeclarationNode decl) {
-
-                String varName = decl.getName();
-                String declType = decl.getType();
-                variableTypes.put(varName, declType);
-
-                // Caso: Struct<Set<int>>
-                if (declType != null &&
-                        declType.startsWith("Struct<") &&
-                        declType.endsWith(">")) {
-
-                    // Ex: Struct<Set<int>>
-                    int i1 = declType.indexOf('<', "Struct".length());
-                    int i2 = declType.lastIndexOf('>');
-
-                    if (i1 > 0 && i2 > i1) {
-                        String inner = declType.substring(i1 + 1, i2).trim(); // ex: Set<int>
-
-                        if (inner.startsWith("Set<") && inner.endsWith(">")) {
-                            String elemType = inner.substring("Set<".length(), inner.length() - 1).trim();
-
-                            StructInstaceNode si = getStructInstaceNode(decl);
-                            structVars.put(varName, si);
-
-                            registerStructInference(si, elemType, "declaração explícita");
-
-                            if (visitor != null) {
-                                StructNode base = visitor.getStructNode("Set");
-                                if (base != null) {
-                                    visitor.getOrCreateSpecializedStruct(base, elemType);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Inicializador é uma struct real
-                if (decl.getInitializer() instanceof StructInstaceNode si) {
-                    structVars.put(varName, si);
-
-                    if (visitor != null) {
-                        visitor.markStructUsed(si.getName());
-                    }
-                }
+                handleVarDecl(decl);
             }
 
             if (node instanceof ImplNode impl) {
@@ -125,68 +68,17 @@ public class TypeSpecializer {
                 }
             }
 
-
-            // StructNode — APENAS REGISTRO DE TIPO, NÃO USO
-
-
             if (node instanceof StructNode struct) {
                 String name = struct.getName();
-
-                if (!variableTypes.containsKey(name)) {
-                    variableTypes.put(name, "Struct<" + name + ">");
-                }
-
+                variableTypes.putIfAbsent(name, "Struct<" + name + ">");
             }
 
             if (node instanceof StructInstaceNode structNode) {
-
-                Map<String, ASTNode> named = structNode.getNamedValues();
-                if (named != null && !named.isEmpty()) {
-
-                    ASTNode dataInit = named.get("data");
-                    if (dataInit instanceof ListNode list) {
-                        String elemType = extractElementType(list.getType());
-                        if (elemType != null) {
-                            registerStructInference(structNode, elemType, "inicialização explícita");
-                        }
-                    }
-                }
+                handleStructInstanceInference(structNode);
             }
 
-            // Chamada de método (ex: s.add(x))
-
             if (node instanceof StructMethodCallNode call) {
-
-                String varName = call.getReceiverName();
-                ASTNode arg = call.getArgs().isEmpty() ? null : call.getArgs().get(0);
-
-                if (arg != null && varName != null) {
-
-                    String inferredType = inferTypeFromArgument(arg);
-                    StructInstaceNode target = structVars.get(varName);
-
-                    if (target != null && inferredType != null) {
-
-                        if (visitor != null) {
-                            visitor.markStructUsed(target.getName());
-                        }
-
-                        if (!inferredStructTypes.containsKey(target)) {
-                            registerStructInference(
-                                    target,
-                                    inferredType,
-                                    "primeiro uso (chamada " + varName + ".add)"
-                            );
-                        } else {
-                            String current = inferredStructTypes.get(target);
-                            if (!Objects.equals(current, inferredType)) {
-                                System.out.println("[TypeSpecializer][Aviso] Conflito de tipos em '" +
-                                        varName + "': era " + current +
-                                        ", recebeu " + inferredType);
-                            }
-                        }
-                    }
-                }
+                handleStructMethodCallInference(call);
             }
 
             // Recursão
@@ -196,18 +88,113 @@ public class TypeSpecializer {
         }
     }
 
+    private void handleVarDecl(VariableDeclarationNode decl) {
+        String varName = decl.getName();
+        String declType = decl.getType();
+        variableTypes.put(varName, declType);
+
+        // Caso: Struct<Set<int>>
+        if (declType != null && declType.startsWith("Struct<") && declType.endsWith(">")) {
+
+            int i1 = declType.indexOf('<', "Struct".length());
+            int i2 = declType.lastIndexOf('>');
+
+            if (i1 > 0 && i2 > i1) {
+                String inner = declType.substring(i1 + 1, i2).trim(); // ex: Set<int>
+
+                if (inner.startsWith("Set<") && inner.endsWith(">")) {
+                    String elemType = inner.substring("Set<".length(), inner.length() - 1).trim();
+
+                    StructInstaceNode si = getStructInstaceNode(decl);
+
+                    if (si == null) {
+                        si = new StructInstaceNode(
+                                "Set",
+                                Collections.emptyList(),
+                                Collections.emptyMap()
+                        );
+                    }
+
+                    structVars.put(varName, si);
+                    registerStructInference(si, elemType, "declaração explícita");
+
+
+                    if (visitor != null) {
+                        StructNode base = visitor.getStructNode("Set");
+                        if (base != null) {
+                            visitor.getOrCreateSpecializedStruct(base, elemType);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Inicializador é uma struct real
+        if (decl.getInitializer() instanceof StructInstaceNode si) {
+            structVars.put(varName, si);
+            if (visitor != null) visitor.markStructUsed(si.getName());
+        }
+    }
+
+    private void handleStructInstanceInference(StructInstaceNode structNode) {
+        Map<String, ASTNode> named = structNode.getNamedValues();
+        if (named == null || named.isEmpty()) return;
+
+        ASTNode dataInit = named.get("data");
+        if (dataInit instanceof ListNode list) {
+            String elemType = extractElementType(list.getType());
+            if (elemType != null) {
+                registerStructInference(structNode, elemType, "inicialização explícita");
+            }
+        }
+    }
+
+    private void handleStructMethodCallInference(StructMethodCallNode call) {
+
+        String varName = call.getReceiverName();
+        if (varName == null) return;
+
+        StructInstaceNode target = structVars.get(varName);
+        if (target == null) return;
+        if (!"Set".equals(target.getName())) {
+            return;
+        }
+
+        // opcional: restringir só a métodos que realmente “inserem” elemento
+        String method = call.getMethodName();
+        if (method != null && !method.equals("add") && !method.equals("push") && !method.equals("insert")) {
+            return;
+        }
+
+        ASTNode arg = call.getArgs().isEmpty() ? null : call.getArgs().get(0);
+        if (arg == null) return;
+
+        String inferredType = inferTypeFromArgument(arg);
+        if (inferredType == null) return;
+
+        if (visitor != null) visitor.markStructUsed(target.getName());
+
+        if (!inferredStructTypes.containsKey(target)) {
+            registerStructInference(target, inferredType, "primeiro uso (Set.add)");
+        } else {
+            String current = inferredStructTypes.get(target);
+            if (!Objects.equals(current, inferredType)) {
+                System.out.println("[TypeSpecializer][Aviso] Conflito de tipos em '" +
+                        varName + "': era " + current + ", recebeu " + inferredType);
+            }
+        }
+    }
+
     private static StructInstaceNode getStructInstaceNode(VariableDeclarationNode decl) {
         if (decl.getInitializer() instanceof StructInstaceNode si) {
             return si;
         }
-        return new StructInstaceNode(
-                "Set",
-                new ArrayList<>(),
-                new LinkedHashMap<>()
-        );
+        return null;
     }
 
     private void registerStructInference(StructInstaceNode node, String elemType, String origem) {
+        if (node == null) return;
+        if (elemType == null) return;
 
         inferredStructTypes.put(node, elemType);
 
@@ -222,7 +209,6 @@ public class TypeSpecializer {
 
         node.setConcreteType(concrete);
 
-
         if (visitor != null) {
             visitor.markStructUsed(node.getName()); // uso REAL
 
@@ -230,7 +216,6 @@ public class TypeSpecializer {
                 String specName = node.getName() + "_" + elemType;
                 visitor.markStructUsed(specName);
             }
-
 
             StructNode baseNode = visitor.getStructNode(node.getName());
             if (baseNode != null && !isAlreadySpecializedName(baseNode.getName())) {
@@ -240,13 +225,13 @@ public class TypeSpecializer {
     }
 
     private boolean isAlreadySpecializedName(String name) {
-        return name.contains("_");
+        return name != null && name.contains("_");
     }
 
     private String extractElementType(String type) {
         if (type == null || type.equals("?")) return null;
         if (type.startsWith("List<") && type.endsWith(">")) {
-            return type.substring(5, type.length() - 1);
+            return type.substring(5, type.length() - 1).trim();
         }
         return type;
     }
@@ -268,13 +253,6 @@ public class TypeSpecializer {
         return null;
     }
 
-    private String findVarName(StructInstaceNode node) {
-        for (var e : structVars.entrySet()) {
-            if (e.getValue() == node) return e.getKey();
-        }
-        return "?";
-    }
-
     private void applySpecializations(List<ASTNode> ast) {
         for (ASTNode node : ast) {
             if (node instanceof FunctionNode fn) {
@@ -285,7 +263,6 @@ public class TypeSpecializer {
                     specializeFunction(method);
                 }
             }
-
 
             for (ASTNode child : node.getChildren()) {
                 applySpecializations(Collections.singletonList(child));
@@ -303,12 +280,7 @@ public class TypeSpecializer {
             if ("?".equals(p.type())) {
                 String inferred = inferTypeFromBody(fn.getBody());
                 if (inferred != null) {
-                    // substitui o ParamInfo por outro com tipo inferido
-                    params.set(i, new ParamInfo(
-                            p.name(),
-                            inferred,
-                            p.isRef()
-                    ));
+                    params.set(i, new ParamInfo(p.name(), inferred, p.isRef()));
                 }
             }
         }
@@ -335,7 +307,6 @@ public class TypeSpecializer {
                 String type = variableTypes.get(v.getName());
                 if (type != null) return type;
             }
-
             if (stmt instanceof StructFieldAccessNode sfa) {
                 String field = sfa.getFieldName();
                 if (field != null && !field.equals("?")) {
@@ -345,10 +316,10 @@ public class TypeSpecializer {
         }
         return null;
     }
+
     private void propagateInferredTypes(List<ASTNode> ast) {
 
         for (ASTNode node : ast) {
-
 
             if (node instanceof ImplNode impl) {
                 for (FunctionNode method : impl.getMethods()) {
@@ -356,11 +327,9 @@ public class TypeSpecializer {
                 }
             }
 
-
             if (node instanceof VariableDeclarationNode decl) {
 
                 StructInstaceNode si = structVars.get(decl.getName());
-
                 if (si != null && inferredStructTypes.containsKey(si)) {
 
                     String elemType = inferredStructTypes.get(si);

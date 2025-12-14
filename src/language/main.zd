@@ -1,26 +1,19 @@
+import "src/language/structs/impls/monomorfizacao.zd";
 
 main {
+    Set<int> numeros;
+    numeros.add(3);
+    numeros.add(3);
+    print(numeros);
 
+    Set<boolean> real;
+    real.add(true);
+    real.add(false);
+    real.add(true);
+    print(real);
 
-Struct Matrix {
-    List<int> rows;
-}
-
-
-impl Matrix {
-
-    function int somar(int b, int c) {
-        return b +c;
-    }
-
-    function void ola() {
-        print("hello world");
-    }
-
-}
-
-
-    Matrix mat;
-    print(mat.somar(3,2));
-    mat.ola();
+    Set<string> names;
+    names.add("zard");
+    names.add("zard");
+    print(names);
 }

@@ -91,21 +91,13 @@ import java.util.Map;
                     if (parser.current().getValue().equals("{")) {
                         return parseInlineStructUpdate(structAccess);
                     }
+
                     if (parser.current().getValue().equals("(")) {
                         List<ASTNode> args = parser.parseArguments();
                         parser.eat(Token.TokenType.DELIMITER, ";");
-                        String structType =
-                                receiverType.substring("Struct<".length(), receiverType.length() - 1);
-                        FunctionNode method =
-                                parser.getStructMethod(structType, memberName);
-                        if (method == null) {
-                            throw new RuntimeException("Método '" + memberName + "' não encontrado em Struct " + structType);
-                        }
-                        StructMethodCallNode call = new StructMethodCallNode(receiver, structType, memberName, args);
-                        call.setReturnType(method.getReturnType());
-                        return call;
+                        String structType = receiverType.substring("Struct<".length(), receiverType.length() - 1);
+                        return new StructMethodCallNode(receiver, structType, memberName, args);
                     }
-
 
                     return structAccess;
                 }
@@ -196,11 +188,16 @@ import java.util.Map;
 
                     if (parser.current().getValue().equals("(")) {
                         List<ASTNode> args = parser.parseArguments();
+
                         String structType =
                                 receiverType.substring("Struct<".length(), receiverType.length() - 1);
+
                         StructMethodCallNode call =
                                 new StructMethodCallNode(node, structType, memberName, args);
-                        FunctionNode method = parser.getStructMethod(structType, memberName);
+
+                        FunctionNode method =
+                                parser.getStructMethod(structType, memberName);
+
                         if (method == null) {
                             throw new RuntimeException(
                                     "Método '" + memberName + "' não encontrado em Struct " + structType

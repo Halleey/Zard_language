@@ -110,23 +110,33 @@ public class StructInstanceEmitter {
             return switch (inner) {
                 case "int" -> "%struct.ArrayListInt*";
                 case "double" -> "%struct.ArrayListDouble*";
-                case "boolean" -> "%struct.ArrayListBool*";
+                case "boolean", "bool" -> "%struct.ArrayListBool*";
                 default -> "%ArrayList*";
             };
         }
+
         if (type.startsWith("Struct<")) {
             String inner = type.substring(7, type.length() - 1).trim();
             return "%" + inner + "*";
         }
+
         return new TypeMapper().toLLVM(type);
     }
 
     private String emitDefaultValue(String type, StringBuilder llvm) {
         switch (type) {
-            case "int" -> { return "0"; }
-            case "double", "float" -> { return "0.0"; }
-            case "boolean" -> { return "0"; }
-            case "string" -> {
+            case "int":
+                return "0";
+
+            case "double":
+            case "float":
+                return "0.0";
+
+            case "boolean":
+            case "bool":
+                return "0";
+
+            case "string": {
                 String tmp = tempManager.newTemp();
                 String empty = stringManager.getGlobalName("");
                 llvm.append("  ").append(tmp)
@@ -137,16 +147,14 @@ public class StructInstanceEmitter {
         }
 
         if (type.startsWith("List<")) {
-            String tmp = tempManager.newTemp();
-            llvm.append("  ").append(tmp)
-                    .append(" = call i8* @arraylist_create(i64 4)\n");
-            String casted = tempManager.newTemp();
-            llvm.append("  ").append(casted)
-                    .append(" = bitcast i8* ").append(tmp)
-                    .append(" to %ArrayList*\n");
-            return casted;
+            return "null";
+        }
+
+        if (type.startsWith("Struct<")) {
+            return "null";
         }
 
         return "null";
     }
+
 }

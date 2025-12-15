@@ -58,13 +58,19 @@ public class VariableEmitter {
             }
 
             if (node.initializer instanceof StructInstaceNode sin) {
-                String code = node.initializer.accept(visitor);
+
+                if (sin.getNamedValues().isEmpty() && sin.getPositionalValues().isEmpty()) {
+                    return structInitEmitter.emit(node, info);
+                }
+
+                String code = sin.accept(visitor);
                 String tmp  = extractTemp(code);
 
                 return code
                         + "  store " + info.getLLVMType() + " " + tmp
                         + ", " + info.getLLVMType() + "* " + varPtr + "\n";
             }
+
 
             String exprCode = node.initializer.accept(visitor);
             String tmp = extractTemp(exprCode);

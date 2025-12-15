@@ -1,70 +1,39 @@
 main {
-Struct Item {
- int id;
- string name;
- List<int> quantidade;
-}
- Struct Set{
-  List<Item> data;
- }
 
- impl Set {
- function  addItem(int id, string name, int quantidade) {
-   Item it;
-   it.id = id;
-   it.name = name;
-   it.quantidade.add(quantidade);
-   s.data.add(it);
-   return s;
-  }
-
-  function removeFirst() {
-   if (s.data.size() > 0) {
-   s.data.remove(0);
-   }
-    return s;
-  }
-  function  removeItemById(int id) {
-  int i = 0; while (i < s.data.size()) {
-  Item cur = s.data.get(i);
-   if (cur.id == id) {
-   s.data.remove(i);
-   return s;
-   }
-   i++;
-  }
-  return s;
- }
-  function prints() {
-    int i = 0;
-
-    print("Set {");
-
-    while (i < s.data.size()) {
-      Item cur = s.data.get(i);
-
-      print("  Item {");
-      print("    id:");
-      print(cur.id);
-      print("    name:");
-      print(cur.name);
-      print("  }");
-
-      i++;
+    Struct Multi {
+        List<int> ints;
+        List<double> doubles;
+        List<string> strings;
+        List<boolean> booleans;
     }
-    print("}");
-    return s;
-  }
 
+    Multi m1;
+    m1.ints.add(1);
+    m1.ints.add(2);
+
+    m1.doubles.add(1.1);
+    m1.doubles.add(2.2);
+
+    m1.strings.add("A");
+    m1.strings.add("B");
+
+    m1.booleans.add(true);
+
+    Multi m2;
+    m2 = m1;
+
+    m2.ints.add(99);
+    m2.doubles.add(9.9);
+    m2.strings.add("Z");
+
+    m2.booleans.add(true);
+
+    println("=== Original m1 ===");
+    println(m1);
+
+    println("=== Clone m2 ===");
+    println(m2);
+
+
+    print("testando ");
 }
-
-# ==== Item ====
-  Set<Item> items;
-  Item teste;
-  items.addItem(1, "Sword",3);
-  items.addItem(2, "Shield",2);
-  items.addItem(3, "Potion",6);
-  items.removeItemById(2);
-
-  items.prints();
- }

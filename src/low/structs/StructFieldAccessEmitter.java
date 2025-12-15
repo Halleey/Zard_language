@@ -136,21 +136,41 @@ public class StructFieldAccessEmitter {
 
         return llvm.toString();
     }
-
     private String mangleGenericType(String t) {
         if (t == null) return "";
+
         t = t.trim();
 
+        // remove ponteiros
+        while (t.endsWith("*")) {
+            t = t.substring(0, t.length() - 1).trim();
+        }
+
+        // remove %
+        if (t.startsWith("%")) {
+            t = t.substring(1).trim();
+        }
+
+        // remove Struct<...>
         if (t.startsWith("Struct<") && t.endsWith(">")) {
             t = t.substring(7, t.length() - 1).trim();
         }
 
+        // remove prefixos estranhos
+        if (t.startsWith("Struct ")) {
+            t = t.substring("Struct ".length()).trim();
+        }
+
+        // mangling genérico
         t = t.replace(" ", "")
                 .replace("<", "_")
                 .replace(">", "")
                 .replace(",", "_");
 
-        while (t.contains("__")) t = t.replace("__", "_");
+        while (t.contains("__")) {
+            t = t.replace("__", "_");
+        }
+
         return t;
     }
 

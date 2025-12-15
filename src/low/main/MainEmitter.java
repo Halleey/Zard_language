@@ -394,7 +394,6 @@ public class MainEmitter {
     declare void @arraylist_print_String(%ArrayList*)
     declare %String* @arraylist_get_String(%ArrayList*, i64)
 
-    ; --- (Opcional) suporte a C-string (i8*) se você usar em algum lugar ---
     declare void @arraylist_add_string(%ArrayList*, i8*)
     declare void @arraylist_addAll_string(%ArrayList*, i8**, i64)
     declare void @arraylist_print_string(%ArrayList*)

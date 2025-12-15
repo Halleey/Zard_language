@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+
 public class StructInstanceParser {
     private final Parser parser;
 
@@ -19,42 +21,65 @@ public class StructInstanceParser {
         this.parser = parser;
     }
 
-    public VariableDeclarationNode parseStructInstanceAfterKeyword(String structName, String varName) {
+    public VariableDeclarationNode parseStructInstanceAfterKeyword(
+            String structName,
+            String varName
+    ) {
 
-        String innerType = parseOptionalInnerType(); // <int> ou null
+        String innerType = parseOptionalInnerType();
 
         List<ASTNode> positionalValues = null;
         Map<String, ASTNode> namedValues = null;
 
-        // Detecta inicialização com ou sem '='
+        boolean hasInitializer = false;
+
         if (accept("=")) {
+            hasInitializer = true;
             parser.eat(Token.TokenType.DELIMITER, "{");
+
             namedValues = tryParseNamed(structName);
-            if (namedValues == null)
+            if (namedValues == null) {
                 positionalValues = parsePositionalInitializers();
+            }
+
             parser.eat(Token.TokenType.DELIMITER, "}");
             parser.eat(Token.TokenType.DELIMITER, ";");
         }
         else if (accept("{")) {
+            hasInitializer = true;
             namedValues = tryParseNamed(structName);
-            if (namedValues == null)
+            if (namedValues == null) {
                 positionalValues = parsePositionalInitializers();
+            }
+
             parser.eat(Token.TokenType.DELIMITER, "}");
             parser.eat(Token.TokenType.DELIMITER, ";");
         }
         else {
+
             parser.eat(Token.TokenType.DELIMITER, ";");
         }
 
-        // Monta tipo final "Struct<Set<int>>"
         String variableType = buildStructType(structName, innerType);
 
+        parser.declareVariable(varName, variableType);
+
+        if (!hasInitializer) {
+            return new VariableDeclarationNode(
+                    varName,
+                    variableType,
+                    null
+            );
+        }
         StructInstaceNode instanceNode =
                 new StructInstaceNode(structName, positionalValues, namedValues);
         instanceNode.setConcreteType(variableType);
 
-        parser.declareVariable(varName, variableType);
-        return new VariableDeclarationNode(varName, variableType, instanceNode);
+        return new VariableDeclarationNode(
+                varName,
+                variableType,
+                instanceNode
+        );
     }
 
     private String parseOptionalInnerType() {

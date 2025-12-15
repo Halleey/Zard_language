@@ -81,7 +81,7 @@ public class StructFieldPrint {
                 case "boolean", "bool" ->
                         sb.append("  call void @arraylist_print_bool(%struct.ArrayListBool* %v").append(idx).append(")\n");
                 case "string", "String" ->
-                        sb.append("  call void @arraylist_print_string(%ArrayList* %v").append(idx).append(")\n");
+                        sb.append("  call void @arraylist_print_String(%ArrayList* %v").append(idx).append(")\n");
                 case "?" ->
                         sb.append("  ; List<?> genérica: ignorando print\n");
                 default ->

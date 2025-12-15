@@ -78,16 +78,21 @@ public class ListAddEmitter {
             }
 
             case "%ArrayList*": {
-                // lista genérica: empurra i8*
-                // aqui você guarda ponteiros de structs, strings, etc.
-
-                String asI8 = valTmp;
 
                 if (valType.equals("i32") || valType.equals("i1") || valType.equals("double")) {
-                    // NÃO dá pra colocar primitivo numa lista genérica sem boxing.
-                    // Melhor explodir cedo pra não gerar UB.
-                    throw new RuntimeException("Tentando adicionar primitivo (" + valType + ") em List<ptr>. Precisa boxing ou lista tipada.");
+                    throw new RuntimeException(
+                            "Tentando adicionar primitivo (" + valType + ") em List<T>. Use lista tipada."
+                    );
                 }
+
+                if (valType.equals("%String*")) {
+                    llvm.append("  call void @arraylist_add_String(%ArrayList* ")
+                            .append(listTmp).append(", %String* ").append(valTmp).append(")\n");
+                    llvm.append(";;VAL:").append(listTmp).append(";;TYPE:%ArrayList*\n");
+                    return llvm.toString();
+                }
+
+                String asI8 = valTmp;
 
                 if (!valType.equals("i8*")) {
                     String castVal = temps.newTemp();
@@ -102,6 +107,7 @@ public class ListAddEmitter {
                 llvm.append(";;VAL:").append(listTmp).append(";;TYPE:%ArrayList*\n");
                 return llvm.toString();
             }
+
 
             default: {
                 // Se cair aqui, o problema está em quem emite o tipo da lista (FieldAccess/ListInit)

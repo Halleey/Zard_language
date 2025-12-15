@@ -43,7 +43,6 @@ public class FreeInsertionPass {
                 if (iff.elseBranch != null) apply(iff.elseBranch, iff);
             }
 
-            // Inserção de pontos de liberação baseados no último uso
             for (var e : lastUse.entrySet()) {
                 if (e.getValue() == node) {
                     it.add(new FreeNode(e.getKey()));

@@ -396,7 +396,6 @@ public class MainEmitter {
 
     declare void @arraylist_add_string(%ArrayList*, i8*)
     declare void @arraylist_addAll_string(%ArrayList*, i8**, i64)
-    declare void @arraylist_print_string(%ArrayList*)
     """);
                 continue;
             }

@@ -1,64 +1,39 @@
 main {
 
-    Struct Pais {
-        string nome;
+    Struct Multi {
+        List<int> ints;
+        List<double> doubles;
+        List<string> strings;
+        List<boolean> booleans;
     }
 
+    Multi m1;
+    m1.ints.add(1);
+    m1.ints.add(2);
 
-    float teste = 3.14;
-    print(teste);
-    Struct Endereco {
-        string rua;
-        string cidade;
-        Struct Pais pais;
-    }
+    m1.doubles.add(1.1);
+    m1.doubles.add(2.2);
 
-    Struct Pessoa {
-        string nome;
-        int idade;
-        Struct Endereco endereco;
-        List<string> telefones;
-    }
+    m1.strings.add("A");
+    m1.strings.add("B");
 
-    # ---- Instâncias base ----
-    Pais brasil;
-    brasil.nome = "Brasil";
+    m1.booleans.add(true);
 
-    Endereco e1;
-    e1.rua = "Rua A";
-    e1.cidade = "São Paulo";
-    e1.pais = brasil;
+    Multi m2;
+    m2 = m1;
 
-    Pessoa p1;
-    p1.nome = "Alice";
-    p1.idade = 25;
-    p1.endereco = e1;
-    p1.telefones.add("11 99999-1111");
-    p1.telefones.add("11 22222-3333");
+    m2.ints.add(99);
+    m2.doubles.add(9.9);
+    m2.strings.add("Z");
 
-    # === Cópia profunda ===
-    Pessoa p2;
-    p2 = p1;
+    m2.booleans.add(true);
 
-    # === Alterações independentes ===
-    p2.nome = "Zard";
-    p2.telefones.add("21 44444-5555");
+    println("=== Original m1 ===");
+    println(m1);
 
-    e1.rua = "teste";
-    e1.cidade = "Santo andré";
-    p2.telefones.remove(0);
+    println("=== Clone m2 ===");
+    println(m2);
 
 
-    # Atualização inline aninhada com lista e sub-struct
-    p2.endereco {
-        rua: "Nova Rua";
-        cidade: "Zurique";
-        pais {
-            nome: "Suíça";
-        }
-    }
-    println("=== Original p1 ===");
-    println(p1);
-    println("=== Clone p2 ===");
-    println(p2);
+    print("testando ");
 }

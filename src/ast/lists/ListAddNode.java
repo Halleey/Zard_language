@@ -3,6 +3,7 @@ package ast.lists;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
+import ast.variables.ListValue;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;
@@ -28,11 +29,22 @@ public class ListAddNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        DynamicList list = (DynamicList) listNode.evaluate(ctx).value();
-        TypedValue values = valuesNode.evaluate(ctx);
-        list.add(values);
-        return values;
+
+        TypedValue listVal = listNode.evaluate(ctx);
+
+        if (!(listVal.value() instanceof ListValue list)) {
+            throw new RuntimeException(
+                    "Tentativa de add em algo que não é ListValue: " + listVal.type()
+            );
+        }
+
+        TypedValue value = valuesNode.evaluate(ctx);
+
+        list.add(value);
+
+        return value;
     }
+
 
     @Override
     public void print(String prefix) {

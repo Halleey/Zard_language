@@ -3,6 +3,7 @@ package ast.lists;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
+import ast.variables.ListValue;
 import low.module.LLVMEmitVisitor;
 
 public class ListRemoveNode extends ASTNode {
@@ -22,9 +23,9 @@ public class ListRemoveNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        DynamicList list = (DynamicList) listNode.evaluate(ctx).value();
+        ListValue list = (ListValue) listNode.evaluate(ctx).value();
         int index = ((Number) indexNode.evaluate(ctx).value()).intValue();
-        return list.removeByIndex(index, ctx); // usa método novo
+        return list.removeByIndex(index);
     }
 
     public ASTNode getIndexNode() {

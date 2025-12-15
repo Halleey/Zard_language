@@ -8,4 +8,5 @@ public class VariableSlot {
     public VariableSlot(TypedValue typedValue) {
         this.typedValue = typedValue;
     }
+
 }

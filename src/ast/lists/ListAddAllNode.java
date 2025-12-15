@@ -3,6 +3,7 @@ package ast.lists;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
+import ast.variables.ListValue;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;
@@ -32,16 +33,16 @@ public class ListAddAllNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        DynamicList target = (DynamicList) targetListNode.evaluate(ctx).value();
+        ListValue target = (ListValue) targetListNode.evaluate(ctx).value();
 
         for (ASTNode argNode : args) {
             TypedValue val = argNode.evaluate(ctx);
 
             if (val.type().equals("List")) {
                 // Se for uma lista, adiciona cada elemento
-                DynamicList other = (DynamicList) val.value();
-                for (ASTNode elemNode : other.getElements()) {
-                    target.add(elemNode.evaluate(ctx));
+                ListValue other = (ListValue) val.value();
+                for (TypedValue elem : other.getElements()) {
+                    target.add(elem);
                 }
             } else {
                 // Se for valor simples, adiciona direto
@@ -51,6 +52,8 @@ public class ListAddAllNode extends ASTNode {
 
         return new TypedValue("List", target);
     }
+
+
 
     @Override
     public void print(String prefix) {

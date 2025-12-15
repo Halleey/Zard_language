@@ -3,6 +3,7 @@ package ast.lists;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
+import ast.variables.ListValue;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;// Nó AST que representa uma lista tipada
@@ -29,11 +30,12 @@ public class ListNode extends ASTNode {
     public String accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
-
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        return new TypedValue(type, list);
+        ListValue listValue = new ListValue(list.getElementType(), list.evaluate(ctx));
+        return new TypedValue(type, listValue);
     }
+
 
     @Override
     public void print(String prefix) {

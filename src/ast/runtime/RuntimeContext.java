@@ -103,4 +103,18 @@ public class RuntimeContext {
         throw new RuntimeException("Struct não definida: " + name);
     }
 
+    public void remove(String varName) {
+        if (variables.containsKey(varName)) {
+            variables.remove(varName);
+            return;
+        }
+
+        if (parent != null) {
+            parent.remove(varName);
+            return;
+        }
+
+        throw new RuntimeException("Tentativa de free em variável inexistente: " + varName);
+    }
+
 }

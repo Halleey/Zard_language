@@ -38,6 +38,8 @@ import low.variables.exps.UnaryOpEmitter;
 
 import low.variables.structs.StructCopyEmitter;
 import memory_manager.EscapeInfo;
+import memory_manager.FreeEmitter;
+import memory_manager.FreeNode;
 
 import java.util.*;
 
@@ -126,6 +128,9 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return currentSpecializationType;
     }
 
+    //Memory manager
+    private final FreeEmitter freeEmitter;
+
 
     private EscapeInfo escapeInfo;
 
@@ -197,6 +202,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         Map<String, TypeInfos> varTypesView = types.getVarTypesMap();
 
         this.varEmitter = new VariableEmitter(varTypesView, temps, this);
+        this.freeEmitter = new FreeEmitter(varTypesView, temps, this.varEmitter, this);
         this.printEmitter = new PrintEmitter(globalStrings, temps);
         this.assignmentEmitter = new AssignmentEmitter(varTypesView, temps, globalStrings, this);
         this.unaryOpEmitter = new UnaryOpEmitter(varTypesView, temps, varEmitter);
@@ -371,6 +377,11 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     }
 
     @Override
+    public String visit(FreeNode node) {
+        return freeEmitter.emit(node);
+    }
+
+    @Override
     public String visit(MainAST node) {
         MainEmitter mainEmitter = new MainEmitter(globalStrings, temps, tiposDeListasUsados, structDefinitions);
         return mainEmitter.emit(node, this);
@@ -528,20 +539,105 @@ public class LLVisitorMain implements LLVMEmitVisitor {
             default -> 8; // List, Struct, qualquer ponteiro
         };
     }
+    // ==== STRUCT FREE ====
+    public String emitFreeStruct(String structPtr, String structName) {
+        StringBuilder sb = new StringBuilder();
 
+        StructNode def = getStructNode(structName);
+        if (def == null) {
+            sb.append("  ; free ignorado (struct não encontrada): ")
+                    .append(structName).append("\n");
+            return sb.toString();
+        }
 
+        int idx = 0;
 
-    public String getStructFieldType(StructFieldAccessNode node) {
-        return structTypeResolver.getStructFieldType(node);
+        for (VariableDeclarationNode field : def.getFields()) {
+
+            String fieldType = field.getType();
+            String fieldPtr = temps.newTemp();
+            String fieldVal = temps.newTemp();
+
+            // ponteiro do campo
+            sb.append("  ").append(fieldPtr)
+                    .append(" = getelementptr inbounds %").append(structName)
+                    .append(", %").append(structName).append("* ")
+                    .append(structPtr)
+                    .append(", i32 0, i32 ").append(idx).append("\n");
+
+            // ===== LIST =====
+            if (fieldType.startsWith("List<")) {
+
+                String elem = fieldType.substring(5, fieldType.length() - 1);
+
+                // List<int>
+                if (elem.equals("int")) {
+                    sb.append("  ").append(fieldVal)
+                            .append(" = load %struct.ArrayListInt*, %struct.ArrayListInt** ")
+                            .append(fieldPtr).append("\n");
+                    sb.append("  call void @arraylist_free_int(%struct.ArrayListInt* ")
+                            .append(fieldVal).append(")\n");
+                }
+
+                // List<double>
+                else if (elem.equals("double")) {
+                    sb.append("  ").append(fieldVal)
+                            .append(" = load %struct.ArrayListDouble*, %struct.ArrayListDouble** ")
+                            .append(fieldPtr).append("\n");
+                    sb.append("  call void @arraylist_free_double(%struct.ArrayListDouble* ")
+                            .append(fieldVal).append(")\n");
+                }
+
+                // List<boolean>
+                else if (elem.equals("boolean")) {
+                    sb.append("  ").append(fieldVal)
+                            .append(" = load %struct.ArrayListBool*, %struct.ArrayListBool** ")
+                            .append(fieldPtr).append("\n");
+                    sb.append("  call void @arraylist_free_bool(%struct.ArrayListBool* ")
+                            .append(fieldVal).append(")\n");
+                }
+
+                // List<string>
+                else if (elem.equals("string")) {
+                    sb.append("  ").append(fieldVal)
+                            .append(" = load %ArrayList*, %ArrayList** ")
+                            .append(fieldPtr).append("\n");
+                    sb.append("  call void @freeList(%ArrayList* ")
+                            .append(fieldVal).append(")\n");
+                }
+            }
+
+            // ===== STRUCT ANINHADA (deep free) =====
+            else if (fieldType.startsWith("Struct<")) {
+
+                String inner =
+                        fieldType.substring("Struct<".length(), fieldType.length() - 1);
+
+                sb.append("  ").append(fieldVal)
+                        .append(" = load %").append(inner)
+                        .append("*, %").append(inner).append("** ")
+                        .append(fieldPtr).append("\n");
+
+                sb.append(emitFreeStruct(fieldVal, inner));
+            }
+
+            idx++;
+        }
+
+        String bc = temps.newTemp();
+        sb.append("  ").append(bc)
+                .append(" = bitcast %").append(structName)
+                .append("* ").append(structPtr).append(" to i8*\n");
+
+        sb.append("  call void @free(i8* ").append(bc).append(")\n");
+
+        return sb.toString();
     }
 
     public String resolveStructName(ASTNode node) {
         return structTypeResolver.resolveStructName(node);
     }
 
-    public Map<String, String> getListElementTypesLegacyView() {
-        return listElementTypesLegacyView;
-    }
 
 
 }

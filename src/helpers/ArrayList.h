@@ -1,6 +1,5 @@
-#ifndef ARRAYLIST_H
-#define ARRAYLIST_H
-#include <stdlib.h>
+#pragma once
+#include <stddef.h>
 #include "Stringz.h"
 
 typedef struct {
@@ -10,18 +9,14 @@ typedef struct {
 } ArrayList;
 
 ArrayList* arraylist_create(size_t initial_capacity);
-void arraylist_add_string(ArrayList* list, char* str);
-void arraylist_add_String(ArrayList* list, String* str);
-void arraylist_addAll_string(ArrayList* list, char** strings, size_t n);
-void arraylist_addAll_String(ArrayList* list, String** strings, size_t n);
-void removeItem(ArrayList* list, size_t index);
-int size(ArrayList* list);
-int length(ArrayList* list);
 
 void arraylist_add_ptr(ArrayList* list, void* element);
 void* arraylist_get_ptr(ArrayList* list, size_t index);
+size_t length(ArrayList* list);
 
+void removeItem(ArrayList* list, size_t index);
 void clearList(ArrayList* list);
 void freeList(ArrayList* list);
 
-#endif
+void arraylist_add_String(ArrayList* list, String* str);
+void arraylist_addAll_String(ArrayList* list, String** strings, size_t n);

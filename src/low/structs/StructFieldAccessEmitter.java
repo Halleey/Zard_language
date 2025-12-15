@@ -33,6 +33,8 @@ public class StructFieldAccessEmitter {
         String structVal = extractTemp(structCode);
         String structLLVMType = extractType(structCode).trim();
 
+        System.out.println("[StructFieldAccess] structLLVMType = " + structLLVMType);
+
         if (structLLVMType.endsWith("**")) {
             String base = structLLVMType.substring(0, structLLVMType.length() - 1);
             String tmp = temps.newTemp();
@@ -43,19 +45,22 @@ public class StructFieldAccessEmitter {
             structLLVMType = base;
         }
 
-        // Resolve o tipo lógico da struct
         String ownerType = resolveOwnerType(node.getStructInstance(), structLLVMType, visitor);
         if (ownerType == null) {
-            throw new RuntimeException("Não foi possível resolver struct dona de " + node.getFieldName() +
-                    " (LLVMType=" + structLLVMType + ")");
+            throw new RuntimeException("Owner não resolvido para campo " + node.getFieldName());
         }
-        StructNode def = visitor.getStructNode(ownerType);
 
+        System.out.println("[StructFieldAccess] ownerType = " + ownerType);
+
+        String ownerBase = ownerType;
+        int genIdx = ownerBase.indexOf('<');
+        if (genIdx != -1) ownerBase = ownerBase.substring(0, genIdx).trim();
+
+        StructNode def = visitor.getStructNode(ownerBase);
         if (def == null) {
-            throw new RuntimeException("Acesso de campo em algo que não é struct: " + structLLVMType);
+            throw new RuntimeException("Struct não encontrada: " + ownerBase);
         }
 
-        // Encontra o campo
         int fieldIndex = -1;
         VariableDeclarationNode fieldDecl = null;
         List<VariableDeclarationNode> fields = def.getFields();
@@ -66,110 +71,108 @@ public class StructFieldAccessEmitter {
                 break;
             }
         }
+
         if (fieldIndex == -1) {
             throw new RuntimeException("Campo não encontrado: " + node.getFieldName());
         }
 
-        // Se structVal for i8*, faz bitcast para o tipo real
-        if (structLLVMType.equals("i8*")) {
-            String realTy = "%" + ownerType + "*";
+        String ownerMangled = mangleGenericType(ownerType);
+        String ownerLLNoPtr = "%" + ownerMangled;
+        String ownerLLPtr = ownerLLNoPtr + "*";
+
+        System.out.println("[StructFieldAccess] ownerLL = " + ownerLLPtr);
+
+        if (!structLLVMType.equals(ownerLLPtr)) {
             String casted = temps.newTemp();
             llvm.append("  ").append(casted)
-                    .append(" = bitcast i8* ").append(structVal)
-                    .append(" to ").append(realTy).append("\n");
-            llvm.append(";;VAL:").append(casted).append(";;TYPE:").append(realTy).append("\n");
+                    .append(" = bitcast ").append(structLLVMType).append(" ").append(structVal)
+                    .append(" to ").append(ownerLLPtr).append("\n");
+            llvm.append(";;VAL:").append(casted).append(";;TYPE:").append(ownerLLPtr).append("\n");
             structVal = casted;
-            structLLVMType = realTy;
         }
 
-        // GEP até o ponteiro do campo
         String fieldPtr = temps.newTemp();
-        String structTyNoPtr = structLLVMType.replace("*", "");
         llvm.append("  ").append(fieldPtr).append(" = getelementptr inbounds ")
-                .append(structTyNoPtr).append(", ").append(structLLVMType).append(" ").append(structVal)
+                .append(ownerLLNoPtr).append(", ").append(ownerLLPtr).append(" ").append(structVal)
                 .append(", i32 0, i32 ").append(fieldIndex).append("\n");
 
-        // Descobre tipo do campo (semântico + LLVM)
-        final String fieldLangType = fieldDecl.getType();
-        final String fieldLLType = mapFieldTypeForStruct(fieldLangType);
-        TypeInfos fieldInfo = new TypeInfos(fieldLangType, fieldLLType,
-                fieldLangType.startsWith("List<") ? fieldLangType.substring(5, fieldLangType.length() - 1) : null);
+        String fieldLangType = fieldDecl.getType();
+        String fieldLLType = mapFieldTypeForStruct(fieldLangType);
 
-        boolean isWrite = (node.getValue() != null);
+        boolean isWrite = node.getValue() != null;
+
         if (isWrite) {
-            // RHS
-            String rhsCode;
-            if (node.getValue() instanceof InputNode in) {
-                InputEmitter inEmitter = new InputEmitter(temps, visitor.getGlobalStrings());
-                rhsCode = inEmitter.emit(in, fieldLLType);
-            } else {
-                rhsCode = node.getValue().accept(visitor);
-            }
+            String rhsCode = node.getValue().accept(visitor);
             llvm.append(rhsCode);
 
             String rhsVal = extractTemp(rhsCode);
-            String rhsTy  = extractType(rhsCode).trim();
+            String rhsTy = extractType(rhsCode).trim();
 
-            String storeVal = rhsVal;
-
-            // Casting se necessário
             if (!rhsTy.equals(fieldLLType)) {
-                String cast = temps.newTemp();
-                llvm.append("  ").append(cast).append(" = bitcast ")
-                        .append(rhsTy).append(" ").append(rhsVal)
-                        .append(" to ").append(fieldLLType).append("\n");
-                storeVal = cast;
+                if (rhsTy.endsWith("*") && fieldLLType.endsWith("*")) {
+                    String cast = temps.newTemp();
+                    llvm.append("  ").append(cast).append(" = bitcast ")
+                            .append(rhsTy).append(" ").append(rhsVal)
+                            .append(" to ").append(fieldLLType).append("\n");
+                    rhsVal = cast;
+                } else {
+                    throw new RuntimeException("Tipo inválido: " + rhsTy + " -> " + fieldLLType);
+                }
             }
 
-            // Faz o store
-            llvm.append("  store ").append(fieldLLType).append(" ").append(storeVal)
+            llvm.append("  store ").append(fieldLLType).append(" ").append(rhsVal)
                     .append(", ").append(fieldLLType).append("* ").append(fieldPtr).append("\n");
 
-            // Recarrega para atualizar markers
-            String retAlias = temps.newTemp();
-            llvm.append("  ").append(retAlias).append(" = load ")
-                    .append(fieldLLType).append(", ").append(fieldLLType).append("* ").append(fieldPtr).append("\n");
-            llvm.append(";;VAL:").append(retAlias).append(";;TYPE:").append(fieldLLType).append("\n");
-
-            visitor.putVarType(node.getFieldName(), fieldInfo);
-
-        }
-        else {
-            // Leitura
             String loaded = temps.newTemp();
             llvm.append("  ").append(loaded).append(" = load ")
-                    .append(fieldLLType).append(", ").append(fieldLLType)
-                    .append("* ").append(fieldPtr).append("\n");
+                    .append(fieldLLType).append(", ").append(fieldLLType).append("* ").append(fieldPtr).append("\n");
             llvm.append(";;VAL:").append(loaded).append(";;TYPE:").append(fieldLLType).append("\n");
-
-            visitor.putVarType(node.getFieldName(), fieldInfo);
+        } else {
+            String loaded = temps.newTemp();
+            llvm.append("  ").append(loaded).append(" = load ")
+                    .append(fieldLLType).append(", ").append(fieldLLType).append("* ").append(fieldPtr).append("\n");
+            llvm.append(";;VAL:").append(loaded).append(";;TYPE:").append(fieldLLType).append("\n");
         }
 
         return llvm.toString();
+    }
+
+    private String mangleGenericType(String t) {
+        if (t == null) return "";
+        t = t.trim();
+
+        if (t.startsWith("Struct<") && t.endsWith(">")) {
+            t = t.substring(7, t.length() - 1).trim();
+        }
+
+        t = t.replace(" ", "")
+                .replace("<", "_")
+                .replace(">", "")
+                .replace(",", "_");
+
+        while (t.contains("__")) t = t.replace("__", "_");
+        return t;
     }
 
     private String mapFieldTypeForStruct(String langType) {
         if (langType == null) return "void";
         langType = langType.trim();
 
-        if (isListType(langType)) {
-            String inner = getListInner(langType);
+        if (langType.startsWith("List<")) {
+            String inner = langType.substring(5, langType.length() - 1).trim();
             return switch (inner) {
                 case "int" -> "%struct.ArrayListInt*";
                 case "double" -> "%struct.ArrayListDouble*";
-                case "boolean" -> "%struct.ArrayListBool*";
-                case "string" -> "%ArrayList*"; // lista genérica de String
+                case "boolean", "bool" -> "%struct.ArrayListBool*";
+                case "string", "String" -> "%ArrayList*";
                 default -> "%ArrayList*";
             };
         }
-        if (langType.startsWith("Struct ")) {
-            String inner = langType.substring("Struct ".length()).trim();
-            return "%" + inner + "*";
-        }
+
         if (langType.startsWith("Struct<") && langType.endsWith(">")) {
-            String inner = langType.substring(7, langType.length() - 1).trim();
-            return "%" + inner + "*";
+            return "%" + langType.substring(7, langType.length() - 1).trim() + "*";
         }
+
         return new TypeMapper().toLLVM(langType);
     }
 
@@ -189,9 +192,7 @@ public class StructFieldAccessEmitter {
         if (u.startsWith("%")) u = u.substring(1).trim();
         if (u.startsWith("Struct.")) u = u.substring("Struct.".length()).trim();
         if (u.startsWith("Struct ")) u = u.substring("Struct ".length()).trim();
-        if (u.contains(".")) {
-            u = u.substring(u.lastIndexOf('.') + 1);
-        }
+        if (u.contains(".")) u = u.substring(u.lastIndexOf('.') + 1);
         return u;
     }
 
@@ -239,6 +240,8 @@ public class StructFieldAccessEmitter {
 
     private String extractType(String code) {
         int lastTypeIdx = code.lastIndexOf(";;TYPE:");
-        return code.substring(lastTypeIdx + 7).trim();
+        int end = code.indexOf('\n', lastTypeIdx);
+        if (end == -1) end = code.length();
+        return code.substring(lastTypeIdx + 7, end).trim();
     }
 }

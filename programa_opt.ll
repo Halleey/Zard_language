@@ -110,17 +110,19 @@ declare void @arraylist_remove_int(ptr, i64)
 
 declare i32 @arraylist_size_int(ptr)
 
+declare void @arraylist_add_String(ptr, ptr)
+
+declare void @arraylist_addAll_String(ptr, ptr, i64)
+
+declare void @arraylist_print_String(ptr)
+
+declare ptr @arraylist_get_String(ptr, i64)
+
 declare void @arraylist_add_string(ptr, ptr)
 
 declare void @arraylist_addAll_string(ptr, ptr, i64)
 
 declare void @arraylist_print_string(ptr)
-
-declare void @arraylist_add_String(ptr, ptr)
-
-declare void @arraylist_addAll_String(ptr, ptr, i64)
-
-declare ptr @getItem(ptr, i64)
 
 define void @print_Multi(ptr %p) {
 entry:
@@ -151,114 +153,119 @@ define i32 @main() {
   %tmp11 = call ptr @arraylist_create(i64 4)
   %tmp13 = getelementptr inbounds %Multi, ptr %tmp0, i32 0, i32 3
   store ptr %tmp11, ptr %tmp13, align 8
+  %tmp16 = load ptr, ptr %tmp0, align 8
+  call void @arraylist_add_int(ptr %tmp16, i32 1)
   %tmp20 = load ptr, ptr %tmp0, align 8
-  call void @arraylist_add_int(ptr %tmp20, i32 1)
-  %tmp28 = load ptr, ptr %tmp0, align 8
-  call void @arraylist_add_int(ptr %tmp28, i32 2)
-  %tmp36 = load ptr, ptr %tmp7, align 8
-  call void @arraylist_add_double(ptr %tmp36, double 1.100000e+00)
-  %tmp44 = load ptr, ptr %tmp7, align 8
-  call void @arraylist_add_double(ptr %tmp44, double 2.200000e+00)
-  %tmp48 = load ptr, ptr %tmp10, align 8
-  %tmp50 = call ptr @createString(ptr @.str0)
-  call void @arraylist_add_String(ptr %tmp48, ptr %tmp50)
-  %tmp54 = load ptr, ptr %tmp10, align 8
-  %tmp56 = call ptr @createString(ptr @.str1)
-  call void @arraylist_add_String(ptr %tmp54, ptr %tmp56)
-  %tmp64 = load ptr, ptr %tmp13, align 8
-  call void @arraylist_add_bool(ptr %tmp64, i1 true)
-  %tmp66 = call ptr @malloc(i64 32)
-  %tmp68 = call ptr @arraylist_create(i64 4)
-  store ptr %tmp68, ptr %tmp66, align 8
-  %tmp71 = call ptr @arraylist_create(i64 4)
-  %tmp73 = getelementptr inbounds %Multi, ptr %tmp66, i32 0, i32 1
-  store ptr %tmp71, ptr %tmp73, align 8
-  %tmp74 = call ptr @arraylist_create(i64 4)
-  %tmp76 = getelementptr inbounds %Multi, ptr %tmp66, i32 0, i32 2
-  store ptr %tmp74, ptr %tmp76, align 8
-  %tmp77 = call ptr @arraylist_create(i64 4)
-  %tmp79 = getelementptr inbounds %Multi, ptr %tmp66, i32 0, i32 3
-  store ptr %tmp77, ptr %tmp79, align 8
-  %tmp84 = load ptr, ptr %tmp0, align 8
-  %tmp86 = load ptr, ptr %tmp84, align 8
-  %tmp87 = getelementptr inbounds %struct.ArrayListInt, ptr %tmp84, i32 0, i32 1
-  %tmp88 = load i64, ptr %tmp87, align 4
-  %tmp89 = call ptr @arraylist_create_int(i64 %tmp88)
-  call void @arraylist_addAll_int(ptr %tmp89, ptr %tmp86, i64 %tmp88)
-  store ptr %tmp89, ptr %tmp66, align 8
-  %tmp92 = load ptr, ptr %tmp7, align 8
-  %tmp94 = load ptr, ptr %tmp92, align 8
-  %tmp95 = getelementptr inbounds %struct.ArrayListDouble, ptr %tmp92, i32 0, i32 1
-  %tmp96 = load i64, ptr %tmp95, align 4
-  %tmp97 = call ptr @arraylist_create_double(i64 %tmp96)
-  call void @arraylist_addAll_double(ptr %tmp97, ptr %tmp94, i64 %tmp96)
-  store ptr %tmp97, ptr %tmp73, align 8
-  %tmp100 = load ptr, ptr %tmp10, align 8
-  %tmp101 = call i32 @length(ptr %tmp100)
-  %tmp102 = zext i32 %tmp101 to i64
-  %tmp103 = call ptr @arraylist_create(i64 %tmp102)
-  %tmp1081 = icmp ult i64 0, %tmp102
-  br i1 %tmp1081, label %list_copy_body_tmp106.lr.ph, label %list_copy_end_tmp106
+  call void @arraylist_add_int(ptr %tmp20, i32 2)
+  %tmp24 = load ptr, ptr %tmp7, align 8
+  call void @arraylist_add_double(ptr %tmp24, double 1.100000e+00)
+  %tmp28 = load ptr, ptr %tmp7, align 8
+  call void @arraylist_add_double(ptr %tmp28, double 2.200000e+00)
+  %tmp32 = load ptr, ptr %tmp10, align 8
+  %tmp34 = call ptr @createString(ptr @.str0)
+  call void @arraylist_add_ptr(ptr %tmp32, ptr %tmp34)
+  %tmp38 = load ptr, ptr %tmp10, align 8
+  %tmp40 = call ptr @createString(ptr @.str1)
+  call void @arraylist_add_ptr(ptr %tmp38, ptr %tmp40)
+  %tmp44 = load ptr, ptr %tmp13, align 8
+  call void @arraylist_add_bool(ptr %tmp44, i1 true)
+  %tmp46 = call ptr @malloc(i64 32)
+  %tmp48 = call ptr @arraylist_create(i64 4)
+  store ptr %tmp48, ptr %tmp46, align 8
+  %tmp51 = call ptr @arraylist_create(i64 4)
+  %tmp53 = getelementptr inbounds %Multi, ptr %tmp46, i32 0, i32 1
+  store ptr %tmp51, ptr %tmp53, align 8
+  %tmp54 = call ptr @arraylist_create(i64 4)
+  %tmp56 = getelementptr inbounds %Multi, ptr %tmp46, i32 0, i32 2
+  store ptr %tmp54, ptr %tmp56, align 8
+  %tmp57 = call ptr @arraylist_create(i64 4)
+  %tmp59 = getelementptr inbounds %Multi, ptr %tmp46, i32 0, i32 3
+  store ptr %tmp57, ptr %tmp59, align 8
+  %tmp61 = call ptr @malloc(i64 32)
+  %tmp65 = load ptr, ptr %tmp0, align 8
+  %tmp67 = load ptr, ptr %tmp65, align 8
+  %tmp68 = getelementptr inbounds %struct.ArrayListInt, ptr %tmp65, i32 0, i32 1
+  %tmp69 = load i64, ptr %tmp68, align 4
+  %tmp70 = call ptr @arraylist_create_int(i64 %tmp69)
+  call void @arraylist_addAll_int(ptr %tmp70, ptr %tmp67, i64 %tmp69)
+  store ptr %tmp70, ptr %tmp61, align 8
+  %tmp72 = getelementptr inbounds %Multi, ptr %tmp61, i32 0, i32 1
+  %tmp73 = load ptr, ptr %tmp7, align 8
+  %tmp75 = load ptr, ptr %tmp73, align 8
+  %tmp76 = getelementptr inbounds %struct.ArrayListDouble, ptr %tmp73, i32 0, i32 1
+  %tmp77 = load i64, ptr %tmp76, align 4
+  %tmp78 = call ptr @arraylist_create_double(i64 %tmp77)
+  call void @arraylist_addAll_double(ptr %tmp78, ptr %tmp75, i64 %tmp77)
+  store ptr %tmp78, ptr %tmp72, align 8
+  %tmp80 = getelementptr inbounds %Multi, ptr %tmp61, i32 0, i32 2
+  %tmp81 = load ptr, ptr %tmp10, align 8
+  %tmp82 = call i32 @length(ptr %tmp81)
+  %tmp83 = zext i32 %tmp82 to i64
+  %tmp84 = call ptr @arraylist_create(i64 %tmp83)
+  %tmp891 = icmp ult i64 0, %tmp83
+  br i1 %tmp891, label %list_copy_body_tmp87.lr.ph, label %list_copy_end_tmp87
 
-list_copy_body_tmp106.lr.ph:                      ; preds = %0
-  br label %list_copy_body_tmp106
+list_copy_body_tmp87.lr.ph:                       ; preds = %0
+  br label %list_copy_body_tmp87
 
-list_copy_body_tmp106:                            ; preds = %list_copy_body_tmp106.lr.ph, %list_copy_body_tmp106
-  %tmp105.02 = phi i64 [ 0, %list_copy_body_tmp106.lr.ph ], [ %tmp111, %list_copy_body_tmp106 ]
-  %tmp109 = call ptr @arraylist_get_ptr(ptr %tmp100, i64 %tmp105.02)
-  %tmp110 = call ptr @createString(ptr %tmp109)
-  call void @arraylist_add_String(ptr %tmp103, ptr %tmp110)
-  %tmp111 = add i64 %tmp105.02, 1
-  %tmp108 = icmp ult i64 %tmp111, %tmp102
-  br i1 %tmp108, label %list_copy_body_tmp106, label %list_copy_cond_tmp106.list_copy_end_tmp106_crit_edge
+list_copy_body_tmp87:                             ; preds = %list_copy_body_tmp87.lr.ph, %list_copy_body_tmp87
+  %tmp86.02 = phi i64 [ 0, %list_copy_body_tmp87.lr.ph ], [ %tmp96, %list_copy_body_tmp87 ]
+  %tmp90 = call ptr @arraylist_get_ptr(ptr %tmp81, i64 %tmp86.02)
+  %tmp93 = load ptr, ptr %tmp90, align 8
+  %tmp94 = call ptr @createString(ptr %tmp93)
+  call void @arraylist_add_ptr(ptr %tmp84, ptr %tmp94)
+  %tmp96 = add i64 %tmp86.02, 1
+  %tmp89 = icmp ult i64 %tmp96, %tmp83
+  br i1 %tmp89, label %list_copy_body_tmp87, label %list_copy_cond_tmp87.list_copy_end_tmp87_crit_edge
 
-list_copy_cond_tmp106.list_copy_end_tmp106_crit_edge: ; preds = %list_copy_body_tmp106
-  br label %list_copy_end_tmp106
+list_copy_cond_tmp87.list_copy_end_tmp87_crit_edge: ; preds = %list_copy_body_tmp87
+  br label %list_copy_end_tmp87
 
-list_copy_end_tmp106:                             ; preds = %list_copy_cond_tmp106.list_copy_end_tmp106_crit_edge, %0
-  store ptr %tmp103, ptr %tmp76, align 8
-  %tmp114 = load ptr, ptr %tmp13, align 8
-  %tmp116 = load ptr, ptr %tmp114, align 8
-  %tmp117 = getelementptr inbounds %struct.ArrayListBool, ptr %tmp114, i32 0, i32 1
-  %tmp118 = load i64, ptr %tmp117, align 4
-  %tmp119 = call ptr @arraylist_create_bool(i64 %tmp118)
-  call void @arraylist_addAll_bool(ptr %tmp119, ptr %tmp116, i64 %tmp118)
-  store ptr %tmp119, ptr %tmp79, align 8
-  %tmp126 = load ptr, ptr %tmp66, align 8
-  call void @arraylist_add_int(ptr %tmp126, i32 99)
-  %tmp134 = load ptr, ptr %tmp73, align 8
-  call void @arraylist_add_double(ptr %tmp134, double 9.900000e+00)
-  %tmp138 = load ptr, ptr %tmp76, align 8
-  %tmp140 = call ptr @createString(ptr @.str2)
-  call void @arraylist_add_String(ptr %tmp138, ptr %tmp140)
-  %tmp148 = load ptr, ptr %tmp79, align 8
-  call void @arraylist_add_bool(ptr %tmp148, i1 true)
+list_copy_end_tmp87:                              ; preds = %list_copy_cond_tmp87.list_copy_end_tmp87_crit_edge, %0
+  store ptr %tmp84, ptr %tmp80, align 8
+  %tmp98 = getelementptr inbounds %Multi, ptr %tmp61, i32 0, i32 3
+  %tmp99 = load ptr, ptr %tmp13, align 8
+  %tmp101 = load ptr, ptr %tmp99, align 8
+  %tmp102 = getelementptr inbounds %struct.ArrayListBool, ptr %tmp99, i32 0, i32 1
+  %tmp103 = load i64, ptr %tmp102, align 4
+  %tmp104 = call ptr @arraylist_create_bool(i64 %tmp103)
+  call void @arraylist_addAll_bool(ptr %tmp104, ptr %tmp101, i64 %tmp103)
+  store ptr %tmp104, ptr %tmp98, align 8
+  %tmp107 = load ptr, ptr %tmp61, align 8
+  call void @arraylist_add_int(ptr %tmp107, i32 99)
+  %tmp111 = load ptr, ptr %tmp72, align 8
+  call void @arraylist_add_double(ptr %tmp111, double 9.900000e+00)
+  %tmp115 = load ptr, ptr %tmp80, align 8
+  %tmp117 = call ptr @createString(ptr @.str2)
+  call void @arraylist_add_ptr(ptr %tmp115, ptr %tmp117)
+  %tmp121 = load ptr, ptr %tmp98, align 8
+  call void @arraylist_add_bool(ptr %tmp121, i1 true)
   %1 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str3)
   %2 = call i32 (ptr, ...) @printf(ptr @.strNewLine)
   call void @print_Multi(ptr %tmp0)
   %3 = call i32 (ptr, ...) @printf(ptr @.strNewLine)
-  %tmp154 = load ptr, ptr %tmp0, align 8
-  call void @arraylist_free_int(ptr %tmp154)
-  %tmp156 = load ptr, ptr %tmp7, align 8
-  call void @arraylist_free_double(ptr %tmp156)
-  %tmp158 = load ptr, ptr %tmp10, align 8
-  call void @freeList(ptr %tmp158)
-  %tmp160 = load ptr, ptr %tmp13, align 8
-  call void @arraylist_free_bool(ptr %tmp160)
+  %tmp127 = load ptr, ptr %tmp0, align 8
+  call void @arraylist_free_int(ptr %tmp127)
+  %tmp129 = load ptr, ptr %tmp7, align 8
+  call void @arraylist_free_double(ptr %tmp129)
+  %tmp131 = load ptr, ptr %tmp10, align 8
+  call void @freeList(ptr %tmp131)
+  %tmp133 = load ptr, ptr %tmp13, align 8
+  call void @arraylist_free_bool(ptr %tmp133)
   call void @free(ptr %tmp0)
   %4 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str4)
   %5 = call i32 (ptr, ...) @printf(ptr @.strNewLine)
-  call void @print_Multi(ptr %tmp66)
+  call void @print_Multi(ptr %tmp61)
   %6 = call i32 (ptr, ...) @printf(ptr @.strNewLine)
-  %tmp166 = load ptr, ptr %tmp66, align 8
-  call void @arraylist_free_int(ptr %tmp166)
-  %tmp168 = load ptr, ptr %tmp73, align 8
-  call void @arraylist_free_double(ptr %tmp168)
-  %tmp170 = load ptr, ptr %tmp76, align 8
-  call void @freeList(ptr %tmp170)
-  %tmp172 = load ptr, ptr %tmp79, align 8
-  call void @arraylist_free_bool(ptr %tmp172)
-  call void @free(ptr %tmp66)
+  %tmp139 = load ptr, ptr %tmp61, align 8
+  call void @arraylist_free_int(ptr %tmp139)
+  %tmp141 = load ptr, ptr %tmp72, align 8
+  call void @arraylist_free_double(ptr %tmp141)
+  %tmp143 = load ptr, ptr %tmp80, align 8
+  call void @freeList(ptr %tmp143)
+  %tmp145 = load ptr, ptr %tmp98, align 8
+  call void @arraylist_free_bool(ptr %tmp145)
+  call void @free(ptr %tmp61)
   %7 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str5)
   %8 = call i32 @getchar()
   ret i32 0

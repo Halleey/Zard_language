@@ -169,7 +169,7 @@ public class ListPrintHandler implements PrintHandler {
             case "int" -> sb.append("  call void @arraylist_print_int(%struct.ArrayListInt* ").append(tmp).append(")\n");
             case "double" -> sb.append("  call void @arraylist_print_double(%struct.ArrayListDouble* ").append(tmp).append(")\n");
             case "boolean" -> sb.append("  call void @arraylist_print_bool(%struct.ArrayListBool* ").append(tmp).append(")\n");
-            case "string" -> sb.append("  call void @arraylist_print_string(%ArrayList* ").append(tmp).append(")\n");
+            case "string" -> sb.append("  call void @arraylist_print_String(%ArrayList* ").append(tmp).append(")\n");
             default -> {
                 String structName;
                 if (elemType.startsWith("Struct<")) {

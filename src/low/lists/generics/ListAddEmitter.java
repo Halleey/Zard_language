@@ -8,7 +8,7 @@ import low.lists.doubles.ListAddDoubleEmitter;
 import low.lists.ints.ListIntAddEmitter;
 import low.main.GlobalStringManager;
 import low.module.LLVMEmitVisitor;
-import low.module.LLVisitorMain;
+
 
 public class ListAddEmitter {
 
@@ -29,172 +29,85 @@ public class ListAddEmitter {
     public String emit(ListAddNode node, LLVMEmitVisitor visitor) {
         StringBuilder llvm = new StringBuilder();
 
-        String specialized = null;
-        if (visitor instanceof LLVisitorMain mainVisitor) {
-            specialized = mainVisitor.getCurrentSpecializationType();
-        }
+        // 1) avalia lista
+        String listCode = node.getListNode().accept(visitor);
+        llvm.append(listCode);
+        String listTmp  = extractTemp(listCode);
+        String listType = extractType(listCode); // tipo REAL da lista no IR
 
-        if (specialized != null) {
+        // 2) avalia valor
+        String valCode = node.getValuesNode().accept(visitor);
+        llvm.append(valCode);
+        String valTmp  = extractTemp(valCode);
+        String valType = extractType(valCode);
 
-            String listCode = node.getListNode().accept(visitor);
-            llvm.append(listCode);
-            String listTmp = extractTemp(listCode);
-            String listType = extractType(listCode); // agora pega o ÚLTIMO ;;TYPE:
+        // 3) decide pelo tipo da LISTA (e não pela specialization)
+        switch (listType) {
 
-            String valCode = node.getValuesNode().accept(visitor);
-            llvm.append(valCode);
-            String valTmp = extractTemp(valCode);
-            String valType = extractType(valCode);
+            case "%struct.ArrayListInt*": {
+                // valor deve ser i32
+                if (!valType.equals("i32")) {
+                    throw new RuntimeException("List<int>.add recebeu " + valType + " (esperado i32)");
+                }
+                llvm.append("  call void @arraylist_add_int(%struct.ArrayListInt* ")
+                        .append(listTmp).append(", i32 ").append(valTmp).append(")\n");
+                llvm.append(";;VAL:").append(listTmp).append(";;TYPE:%struct.ArrayListInt*\n");
+                return llvm.toString();
+            }
 
-            String func = switch (specialized) {
-                case "int"    -> "arraylist_add_int";
-                case "double" -> "arraylist_add_double";
-                case "bool", "boolean" -> "arraylist_add_bool";
-                case "string" -> "arraylist_add_string"; // usado só pra log
-                default       -> "arraylist_add_ptr";
-            };
+            case "%struct.ArrayListDouble*": {
+                // valor deve ser double
+                if (!valType.equals("double")) {
+                    throw new RuntimeException("List<double>.add recebeu " + valType + " (esperado double)");
+                }
+                llvm.append("  call void @arraylist_add_double(%struct.ArrayListDouble* ")
+                        .append(listTmp).append(", double ").append(valTmp).append(")\n");
+                llvm.append(";;VAL:").append(listTmp).append(";;TYPE:%struct.ArrayListDouble*\n");
+                return llvm.toString();
+            }
 
+            case "%struct.ArrayListBool*": {
+                // valor deve ser i1
+                if (!valType.equals("i1")) {
+                    throw new RuntimeException("List<bool>.add recebeu " + valType + " (esperado i1)");
+                }
+                llvm.append("  call void @arraylist_add_bool(%struct.ArrayListBool* ")
+                        .append(listTmp).append(", i1 ").append(valTmp).append(")\n");
+                llvm.append(";;VAL:").append(listTmp).append(";;TYPE:%struct.ArrayListBool*\n");
+                return llvm.toString();
+            }
 
-            String listLLVMType;
+            case "%ArrayList*": {
+                // lista genérica: empurra i8*
+                // aqui você guarda ponteiros de structs, strings, etc.
 
-            if (specialized.equals("string")) {
-                listLLVMType = "%ArrayList*";
+                String asI8 = valTmp;
 
-                if (!listType.equals("%ArrayList*")) {
-                    String castList = temps.newTemp();
-                    llvm.append("  ").append(castList)
-                            .append(" = bitcast ")
-                            .append(listType).append(" ").append(listTmp)
-                            .append(" to %ArrayList*\n");
-                    listTmp = castList;
-                    listType = "%ArrayList*";
+                if (valType.equals("i32") || valType.equals("i1") || valType.equals("double")) {
+                    // NÃO dá pra colocar primitivo numa lista genérica sem boxing.
+                    // Melhor explodir cedo pra não gerar UB.
+                    throw new RuntimeException("Tentando adicionar primitivo (" + valType + ") em List<ptr>. Precisa boxing ou lista tipada.");
                 }
 
-                if (!valType.equals("%String*")) {
-                }
-
-                llvm.append("  call void @arraylist_add_String(%ArrayList* ")
-                        .append(listTmp)
-                        .append(", %String* ").append(valTmp)
-                        .append(")\n");
-            } else if (specialized.equals("int") ||
-                    specialized.equals("double") ||
-                    specialized.equals("bool") ||
-                    specialized.equals("boolean")) {
-
-                String normalized = normalizeListType(specialized);
-                listLLVMType = "%struct.ArrayList" + normalized + "*";
-
-
-                String llvmType = mapToLLVMType(specialized);
-
-                if (!listType.equals(listLLVMType)) {
-                    String castList = temps.newTemp();
-                    llvm.append("  ").append(castList)
-                            .append(" = bitcast ")
-                            .append(listType).append(" ").append(listTmp)
-                            .append(" to ").append(listLLVMType).append("\n");
-                    listTmp = castList;
-                    listType = listLLVMType;
-                }
-                llvm.append("  call void @").append(func)
-                        .append("(").append(listLLVMType).append(" ").append(listTmp)
-                        .append(", ").append(llvmType).append(" ").append(valTmp)
-                        .append(")\n");
-
-            } else {
-
-
-                // listTmp deve ser %ArrayList*
-                if (!listType.equals("%ArrayList*")) {
-                    String castList = temps.newTemp();
-                    llvm.append("  ").append(castList)
-                            .append(" = bitcast ")
-                            .append(listType).append(" ").append(listTmp)
-                            .append(" to %ArrayList*\n");
-                    listTmp = castList;
-                    listType = "%ArrayList*";
-                }
-
-                String castValTmp = valTmp;
                 if (!valType.equals("i8*")) {
                     String castVal = temps.newTemp();
                     llvm.append("  ").append(castVal)
-                            .append(" = bitcast ")
-                            .append(valType).append(" ").append(valTmp)
+                            .append(" = bitcast ").append(valType).append(" ").append(valTmp)
                             .append(" to i8*\n");
-                    castValTmp = castVal;
-                    valType = "i8*";
+                    asI8 = castVal;
                 }
 
                 llvm.append("  call void @arraylist_add_ptr(%ArrayList* ")
-                        .append(listTmp)
-                        .append(", i8* ").append(castValTmp)
-                        .append(")\n");
+                        .append(listTmp).append(", i8* ").append(asI8).append(")\n");
+                llvm.append(";;VAL:").append(listTmp).append(";;TYPE:%ArrayList*\n");
+                return llvm.toString();
             }
-            llvm.append(";;VAL:").append(listTmp)
-                    .append(";;TYPE:").append(
-                            specialized.equals("int") ||
-                                    specialized.equals("double") ||
-                                    specialized.equals("bool") ||
-                                    specialized.equals("boolean")
-                                    ? "%struct.ArrayList" + normalizeListType(specialized) + "*"
-                                    : "%ArrayList*"
-                    ).append("\n");
 
-            return llvm.toString();
+            default: {
+                // Se cair aqui, o problema está em quem emite o tipo da lista (FieldAccess/ListInit)
+                throw new RuntimeException("Tipo de lista inesperado no IR: " + listType);
+            }
         }
-
-
-        String listCode = node.getListNode().accept(visitor);
-        llvm.append(listCode);
-        String listTmp = extractTemp(listCode);
-        String listType = extractType(listCode);
-
-        String valCode = node.getValuesNode().accept(visitor);
-        llvm.append(valCode);
-        String valTmp = extractTemp(valCode);
-        String valType = extractType(valCode);
-
-
-        if (valType.equals("i32")) {
-            return intAddEmitter.emit(node, visitor);
-        }
-        if (valType.equals("double")) {
-            return doubleEmitter.emit(node, visitor);
-        }
-        if (valType.equals("i1")) {
-            return boolAddEmitter.emit(node, visitor);
-        }
-
-
-        String listCastTmp = temps.newTemp();
-        llvm.append("  ").append(listCastTmp)
-                .append(" = bitcast ").append(listType).append(" ").append(listTmp)
-                .append(" to %ArrayList*\n");
-
-        if (valType.equals("%String*")) {
-            llvm.append("  call void @arraylist_add_String(%ArrayList* ")
-                    .append(listCastTmp).append(", %String* ").append(valTmp).append(")\n");
-        }
-        else if (valType.equals("i8*")) {
-            llvm.append("  call void @arraylist_add_string(%ArrayList* ")
-                    .append(listCastTmp).append(", i8* ").append(valTmp).append(")\n");
-        }
-        else {
-            // qualquer outro ponteiro vira i8* via bitcast
-            String castVal = temps.newTemp();
-            llvm.append("  ").append(castVal)
-                    .append(" = bitcast ").append(valType).append(" ").append(valTmp)
-                    .append(" to i8*\n");
-
-            llvm.append("  call void @arraylist_add_ptr(%ArrayList* ")
-                    .append(listCastTmp).append(", i8* ").append(castVal).append(")\n");
-        }
-
-        llvm.append(";;VAL:").append(listCastTmp).append(";;TYPE:%ArrayList*\n");
-
-        return llvm.toString();
     }
 
     private String extractTemp(String code) {
@@ -207,25 +120,5 @@ public class ListAddEmitter {
         int lastTypeIdx = code.lastIndexOf(";;TYPE:");
         int endIdx = code.indexOf("\n", lastTypeIdx);
         return code.substring(lastTypeIdx + 7, endIdx == -1 ? code.length() : endIdx).trim();
-    }
-
-    private String mapToLLVMType(String type) {
-        return switch (type) {
-            case "int" -> "i32";
-            case "double" -> "double";
-            case "bool", "boolean" -> "i1";
-            case "string" -> "%String*";
-            default -> "i8*";
-        };
-    }
-
-    private String normalizeListType(String type) {
-        return switch (type) {
-            case "boolean", "bool" -> "Bool";
-            case "int" -> "Int";
-            case "double" -> "Double";
-            case "string", "String" -> "Str";
-            default -> "Ptr";
-        };
     }
 }

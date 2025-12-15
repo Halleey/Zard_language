@@ -65,6 +65,7 @@ public class VariableEmitter {
                         + "  store " + info.getLLVMType() + " " + tmp
                         + ", " + info.getLLVMType() + "* " + varPtr + "\n";
             }
+
             String exprCode = node.initializer.accept(visitor);
             String tmp = extractTemp(exprCode);
 
@@ -72,14 +73,24 @@ public class VariableEmitter {
 
             if (!escapes) {
                 StructCopyEmitter copier = visitor.getStructCopyEmitter();
+
+                String structName =
+                        srcType.substring(srcType.indexOf('<') + 1, srcType.indexOf('>')).trim();
+
+                String copyCode = copier.emitDeepCopy(structName, tmp);
+                String copiedPtr = extractTemp(copyCode);
+
                 return exprCode
-                        + copier.emit(null, tmp, varPtr, srcType);
+                        + copyCode
+                        + "  store %" + structName + "* " + copiedPtr
+                        + ", %" + structName + "** " + varPtr + "\n";
             }
 
             return exprCode
                     + "  store " + info.getLLVMType() + " " + tmp
                     + ", " + info.getLLVMType() + "* " + varPtr + "\n";
         }
+
         if (node.initializer == null) {
             return handleDefaultInit(node, info);
         }

@@ -8,5 +8,5 @@ void arraylist_print_double(ArrayListDouble* list);
 void arraylist_print_bool(ArrayListBool* list);
 void arraylist_print_string(ArrayList* list);
 void arraylist_print_ptr(ArrayList* list, void (*printFn)(void*));
-
+void arraylist_print_String(ArrayList* list);
 #endif

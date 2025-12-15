@@ -1,5 +1,7 @@
 #include "PrintList.h"
+#include "Stringz.h"
 #include <stdio.h>
+
 
 void arraylist_print_int(ArrayListInt* list) {
     if (!list) {
@@ -46,6 +48,30 @@ void arraylist_print_string(ArrayList* list) {
     }
     printf("]\n");
 }
+
+void arraylist_print_String(ArrayList* list) {
+    if (!list) {
+        printf("[]\n");
+        return;
+    }
+
+    printf("[");
+    for (size_t i = 0; i < list->length; i++) {
+        String* s = (String*) list->data[i];
+        if (s && s->data) {
+            printf("%s", s->data);
+        } else {
+            printf("null");
+        }
+
+        if (i < list->length - 1)
+            printf(", ");
+    }
+    printf("]\n");
+}
+
+
+
 void arraylist_print_bool(ArrayListBool* list) {
     if (!list) {
         printf("[]\n");

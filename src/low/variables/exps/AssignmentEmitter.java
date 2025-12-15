@@ -120,12 +120,23 @@ public class AssignmentEmitter {
 
         llvm.append(exprLLVM);
 
-        if (sourceType.startsWith("Struct")) {
-            StructCopyEmitter structCopyEmitter =
-                    new StructCopyEmitter(varTypes, temps, globalStrings, visitor);
-            llvm.append(structCopyEmitter.emit(assignNode, temp, varPtr, sourceType));
+        if (sourceType.startsWith("Struct<")) {
+
+            StructCopyEmitter copier = visitor.getStructCopyEmitter();
+
+            String structName =
+                    sourceType.substring(sourceType.indexOf('<') + 1, sourceType.indexOf('>')).trim();
+
+            String copyCode = copier.emitDeepCopy(structName, temp);
+            String copiedPtr = extractTemp(copyCode);
+
+            llvm.append(copyCode);
+            llvm.append("  store %").append(structName).append("* ").append(copiedPtr)
+                    .append(", %").append(structName).append("** ").append(varPtr).append("\n");
+
             return llvm.toString();
         }
+
 
         if ("%String".equals(llvmType) || "%String*".equals(llvmType)) {
             llvm.append("  store %String* ").append(temp).append(", %String** ").append(varPtr).append("\n");

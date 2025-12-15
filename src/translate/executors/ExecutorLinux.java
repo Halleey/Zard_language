@@ -1,5 +1,6 @@
 package translate.executors;
 
+import ast.ASTNode;
 import ast.home.MainAST;
 import ast.prints.ASTPrinter;
 import low.module.LLVMGenerator;
@@ -14,6 +15,8 @@ import translate.front.FrontendPipeline;
 import translate.front.TypePipeline;
 import translate.llvm.LLVMToolchain;
 
+import java.util.List;
+
 
 public class ExecutorLinux {
 
@@ -21,9 +24,7 @@ public class ExecutorLinux {
         String filePath = args.length > 0 ? args[0] : "src/language/main.zd";
 
         FrontendPipeline frontend = new FrontendPipeline(filePath);
-        var ast = frontend.process();
-
-        EscapeInfo escapeInfo = frontend.getEscapeInfo();
+        List<ASTNode> ast = frontend.process();
 
         TypePipeline typePipeline = new TypePipeline(frontend.getParser());
         TypePipelineResult typeResult = typePipeline.process(ast);
@@ -33,20 +34,37 @@ public class ExecutorLinux {
                         typeResult.getSpecializer().getVariableTypes()
                 );
 
-        var lastUse = lifetime.analyze(ast);
+        // ✅ acha o MainAST dentro da lista top-level
+        MainAST mainAst = null;
+        for (ASTNode n : ast) {
+            if (n instanceof MainAST m) {
+                mainAst = m;
+                break;
+            }
+        }
 
-        System.out.println("=== LAST USE (STRUCTS) ===");
-        lastUse.forEach((k, v) ->
-                System.out.println("  " + k + " -> " + v.getClass().getSimpleName()));
-        System.out.println("==========================");
+        if (mainAst != null) {
+            var lastUse = lifetime.analyze(mainAst.body);
 
-        if (ast instanceof MainAST mainAst) {
+            System.out.println("=== LAST USE (STRUCTS) ===");
+            lastUse.forEach((k, v) ->
+                    System.out.println("  " + k + " -> " + v.getClass().getSimpleName()));
+            System.out.println("==========================");
+
             new FreeInsertionPass(lastUse).apply(mainAst.body);
         }
 
-
         System.out.println("=== AST AFTER FREE INSERTION ===");
         ASTPrinter.printAST(ast);
+
+        ASTInterpreter interpreter = new ASTInterpreter();
+        interpreter.run(ast);
+    }
+}
+
+
+
+
 
 //        LLVisitorMain llvmVisitor = typeResult.getVisitor().fork();
 //        llvmVisitor.setEscapeInfo(escapeInfo);
@@ -60,10 +78,3 @@ public class ExecutorLinux {
 //        LLVMToolchain toolchain = new LLVMToolchain();
 //        String exePath = toolchain.buildExecutable(llvm);
 //        toolchain.runExecutable(exePath);
-
-
-
-        ASTInterpreter interpreter = new ASTInterpreter();
-        interpreter.run(ast);
-    }
-}

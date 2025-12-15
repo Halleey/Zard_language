@@ -104,6 +104,13 @@ public class PrintNode extends ASTNode {
         else System.out.print("}");
     }
 
+
+    @Override
+    public List<ASTNode> getChildren() {
+        return expr != null ? List.of(expr) : List.of();
+    }
+
+
     @Override
     public void print(String prefix) {
         System.out.println(prefix + (newline ? "PrintLn:" : "Print:"));

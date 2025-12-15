@@ -6,8 +6,6 @@ import ast.runtime.RuntimeContext;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;
-
-
 public class FreeNode extends ASTNode {
 
     private final String varName;

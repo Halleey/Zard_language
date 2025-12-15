@@ -1,39 +1,22 @@
+import "src/language/structs/impls/monomorfizacao.zd";
+
 main {
+    Set<int> numeros;
+    numeros.add(3);
+    numeros.add(3);
+    println(numeros);
 
-    Struct Multi {
-        List<int> ints;
-        List<double> doubles;
-        List<string> strings;
-        List<boolean> booleans;
-    }
+    Set<boolean> real;
+    real.add(true);
+    real.add(false);
+    real.add(true);
+    println(real);
 
-    Multi m1;
-    m1.ints.add(1);
-    m1.ints.add(2);
+    Set<string> names;
+    names.add("zard");
+    names.add("zard");
+    println(names);
 
-    m1.doubles.add(1.1);
-    m1.doubles.add(2.2);
-
-    m1.strings.add("A");
-    m1.strings.add("B");
-
-    m1.booleans.add(true);
-
-    Multi m2;
-    m2 = m1;
-
-    m2.ints.add(99);
-    m2.doubles.add(9.9);
-    m2.strings.add("Z");
-
-    m2.booleans.add(true);
-
-    println("=== Original m1 ===");
-    println(m1);
-
-    println("=== Clone m2 ===");
-    println(m2);
-
-
-    print("testando ");
+    int x =3;
+    print(x);
 }

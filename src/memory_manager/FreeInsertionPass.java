@@ -8,8 +8,6 @@ import ast.loops.WhileNode;
 import ast.structs.ImplNode;
 
 import java.util.*;
-
-
 public class FreeInsertionPass {
 
     private final Map<String, ASTNode> lastUse;
@@ -21,6 +19,7 @@ public class FreeInsertionPass {
     public void apply(List<ASTNode> stmts) {
         apply(stmts, null);
     }
+
 
     private void apply(List<ASTNode> stmts, ASTNode container) {
         if (stmts == null) return;
@@ -44,6 +43,7 @@ public class FreeInsertionPass {
                 if (iff.elseBranch != null) apply(iff.elseBranch, iff);
             }
 
+            // Inserção de pontos de liberação baseados no último uso
             for (var e : lastUse.entrySet()) {
                 if (e.getValue() == node) {
                     it.add(new FreeNode(e.getKey()));
@@ -51,6 +51,7 @@ public class FreeInsertionPass {
             }
         }
 
+        // Caso seja um container, insere um ponto de liberação após o término
         if (container != null) {
             for (var e : lastUse.entrySet()) {
                 if (e.getValue() == container) {

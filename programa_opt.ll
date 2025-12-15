@@ -237,10 +237,28 @@ list_copy_end_tmp106:                             ; preds = %list_copy_cond_tmp1
   %2 = call i32 (ptr, ...) @printf(ptr @.strNewLine)
   call void @print_Multi(ptr %tmp0)
   %3 = call i32 (ptr, ...) @printf(ptr @.strNewLine)
+  %tmp154 = load ptr, ptr %tmp0, align 8
+  call void @arraylist_free_int(ptr %tmp154)
+  %tmp156 = load ptr, ptr %tmp7, align 8
+  call void @arraylist_free_double(ptr %tmp156)
+  %tmp158 = load ptr, ptr %tmp10, align 8
+  call void @freeList(ptr %tmp158)
+  %tmp160 = load ptr, ptr %tmp13, align 8
+  call void @arraylist_free_bool(ptr %tmp160)
+  call void @free(ptr %tmp0)
   %4 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str4)
   %5 = call i32 (ptr, ...) @printf(ptr @.strNewLine)
   call void @print_Multi(ptr %tmp66)
   %6 = call i32 (ptr, ...) @printf(ptr @.strNewLine)
+  %tmp166 = load ptr, ptr %tmp66, align 8
+  call void @arraylist_free_int(ptr %tmp166)
+  %tmp168 = load ptr, ptr %tmp73, align 8
+  call void @arraylist_free_double(ptr %tmp168)
+  %tmp170 = load ptr, ptr %tmp76, align 8
+  call void @freeList(ptr %tmp170)
+  %tmp172 = load ptr, ptr %tmp79, align 8
+  call void @arraylist_free_bool(ptr %tmp172)
+  call void @free(ptr %tmp66)
   %7 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str5)
   %8 = call i32 @getchar()
   ret i32 0

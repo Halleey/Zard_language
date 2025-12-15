@@ -9,6 +9,8 @@ import ast.variables.VariableNode;
 
 
 import java.util.*;
+
+
 public class DeterministicLifetimeAnalyzer {
 
     private final Map<String, String> varTypes; // getVariableTypes() mapeando os tipos de variáveis

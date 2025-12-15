@@ -34,7 +34,6 @@ public class ExecutorLinux {
                         typeResult.getSpecializer().getVariableTypes()
                 );
 
-        // ✅ acha o MainAST dentro da lista top-level
         MainAST mainAst = null;
         for (ASTNode n : ast) {
             if (n instanceof MainAST m) {
@@ -57,8 +56,24 @@ public class ExecutorLinux {
         System.out.println("=== AST AFTER FREE INSERTION ===");
         ASTPrinter.printAST(ast);
 
-        ASTInterpreter interpreter = new ASTInterpreter();
-        interpreter.run(ast);
+
+
+        LLVisitorMain llvmVisitor = typeResult.getVisitor().fork();
+//        llvmVisitor.setEscapeInfo(escapeInfo);
+//
+        System.out.println("[DEBUG ExecutorLinux] visitor no backend @"
+                + System.identityHashCode(llvmVisitor));
+
+        LLVMGenerator llgen = new LLVMGenerator(llvmVisitor);
+        String llvm = llgen.generate(ast);
+
+        LLVMToolchain toolchain = new LLVMToolchain();
+        String exePath = toolchain.buildExecutable(llvm);
+        toolchain.runExecutable(exePath);
+
+
+//        ASTInterpreter interpreter = new ASTInterpreter();
+//        interpreter.run(ast);
     }
 }
 
@@ -66,15 +81,3 @@ public class ExecutorLinux {
 
 
 
-//        LLVisitorMain llvmVisitor = typeResult.getVisitor().fork();
-//        llvmVisitor.setEscapeInfo(escapeInfo);
-//
-//        System.out.println("[DEBUG ExecutorLinux] visitor no backend @"
-//                + System.identityHashCode(llvmVisitor));
-//
-//        LLVMGenerator llgen = new LLVMGenerator(llvmVisitor);
-//        String llvm = llgen.generate(ast);
-//
-//        LLVMToolchain toolchain = new LLVMToolchain();
-//        String exePath = toolchain.buildExecutable(llvm);
-//        toolchain.runExecutable(exePath);

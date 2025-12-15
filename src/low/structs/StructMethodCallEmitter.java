@@ -8,6 +8,8 @@ import ast.structs.StructMethodCallNode;
 import low.TempManager;
 
 import low.module.LLVisitorMain;
+
+
 public class StructMethodCallEmitter {
 
     private final TempManager temps;

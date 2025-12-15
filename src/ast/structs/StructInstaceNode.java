@@ -79,9 +79,6 @@ public class StructInstaceNode extends ASTNode {
                 astValue = positionalValues.get(i);
             }
 
-            // =============================
-            // LIST
-            // =============================
             if (ftype.startsWith("List<")) {
 
                 String innerType = ftype.substring(5, ftype.length() - 1);

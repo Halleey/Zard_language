@@ -19,6 +19,7 @@ import low.TempManager;
 import low.exceptions.ReturnEmitter;
 import low.functions.FunctionCallEmitter;
 import low.functions.FunctionEmitter;
+import low.functions.TypeMapper;
 import low.imports.ImportEmitter;
 import low.main.GlobalStringManager;
 import low.main.MainEmitter;
@@ -340,7 +341,67 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public String visit(StructInstaceNode node) {
-        return instanceEmitter.emit(node, this, true);
+
+        StringBuilder sb = new StringBuilder();
+
+        TypeMapper mapper = new TypeMapper();
+
+        String baseName     = node.getName();               // Item, Set
+        String concreteType = node.getConcreteType();       // Set<Item> etc
+
+        String llvmType =
+                (concreteType != null && !concreteType.isEmpty())
+                        ? mapper.toLLVM(concreteType)
+                        : mapper.toLLVM("Struct<" + baseName + ">");
+
+        if (!llvmType.endsWith("*")) {
+            throw new RuntimeException("StructInstaceNode não gerou ponteiro: " + llvmType);
+        }
+
+        String structLLVM     = llvmType.substring(0, llvmType.length() - 1);
+        String structPtr      = temps.newTemp();
+
+        // ===== heap allocation (LLVM-safe) =====
+        sb.append(emitMallocStruct(structLLVM, structPtr));
+
+        // ===== init fields =====
+        sb.append(
+                instanceEmitter.emit(
+                        node,
+                        this,
+                        structPtr,
+                        structLLVM
+                )
+        );
+
+        return sb.toString();
+    }
+    private String emitMallocStruct(String structLLVM, String outPtr) {
+
+        String gep  = temps.newTemp();
+        String size = temps.newTemp();
+        String raw  = temps.newTemp();
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("  ").append(gep)
+                .append(" = getelementptr ")
+                .append(structLLVM).append(", ")
+                .append(structLLVM).append("* null, i32 1\n");
+
+        sb.append("  ").append(size)
+                .append(" = ptrtoint ")
+                .append(structLLVM).append("* ")
+                .append(gep).append(" to i64\n");
+
+        sb.append("  ").append(raw)
+                .append(" = call i8* @malloc(i64 ").append(size).append(")\n");
+
+        sb.append("  ").append(outPtr)
+                .append(" = bitcast i8* ").append(raw)
+                .append(" to ").append(structLLVM).append("*\n");
+
+        return sb.toString();
     }
 
 

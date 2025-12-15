@@ -11,7 +11,6 @@ import low.module.LLVisitorMain;
 
 import java.util.List;
 import java.util.Map;
-
 public class StructInstanceEmitter {
 
     private final TempManager tempManager;
@@ -28,52 +27,17 @@ public class StructInstanceEmitter {
     public String emit(
             StructInstaceNode node,
             LLVisitorMain visitor,
-            boolean forceHeap
+            String structPtr,          // <-- RECEBE O PTR
+            String structLLVMType      // <-- %Item, %Set_Item
     ) {
-
-        if (!forceHeap) {
-            throw new IllegalStateException(
-                    "StructInstanceEmitter só pode ser usado para heap allocations"
-            );
-        }
 
         StringBuilder llvm = new StringBuilder();
 
-        String baseStructName = node.getName();
-        String concreteType   = node.getConcreteType();
-
-        TypeMapper mapper = new TypeMapper();
-        String structLLVMType =
-                (concreteType != null && !concreteType.isEmpty())
-                        ? mapper.toLLVM(concreteType)
-                        : mapper.toLLVM("Struct<" + baseStructName + ">");
-
-        if (structLLVMType.endsWith("*")) {
-            structLLVMType =
-                    structLLVMType.substring(0, structLLVMType.length() - 1);
-        }
-
-        // ==== resolve struct ====
-        StructNode def = visitor.getStructNode(baseStructName);
+        StructNode def = visitor.getStructNode(node.getName());
         if (def == null) {
-            throw new RuntimeException("Struct não encontrada: " + baseStructName);
+            throw new RuntimeException("Struct não encontrada: " + node.getName());
         }
 
-        int structSize = def.getLLVMSizeBytes();
-
-        // ==== HEAP allocation ====
-        String mallocTmp = tempManager.newTemp();
-        String structPtr = tempManager.newTemp();
-
-        llvm.append("  ").append(mallocTmp)
-                .append(" = call i8* @malloc(i64 ")
-                .append(structSize).append(")\n");
-
-        llvm.append("  ").append(structPtr)
-                .append(" = bitcast i8* ").append(mallocTmp)
-                .append(" to ").append(structLLVMType).append("*\n");
-
-        // ==== fields ====
         List<VariableDeclarationNode> fields = def.getFields();
 
         for (int i = 0; i < fields.size(); i++) {
@@ -81,10 +45,10 @@ public class StructInstanceEmitter {
             VariableDeclarationNode field = fields.get(i);
             String fieldType = field.getType();
             String fieldLLVM = mapFieldTypeForStruct(fieldType);
-
-            String valueTmp = emitDefaultValue(fieldType, llvm);
+            String valueTmp  = emitDefaultValue(fieldType, llvm);
 
             String fieldPtr = tempManager.newTemp();
+
             llvm.append("  ").append(fieldPtr)
                     .append(" = getelementptr inbounds ")
                     .append(structLLVMType).append(", ")
@@ -92,8 +56,8 @@ public class StructInstanceEmitter {
                     .append(structPtr)
                     .append(", i32 0, i32 ").append(i).append("\n");
 
-            llvm.append("  store ").append(fieldLLVM)
-                    .append(" ").append(valueTmp)
+            llvm.append("  store ")
+                    .append(fieldLLVM).append(" ").append(valueTmp)
                     .append(", ").append(fieldLLVM)
                     .append("* ").append(fieldPtr).append("\n");
         }
@@ -124,37 +88,19 @@ public class StructInstanceEmitter {
     }
 
     private String emitDefaultValue(String type, StringBuilder llvm) {
-        switch (type) {
-            case "int":
-                return "0";
-
-            case "double":
-            case "float":
-                return "0.0";
-
-            case "boolean":
-            case "bool":
-                return "0";
-
-            case "string": {
+        return switch (type) {
+            case "int" -> "0";
+            case "double", "float" -> "0.0";
+            case "boolean", "bool" -> "0";
+            case "string" -> {
                 String tmp = tempManager.newTemp();
                 String empty = stringManager.getGlobalName("");
                 llvm.append("  ").append(tmp)
                         .append(" = call %String* @createString(i8* ")
                         .append(empty).append(")\n");
-                return tmp;
+                yield tmp;
             }
-        }
-
-        if (type.startsWith("List<")) {
-            return "null";
-        }
-
-        if (type.startsWith("Struct<")) {
-            return "null";
-        }
-
-        return "null";
+            default -> "null";
+        };
     }
-
 }

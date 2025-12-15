@@ -10,6 +10,8 @@ import low.main.TypeInfos;
 import low.module.LLVisitorMain;
 
 import java.util.Map;
+
+
 public class StructCopyEmitter {
 
     private final Map<String, TypeInfos> varTypes;
@@ -44,17 +46,9 @@ public class StructCopyEmitter {
             throw new RuntimeException("Struct definition not found: " + structName);
         }
 
-        int size = def.getLLVMSizeBytes();
-
-        String raw = temps.newTemp();
         String dst = temps.newTemp();
 
-        llvm.append("  ").append(raw)
-                .append(" = call i8* @malloc(i64 ").append(size).append(")\n");
-
-        llvm.append("  ").append(dst)
-                .append(" = bitcast i8* ").append(raw)
-                .append(" to %").append(structName).append("*\n");
+        llvm.append(emitMallocStruct("%" + structName, dst));
 
         int index = 0;
         for (VariableDeclarationNode field : def.getFields()) {
@@ -125,6 +119,35 @@ public class StructCopyEmitter {
 
         return llvm.toString();
     }
+
+    private String emitMallocStruct(String structLLVM, String outPtr) {
+
+        String gep  = temps.newTemp();
+        String size = temps.newTemp();
+        String raw  = temps.newTemp();
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("  ").append(gep)
+                .append(" = getelementptr ")
+                .append(structLLVM).append(", ")
+                .append(structLLVM).append("* null, i32 1\n");
+
+        sb.append("  ").append(size)
+                .append(" = ptrtoint ")
+                .append(structLLVM).append("* ")
+                .append(gep).append(" to i64\n");
+
+        sb.append("  ").append(raw)
+                .append(" = call i8* @malloc(i64 ").append(size).append(")\n");
+
+        sb.append("  ").append(outPtr)
+                .append(" = bitcast i8* ").append(raw)
+                .append(" to ").append(structLLVM).append("*\n");
+
+        return sb.toString();
+    }
+
 
     private String emitListDeepCopy(String fieldType, String srcFieldPtr, String dstFieldPtr) {
         StringBuilder sb = new StringBuilder();

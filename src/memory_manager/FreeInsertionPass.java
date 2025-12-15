@@ -8,6 +8,8 @@ import ast.loops.WhileNode;
 import ast.structs.ImplNode;
 
 import java.util.*;
+
+
 public class FreeInsertionPass {
 
     private final Map<String, ASTNode> lastUse;

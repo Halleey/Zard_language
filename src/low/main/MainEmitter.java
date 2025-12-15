@@ -304,7 +304,8 @@ public class MainEmitter {
         declare i8* @malloc(i64)
         declare void @setString(i8*)
         declare void @free(i8*)
-                
+       declare void @llvm.memcpy.p0i8.p0i8.i64(i8*, i8*, i64, i1)
+         
         @.strChar   = private constant [3 x i8] c"%c\\00"
         @.strInt    = private constant [3 x i8] c"%d\\00"
         @.strDouble = private constant [3 x i8] c"%f\\00"

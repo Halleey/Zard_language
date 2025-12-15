@@ -46,6 +46,10 @@ main {
 
     Void v;
     println(v.somar(3,5));
-
+    string nome = "teste";
+    List nomes = ("zardelas");
     print("testando ");
+    print(nome);
+    string teste = nome;
+
 }

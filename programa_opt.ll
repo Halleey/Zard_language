@@ -5,6 +5,7 @@ source_filename = "programa.ll"
 %struct.ArrayListInt = type { ptr, i64, i64 }
 %struct.ArrayListDouble = type { ptr, i64, i64 }
 %struct.ArrayListBool = type { ptr, i64, i64 }
+%String = type { ptr, i64 }
 
 @.strChar = private constant [3 x i8] c"%c\00"
 @.strInt = private constant [3 x i8] c"%d\00"
@@ -20,7 +21,9 @@ source_filename = "programa.ll"
 @.str2 = private constant [2 x i8] c"Z\00"
 @.str3 = private constant [20 x i8] c"=== Original m1 ===\00"
 @.str4 = private constant [17 x i8] c"=== Clone m2 ===\00"
-@.str5 = private constant [10 x i8] c"testando \00"
+@.str5 = private constant [6 x i8] c"teste\00"
+@.str6 = private constant [9 x i8] c"zardelas\00"
+@.str7 = private constant [10 x i8] c"testando \00"
 
 declare i32 @printf(ptr, ...)
 
@@ -286,7 +289,45 @@ list_copy_end_tmp88:                              ; preds = %list_copy_cond_tmp8
   %8 = call i32 (ptr, ...) @printf(ptr @.strNewLine)
   %tmp155 = load ptr, ptr %v, align 8
   call void @free(ptr %tmp155)
-  %9 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str5)
+  %nome = alloca ptr, align 8
+  %tmp158 = call ptr @createString(ptr @.str5)
+  %tmp160 = load ptr, ptr %tmp158, align 8
+  %tmp161 = getelementptr inbounds %String, ptr %tmp158, i32 0, i32 1
+  %tmp162 = load i64, ptr %tmp161, align 4
+  %tmp163 = add i64 %tmp162, 1
+  %tmp164 = call ptr @malloc(i64 %tmp163)
+  call void @llvm.memcpy.p0.p0.i64(ptr %tmp164, ptr %tmp160, i64 %tmp163, i1 false)
+  %tmp165 = call ptr @createString(ptr %tmp164)
+  store ptr %tmp165, ptr %nome, align 8
+  %nomes = alloca ptr, align 8
+  %tmp166 = call ptr @arraylist_create(i64 4)
+  %tmp169 = call ptr @createString(ptr @.str6)
+  call void @arraylist_add_String(ptr %tmp166, ptr %tmp169)
+  store ptr %tmp166, ptr %nomes, align 8
+  call void @freeList(ptr %tmp166)
+  %9 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str7)
+  %tmp173 = load ptr, ptr %nome, align 8
+  call void @printString(ptr %tmp173)
+  %teste = alloca ptr, align 8
+  %tmp174 = load ptr, ptr %nome, align 8
+  %tmp176 = load ptr, ptr %tmp174, align 8
+  %tmp177 = getelementptr inbounds %String, ptr %tmp174, i32 0, i32 1
+  %tmp178 = load i64, ptr %tmp177, align 4
+  %tmp179 = add i64 %tmp178, 1
+  %tmp180 = call ptr @malloc(i64 %tmp179)
+  call void @llvm.memcpy.p0.p0.i64(ptr %tmp180, ptr %tmp176, i64 %tmp179, i1 false)
+  %tmp181 = call ptr @createString(ptr %tmp180)
+  store ptr %tmp181, ptr %teste, align 8
+  %tmp184 = load ptr, ptr %tmp181, align 8
+  call void @free(ptr %tmp184)
+  %tmp185 = load ptr, ptr %nome, align 8
+  %tmp187 = load ptr, ptr %tmp185, align 8
+  call void @free(ptr %tmp187)
   %10 = call i32 @getchar()
   ret i32 0
 }
+
+; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
+declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #0
+
+attributes #0 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }

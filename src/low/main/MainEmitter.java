@@ -122,44 +122,6 @@ public class MainEmitter {
                 listasAlocadas.add(varDecl.getName());
             }
         }
-
-        if (!listasAlocadas.isEmpty()) {
-            llvm.append("  ; === Free das listas alocadas ===\n");
-            for (String varName : listasAlocadas) {
-                String tipoLista = visitor.getListElementType(varName);
-                String tmp = tempManager.newTemp();
-                switch (tipoLista) {
-                    case "int" -> {
-                        llvm.append("  ").append(tmp)
-                                .append(" = load %struct.ArrayListInt*, %struct.ArrayListInt** %")
-                                .append(varName).append("\n");
-                        llvm.append("  call void @arraylist_free_int(%struct.ArrayListInt* ")
-                                .append(tmp).append(")\n");
-                    }
-                    case "double" -> {
-                        llvm.append("  ").append(tmp)
-                                .append(" = load %struct.ArrayListDouble*, %struct.ArrayListDouble** %")
-                                .append(varName).append("\n");
-                        llvm.append("  call void @arraylist_free_double(%struct.ArrayListDouble* ")
-                                .append(tmp).append(")\n");
-                    }
-                    case "boolean" -> {
-                        llvm.append("  ").append(tmp)
-                                .append(" = load %struct.ArrayListBool*, %struct.ArrayListBool** %")
-                                .append(varName).append("\n");
-                        llvm.append("  call void @arraylist_free_bool(%struct.ArrayListBool* ")
-                                .append(tmp).append(")\n");
-                    }
-                    default -> {
-                        llvm.append("  ").append(tmp)
-                                .append(" = load %ArrayList*, %ArrayList** %")
-                                .append(varName).append("\n");
-                        llvm.append("  call void @freeList(%ArrayList* ").append(tmp).append(")\n");
-                    }
-                }
-            }
-        }
-
         llvm.append("  call i32 @getchar()\n");
         llvm.append("  ret i32 0\n}\n");
 

@@ -340,7 +340,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public String visit(StructInstaceNode node) {
-        return instanceEmitter.emit(node, this, true);
+        return instanceEmitter.emit(node, this);
     }
 
 
@@ -539,17 +539,13 @@ public class LLVisitorMain implements LLVMEmitVisitor {
             default -> 8; // List, Struct, qualquer ponteiro
         };
     }
-    // ==== STRUCT FREE ====
-    public String emitFreeStruct(String structPtr, String structName) {
+
+    public String emitFreeStruct(
+            String structPtr,
+            String llvmStructName,
+            StructNode def
+    ) {
         StringBuilder sb = new StringBuilder();
-
-        StructNode def = getStructNode(structName);
-        if (def == null) {
-            sb.append("  ; free ignorado (struct não encontrada): ")
-                    .append(structName).append("\n");
-            return sb.toString();
-        }
-
         int idx = 0;
 
         for (VariableDeclarationNode field : def.getFields()) {
@@ -558,75 +554,18 @@ public class LLVisitorMain implements LLVMEmitVisitor {
             String fieldPtr = temps.newTemp();
             String fieldVal = temps.newTemp();
 
-            // ponteiro do campo
             sb.append("  ").append(fieldPtr)
-                    .append(" = getelementptr inbounds %").append(structName)
-                    .append(", %").append(structName).append("* ")
+                    .append(" = getelementptr inbounds %").append(llvmStructName)
+                    .append(", %").append(llvmStructName).append("* ")
                     .append(structPtr)
                     .append(", i32 0, i32 ").append(idx).append("\n");
-
-            // ===== LIST =====
-            if (fieldType.startsWith("List<")) {
-
-                String elem = fieldType.substring(5, fieldType.length() - 1);
-
-                // List<int>
-                if (elem.equals("int")) {
-                    sb.append("  ").append(fieldVal)
-                            .append(" = load %struct.ArrayListInt*, %struct.ArrayListInt** ")
-                            .append(fieldPtr).append("\n");
-                    sb.append("  call void @arraylist_free_int(%struct.ArrayListInt* ")
-                            .append(fieldVal).append(")\n");
-                }
-
-                // List<double>
-                else if (elem.equals("double")) {
-                    sb.append("  ").append(fieldVal)
-                            .append(" = load %struct.ArrayListDouble*, %struct.ArrayListDouble** ")
-                            .append(fieldPtr).append("\n");
-                    sb.append("  call void @arraylist_free_double(%struct.ArrayListDouble* ")
-                            .append(fieldVal).append(")\n");
-                }
-
-                // List<boolean>
-                else if (elem.equals("boolean")) {
-                    sb.append("  ").append(fieldVal)
-                            .append(" = load %struct.ArrayListBool*, %struct.ArrayListBool** ")
-                            .append(fieldPtr).append("\n");
-                    sb.append("  call void @arraylist_free_bool(%struct.ArrayListBool* ")
-                            .append(fieldVal).append(")\n");
-                }
-
-                // List<string>
-                else if (elem.equals("string")) {
-                    sb.append("  ").append(fieldVal)
-                            .append(" = load %ArrayList*, %ArrayList** ")
-                            .append(fieldPtr).append("\n");
-                    sb.append("  call void @freeList(%ArrayList* ")
-                            .append(fieldVal).append(")\n");
-                }
-            }
-
-            // ===== STRUCT ANINHADA (deep free) =====
-            else if (fieldType.startsWith("Struct<")) {
-
-                String inner =
-                        fieldType.substring("Struct<".length(), fieldType.length() - 1);
-
-                sb.append("  ").append(fieldVal)
-                        .append(" = load %").append(inner)
-                        .append("*, %").append(inner).append("** ")
-                        .append(fieldPtr).append("\n");
-
-                sb.append(emitFreeStruct(fieldVal, inner));
-            }
 
             idx++;
         }
 
         String bc = temps.newTemp();
         sb.append("  ").append(bc)
-                .append(" = bitcast %").append(structName)
+                .append(" = bitcast %").append(llvmStructName)
                 .append("* ").append(structPtr).append(" to i8*\n");
 
         sb.append("  call void @free(i8* ").append(bc).append(")\n");

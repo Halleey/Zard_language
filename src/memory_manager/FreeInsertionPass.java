@@ -6,6 +6,8 @@ import ast.home.MainAST;
 import ast.ifstatements.IfNode;
 import ast.loops.WhileNode;
 import ast.structs.ImplNode;
+import ast.structs.StructFieldAccessNode;
+import ast.structs.StructInstaceNode;
 
 import java.util.*;
 public class FreeInsertionPass {
@@ -47,6 +49,14 @@ public class FreeInsertionPass {
             for (var e : lastUse.entrySet()) {
                 if (e.getValue() == node) {
                     it.add(new FreeNode(e.getKey()));
+                    // Recursão para liberar os campos internos, como List<Row> em Matrix
+                    if (node instanceof StructFieldAccessNode fieldAccess) {
+                        String fieldName = fieldAccess.getFieldName();
+                        if ("rows".equals(fieldName)) {
+                            // Quando for um campo do tipo List<Row>, aplicar liberação recursiva
+                            applyFreeRecursively(fieldAccess.getStructInstance());
+                        }
+                    }
                 }
             }
         }
@@ -56,8 +66,31 @@ public class FreeInsertionPass {
             for (var e : lastUse.entrySet()) {
                 if (e.getValue() == container) {
                     stmts.add(new FreeNode(e.getKey()));
+                    // Recursão para liberar os campos internos
+                    if (container instanceof StructFieldAccessNode fieldAccess) {
+                        String fieldName = fieldAccess.getFieldName();
+                        if ("rows".equals(fieldName)) {
+                            applyFreeRecursively(fieldAccess.getStructInstance());
+                        }
+                    }
                 }
             }
         }
     }
+
+    private void applyFreeRecursively(ASTNode structInstance) {
+        // Lógica para fazer chamada recursiva para campos internos, como List<Row>
+        if (structInstance instanceof StructInstaceNode structNode) {
+            for (ASTNode child : structNode.getChildren()) {
+                if (child instanceof StructFieldAccessNode fieldAccess) {
+                    String fieldName = fieldAccess.getFieldName();
+                    // Verifica se o campo é uma lista (como 'rows' que é uma lista de Row)
+                    if ("rows".equals(fieldName)) {
+                        applyFreeRecursively(fieldAccess.getStructInstance()); // Recursão
+                    }
+                }
+            }
+        }
+    }
+
 }

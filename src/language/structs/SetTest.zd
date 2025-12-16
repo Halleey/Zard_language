@@ -5,7 +5,7 @@ main {
     }
 
     # Cria uma instância do Set
-    Struct Set s;
+    Set s;
 
     # Adiciona elementos na lista interna
     s.data.add("teste");

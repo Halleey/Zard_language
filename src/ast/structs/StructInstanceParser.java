@@ -26,7 +26,6 @@ public class StructInstanceParser {
         List<ASTNode> positionalValues = null;
         Map<String, ASTNode> namedValues = null;
 
-        // Detecta inicialização com ou sem '='
         if (accept("=")) {
             parser.eat(Token.TokenType.DELIMITER, "{");
             namedValues = tryParseNamed(structName);

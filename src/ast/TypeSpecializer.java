@@ -361,4 +361,10 @@ public class TypeSpecializer {
             }
         }
     }
+
+    public Map<String, String> getVariableTypes() {
+        return variableTypes;
+    }
+
+
 }

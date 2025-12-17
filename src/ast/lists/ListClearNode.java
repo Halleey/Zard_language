@@ -3,6 +3,7 @@ package ast.lists;
 import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
+import ast.variables.ListValue;
 import low.module.LLVMEmitVisitor;
 
 public class ListClearNode extends ASTNode {
@@ -22,10 +23,11 @@ public class ListClearNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        DynamicList list = (DynamicList) listNode.evaluate(ctx).value();
+        ListValue list = (ListValue) listNode.evaluate(ctx).value();
         list.getElements().clear();
         return new TypedValue("List", list);
     }
+
 
 
     public ASTNode getListNode() {

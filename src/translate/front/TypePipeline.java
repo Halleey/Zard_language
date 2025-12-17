@@ -6,8 +6,10 @@ import ast.home.MainAST;
 import ast.structs.ImplNode;
 import ast.structs.StructNode;
 import low.module.LLVisitorMain;
+import memory_manager.TypePipelineResult;
 
 import java.util.List;
+
 public class TypePipeline {
 
     private final Parser parser;
@@ -16,11 +18,10 @@ public class TypePipeline {
         this.parser = parser;
     }
 
-    public LLVisitorMain process(List<ASTNode> ast) {
+    public TypePipelineResult process(List<ASTNode> ast) {
         TypeSpecializer specializer = new TypeSpecializer();
         LLVisitorMain visitor = new LLVisitorMain(specializer);
         specializer.setVisitor(visitor);
-
 
         for (ASTNode node : ast) {
             if (node instanceof MainAST main) {
@@ -30,6 +31,6 @@ public class TypePipeline {
 
         specializer.specialize(ast);
 
-        return visitor;
+        return new TypePipelineResult(visitor, specializer);
     }
 }

@@ -9,6 +9,8 @@ import low.lists.ints.ListIntAddEmitter;
 import low.main.GlobalStringManager;
 import low.module.LLVMEmitVisitor;
 import low.module.LLVisitorMain;
+
+
 public class ListAddEmitter {
 
     private final TempManager temps;
@@ -45,14 +47,6 @@ public class ListAddEmitter {
             String valTmp = extractTemp(valCode);
             String valType = extractType(valCode);
 
-            System.out.println("[ListAddEmitter] (SPECIALIZED MODE)");
-            System.out.println("  listCode:\n" + listCode);
-            System.out.println("  → listTmp = " + listTmp);
-            System.out.println("  → listType = " + listType);
-            System.out.println("  valCode:\n" + valCode);
-            System.out.println("  → valTmp = " + valTmp);
-            System.out.println("  → valType = " + valType);
-
             String func = switch (specialized) {
                 case "int"    -> "arraylist_add_int";
                 case "double" -> "arraylist_add_double";
@@ -61,14 +55,12 @@ public class ListAddEmitter {
                 default       -> "arraylist_add_ptr";
             };
 
-            System.out.println("[ListAddEmitter] Runtime function chosen = " + func);
 
             String listLLVMType;
 
             if (specialized.equals("string")) {
                 listLLVMType = "%ArrayList*";
 
-                System.out.println("[ListAddEmitter] Specialized STRING branch acionado");
                 if (!listType.equals("%ArrayList*")) {
                     String castList = temps.newTemp();
                     llvm.append("  ").append(castList)
@@ -80,7 +72,6 @@ public class ListAddEmitter {
                 }
 
                 if (!valType.equals("%String*")) {
-                    System.out.println("[ListAddEmitter][WARN] string especializada com valType=" + valType);
                 }
 
                 llvm.append("  call void @arraylist_add_String(%ArrayList* ")
@@ -95,12 +86,9 @@ public class ListAddEmitter {
                 String normalized = normalizeListType(specialized);
                 listLLVMType = "%struct.ArrayList" + normalized + "*";
 
-                System.out.println("[ListAddEmitter] normalized = " + normalized);
-                System.out.println("[ListAddEmitter] listLLVMType = " + listLLVMType);
 
                 String llvmType = mapToLLVMType(specialized);
 
-                System.out.println("[ListAddEmitter] llvmType(value) = " + llvmType);
                 if (!listType.equals(listLLVMType)) {
                     String castList = temps.newTemp();
                     llvm.append("  ").append(castList)
@@ -117,7 +105,6 @@ public class ListAddEmitter {
 
             } else {
 
-                System.out.println("[ListAddEmitter] Specialized PTR branch acionado para tipo=" + specialized);
 
                 // listTmp deve ser %ArrayList*
                 if (!listType.equals("%ArrayList*")) {
@@ -156,11 +143,9 @@ public class ListAddEmitter {
                                     : "%ArrayList*"
                     ).append("\n");
 
-            System.out.println("[ListAddEmitter] ==== FIM DO SPECIALIZED ====\n");
             return llvm.toString();
         }
 
-        System.out.println("[ListAddEmitter] (FALLBACK MODE)");
 
         String listCode = node.getListNode().accept(visitor);
         llvm.append(listCode);
@@ -172,27 +157,17 @@ public class ListAddEmitter {
         String valTmp = extractTemp(valCode);
         String valType = extractType(valCode);
 
-        System.out.println("  listCode:\n" + listCode);
-        System.out.println("  → listTmp = " + listTmp);
-        System.out.println("  → listType = " + listType);
-        System.out.println("  valCode:\n" + valCode);
-        System.out.println("  → valTmp = " + valTmp);
-        System.out.println("  → valType = " + valType);
 
         if (valType.equals("i32")) {
-            System.out.println("[ListAddEmitter] → INT fallback");
             return intAddEmitter.emit(node, visitor);
         }
         if (valType.equals("double")) {
-            System.out.println("[ListAddEmitter] → DOUBLE fallback");
             return doubleEmitter.emit(node, visitor);
         }
         if (valType.equals("i1")) {
-            System.out.println("[ListAddEmitter] → BOOL fallback");
             return boolAddEmitter.emit(node, visitor);
         }
 
-        System.out.println("[ListAddEmitter] → PTR/STRING fallback");
 
         String listCastTmp = temps.newTemp();
         llvm.append("  ").append(listCastTmp)
@@ -220,7 +195,6 @@ public class ListAddEmitter {
 
         llvm.append(";;VAL:").append(listCastTmp).append(";;TYPE:%ArrayList*\n");
 
-        System.out.println("[ListAddEmitter] ==== FIM FALBACK ====\n");
         return llvm.toString();
     }
 

@@ -42,9 +42,12 @@ public class AssignmentNode extends ASTNode {
             );
         }
 
-        ctx.setVariable(name, value);
-        return value;
+        TypedValue assigned = value.deepCopy();
+
+        ctx.setVariable(name, assigned);
+        return assigned;
     }
+
 
 
     @Override

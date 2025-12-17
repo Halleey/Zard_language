@@ -38,6 +38,8 @@ import low.variables.exps.UnaryOpEmitter;
 
 import low.variables.structs.StructCopyEmitter;
 import memory_manager.EscapeInfo;
+import memory_manager.FreeEmitter;
+import memory_manager.FreeNode;
 
 import java.util.*;
 
@@ -126,6 +128,9 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return currentSpecializationType;
     }
 
+    //Memory manager
+    private final FreeEmitter freeEmitter;
+
 
     private EscapeInfo escapeInfo;
 
@@ -197,6 +202,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         Map<String, TypeInfos> varTypesView = types.getVarTypesMap();
 
         this.varEmitter = new VariableEmitter(varTypesView, temps, this);
+        this.freeEmitter = new FreeEmitter(varTypesView, temps, this.varEmitter, this);
         this.printEmitter = new PrintEmitter(globalStrings, temps);
         this.assignmentEmitter = new AssignmentEmitter(varTypesView, temps, globalStrings, this);
         this.unaryOpEmitter = new UnaryOpEmitter(varTypesView, temps, varEmitter);
@@ -334,7 +340,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public String visit(StructInstaceNode node) {
-        return instanceEmitter.emit(node, this, true);
+        return instanceEmitter.emit(node, this);
     }
 
 
@@ -368,6 +374,11 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     @Override
     public String visit(ForNode node) {
         return controlFlow.visit(node);
+    }
+
+    @Override
+    public String visit(FreeNode node) {
+        return freeEmitter.emit(node);
     }
 
     @Override
@@ -529,19 +540,43 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         };
     }
 
+    public String emitFreeStruct(
+            String structPtr,
+            String llvmStructName,
+            StructNode def
+    ) {
+        StringBuilder sb = new StringBuilder();
+        int idx = 0;
 
+        for (VariableDeclarationNode field : def.getFields()) {
 
-    public String getStructFieldType(StructFieldAccessNode node) {
-        return structTypeResolver.getStructFieldType(node);
+            String fieldType = field.getType();
+            String fieldPtr = temps.newTemp();
+            String fieldVal = temps.newTemp();
+
+            sb.append("  ").append(fieldPtr)
+                    .append(" = getelementptr inbounds %").append(llvmStructName)
+                    .append(", %").append(llvmStructName).append("* ")
+                    .append(structPtr)
+                    .append(", i32 0, i32 ").append(idx).append("\n");
+
+            idx++;
+        }
+
+        String bc = temps.newTemp();
+        sb.append("  ").append(bc)
+                .append(" = bitcast %").append(llvmStructName)
+                .append("* ").append(structPtr).append(" to i8*\n");
+
+        sb.append("  call void @free(i8* ").append(bc).append(")\n");
+
+        return sb.toString();
     }
 
     public String resolveStructName(ASTNode node) {
         return structTypeResolver.resolveStructName(node);
     }
 
-    public Map<String, String> getListElementTypesLegacyView() {
-        return listElementTypesLegacyView;
-    }
 
 
 }

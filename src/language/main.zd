@@ -40,13 +40,16 @@ main {
     Pessoa p2;
     p2 = p1;
 
+
+
+
     # === Alterações independentes ===
     p2.nome = "Zard";
     p2.telefones.add("21 44444-5555");
 
     e1.rua = "teste";
     e1.cidade = "Santo andré";
-    p2.telefones.remove(0);
+
 
 
     # Atualização inline aninhada com lista e sub-struct
@@ -57,8 +60,11 @@ main {
             nome: "Suíça";
         }
     }
-    println("=== Original p1 ===");
+
+   println("=== Original p1 ===");
     println(p1);
+
+
     println("=== Clone p2 ===");
-    println(p2);
+    print(p2);
 }

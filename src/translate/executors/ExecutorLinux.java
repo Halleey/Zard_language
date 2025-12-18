@@ -69,22 +69,22 @@ public class ExecutorLinux {
             System.out.println("=== AST AFTER FREE INSERTION ===");
             ASTPrinter.printAST(ast);
         }
-//        LLVisitorMain llvmVisitor = typeResult.getVisitor().fork();
-//        llvmVisitor.setEscapeInfo(escapeInfo);
-//
-//        System.out.println(
-//                "[DEBUG ExecutorLinux] LLVM visitor @"
-//                        + System.identityHashCode(llvmVisitor)
-//        );
-//
-//        LLVMGenerator llgen = new LLVMGenerator(llvmVisitor);
-//        String llvm = llgen.generate(ast);
-//
-//        LLVMToolchain toolchain = new LLVMToolchain();
-//        String exePath = toolchain.buildExecutable(llvm);
-//        toolchain.runExecutable(exePath);
+        LLVisitorMain llvmVisitor = typeResult.getVisitor().fork();
+        llvmVisitor.setEscapeInfo(escapeInfo);
 
-         ASTInterpreter interpreter = new ASTInterpreter();
-         interpreter.run(ast);
+        System.out.println(
+                "[DEBUG ExecutorLinux] LLVM visitor @"
+                        + System.identityHashCode(llvmVisitor)
+        );
+
+        LLVMGenerator llgen = new LLVMGenerator(llvmVisitor);
+        String llvm = llgen.generate(ast);
+
+        LLVMToolchain toolchain = new LLVMToolchain();
+        String exePath = toolchain.buildExecutable(llvm);
+        toolchain.runExecutable(exePath);
+
+//         ASTInterpreter interpreter = new ASTInterpreter();
+//         interpreter.run(ast);
     }
 }

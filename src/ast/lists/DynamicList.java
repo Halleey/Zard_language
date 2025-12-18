@@ -25,6 +25,7 @@ public class DynamicList {
         return elements;
     }
 
+
     // Avalia todos os elementos no runtime
     public List<TypedValue> evaluate(RuntimeContext ctx) {
         List<TypedValue> result = new ArrayList<>();

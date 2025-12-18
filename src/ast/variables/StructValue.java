@@ -6,6 +6,7 @@ import memory_manager.borrows.AssignKind;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 public class StructValue extends TypedValue {
 
     private final Map<String, TypedValue> fields;

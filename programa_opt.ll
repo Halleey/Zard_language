@@ -151,79 +151,97 @@ define i32 @main() {
   %tmp64 = load ptr, ptr %tmp42, align 8
   %tmp66 = call ptr @createString(ptr @.str5)
   call void @arraylist_add_String(ptr %tmp64, ptr %tmp66)
-  %tmp68 = call ptr @malloc(i64 28)
-  %tmp70 = call ptr @createString(ptr null)
-  store ptr %tmp70, ptr %tmp68, align 8
-  %tmp72 = getelementptr inbounds %Pessoa, ptr %tmp68, i32 0, i32 1
-  store i32 0, ptr %tmp72, align 4
-  %tmp73 = getelementptr inbounds %Pessoa, ptr %tmp68, i32 0, i32 2
-  store ptr null, ptr %tmp73, align 8
-  %tmp74 = call ptr @arraylist_create(i64 10)
-  %tmp76 = getelementptr inbounds %Pessoa, ptr %tmp68, i32 0, i32 3
-  store ptr %tmp74, ptr %tmp76, align 8
-  %tmp80 = call ptr @malloc(i64 32)
-  %tmp84 = load ptr, ptr %tmp34, align 8
-  %tmp86 = load ptr, ptr %tmp84, align 8
-  %tmp87 = call ptr @createString(ptr %tmp86)
-  store ptr %tmp87, ptr %tmp80, align 8
-  %tmp89 = getelementptr inbounds %Pessoa, ptr %tmp80, i32 0, i32 1
-  %tmp90 = load i32, ptr %tmp38, align 4
-  store i32 %tmp90, ptr %tmp89, align 4
-  %tmp92 = getelementptr inbounds %Pessoa, ptr %tmp80, i32 0, i32 2
-  %tmp93 = load ptr, ptr %tmp39, align 8
-  %tmp97 = call ptr @malloc(i64 24)
-  %tmp101 = load ptr, ptr %tmp93, align 8
-  %tmp103 = load ptr, ptr %tmp101, align 8
-  %tmp104 = call ptr @createString(ptr %tmp103)
-  store ptr %tmp104, ptr %tmp97, align 8
-  %tmp105 = getelementptr inbounds %Endereco, ptr %tmp93, i32 0, i32 1
-  %tmp106 = getelementptr inbounds %Endereco, ptr %tmp97, i32 0, i32 1
-  %tmp107 = load ptr, ptr %tmp105, align 8
-  %tmp109 = load ptr, ptr %tmp107, align 8
-  %tmp110 = call ptr @createString(ptr %tmp109)
-  store ptr %tmp110, ptr %tmp106, align 8
-  %tmp111 = getelementptr inbounds %Endereco, ptr %tmp93, i32 0, i32 2
-  %tmp112 = getelementptr inbounds %Endereco, ptr %tmp97, i32 0, i32 2
-  %tmp113 = load ptr, ptr %tmp111, align 8
-  %tmp117 = call ptr @malloc(i64 8)
-  %tmp121 = load ptr, ptr %tmp113, align 8
-  %tmp123 = load ptr, ptr %tmp121, align 8
-  %tmp124 = call ptr @createString(ptr %tmp123)
-  store ptr %tmp124, ptr %tmp117, align 8
-  store ptr %tmp117, ptr %tmp112, align 8
-  store ptr %tmp97, ptr %tmp92, align 8
-  %tmp128 = getelementptr inbounds %Pessoa, ptr %tmp80, i32 0, i32 3
-  %tmp129 = load ptr, ptr %tmp42, align 8
-  %tmp130 = call i32 @length(ptr %tmp129)
-  %tmp131 = zext i32 %tmp130 to i64
-  %tmp132 = call ptr @arraylist_create(i64 %tmp131)
-  store ptr %tmp132, ptr %tmp128, align 8
-  %tmp137 = call ptr @createString(ptr @.str6)
-  store ptr %tmp137, ptr %tmp80, align 8
-  %tmp141 = load ptr, ptr %tmp128, align 8
-  %tmp143 = call ptr @createString(ptr @.str7)
-  call void @arraylist_add_String(ptr %tmp141, ptr %tmp143)
-  %tmp148 = call ptr @createString(ptr @.str8)
-  store ptr %tmp148, ptr %tmp13, align 8
-  %tmp153 = call ptr @createString(ptr @.str9)
-  store ptr %tmp153, ptr %tmp18, align 8
-  %tmp157 = load ptr, ptr %tmp92, align 8
-  %tmp159 = call ptr @createString(ptr @.str10)
-  store ptr %tmp159, ptr %tmp157, align 8
-  %tmp162 = call ptr @createString(ptr @.str11)
-  %tmp163 = getelementptr inbounds %Endereco, ptr %tmp157, i32 0, i32 1
-  store ptr %tmp162, ptr %tmp163, align 8
-  %tmp164 = getelementptr inbounds %Endereco, ptr %tmp157, i32 0, i32 2
-  %tmp165 = load ptr, ptr %tmp164, align 8
-  %tmp167 = call ptr @createString(ptr @.str12)
-  store ptr %tmp167, ptr %tmp165, align 8
+  %tmp71 = call ptr @malloc(i64 32)
+  %tmp75 = load ptr, ptr %tmp34, align 8
+  %tmp77 = load ptr, ptr %tmp75, align 8
+  %tmp78 = call ptr @createString(ptr %tmp77)
+  store ptr %tmp78, ptr %tmp71, align 8
+  %tmp80 = getelementptr inbounds %Pessoa, ptr %tmp71, i32 0, i32 1
+  %tmp81 = load i32, ptr %tmp38, align 4
+  store i32 %tmp81, ptr %tmp80, align 4
+  %tmp83 = getelementptr inbounds %Pessoa, ptr %tmp71, i32 0, i32 2
+  %tmp84 = load ptr, ptr %tmp39, align 8
+  %tmp88 = call ptr @malloc(i64 24)
+  %tmp92 = load ptr, ptr %tmp84, align 8
+  %tmp94 = load ptr, ptr %tmp92, align 8
+  %tmp95 = call ptr @createString(ptr %tmp94)
+  store ptr %tmp95, ptr %tmp88, align 8
+  %tmp96 = getelementptr inbounds %Endereco, ptr %tmp84, i32 0, i32 1
+  %tmp97 = getelementptr inbounds %Endereco, ptr %tmp88, i32 0, i32 1
+  %tmp98 = load ptr, ptr %tmp96, align 8
+  %tmp100 = load ptr, ptr %tmp98, align 8
+  %tmp101 = call ptr @createString(ptr %tmp100)
+  store ptr %tmp101, ptr %tmp97, align 8
+  %tmp102 = getelementptr inbounds %Endereco, ptr %tmp84, i32 0, i32 2
+  %tmp103 = getelementptr inbounds %Endereco, ptr %tmp88, i32 0, i32 2
+  %tmp104 = load ptr, ptr %tmp102, align 8
+  %tmp108 = call ptr @malloc(i64 8)
+  %tmp112 = load ptr, ptr %tmp104, align 8
+  %tmp114 = load ptr, ptr %tmp112, align 8
+  %tmp115 = call ptr @createString(ptr %tmp114)
+  store ptr %tmp115, ptr %tmp108, align 8
+  store ptr %tmp108, ptr %tmp103, align 8
+  store ptr %tmp88, ptr %tmp83, align 8
+  %tmp119 = getelementptr inbounds %Pessoa, ptr %tmp71, i32 0, i32 3
+  %tmp120 = load ptr, ptr %tmp42, align 8
+  %tmp121 = call i32 @length(ptr %tmp120)
+  %tmp122 = zext i32 %tmp121 to i64
+  %tmp123 = call ptr @arraylist_create(i64 %tmp122)
+  store ptr %tmp123, ptr %tmp119, align 8
+  %tmp128 = call ptr @createString(ptr @.str6)
+  store ptr %tmp128, ptr %tmp71, align 8
+  %tmp132 = load ptr, ptr %tmp119, align 8
+  %tmp134 = call ptr @createString(ptr @.str7)
+  call void @arraylist_add_String(ptr %tmp132, ptr %tmp134)
+  %tmp139 = call ptr @createString(ptr @.str8)
+  store ptr %tmp139, ptr %tmp13, align 8
+  %tmp144 = call ptr @createString(ptr @.str9)
+  store ptr %tmp144, ptr %tmp18, align 8
+  %tmp148 = load ptr, ptr %tmp83, align 8
+  %tmp150 = call ptr @createString(ptr @.str10)
+  store ptr %tmp150, ptr %tmp148, align 8
+  %tmp153 = call ptr @createString(ptr @.str11)
+  %tmp154 = getelementptr inbounds %Endereco, ptr %tmp148, i32 0, i32 1
+  store ptr %tmp153, ptr %tmp154, align 8
+  %tmp155 = getelementptr inbounds %Endereco, ptr %tmp148, i32 0, i32 2
+  %tmp156 = load ptr, ptr %tmp155, align 8
+  %tmp158 = call ptr @createString(ptr @.str12)
+  store ptr %tmp158, ptr %tmp156, align 8
   %2 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str13)
   %3 = call i32 (ptr, ...) @printf(ptr @.strNewLine)
   call void @print_Pessoa(ptr %tmp34)
   %4 = call i32 (ptr, ...) @printf(ptr @.strNewLine)
-  %5 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str14)
-  %6 = call i32 (ptr, ...) @printf(ptr @.strNewLine)
-  call void @print_Pessoa(ptr %tmp80)
-  %7 = call i32 @getchar()
+  %tmp162 = call ptr @malloc(i64 24)
+  %tmp164 = call ptr @createString(ptr null)
+  store ptr %tmp164, ptr %tmp162, align 8
+  %tmp166 = call ptr @createString(ptr null)
+  %tmp167 = getelementptr inbounds %Endereco, ptr %tmp162, i32 0, i32 1
+  store ptr %tmp166, ptr %tmp167, align 8
+  %tmp168 = getelementptr inbounds %Endereco, ptr %tmp162, i32 0, i32 2
+  store ptr null, ptr %tmp168, align 8
+  %tmp172 = call ptr @malloc(i64 24)
+  %tmp176 = load ptr, ptr %tmp13, align 8
+  %tmp178 = load ptr, ptr %tmp176, align 8
+  %tmp179 = call ptr @createString(ptr %tmp178)
+  store ptr %tmp179, ptr %tmp172, align 8
+  %tmp181 = getelementptr inbounds %Endereco, ptr %tmp172, i32 0, i32 1
+  %tmp182 = load ptr, ptr %tmp18, align 8
+  %tmp184 = load ptr, ptr %tmp182, align 8
+  %tmp185 = call ptr @createString(ptr %tmp184)
+  store ptr %tmp185, ptr %tmp181, align 8
+  %tmp187 = getelementptr inbounds %Endereco, ptr %tmp172, i32 0, i32 2
+  %tmp188 = load ptr, ptr %tmp19, align 8
+  %tmp192 = call ptr @malloc(i64 8)
+  %tmp196 = load ptr, ptr %tmp188, align 8
+  %tmp198 = load ptr, ptr %tmp196, align 8
+  %tmp199 = call ptr @createString(ptr %tmp198)
+  store ptr %tmp199, ptr %tmp192, align 8
+  store ptr %tmp192, ptr %tmp187, align 8
+  call void @print_Endereco(ptr %tmp172)
+  %5 = call i32 (ptr, ...) @printf(ptr @.strNewLine)
+  %6 = call i32 (ptr, ...) @printf(ptr @.strStr, ptr @.str14)
+  %7 = call i32 (ptr, ...) @printf(ptr @.strNewLine)
+  call void @print_Pessoa(ptr %tmp71)
+  %8 = call i32 @getchar()
   ret i32 0
 }

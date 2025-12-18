@@ -25,30 +25,47 @@ public class OwnershipAnalyzer {
         debug("=== Ownership analysis end ===");
         dumpFinalState();
     }
-
     private void visit(ASTNode node) {
         if (node == null) return;
 
-
         if (node instanceof VariableDeclarationNode vd) {
 
-            if (vd.getInitializer() instanceof StructInstaceNode sin) {
+            ASTNode init = vd.getInitializer();
+            if (init != null) {
 
-                ownership.put(sin, new OwnerShipInfo(
-                        OwnershipState.OWNED,
-                        vd,
-                        sin,
-                        AssignKind.COPY,
-                        0
-                ));
+                if (init instanceof StructInstaceNode sin) {
 
-                variableBinding.put(vd, sin);
-                realNames.put(vd, vd.getName());
-                realNames.put(sin, vd.getName());
-                debug("VAR '" + vd.getName() + "' OWNS NEW struct");
+                    ownership.put(sin, new OwnerShipInfo(
+                            OwnershipState.OWNED,
+                            vd,
+                            sin,
+                            AssignKind.COPY,
+                            0
+                    ));
 
+                    variableBinding.put(vd, sin);
+                    realNames.put(vd, vd.getName());
+                    realNames.put(sin, vd.getName());
+
+                    debug("VAR '" + vd.getName() + "' OWNS NEW struct");
+                }
+                else {
+                    OwnerShipInfo src = resolveOwnership(init);
+                    if (src != null) {
+
+                        variableBinding.put(vd, src.origin);
+                        realNames.put(vd, vd.getName());
+                        AssignmentNode fakeAssign =
+                                new AssignmentNode(vd.getName(), init);
+
+                        fakeAssign.setAssignKind(AssignKind.COPY);
+
+                        handleAssignment(fakeAssign);
+
+                        debug("VAR '" + vd.getName() + "' INIT via assignment");
+                    }
+                }
             }
-
         }
 
         else if (node instanceof AssignmentNode an) {
@@ -59,6 +76,7 @@ public class OwnershipAnalyzer {
                 fa.getValue() != null) {
             handleFieldAssignment(fa);
         }
+
         else if (node instanceof ListAddNode ln) {
             handleListAdd(ln);
         }
@@ -72,6 +90,30 @@ public class OwnershipAnalyzer {
         OwnerShipInfo src = resolveOwnership(an.getValueNode());
         if (src == null) return;
 
+        boolean isDeepCopy = false;
+
+        if (src.origin instanceof StructInstaceNode srcStruct) {
+            System.out.println("Entrou aqui");
+            // pega o nome da variável destino
+            String targetVarName = an.getName();
+            // pega a declaração da variável destino
+            VariableDeclarationNode targetDecl =
+                    findVariableDeclaration(targetVarName);
+
+            if (targetDecl != null) {
+                String targetType = targetDecl.getType();              // Struct<Pessoa>
+                String sourceType = "Struct<" + srcStruct.getName() + ">";
+                System.out.println("segundo");
+                if (targetType.equals(sourceType)) {
+                    System.out.println("terceiro");
+                    isDeepCopy = true;
+                    an.setAssignKind(AssignKind.DEEP_COPY);
+                    System.out.println("DEEP COPY detectado: " + sourceType);
+                }
+            }
+
+        }
+
         if (an.getAssignKind() == AssignKind.MOVE) {
             if (src.state == OwnershipState.MOVED) {
                 error("Uso após move", an);
@@ -79,20 +121,38 @@ public class OwnershipAnalyzer {
             src.state = OwnershipState.MOVED;
         }
 
-        ownership.put(an, new OwnerShipInfo(
+        OwnerShipInfo info = new OwnerShipInfo(
                 OwnershipState.OWNED,
                 an,
                 src.origin,
                 an.getAssignKind(),
                 src.depth
-        ));
+        );
 
+        info.isDeepCopy = isDeepCopy;
+
+        ownership.put(an, info);
         variableBinding.put(an, src.origin);
         realNames.put(an, an.getName());
 
-        debug("ASSIGN '" + an.getName() +
-                "' OWNS value from " + shortNode(src.origin));
+        debug(
+                "ASSIGN '" + an.getName() + "' " +
+                        (isDeepCopy ? "DEEP COPY from " : "OWNS value from ") +
+                        shortNode(src.origin)
+        );
     }
+
+    private VariableDeclarationNode findVariableDeclaration(String name) {
+        for (ASTNode n : variableBinding.keySet()) {
+            if (n instanceof VariableDeclarationNode vd &&
+                    vd.getName().equals(name)) {
+                return vd;
+            }
+        }
+        return null;
+    }
+
+
     private OwnerShipInfo resolveOwnership(ASTNode node) {
 
 
@@ -101,7 +161,6 @@ public class OwnershipAnalyzer {
             return null;
         }
 
-        // ===== Variable =====
         if (node instanceof VariableNode vn) {
             debug("[resolveOwnership] VariableNode -> name = " + vn.getName());
 
@@ -122,7 +181,6 @@ public class OwnershipAnalyzer {
             }
         }
 
-        // ===== Struct field =====
         if (node instanceof StructFieldAccessNode fa) {
             debug("[resolveOwnership] StructFieldAccessNode -> field = " + fa.getFieldName());
             debug("[resolveOwnership]   structInstance = " + shortNode(fa.getStructInstance()));

@@ -1,7 +1,6 @@
 package ast.variables;
 
 import ast.ASTNode;
-import ast.functions.FunctionNode;
 import ast.ifstatements.IfNode;
 import ast.loops.WhileNode;
 import ast.structs.StructFieldAccessNode;

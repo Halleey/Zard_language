@@ -37,8 +37,7 @@ main {
     p1.telefones.add("11 22222-3333");
 
     # === Cópia profunda ===
-    Pessoa p2;
-    p2 = p1;
+    Pessoa p2 = p1;
 
 
 
@@ -49,6 +48,7 @@ main {
 
     e1.rua = "teste";
     e1.cidade = "Santo andré";
+
 
 
 
@@ -63,6 +63,12 @@ main {
 
    println("=== Original p1 ===");
     println(p1);
+
+
+
+    Endereco e2;
+    e2 = e1;
+    println(e2);
 
 
     println("=== Clone p2 ===");

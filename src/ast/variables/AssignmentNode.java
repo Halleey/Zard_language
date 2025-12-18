@@ -53,19 +53,34 @@ public class AssignmentNode extends ASTNode {
             );
         }
 
+        // 🔥 AQUI está o ponto chave
         if (value instanceof StructValue sv) {
-            if (sv.hasOwner()) {
-                throw new RuntimeException(
-                        "Struct já possui dono. Use copy explicitamente."
-                );
+
+            switch (assignKind) {
+
+                case MOVE -> {
+                    if (sv.hasOwner()) {
+                        throw new RuntimeException(
+                                "Struct já possui dono. Use copy ou deep copy."
+                        );
+                    }
+                    sv.moveTo(name);
+                    ctx.setVariable(name, sv);
+                    return sv;
+                }
+
+                case COPY, DEEP_COPY -> {
+                    StructValue copy = (StructValue) sv.deepCopy();
+                    ctx.setVariable(name, copy);
+                    return copy;
+                }
             }
-            sv.moveTo(name);
         }
 
+        // Tipos primitivos continuam normais
         ctx.setVariable(name, value);
         return value;
     }
-
 
 
     @Override

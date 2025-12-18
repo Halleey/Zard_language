@@ -4,10 +4,21 @@ import ast.ASTNode;
 import ast.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
+import memory_manager.borrows.AssignKind;
 
 public class AssignmentNode extends ASTNode {
     public final String name;
     public final ASTNode valueNode;
+    private AssignKind assignKind = AssignKind.MOVE; // default
+
+    public void setAssignKind(AssignKind kind) {
+        this.assignKind = kind;
+    }
+
+    public AssignKind getAssignKind() {
+        return assignKind;
+    }
+
 
     public ASTNode getValueNode() {
         return valueNode;
@@ -42,10 +53,17 @@ public class AssignmentNode extends ASTNode {
             );
         }
 
-        TypedValue assigned = value.deepCopy();
+        if (value instanceof StructValue sv) {
+            if (sv.hasOwner()) {
+                throw new RuntimeException(
+                        "Struct já possui dono. Use copy explicitamente."
+                );
+            }
+            sv.moveTo(name);
+        }
 
-        ctx.setVariable(name, assigned);
-        return assigned;
+        ctx.setVariable(name, value);
+        return value;
     }
 
 

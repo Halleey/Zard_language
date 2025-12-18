@@ -48,13 +48,6 @@ public class FrontendPipeline {
 
         EscapeAnalyzer escapeAnalyzer = new EscapeAnalyzer();
         this.escapeInfo = escapeAnalyzer.analyze(ast);
-
-        System.out.println("=== Escape Analysis Results ===");
-        for (var e : escapeInfo.getMap().entrySet()) {
-            System.out.println("  " + e.getKey() + " -> escapes? " + e.getValue());
-        }
-        System.out.println("================================");
-
         return ast;
     }
 }

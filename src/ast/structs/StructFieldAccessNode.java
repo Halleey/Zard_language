@@ -3,7 +3,9 @@ package ast.structs;
 import ast.ASTNode;
 import ast.expressions.TypedValue;
 import ast.runtime.RuntimeContext;
+import ast.variables.StructValue;
 import low.module.LLVMEmitVisitor;
+import memory_manager.borrows.AssignKind;
 
 import java.util.List;
 import java.util.Map;
@@ -13,6 +15,17 @@ public class StructFieldAccessNode extends ASTNode {
     private final String fieldName;
     private final ASTNode value;
     private String resolvedFieldType;
+
+    private AssignKind assignKind = AssignKind.MOVE;
+
+    public AssignKind getAssignKind() {
+        return assignKind;
+    }
+
+    public void setAssignKind(AssignKind kind) {
+        this.assignKind = kind;
+    }
+
 
     public StructFieldAccessNode(ASTNode structInstance, String fieldName, ASTNode value) {
         this.structInstance = structInstance;
@@ -39,27 +52,41 @@ public class StructFieldAccessNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
+
         TypedValue structVal = structInstance.evaluate(ctx);
 
-        if (!(structVal.value() instanceof Map<?, ?>)) {
+        if (!(structVal instanceof StructValue svStruct)) {
             throw new RuntimeException("Não é uma struct: " + structInstance);
         }
 
-        @SuppressWarnings("unchecked")
-        Map<String, TypedValue> fields = (Map<String, TypedValue>) structVal.value();
+        Map<String, TypedValue> fields = svStruct.getFields();
 
         TypedValue val;
+
         if (value != null) {
             val = value.evaluate(ctx);
-            fields.put(fieldName, val);
-        } else {
-            val = fields.get(fieldName);
-            if (val == null) {
-                throw new RuntimeException("Campo não existe: " + fieldName);
+
+            if (val instanceof StructValue svField) {
+                // Se já tiver dono, copia profundamente
+                if (svField.hasOwner()) {
+                    svField = (StructValue) svField.deepCopy();
+                }
+                svField.moveTo(svStruct); // atribuição agora segura
+                val = svField;           // garante que val seja a cópia
             }
+
+            fields.put(fieldName, val);
+            return val;
         }
+
+        val = fields.get(fieldName);
+        if (val == null) {
+            throw new RuntimeException("Campo não existe: " + fieldName);
+        }
+
         return val;
     }
+
 
     @Override
     public void print(String prefix) {

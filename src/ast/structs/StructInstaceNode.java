@@ -10,17 +10,29 @@ import ast.variables.ListValue;
 import ast.variables.StructValue;
 import ast.variables.VariableDeclarationNode;
 import low.module.LLVMEmitVisitor;
+import memory_manager.borrows.OwnershipState;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+
 public class StructInstaceNode extends ASTNode {
 
     private final String structName;
     private final List<ASTNode> positionalValues;
     private final Map<String, ASTNode> namedValues;
     private String concreteType;
+
+
+    private OwnershipState initialOwnership = OwnershipState.OWNED;
+
+    public OwnershipState getInitialOwnership() {
+        return initialOwnership;
+    }
+
+
 
     public StructInstaceNode(String structName,
                              List<ASTNode> positionalValues,

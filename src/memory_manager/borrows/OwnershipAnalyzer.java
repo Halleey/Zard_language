@@ -39,7 +39,7 @@ public class OwnershipAnalyzer {
                             OwnershipState.OWNED,
                             vd,
                             sin,
-                            AssignKind.COPY,
+                            AssignKind.ORIGEM,
                             0
                     ));
 
@@ -58,7 +58,7 @@ public class OwnershipAnalyzer {
                         AssignmentNode fakeAssign =
                                 new AssignmentNode(vd.getName(), init);
 
-                        fakeAssign.setAssignKind(AssignKind.COPY);
+                        fakeAssign.setAssignKind(AssignKind.ORIGEM);
 
                         handleAssignment(fakeAssign);
 
@@ -206,7 +206,6 @@ public class OwnershipAnalyzer {
                         ", kind=" + info.transferKind;
     }
 
-
     private void handleFieldAssignment(StructFieldAccessNode fa) {
         OwnerShipInfo src = resolveOwnership(fa.getValue());
         if (src == null) return;
@@ -216,6 +215,7 @@ public class OwnershipAnalyzer {
             error("Struct pai sem ownership", fa);
         }
 
+        // MOVE real: origem perde ownership
         if (fa.getAssignKind() == AssignKind.MOVE) {
             if (src.state == OwnershipState.MOVED) {
                 error("Valor já movido", fa);
@@ -223,16 +223,31 @@ public class OwnershipAnalyzer {
             src.state = OwnershipState.MOVED;
         }
 
-        src.owner = parent.owner;
-        src.depth = parent.depth + 1;
+        // Cria ownership do campo
+        OwnerShipInfo fieldOwnership = new OwnerShipInfo(
+                OwnershipState.OWNED,
+                parent.owner,        // dono final é o struct pai
+                src.origin,          // origem continua sendo a instância original
+                AssignKind.MOVE,
+                parent.depth + 1
+        );
+
+        ownership.put(fa, fieldOwnership);
+        String parentName = shortNode(parent.owner);
+        String fieldName = fa.getFieldName();
+
+        parentName = parentName.replaceAll(".*\\((.*)\\)", "$1");
+
+        realNames.put(fa, parentName + "." + fieldName);
 
         debug(
                 "FIELD MOVE: " +
                         shortNode(src.origin) +
                         " agora pertence a " +
-                        shortNode(parent.owner)
+                        shortNode(fa)
         );
     }
+
 
     private void handleListAdd(ListAddNode ln) {
         OwnerShipInfo src = ownership.get(ln.getValuesNode());

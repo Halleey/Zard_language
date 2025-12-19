@@ -24,14 +24,9 @@ public class ListValue {
     }
 
     public void add(TypedValue v) {
-        if(v instanceof StructValue sv) {
-            if(sv.hasOwner()){
-                throw new RuntimeException("Struct already has owner, use copy explicit");
-            }
-            sv.moveTo(this);
-        }
         elements.add(v);
     }
+
 
     public TypedValue get(int index) {
         return elements.get(index);

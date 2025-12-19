@@ -14,14 +14,14 @@ public class StructValue extends TypedValue {
     // OWNERSHIP
     private Object owner;
     private boolean moved;
-    private AssignKind kind = AssignKind.COPY; // default
+    private AssignKind kind = AssignKind.ORIGEM; // default
 
     public StructValue(String type, Map<String, TypedValue> fields) {
         super(type, fields);
         this.fields = fields;
         this.owner = null;
         this.moved = false;
-        this.kind = AssignKind.COPY; // cópia por padrão
+        this.kind = AssignKind.ORIGEM; // cópia por padrão
     }
 
     public boolean hasOwner() {
@@ -53,7 +53,7 @@ public class StructValue extends TypedValue {
             copied.put(e.getKey(), e.getValue().deepCopy());
         }
         StructValue copy = new StructValue(type, copied);
-        copy.kind = AssignKind.COPY;
+        copy.kind = AssignKind.ORIGEM;
         return copy;
     }
 }

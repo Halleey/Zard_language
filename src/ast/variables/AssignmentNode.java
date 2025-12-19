@@ -69,7 +69,7 @@ public class AssignmentNode extends ASTNode {
                     return sv;
                 }
 
-                case COPY, DEEP_COPY -> {
+                case ORIGEM, DEEP_COPY -> {
                     StructValue copy = (StructValue) sv.deepCopy();
                     ctx.setVariable(name, copy);
                     return copy;

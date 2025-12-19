@@ -1,7 +1,7 @@
 package memory_manager.borrows;
 
 public enum AssignKind {
-    COPY,
+    ORIGEM,
     MOVE,
     DEEP_COPY
 }

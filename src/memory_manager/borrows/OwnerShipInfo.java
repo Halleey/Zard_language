@@ -25,7 +25,7 @@ public class OwnerShipInfo {
                 OwnershipState.OWNED,
                 newOwner,
                 this.origin,
-                AssignKind.COPY,
+                AssignKind.ORIGEM,
                 this.depth
         );
         copy.isDeepCopy = true;

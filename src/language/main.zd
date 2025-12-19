@@ -1,76 +1,72 @@
+
 main {
 
-    Struct Pais {
-        string nome;
+Struct Entry {
+  int key;
+  string value;
+}
+
+Struct maps {
+  List<Entry> data;
+}
+
+impl maps {
+
+  function put(int key, string value) {
+    int i = 0;
+    while (i < s.data.size()) {
+      Entry e = s.data.get(i);
+      if (e.key == key) {
+        e.value = value;
+        return s;
+      }
+      i++;
     }
 
+    Entry n;
+    n.key = key;
+    n.value = value;
+    s.data.add(n);
+    return s;
+  }
 
-    float teste = 3.14;
-    print(teste);
-    Struct Endereco {
-        string rua;
-        string cidade;
-        Struct Pais pais;
+function void get(int key) {
+  int i = 0;
+  while (i < s.data.size()) {
+    Entry e = s.data.get(i);
+    if (e.key == key) {
+      println(e.value);
+      return;
     }
+    i++;
+  }
+  println("key not found");
+}
 
-    Struct Pessoa {
-        string nome;
-        int idade;
-        Struct Endereco endereco;
-        List<string> telefones;
+
+  function remove(int key) {
+    int i = 0;
+    while (i < s.data.size()) {
+      Entry e = s.data.get(i);
+      if (e.key == key) {
+        s.data.remove(i);
+        return s;
+      }
+      i++;
     }
+    return s;
+  }
+}
 
-    # ---- Instâncias base ----
-    Pais brasil;
-    brasil.nome = "Brasil";
+maps m;
 
-    Endereco e1;
-    e1.rua = "Rua A";
-    e1.cidade = "São Paulo";
-    e1.pais = brasil;
-
-    Pessoa p1;
-    p1.nome = "Alice";
-    p1.idade = 25;
-    p1.endereco = e1;
-    p1.telefones.add("11 99999-1111");
-    p1.telefones.add("11 22222-3333");
-
-    # === Cópia profunda ===
-    Pessoa p2 = p1;
+m.put(1, "Sword");
+m.put(2, "Shield");
+m.put(3, "Potion");
 
 
-
-
-    # === Alterações independentes ===
-    p2.nome = "Zard";
-    p2.telefones.add("21 44444-5555");
-
-    e1.rua = "teste";
-    e1.cidade = "Santo andré";
-
-
-
-
-    # Atualização inline aninhada com lista e sub-struct
-    p2.endereco {
-        rua: "Nova Rua";
-        cidade: "Zurique";
-        pais {
-            nome: "Suíça";
-        }
-    }
-
-   println("=== Original p1 ===");
-    println(p1);
-
-
-
-    Endereco e2;
-    e2 = e1;
-    println(e2);
-
-
-    println("=== Clone p2 ===");
-    print(p2);
+m.remove(1);
+m.get(1);
+m.get(3);
+m.get(2);
 }

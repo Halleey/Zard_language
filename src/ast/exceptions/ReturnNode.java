@@ -21,8 +21,13 @@ public class ReturnNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        TypedValue value = expr.evaluate(ctx);
-        throw new ReturnValue(value); // exceção para controlar return
+        TypedValue value = null;
+
+        if (expr != null) {
+            value = expr.evaluate(ctx);
+        }
+
+        throw new ReturnValue(value);
     }
 
     @Override

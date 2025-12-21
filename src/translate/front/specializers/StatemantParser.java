@@ -80,7 +80,10 @@ public class StatemantParser {
                 }
                 case "return" -> {
                     parser.advance();
-                    ASTNode expr = parser.parseExpression();
+                    ASTNode expr = null;
+                    if (!parser.current().getValue().equals(";")) {
+                        expr = parser.parseExpression();
+                    }
                     parser.eat(Token.TokenType.DELIMITER, ";");
                     return new ReturnNode(expr);
                 }

@@ -8,7 +8,6 @@ import low.TempManager;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
 import low.utils.LLVMNameUtils;
-
 public class StructPrintHandler implements PrintHandler {
     private final TempManager temps;
 
@@ -34,15 +33,16 @@ public class StructPrintHandler implements PrintHandler {
     }
 
     @Override
-    public String emit(ASTNode node, LLVisitorMain visitor) {
+    public String emit(ASTNode node, LLVisitorMain visitorMain, boolean newline) {
         StringBuilder llvm = new StringBuilder();
 
-        String code = node.accept(visitor);
+        String code = node.accept(visitorMain);
         if (code != null && !code.isBlank()) llvm.append(code);
 
         String temp = extractTemp(code);
         String type = extractType(code).trim();
 
+        // Corrige ponteiro duplo
         if (type.endsWith("**")) {
             String base = type.substring(0, type.length() - 1);
             String t = temps.newTemp();
@@ -52,33 +52,25 @@ public class StructPrintHandler implements PrintHandler {
             llvm.append(";;VAL:").append(t).append(";;TYPE:").append(base).append("\n");
             temp = t;
             type = base;
-            System.out.println("[StructPrintHandler] Corrigido ponteiro duplo -> " + type);
         }
 
         String key = normalizeKeyFromLLVMPtr(type);
-        StructNode def = resolveStructNode(key, visitor);
+        StructNode def = resolveStructNode(key, visitorMain);
         if (def == null) {
             throw new RuntimeException("Struct não encontrada para impressão: " + key + " (type=" + type + ")");
         }
 
-        String rawLLVMName = def.getLLVMName();
-        String llvmStructName = LLVMNameUtils.llvmSafe(rawLLVMName)
-                .replace("<", "_")
-                .replace(">", "");
-
-
+        String llvmStructName = LLVMNameUtils.llvmSafe(def.getLLVMName()).replace("<", "_").replace(">", "");
         String targetPtrType = "%" + llvmStructName + "*";
 
         if (!type.equals(targetPtrType)) {
             String castTemp = temps.newTemp();
             llvm.append("  ").append(castTemp)
-                    .append(" = bitcast ")
-                    .append(type).append(" ").append(temp)
+                    .append(" = bitcast ").append(type).append(" ").append(temp)
                     .append(" to ").append(targetPtrType).append("\n");
             llvm.append(";;VAL:").append(castTemp).append(";;TYPE:").append(targetPtrType).append("\n");
             temp = castTemp;
             type = targetPtrType;
-            System.out.println("[StructPrintHandler] Bitcast aplicado para " + targetPtrType);
         }
 
         llvm.append("  call void @print_")
@@ -108,9 +100,7 @@ public class StructPrintHandler implements PrintHandler {
         if (n != null) return n;
 
         n = visitor.getStructNode("%" + safe);
-        if (n != null) return n;
-
-        return null;
+        return n;
     }
 
     private String stripGenericBase(String key) {

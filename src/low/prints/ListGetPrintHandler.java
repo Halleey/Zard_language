@@ -6,8 +6,6 @@ import ast.variables.VariableNode;
 import low.TempManager;
 import low.lists.generics.ListGetEmitter;
 import low.module.LLVisitorMain;
-
-
 public class ListGetPrintHandler implements PrintHandler {
     private final TempManager temps;
     private final ListGetEmitter listGetEmitter;
@@ -22,49 +20,42 @@ public class ListGetPrintHandler implements PrintHandler {
         return node instanceof ListGetNode;
     }
 
-    @Override
-    public String emit(ASTNode node, LLVisitorMain visitor) {
+    public String emit(ASTNode node, LLVisitorMain visitor, boolean newline) {
         ListGetNode getNode = (ListGetNode) node;
         ASTNode listRef = getNode.getListName();
 
-        // Pega o tipo do elemento da lista com inferência
         String elemType = visitor.inferListElementType(listRef);
 
-        // Gera o IR do acesso (já inclui ;;VAL: e ;;TYPE:)
         String getCode = listGetEmitter.emit(getNode, visitor);
         String valTemp = extractTemp(getCode);
 
         StringBuilder sb = new StringBuilder();
         appendCodePrefix(sb, getCode);
 
-        if ("string".equals(elemType)) {
-            // Corrigido: imprime como C-string (i8*) usando printf("%s")
-            sb.append("  call i32 (i8*, ...) @printf(")
-                    .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), ")
-                    .append("i8* ").append(valTemp).append(")\n");
-        }
-        else if ("int".equals(elemType)) {
-            sb.append("  call i32 (i8*, ...) @printf(")
-                    .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), ")
-                    .append("i32 ").append(valTemp).append(")\n");
-        }
-        else if ("double".equals(elemType)) {
-            sb.append("  call i32 (i8*, ...) @printf(")
-                    .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), ")
-                    .append("double ").append(valTemp).append(")\n");
-        }
-        else if ("boolean".equals(elemType)) {
-            String boolTmp = temps.newTemp();
-            sb.append("  ").append(boolTmp).append(" = zext i1 ").append(valTemp).append(" to i32\n");
-            sb.append("  call i32 (i8*, ...) @printf(")
-                    .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), ")
-                    .append("i32 ").append(boolTmp).append(")\n");
-        }
-        else {
-            // structs
-            String structName = normalizeStructName(elemType);
-            sb.append("  call void @print_").append(structName)
-                    .append("(i8* ").append(valTemp).append(")\n");
+        String labelSuffix = newline ? "" : "_noNL";
+
+        switch (elemType) {
+            case "string" -> sb.append("  call i32 (i8*, ...) @printf(")
+                    .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strStr").append(labelSuffix)
+                    .append(", i32 0, i32 0), i8* ").append(valTemp).append(")\n");
+            case "int" -> sb.append("  call i32 (i8*, ...) @printf(")
+                    .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strInt").append(labelSuffix)
+                    .append(", i32 0, i32 0), i32 ").append(valTemp).append(")\n");
+            case "double" -> sb.append("  call i32 (i8*, ...) @printf(")
+                    .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble").append(labelSuffix)
+                    .append(", i32 0, i32 0), double ").append(valTemp).append(")\n");
+            case "boolean" -> {
+                String boolTmp = temps.newTemp();
+                sb.append("  ").append(boolTmp).append(" = zext i1 ").append(valTemp).append(" to i32\n");
+                sb.append("  call i32 (i8*, ...) @printf(")
+                        .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strInt").append(labelSuffix)
+                        .append(", i32 0, i32 0), i32 ").append(boolTmp).append(")\n");
+            }
+            default -> { // structs
+                String structName = normalizeStructName(elemType);
+                sb.append("  call void @print_").append(structName)
+                        .append("(i8* ").append(valTemp).append(")\n");
+            }
         }
 
         return sb.toString();

@@ -3,6 +3,8 @@ package ast.prints;
 import ast.ASTNode;
 import tokens.Token;
 import translate.front.Parser;
+
+
 public class PrintParser {
     private final Parser parser;
     private final boolean newline;

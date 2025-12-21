@@ -1,72 +1,70 @@
-
 main {
-
-Struct Entry {
-  int key;
-  string value;
+Struct Item {
+ int id;
+ string name;
+ List<int> quantidade;
 }
+ Struct Set{
+  List<Item> data;
+ }
 
-Struct maps {
-  List<Entry> data;
-}
+ impl Set {
+ function  addItem(int id, string name, int quantidade) {
+   Item it;
+   it.id = id;
+   it.name = name;
+   it.quantidade.add(quantidade);
+   s.data.add(it);
+   return s;
+  }
 
-impl maps {
-
-  function put(int key, string value) {
+  function removeFirst() {
+   if (s.data.size() > 0) {
+   s.data.remove(0);
+   }
+    return s;
+  }
+  function  removeItemById(int id) {
+  int i = 0; while (i < s.data.size()) {
+  Item cur = s.data.get(i);
+   if (cur.id == id) {
+   s.data.remove(i);
+   return s;
+   }
+   i++;
+  }
+  return s;
+ }
+  function prints() {
     int i = 0;
+
+    print("Set {");
+
     while (i < s.data.size()) {
-      Entry e = s.data.get(i);
-      if (e.key == key) {
-        e.value = value;
-        return s;
-      }
+      Item cur = s.data.get(i);
+
+      print("  Item {");
+      print("    id:");
+      print(cur.id);
+      print("    name:");
+      print(cur.name);
+      print("  }");
+
       i++;
     }
-
-    Entry n;
-    n.key = key;
-    n.value = value;
-    s.data.add(n);
+    print("}");
     return s;
   }
 
-function void get(int key) {
-  int i = 0;
-  while (i < s.data.size()) {
-    Entry e = s.data.get(i);
-    if (e.key == key) {
-      println(e.value);
-      return;
-    }
-    i++;
-  }
-  println("key not found");
 }
 
+# ==== Item ====
+  Set<Item> items;
+  Item teste;
+  items.addItem(1, "Sword",3);
+  items.addItem(2, "Shield",2);
+  items.addItem(3, "Potion",6);
+  items.removeItemById(2);
 
-  function remove(int key) {
-    int i = 0;
-    while (i < s.data.size()) {
-      Entry e = s.data.get(i);
-      if (e.key == key) {
-        s.data.remove(i);
-        return s;
-      }
-      i++;
-    }
-    return s;
-  }
-}
-
-maps m;
-
-m.put(1, "Sword");
-m.put(2, "Shield");
-m.put(3, "Potion");
-
-
-m.remove(1);
-m.get(1);
-m.get(3);
-m.get(2);
-}
+  items.prints();
+ }

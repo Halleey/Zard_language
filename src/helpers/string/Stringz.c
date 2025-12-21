@@ -27,6 +27,16 @@
         }
     }
 
+    void printString_noNL(String *str) {
+        if (str != NULL && str->data != NULL) {
+            printf("%s", str->data);
+        } else {
+            printf("(string vazia)");
+        }
+    }
+
+
+
     void concatString(String *str, const char *nConcat) {
         if (!str) return;
         if (nConcat == NULL) nConcat = "";

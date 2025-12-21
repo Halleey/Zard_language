@@ -25,11 +25,12 @@ public class StringVariablePrintHandler implements PrintHandler {
     }
 
     @Override
-    public String emit(ASTNode node, LLVisitorMain visitor) {
+    public String emit(ASTNode node, LLVisitorMain visitor, boolean newline) {
         String varName = ((VariableNode) node).getName();
         String tmpLoad = temps.newTemp();
+        String fn = newline ? "@printString" : "@printString_noNL";
 
         return "  " + tmpLoad + " = load %String*, %String** %" + varName + "\n" +
-                "  call void @printString(%String* " + tmpLoad + ")\n";
+                "  call void " + fn + "(%String* " + tmpLoad + ")\n";
     }
 }

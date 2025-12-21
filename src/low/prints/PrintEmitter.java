@@ -9,7 +9,6 @@ import ast.prints.PrintNode;
 
 
 import java.util.List;
-
 public class PrintEmitter {
     private final List<PrintHandler> handlers;
     private final ExprPrintHandler exprHandler;
@@ -30,13 +29,15 @@ public class PrintEmitter {
     }
 
     public String emit(PrintNode node, LLVisitorMain visitor) {
+        boolean newline = node.newline;
+
         for (PrintHandler handler : handlers) {
             if (handler.canHandle(node.expr, visitor)) {
-                return handler.emit(node.expr, visitor);
+                return handler.emit(node.expr, visitor, newline);
             }
         }
         // fallback para expressões complexas
         String exprLLVM = node.expr.accept(visitor);
-        return exprHandler.emitExprOrElement(exprLLVM, visitor, node.expr);
+        return exprHandler.emitExprOrElement(exprLLVM, visitor, node.expr, newline);
     }
 }

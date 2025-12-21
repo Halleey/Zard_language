@@ -5,6 +5,7 @@ import ast.functions.FunctionCallNode;
 import ast.lists.ListGetNode;
 import ast.lists.ListNode;
 import ast.lists.ListSizeNode;
+import ast.prints.PrintNode;
 import low.TempManager;
 import low.lists.generics.ListGetEmitter;
 import low.lists.generics.ListSizeEmitter;
@@ -17,12 +18,9 @@ public class ExprPrintHandler {
         this.temps = temps;
     }
 
-    public String emitExprOrElement(String exprLLVM, LLVisitorMain visitor, ASTNode node) {
-
+    public String emitExprOrElement(String exprLLVM, LLVisitorMain visitor, ASTNode node, boolean newline) {
         String valTypeLine = findLastValTypeMarkerOfExpression(exprLLVM);
-        if (valTypeLine == null) {
-            return exprLLVM;
-        }
+        if (valTypeLine == null) return exprLLVM;
 
         String temp = extractTemp(valTypeLine);
         String type = extractType(valTypeLine);
@@ -32,119 +30,81 @@ public class ExprPrintHandler {
 
         StringBuilder llvm = new StringBuilder();
         if (!codePart.isBlank()) {
-            if (!codePart.endsWith("\n")) {
-                codePart += "\n";
-            }
+            if (!codePart.endsWith("\n")) codePart += "\n";
             llvm.append(codePart);
         }
 
         switch (type) {
-
-            case "i32" -> {
-                llvm.append("  call i32 (i8*, ...) @printf(")
-                        .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), ")
-                        .append("i32 ").append(temp).append(")\n");
-                return llvm.toString();
-            }
-
-            case "double" -> {
-                llvm.append("  call i32 (i8*, ...) @printf(")
-                        .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), ")
-                        .append("double ").append(temp).append(")\n");
-                return llvm.toString();
-            }
-
+            case "i32" -> appendPrintf(llvm, temp, newline, ".strInt");
+            case "double" -> appendPrintf(llvm, temp, newline, ".strDouble");
             case "float" -> {
                 String tmpExt = temps.newTemp();
                 llvm.append("  ").append(tmpExt)
                         .append(" = fpext float ").append(temp).append(" to double\n")
                         .append(";;VAL:").append(tmpExt).append(";;TYPE:double\n");
-                llvm.append("  call i32 (i8*, ...) @printf(")
-                        .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strFloat, i32 0, i32 0), ")
-                        .append("double ").append(tmpExt).append(")\n");
-                return llvm.toString();
+                appendPrintf(llvm, tmpExt, newline, ".strFloat");
             }
-
-            case "i1" -> {
-                new PrimitivePrintHandler(temps).emitBoolPrint(llvm, temp);
-                return llvm.toString();
-            }
-
-            case "%String*" -> {
-                llvm.append("  call void @printString(%String* ").append(temp).append(")\n");
-                return llvm.toString();
-            }
-
+            case "i1" -> new PrimitivePrintHandler(temps).emitBoolPrint(llvm, temp, newline);
             case "i8" -> {
                 String castTmp = temps.newTemp();
                 llvm.append("  ").append(castTmp)
                         .append(" = sext i8 ").append(temp).append(" to i32\n");
-                llvm.append("  call i32 (i8*, ...) @printf(")
-                        .append("i8* getelementptr ([3 x i8], [3 x i8]* @.strChar, i32 0, i32 0), ")
-                        .append("i32 ").append(castTmp).append(")\n");
-                return llvm.toString();
+                appendPrintf(llvm, castTmp, newline, ".strChar");
             }
-
+            case "%String*" -> {
+                String fn = newline ? "@printString" : "@printString_noNL";
+                llvm.append("  call void ").append(fn).append("(%String* ").append(temp).append(")\n");
+            }
             case "i8*" -> {
                 if (node instanceof FunctionCallNode callNode) {
                     TypeInfos fnType = visitor.getFunctionType(callNode.getName());
                     if (fnType != null && fnType.isList()) {
-                        return new ListPrintHandler(temps).emit(node, visitor);
+                        return new ListPrintHandler(temps).emit(node, visitor, newline);
                     }
                 }
-
-                llvm.append("  call i32 (i8*, ...) @printf(")
-                        .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strStr, i32 0, i32 0), ")
-                        .append("i8* ").append(temp).append(")\n");
-                return llvm.toString();
+                appendPrintf(llvm, temp, newline, ".strStr");
             }
-
             default -> {
-                if (node instanceof ListSizeNode) {
-                    ListSizePrintHandler handler =
-                            new ListSizePrintHandler(temps, new ListSizeEmitter(temps));
-                    return handler.emit(node, visitor);
+                if (node instanceof ListSizeNode)
+                    return new ListSizePrintHandler(temps, new ListSizeEmitter(temps)).emit(node, visitor, newline);
+                if (type.startsWith("%struct.ArrayList"))
+                    return new ListPrintHandler(temps).emit(node, visitor, newline);
+                if (node instanceof FunctionCallNode callNode && visitor.getFunctionType(callNode.getName()) != null
+                        && visitor.getFunctionType(callNode.getName()).isList()) {
+                    return new ListPrintHandler(temps).emit(node, visitor, newline);
                 }
-
-                if (type.startsWith("%struct.ArrayList")) {
-                    ListPrintHandler handler = new ListPrintHandler(temps);
-                    return handler.emit(node, visitor);
-                }
-
-                if (node instanceof FunctionCallNode callNode) {
-                    TypeInfos fnType = visitor.getFunctionType(callNode.getName());
-                    if (fnType != null && fnType.isList()) {
-                        return new ListPrintHandler(temps).emit(node, visitor);
-                    }
-                }
-
-                if (node instanceof ListGetNode) {
-                    ListGetPrintHandler handler =
-                            new ListGetPrintHandler(temps, new ListGetEmitter(temps));
-                    return handler.emit(node, visitor);
-                }
-
-                if (node instanceof ListNode) {
-                    ListPrintHandler handler = new ListPrintHandler(temps);
-                    return handler.emit(node, visitor);
-                }
-
-                if (isStructLLVMType(type)) {
-                    return new StructPrintHandler(temps).emit(node, visitor);
-                }
-
+                if (node instanceof ListGetNode)
+                    return new ListGetPrintHandler(temps, new ListGetEmitter(temps)).emit(node, visitor, newline);
+                if (isStructLLVMType(type))
+                    return new StructPrintHandler(temps).emit(node, visitor, newline);
                 throw new RuntimeException("Unsupported type in print: " + type);
             }
         }
+
+        return llvm.toString();
+    }
+
+    private void appendPrintf(StringBuilder llvm, String temp, boolean newline, String strLabel) {
+        String label = newline ? strLabel : strLabel + "_noNL";
+        llvm.append("  call i32 (i8*, ...) @printf(")
+                .append("i8* getelementptr ([")
+                .append(newline ? "4 x i8" : "3 x i8")
+                .append("], [")
+                .append(newline ? "4 x i8" : "3 x i8")
+                .append("]* @").append(label)
+                .append(", i32 0, i32 0), ").append(getLLVMType(temp)).append(" ").append(temp).append(")\n");
+    }
+
+    private String getLLVMType(String temp) {
+        // Para simplicidade assumimos que temp já possui tipo correto extraído
+        return "i32";
     }
 
     private String findLastValTypeMarkerOfExpression(String exprLLVM) {
         String[] lines = exprLLVM.split("\n");
         for (int i = lines.length - 1; i >= 0; i--) {
             String line = lines[i].trim();
-            if (line.startsWith(";;VAL:") && line.contains(";;TYPE:")) {
-                return line;
-            }
+            if (line.startsWith(";;VAL:") && line.contains(";;TYPE:")) return line;
         }
         return null;
     }
@@ -167,19 +127,8 @@ public class ExprPrintHandler {
     private boolean isStructLLVMType(String llvmType) {
         if (llvmType == null) return false;
         String t = llvmType.trim();
-
-        while (t.endsWith("*")) {
-            t = t.substring(0, t.length() - 1);
-        }
-        if (t.startsWith("%")) {
-            t = t.substring(1);
-        }
-
-        if (t.equals("i32") || t.equals("i1") || t.equals("i8") ||
-                t.equals("double") || t.equals("String") || t.equals("String*")) {
-            return false;
-        }
-
-        return t.startsWith("Struct") || (!t.isEmpty() && Character.isUpperCase(t.charAt(0)));
+        while (t.endsWith("*")) t = t.substring(0, t.length() - 1);
+        if (t.startsWith("%")) t = t.substring(1);
+        return !t.isEmpty() && Character.isUpperCase(t.charAt(0)) && !t.equals("String");
     }
 }

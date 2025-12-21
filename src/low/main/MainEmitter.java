@@ -341,21 +341,26 @@ public class MainEmitter {
         declare void @printString(%String*)
         declare i8* @malloc(i64)
         declare void @setString(i8*)
-        @.strChar   = private constant [3 x i8] c"%c\\00"
-        @.strTrue   = private constant [6 x i8] c"true\\0A\\00"
-        @.strFalse  = private constant [7 x i8] c"false\\0A\\00"
-        @.strInt    = private constant [4 x i8] c"%d\\0A\\00"
-        @.strDouble = private constant [4 x i8] c"%f\\0A\\00"
-        @.strFloat  = private constant [4 x i8] c"%f\\0A\\00"
-        @.strStr    = private constant [4 x i8] c"%s\\0A\\00"
-        @.strEmpty  = private constant [1 x i8] c"\\00"
-
+        @.strChar        = private constant [3 x i8] c"%c\\00"
+        @.strTrue        = private constant [6 x i8] c"true\\0A\\00"
+        @.strFalse       = private constant [7 x i8] c"false\\0A\\00"
+        @.strInt         = private constant [4 x i8] c"%d\\0A\\00"
+        @.strInt_noNL    = private constant [3 x i8] c"%d\\00"
+        @.strDouble      = private constant [4 x i8] c"%f\\0A\\00"
+        @.strDouble_noNL = private constant [3 x i8] c"%f\\00"
+        @.strFloat       = private constant [4 x i8] c"%f\\0A\\00"
+        @.strFloat_noNL  = private constant [3 x i8] c"%f\\00"
+        @.strStr         = private constant [4 x i8] c"%s\\0A\\00"
+        @.strStr_noNL    = private constant [3 x i8] c"%s\\00"
+        @.strEmpty       = private constant [1 x i8] c"\\00"
+        
         declare %String* @createString(i8*)
         declare i1 @strcmp_eq(%String*, %String*)
         declare i1 @strcmp_neq(%String*, %String*)
-
+        
         %String = type { i8*, i64 }
-    """);
+""");
+
 
         if (!tiposDeListasUsados.isEmpty()) {
             sb.append("""

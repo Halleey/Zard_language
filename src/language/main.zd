@@ -1,81 +1,70 @@
 main {
+Struct Item {
+ int id;
+ string name;
+ List<int> quantidade;
+}
+ Struct Set{
+  List<Item> data;
+ }
 
-Struct Row {
-    List<int> values;
+ impl Set {
+ function  addItem(int id, string name, int quantidade) {
+   Item it;
+   it.id = id;
+   it.name = name;
+   it.quantidade.add(quantidade);
+   s.data.add(it);
+   return s;
+  }
+
+  function removeFirst() {
+   if (s.data.size() > 0) {
+   s.data.remove(0);
+   }
+    return s;
+  }
+  function  removeItemById(int id) {
+  int i = 0; while (i < s.data.size()) {
+  Item cur = s.data.get(i);
+   if (cur.id == id) {
+   s.data.remove(i);
+   return s;
+   }
+   i++;
+  }
+  return s;
+ }
+  function prints() {
+    int i = 0;
+
+    print("Set {");
+
+    while (i < s.data.size()) {
+      Item cur = s.data.get(i);
+
+      print("  Item {");
+      print("    id:");
+      print(cur.id);
+      print("    name:");
+      print(cur.name);
+      print("  }");
+
+      i++;
+    }
+    print("}");
+    return s;
+  }
+
 }
 
-Struct Matrix {
-    List<Row> rows;
-}
+# ==== Item ====
+  Set<Item> items;
+  Item teste;
+  items.addItem(1, "Sword",3);
+  items.addItem(2, "Shield",2);
+  items.addItem(3, "Potion",6);
+  items.removeItemById(2);
 
-impl Matrix {
-
-    function adRow(int a, int b, int c) {
-        Row r;
-        r.values.add(a);
-        r.values.add(b);
-        r.values.add(c);
-
-        s.rows.add(r);
-        return s;
-    }
-
-    function printMatrix() {
-        int i = 0;
-
-        while (i < s.rows.size()) {
-            Row r = s.rows.get(i);
-            int j = 0;
-
-            while (j < r.values.size()) {
-                print(r.values.get(j));
-                print(" ");          # espaço entre colunas
-                j = j + 1;
-            }
-
-            println("");             # quebra de linha ao fim da linha
-            i = i + 1;
-        }
-        return s;
-    }
-
-    function int somar(int b, int c) {
-        return b + c;
-    }
-
-    function int sum() {
-        int total = 0;
-        int i = 0;
-
-        while (i < s.rows.size()) {
-            Row r = s.rows.get(i);
-            int j = 0;
-
-            while (j < r.values.size()) {
-                total = total + r.values.get(j);
-                j = j + 1;
-            }
-
-            i = i + 1;
-        }
-        return total;
-    }
-}
-
-    Matrix mat;
-
-    mat.adRow(1, 2, 3);
-    mat.adRow(4, 5, 6);
-    mat.adRow(7, 8, 9);
-
-    println(mat.somar(3, 5));
-
-    println("Matriz:");
-    mat.printMatrix();
-
-    print("teste");
-    print("ok");
-
-    println("Soma total:");
-    println(mat.sum());
-}
+  items.prints();
+ }

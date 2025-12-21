@@ -24,5 +24,7 @@ void printString(String *str);
 void freeString(String *str);
 size_t my_copyString(const char *origem, char *destino);
 size_t my_strlen(const char *text);
+void printString_noNL(String *str);
+
 
 #endif

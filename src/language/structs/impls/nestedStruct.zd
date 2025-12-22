@@ -15,25 +15,22 @@ main {
       return s;
     }
 
-function printMatriz() {
-  int i = 0;
-  while (i < s.linhas.size()) {
+    function printMatriz() {
+      int i = 0;
+      while (i < s.linhas.size()) {
 
-    Linha ln = s.linhas.get(i);
+        Linha ln = s.linhas.get(i);
 
-    int j = 0;
-    while (j < ln.valores.size()) {
-      print(ln.valores.get(j));
-      print(" ");
-      j++;
+        int j = 0;
+        while (j < ln.valores.size()) {
+          print(ln.valores.get(j));
+          j++;
+        }
+
+        print("----");
+        i++;
+      }
     }
-
-    println("");
-    i++;
-  }
-}
-
-
   }
 
   Matriz m;

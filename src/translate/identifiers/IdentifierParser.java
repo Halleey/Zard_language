@@ -11,22 +11,23 @@ import helpers_ast.variables.UnaryParser;
 import tokens.Token;
 import ast.variables.VariableNode;
 import translate.front.Parser;
+import translate.identifiers.structs.StructSimpleDeclarationParser;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-    public class IdentifierParser {
-        private final Parser parser;
+public class IdentifierParser {
+    private final Parser parser;
 
-        public IdentifierParser(Parser parser) {
-            this.parser = parser;
-        }
-        public ASTNode parseAsStatement(String name) {
-            ASTNode receiver = new VariableNode(name);
-            String tokenVal = parser.current().getValue();
+    public IdentifierParser(Parser parser) {
+        this.parser = parser;
+    }
+    public ASTNode parseAsStatement(String name) {
+        ASTNode receiver = new VariableNode(name);
+        String tokenVal = parser.current().getValue();
 
-            String structName = parseTypeStruct(name);
+        String structName = parseTypeStruct(name);
 
         if (parser.isKnownStruct(name)) {
             String varName = parser.current().getValue();
@@ -62,22 +63,12 @@ import java.util.Map;
             return new VariableDeclarationNode(varName, "Struct<" + structName + ">", instanceNode);
         }
 
-        if (parser.current().getType() == Token.TokenType.IDENTIFIER) {
-            String varName = parser.current().getValue();
-            Token afterVar = parser.peek(1);
-
-            if (afterVar.getType() == Token.TokenType.DELIMITER &&
-                    afterVar.getValue().equals(";")) {
-
-                parser.eat(Token.TokenType.IDENTIFIER);
-                parser.eat(Token.TokenType.DELIMITER, ";");
-
-                String finalType = "Struct<" + structName + ">";
-                parser.declareVariable(varName, finalType);
-
-                return new VariableDeclarationNode(varName, finalType, null);
-            }
+        StructSimpleDeclarationParser simpleStructParser = new StructSimpleDeclarationParser(parser);
+        ASTNode simpleDecl = simpleStructParser.tryParse(structName);
+        if (simpleDecl != null) {
+            return simpleDecl;
         }
+
         switch (tokenVal) {
             case "." -> {
                 parser.advance();
@@ -162,101 +153,101 @@ import java.util.Map;
         parser.eat(Token.TokenType.DELIMITER, "}");
         return new StructUpdateNode(target, fieldUpdates, nestedUpdates);
     }
-        public ASTNode parseAsExpression(String name) {
+    public ASTNode parseAsExpression(String name) {
 
-            ASTNode node = new VariableNode(name);
-
-
-            // chamada direta: f(...)
-            if (parser.current().getValue().equals("(")) {
-                List<ASTNode> args = parser.parseArguments();
-                return new FunctionCallNode(name, args);
-            }
-
-            // encadeamento
-            while (parser.current().getValue().equals(".")) {
-
-                parser.advance(); // '.'
-                String memberName = parser.current().getValue();
-                parser.eat(Token.TokenType.IDENTIFIER);
-
-                String receiverType = parser.getExpressionType(node);
+        ASTNode node = new VariableNode(name);
 
 
+        // chamada direta: f(...)
+        if (parser.current().getValue().equals("(")) {
+            List<ASTNode> args = parser.parseArguments();
+            return new FunctionCallNode(name, args);
+        }
 
-                if (receiverType != null && receiverType.startsWith("Struct")) {
+        // encadeamento
+        while (parser.current().getValue().equals(".")) {
 
-                    if (parser.current().getValue().equals("(")) {
-                        List<ASTNode> args = parser.parseArguments();
+            parser.advance(); // '.'
+            String memberName = parser.current().getValue();
+            parser.eat(Token.TokenType.IDENTIFIER);
 
-                        String structType =
-                                receiverType.substring("Struct<".length(), receiverType.length() - 1);
+            String receiverType = parser.getExpressionType(node);
 
-                        StructMethodCallNode call =
-                                new StructMethodCallNode(node, structType, memberName, args);
 
-                        FunctionNode method =
-                                parser.getStructMethod(structType, memberName);
 
-                        if (method == null) {
-                            throw new RuntimeException(
-                                    "Método '" + memberName + "' não encontrado em Struct " + structType
-                            );
-                        }
-
-                        call.setReturnType(method.getReturnType());
-
-                        node = call;
-
-                        continue;
-                    }
-
-                    node = new StructFieldAccessNode(node, memberName, null);
-                    continue;
-                }
-
-                if (receiverType != null && receiverType.startsWith("List")) {
-                    ListMethodParser listParser = new ListMethodParser(parser);
-                    node = listParser.parseExpressionListMethod(node, memberName);
-                    continue;
-                }
+            if (receiverType != null && receiverType.startsWith("Struct")) {
 
                 if (parser.current().getValue().equals("(")) {
                     List<ASTNode> args = parser.parseArguments();
-                    node = new FunctionCallNode(node.toString() + "." + memberName, args);
-                } else {
-                    node = new StructFieldAccessNode(node, memberName, null);
+
+                    String structType =
+                            receiverType.substring("Struct<".length(), receiverType.length() - 1);
+
+                    StructMethodCallNode call =
+                            new StructMethodCallNode(node, structType, memberName, args);
+
+                    FunctionNode method =
+                            parser.getStructMethod(structType, memberName);
+
+                    if (method == null) {
+                        throw new RuntimeException(
+                                "Método '" + memberName + "' não encontrado em Struct " + structType
+                        );
+                    }
+
+                    call.setReturnType(method.getReturnType());
+
+                    node = call;
+
+                    continue;
                 }
 
+                node = new StructFieldAccessNode(node, memberName, null);
+                continue;
             }
 
-            return node;
+            if (receiverType != null && receiverType.startsWith("List")) {
+                ListMethodParser listParser = new ListMethodParser(parser);
+                node = listParser.parseExpressionListMethod(node, memberName);
+                continue;
+            }
+
+            if (parser.current().getValue().equals("(")) {
+                List<ASTNode> args = parser.parseArguments();
+                node = new FunctionCallNode(node.toString() + "." + memberName, args);
+            } else {
+                node = new StructFieldAccessNode(node, memberName, null);
+            }
+
         }
 
-        private String parseTypeStruct(String baseName) {
-
-            if (!parser.current().getValue().equals("<")) {
-                return baseName;
-            }
-
-            parser.advance();
-
-            Token typeToken = parser.current();
-
-            if (typeToken.getType() != Token.TokenType.IDENTIFIER &&
-                    typeToken.getType() != Token.TokenType.KEYWORD) {
-
-                throw new RuntimeException(
-                        "Tipo inválido em especialização de struct: " + typeToken
-                );
-            }
-
-            String innerType = typeToken.getValue();
-            parser.advance();
-
-            parser.eat(Token.TokenType.OPERATOR, ">");
-
-            return baseName + "<" + innerType + ">";
-        }
-
+        return node;
     }
+
+    private String parseTypeStruct(String baseName) {
+
+        if (!parser.current().getValue().equals("<")) {
+            return baseName;
+        }
+
+        parser.advance();
+
+        Token typeToken = parser.current();
+
+        if (typeToken.getType() != Token.TokenType.IDENTIFIER &&
+                typeToken.getType() != Token.TokenType.KEYWORD) {
+
+            throw new RuntimeException(
+                    "Tipo inválido em especialização de struct: " + typeToken
+            );
+        }
+
+        String innerType = typeToken.getValue();
+        parser.advance();
+
+        parser.eat(Token.TokenType.OPERATOR, ">");
+
+        return baseName + "<" + innerType + ">";
+    }
+
+}

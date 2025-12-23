@@ -1,60 +1,37 @@
+import "src/language/stdlib/Math.zd" as math;
+
 main {
-
-  Struct Linha {
-    List<int> valores;
-  }
-
-  Struct Matriz {
-    List<Linha> linhas;
-  }
-
-  impl Matriz {
-
-    function addLinha(Linha l) {
-      s.linhas.add(l);
-      return s;
-    }
-
-function printMatriz() {
-  int i = 0;
-  while (i < s.linhas.size()) {
-
-    Linha ln = s.linhas.get(i);
-
-    int j = 0;
-    while (j < ln.valores.size()) {
-      print(ln.valores.get(j));
-      print(" ");
-      j++;
-    }
-
-    println("");
-    i++;
-  }
-}
+    double a = 10;
+    double b = 3;
+    int n = 5;
 
 
-  }
+    println(math.sum(a, b));
+    println(math.sub(a, b));
+    println(math.mul(a, b));
+    println(math.div(a, b));
 
-  Matriz m;
 
-  Linha l0;
-  l0.valores.add(1);
-  l0.valores.add(2);
-  l0.valores.add(3);
-  m.addLinha(l0);
+    println(math.pow(a, 3));
 
-  Linha l1;
-  l1.valores.add(4);
-  l1.valores.add(5);
-  l1.valores.add(6);
-  m.addLinha(l1);
 
-  Linha l2;
-  l2.valores.add(7);
-  l2.valores.add(8);
-  l2.valores.add(9);
-  m.addLinha(l2);
+    println(math.factorial(n));
 
-  m.printMatriz();
+    println(math.sqrt(a));
+
+
+    println(math.sin(a));
+    println(math.cos(a));
+
+
+    println("Tentando dividir por zero:");
+    println(math.div(a, 0));
+
+    println("Tentando fatorial de número negativo:");
+    println(math.factorial(-3));
+
+    println("Tentando raiz quadrada de número negativo:");
+    println(math.sqrt(-9));
+
+    print("Fim dos testes.");
 }

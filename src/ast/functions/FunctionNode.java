@@ -1,8 +1,9 @@
 package ast.functions;
 
 import ast.ASTNode;
+import ast.context.StaticContext;
 import ast.exceptions.ReturnValue;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
@@ -55,16 +56,8 @@ public class FunctionNode extends ASTNode {
         return body;
     }
 
-    public String getImplicitReceiverName() {
-        return implicitReceiverName;
-    }
-
     public void setImplicitReceiverName(String implicitReceiverName) {
         this.implicitReceiverName = implicitReceiverName;
-    }
-
-    public void setImplStructName(String structName) {
-        this.implStructName = structName;
     }
 
     public String getImplStructName() {
@@ -74,6 +67,11 @@ public class FunctionNode extends ASTNode {
     @Override
     public List<ASTNode> getChildren() {
         return body;
+    }
+
+    @Override
+    public void bind(StaticContext stx) {
+
     }
 
     @Override

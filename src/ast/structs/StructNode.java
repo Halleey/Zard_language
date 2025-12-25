@@ -1,8 +1,9 @@
 package ast.structs;
 
 import ast.ASTNode;
+import ast.context.StaticContext;
 import ast.expressions.TypedValue;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
 import ast.variables.VariableDeclarationNode;
 import low.module.LLVMEmitVisitor;
 
@@ -63,6 +64,11 @@ public class StructNode extends ASTNode {
         for (VariableDeclarationNode f : fields) {
             System.out.println(prefix + "  " + f.getName() + " : " + f.getType());
         }
+    }
+
+    @Override
+    public void bind(StaticContext stx) {
+
     }
 
     public StructNode cloneWithType(String elemType) {

@@ -1,12 +1,11 @@
 package ast.functions;
 
 import ast.ASTNode;
-import ast.exceptions.ReturnValue;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
+import ast.context.StaticContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
-import java.util.ArrayList;
 import java.util.List;
 public class FunctionCallNode extends ASTNode {
     private final String name;
@@ -60,6 +59,12 @@ public class FunctionCallNode extends ASTNode {
             System.out.println(prefix + "  <no args>");
         }
     }
+
+    @Override
+    public void bind(StaticContext stx) {
+
+    }
+
     public String getName() { return name; }
     public List<ASTNode> getArgs() { return args; }
 }

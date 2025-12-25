@@ -12,7 +12,7 @@ import ast.loops.ForNode;
 import ast.structs.*;
 import ast.lists.*;
 import ast.loops.WhileNode;
-import ast.maps.MapNode;
+
 import ast.prints.PrintNode;
 import ast.variables.*;
 import low.TempManager;
@@ -371,10 +371,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return new ReturnEmitter(this, temps).emit(node);
     }
 
-    @Override
-    public String visit(MapNode node) {
-        return "";
-    }
 
     @Override
     public String visit(VariableDeclarationNode node) {

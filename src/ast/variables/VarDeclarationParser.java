@@ -2,7 +2,7 @@ package ast.variables;
 
 import ast.ASTNode;
 import ast.lists.ListDeclarationParser;
-import ast.maps.MapParser;
+
 import ast.structs.StructInstanceParser;
 import tokens.Token;
 import translate.front.Parser;
@@ -24,10 +24,6 @@ public class VarDeclarationParser {
         if (type.equals("List")) {
             ListDeclarationParser listParser = new ListDeclarationParser(parser);
             return listParser.parse(null);
-        }
-        else if (type.equals("Map")) {
-            MapParser mapParser = new MapParser(parser);
-            return mapParser.parse(null);
         }
         else if (type.equals("Struct")) {
 

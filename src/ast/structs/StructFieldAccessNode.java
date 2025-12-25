@@ -1,8 +1,9 @@
 package ast.structs;
 
 import ast.ASTNode;
+import ast.context.StaticContext;
 import ast.expressions.TypedValue;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;
@@ -12,7 +13,6 @@ public class StructFieldAccessNode extends ASTNode {
     private final ASTNode structInstance;
     private final String fieldName;
     private final ASTNode value;
-    private String resolvedFieldType;
 
     public StructFieldAccessNode(ASTNode structInstance, String fieldName, ASTNode value) {
         this.structInstance = structInstance;
@@ -72,17 +72,14 @@ public class StructFieldAccessNode extends ASTNode {
         }
     }
 
-    public void setResolvedFieldType(String s) {
-        this.resolvedFieldType = s;
-    }
-
-    public String getResolvedFieldType() {
-        return resolvedFieldType;
-    }
-
     @Override
     public List<ASTNode> getChildren() {
         return value != null ? List.of(structInstance, value)
                 : List.of(structInstance);
+    }
+
+    @Override
+    public void bind(StaticContext stx) {
+
     }
 }

@@ -1,7 +1,8 @@
 package ast.variables;
 
 import ast.ASTNode;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
+import ast.context.StaticContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
@@ -103,6 +104,10 @@ public class BinaryOpNode extends ASTNode {
         return list;
     }
 
+    @Override
+    public void bind(StaticContext stx) {
+
+    }
 
 
     private Object unwrap(TypedValue tv) {

@@ -1,8 +1,9 @@
 package ast.loops;
 
 import ast.ASTNode;
+import ast.context.StaticContext;
 import ast.exceptions.BreakLoop;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
@@ -56,5 +57,10 @@ public class WhileNode extends ASTNode {
         condition.print(prefix + "    ");
         System.out.println(prefix + "  Body:");
         for (ASTNode n : body) n.print(prefix + "    ");
+    }
+
+    @Override
+    public void bind(StaticContext stx) {
+
     }
 }

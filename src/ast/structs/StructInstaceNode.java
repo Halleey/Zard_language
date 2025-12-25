@@ -1,11 +1,12 @@
 package ast.structs;
 
 import ast.ASTNode;
+import ast.context.StaticContext;
 import ast.expressions.TypedValue;
 import ast.lists.DynamicList;
 import ast.lists.ListNode;
-import ast.runtime.RuntimeContext;
-import ast.runtime.StructDefinition;
+import ast.context.RuntimeContext;
+import ast.context.StructDefinition;
 import ast.variables.VariableDeclarationNode;
 import low.module.LLVMEmitVisitor;
 
@@ -161,5 +162,10 @@ public class StructInstaceNode extends ASTNode {
         List<ASTNode> list = new ArrayList<>(positionalValues);
         list.addAll(namedValues.values());
         return list;
+    }
+
+    @Override
+    public void bind(StaticContext stx) {
+
     }
 }

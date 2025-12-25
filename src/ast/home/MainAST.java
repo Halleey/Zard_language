@@ -1,7 +1,8 @@
 package ast.home;
 
 import ast.ASTNode;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
+import ast.context.StaticContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
@@ -45,4 +46,14 @@ public class MainAST extends ASTNode {
     public List<ASTNode> getChildren() {
         return body;
     }
+
+    @Override
+    public void bind(StaticContext parent) {
+        StaticContext mainCtx = new StaticContext(parent);
+
+        for (ASTNode n : body) {
+            n.bind(mainCtx);
+        }
+    }
+
 }

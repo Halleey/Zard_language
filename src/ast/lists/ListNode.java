@@ -1,7 +1,8 @@
 package ast.lists;
 
 import ast.ASTNode;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
+import ast.context.StaticContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
@@ -23,6 +24,11 @@ public class ListNode extends ASTNode {
 
     public String getType() {
         return type;
+    }
+
+    @Override
+    public void bind(StaticContext stx) {
+
     }
 
     @Override

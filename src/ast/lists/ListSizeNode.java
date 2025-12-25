@@ -1,7 +1,8 @@
 package ast.lists;
 
 import ast.ASTNode;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
+import ast.context.StaticContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
@@ -41,5 +42,10 @@ public class ListSizeNode extends ASTNode {
     public void print(String prefix) {
         System.out.println(prefix + "ListSize:");
         nome.print(prefix + "  ");
+    }
+
+    @Override
+    public void bind(StaticContext stx) {
+
     }
 }

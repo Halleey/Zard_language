@@ -1,10 +1,10 @@
 package ast.variables;
 import ast.ASTNode;
+import ast.context.StaticContext;
 import ast.lists.DynamicList;
 import ast.lists.ListNode;
-import ast.maps.DynamicMap;
-import ast.maps.MapNode;
-import ast.runtime.RuntimeContext;
+
+import ast.context.RuntimeContext;
 import ast.expressions.TypedValue;
 import ast.structs.StructInstaceNode;
 import low.module.LLVMEmitVisitor;
@@ -12,7 +12,7 @@ import low.module.LLVMEmitVisitor;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+
 
 public class VariableDeclarationNode extends ASTNode {
     private final String name;
@@ -56,9 +56,7 @@ public class VariableDeclarationNode extends ASTNode {
         if (initializer != null && !(initializer instanceof StructInstaceNode)) {
             if (initializer instanceof ListNode) {
                 value = evaluateList(ctx, (ListNode) initializer, (DynamicList) value.value());
-            } else if (initializer instanceof MapNode) {
-                value = evaluateMap(ctx, (MapNode) initializer, (DynamicMap) value.value());
-            } else {
+            }else {
                 value = initializer.evaluate(ctx);
 
                 if ("float".equals(type) && "double".equals(value.type())) {
@@ -105,37 +103,10 @@ public class VariableDeclarationNode extends ASTNode {
         return new TypedValue(type, list);
     }
 
-    private TypedValue evaluateMap(RuntimeContext ctx, MapNode mapNode, DynamicMap map) {
-        for (Map.Entry<ASTNode, ASTNode> e : mapNode.getDynamicMap().getEntries().entrySet()) {
-            TypedValue keyVal = e.getKey().evaluate(ctx);
-            TypedValue valueVal = e.getValue().evaluate(ctx);
-
-            String declaredType = type;
-            String keyType = declaredType.substring(declaredType.indexOf('<') + 1, declaredType.indexOf(','));
-            String valueType = declaredType.substring(declaredType.indexOf(',') + 1, declaredType.length() - 1);
-
-            if (!keyVal.type().equals(keyType)) {
-                throw new RuntimeException("Tipo da chave incompatível na variável " + name +
-                        ": esperado " + keyType + ", encontrado " + keyVal.type());
-            }
-            if (!valueVal.type().equals(valueType)) {
-                throw new RuntimeException("Tipo do valor incompatível na variável " + name +
-                        ": esperado " + valueType + ", encontrado " + valueVal.type());
-            }
-
-            map.put(keyVal, valueVal);
-        }
-        return new TypedValue(type, map);
-    }
-
     public TypedValue createInitialValue() {
         if (type.startsWith("List<")) {
             String elementType = getListElementType(type);
             return new TypedValue(type, new DynamicList(elementType, new ArrayList<>()));
-        } else if (type.startsWith("Map<")) {
-            String keyType = type.substring(type.indexOf('<') + 1, type.indexOf(','));
-            String valueType = type.substring(type.indexOf(',') + 1, type.length() - 1);
-            return new TypedValue(type, new DynamicMap(keyType, valueType, new LinkedHashMap<>()));
         }
         else if (type.startsWith("Struct<")) {
             extractStructName(type);
@@ -184,6 +155,16 @@ public class VariableDeclarationNode extends ASTNode {
     public String getName() { return name; }
     @Override
     public String getType() { return type; }
+
+    @Override
+    public void bind(StaticContext stx) {
+        stx.declareVariable(name, type);
+
+        if (initializer != null) {
+            initializer.bind(stx);
+        }
+    }
+
 
     @Override
     public List<ASTNode> getChildren() {

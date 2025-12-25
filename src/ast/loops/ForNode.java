@@ -1,9 +1,10 @@
 package ast.loops;
 
 import ast.ASTNode;
+import ast.context.StaticContext;
 import ast.exceptions.BreakLoop;
 import ast.expressions.TypedValue;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;
@@ -108,4 +109,9 @@ public class ForNode extends ASTNode {
             System.out.println(prefix + "  Body:");
             for (ASTNode node : body) node.print(prefix + "    ");
         }
+
+    @Override
+    public void bind(StaticContext stx) {
+
+    }
 }

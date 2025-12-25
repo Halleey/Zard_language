@@ -1,7 +1,8 @@
 package ast.functions;
 
 import ast.ASTNode;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
+import ast.context.StaticContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
@@ -42,5 +43,10 @@ public class FunctionReferenceNode extends ASTNode {
     @Override
     public void print(String prefix) {
         System.out.println(prefix + "FunctionReference: " + namespacePath);
+    }
+
+    @Override
+    public void bind(StaticContext stx) {
+
     }
 }

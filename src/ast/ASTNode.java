@@ -1,6 +1,7 @@
 package ast;
 
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
+import ast.context.StaticContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
@@ -17,4 +18,5 @@ public abstract class ASTNode {
     public String getType() {
         return null;
     }
+    public abstract void bind(StaticContext stx);
 }

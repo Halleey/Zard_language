@@ -1,10 +1,11 @@
 package ast.structs;
 
 import ast.ASTNode;
+import ast.context.StaticContext;
 import ast.expressions.TypedValue;
 import ast.functions.FunctionNode;
 import ast.functions.ParamInfo;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
 import ast.variables.VariableNode;
 import low.module.LLVMEmitVisitor;
 
@@ -92,5 +93,10 @@ public class StructMethodCallNode extends ASTNode {
             System.out.println(prefix + "  Args:");
             for (ASTNode a : args) a.print(prefix + "    ");
         }
+    }
+
+    @Override
+    public void bind(StaticContext stx) {
+
     }
 }

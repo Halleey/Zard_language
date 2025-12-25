@@ -1,12 +1,10 @@
 package ast.inputs;
 
 import ast.ASTNode;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
+import ast.context.StaticContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
-
-import java.util.Scanner;
-
 
 import java.util.Scanner;
 
@@ -57,6 +55,11 @@ public class InputNode extends ASTNode {
     public void print(String prefix) {
         System.out.println(prefix + "Input" +
                 (prompt != null && !prompt.isEmpty() ? " (\"" + prompt + "\")" : ""));
+    }
+
+    @Override
+    public void bind(StaticContext stx) {
+
     }
 
     public String getPrompt() {

@@ -1,7 +1,8 @@
 package ast.lists;
 
 import ast.ASTNode;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
+import ast.context.StaticContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
@@ -41,6 +42,11 @@ public class ListGetNode extends ASTNode {
         System.out.println(prefix + "ListGet:");
         listName.print(prefix + "  ");
         indexNode.print(prefix + "  ");
+    }
+
+    @Override
+    public void bind(StaticContext stx) {
+
     }
 
     public ASTNode getListName() {

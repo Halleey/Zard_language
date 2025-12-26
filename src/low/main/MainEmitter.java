@@ -11,6 +11,7 @@ import ast.inputs.InputNode;
 import ast.lists.ListAddAllNode;
 import ast.lists.ListAddNode;
 import ast.lists.ListNode;
+import ast.loops.ForNode;
 import ast.loops.WhileNode;
 import ast.prints.PrintNode;
 import ast.structs.*;
@@ -265,6 +266,26 @@ public class MainEmitter {
             if (ifNode.elseBranch != null) {
                 ifNode.elseBranch.forEach(this::coletarStringsRecursivo);
             }
+            return;
+        }
+        if (node instanceof ForNode forNode) {
+
+            if (forNode.getInit() != null) {
+                coletarStringsRecursivo(forNode.getInit());
+            }
+
+            if (forNode.getCondition() != null) {
+                coletarStringsRecursivo(forNode.getCondition());
+            }
+
+            if (forNode.getIncrement() != null) {
+                coletarStringsRecursivo(forNode.getIncrement());
+            }
+
+            if (forNode.getBody() != null) {
+                forNode.getBody().forEach(this::coletarStringsRecursivo);
+            }
+
             return;
         }
 

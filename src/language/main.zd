@@ -14,12 +14,13 @@ main {
     print(pe);
     print(pessoas);
 
-    function void teste (int z) {
-    print(z);
+
+
+    while (a > 0) {
+    a --;
+    List <string> nomes;
+
     }
-
-    call teste(z);
-
     for(int i = 0; i < 10; i ++) {
     println("currently");
     }

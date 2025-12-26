@@ -1,9 +1,10 @@
 package ast.structs;
 
 import ast.ASTNode;
+import ast.context.StaticContext;
 import ast.expressions.TypedValue;
 import ast.functions.FunctionNode;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;
@@ -46,5 +47,10 @@ public class ImplNode extends ASTNode {
         for (FunctionNode fn : methods) {
             fn.print(prefix + " ");
         }
+    }
+
+    @Override
+    public void bind(StaticContext stx) {
+
     }
 }

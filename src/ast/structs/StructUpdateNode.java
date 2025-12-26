@@ -1,14 +1,13 @@
 package ast.structs;
 
 import ast.ASTNode;
+import ast.context.StaticContext;
 import ast.expressions.TypedValue;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
 import low.module.LLVMEmitVisitor;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import java.util.*;
 
 public class StructUpdateNode extends ASTNode {
     private final ASTNode targetStruct; // Ex: p2.endereco
@@ -99,5 +98,10 @@ public class StructUpdateNode extends ASTNode {
             System.out.println(prefix + " Nested update on " + e.getKey() + ":");
             e.getValue().print(prefix + "   ");
         }
+    }
+
+    @Override
+    public void bind(StaticContext stx) {
+
     }
 }

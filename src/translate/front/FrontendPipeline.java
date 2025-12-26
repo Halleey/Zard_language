@@ -7,6 +7,7 @@ import memory_manager.EscapeAnalyzer;
 import memory_manager.EscapeInfo;
 import tokens.Lexer;
 import tokens.Token;
+import translate.StaticBinder;
 import translate.identifiers.MethodDesugarer;
 
 import java.nio.file.Files;
@@ -44,14 +45,18 @@ public class FrontendPipeline {
         MethodDesugarer desugarer = new MethodDesugarer();
         desugarer.desugar(ast);
 
+
+        StaticBinder binder = new StaticBinder();
+        binder.bind(ast);
+
         EscapeAnalyzer escapeAnalyzer = new EscapeAnalyzer();
         this.escapeInfo = escapeAnalyzer.analyze(ast);
 
-        System.out.println("=== Escape Analysis Results ===");
-        for (var e : escapeInfo.getMap().entrySet()) {
-            System.out.println("  " + e.getKey() + " -> escapes? " + e.getValue());
-        }
-        System.out.println("================================");
+//        System.out.println("=== Escape Analysis Results ===");
+//        for (var e : escapeInfo.getMap().entrySet()) {
+//            System.out.println("  " + e.getKey() + " -> escapes? " + e.getValue());
+//        }
+//        System.out.println("================================");
 
         return ast;
     }

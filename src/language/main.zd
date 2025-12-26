@@ -1,37 +1,29 @@
-import "src/language/stdlib/Math.zd" as math;
 
 main {
     double a = 10;
     double b = 3;
     int n = 5;
+    int z = 10;
+    print(z);
+    List pessoas = ("zard","angel");
+    List pe = ("zard","angel");
+    Struct People{
+    int idade;
+    string nome;
+    }
+    print(pe);
+    print(pessoas);
 
 
-    println(math.sum(a, b));
-    println(math.sub(a, b));
-    println(math.mul(a, b));
-    println(math.div(a, b));
 
+    while (a > 0) {
+    a --;
+    List <string> nomes;
 
-    println(math.pow(a, 3));
+    }
+    for(int i = 0; i < 10; i ++) {
+    println("currently");
+    }
 
-
-    println(math.factorial(n));
-
-    println(math.sqrt(a));
-
-
-    println(math.sin(a));
-    println(math.cos(a));
-
-
-    println("Tentando dividir por zero:");
-    println(math.div(a, 0));
-
-    println("Tentando fatorial de número negativo:");
-    println(math.factorial(-3));
-
-    println("Tentando raiz quadrada de número negativo:");
-    println(math.sqrt(-9));
-
-    print("Fim dos testes.");
 }
+

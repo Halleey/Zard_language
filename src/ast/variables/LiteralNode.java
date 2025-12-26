@@ -1,7 +1,8 @@
 package ast.variables;
 
 import ast.ASTNode;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
+import ast.context.StaticContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
@@ -13,6 +14,11 @@ public class LiteralNode extends ASTNode {
     }
     public String getType() {
         return value.type();
+    }
+
+    @Override
+    public void bind(StaticContext stx) {
+
     }
 
     public LiteralNode(TypedValue value) {

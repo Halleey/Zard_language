@@ -1,12 +1,10 @@
 package ast.inputs;
 
 import ast.ASTNode;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
+import ast.context.StaticContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
-
-import java.util.Scanner;
-
 
 import java.util.Scanner;
 
@@ -49,7 +47,6 @@ public class InputNode extends ASTNode {
             return new TypedValue("boolean", false);
         }
 
-        // se não for nenhum dos acima, é string
         return new TypedValue("string", input);
     }
 

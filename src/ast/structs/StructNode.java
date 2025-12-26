@@ -1,8 +1,9 @@
 package ast.structs;
 
 import ast.ASTNode;
+import ast.context.StaticContext;
 import ast.expressions.TypedValue;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
 import ast.variables.VariableDeclarationNode;
 import low.module.LLVMEmitVisitor;
 
@@ -62,6 +63,18 @@ public class StructNode extends ASTNode {
         System.out.println(prefix + "Struct " + name);
         for (VariableDeclarationNode f : fields) {
             System.out.println(prefix + "  " + f.getName() + " : " + f.getType());
+        }
+    }
+
+    @Override
+    public void bind(StaticContext stx) {
+        Set<String> seen = new HashSet<>();
+        for (VariableDeclarationNode f : fields) {
+            if (!seen.add(f.getName())) {
+                throw new RuntimeException(
+                        "Campo duplicado no struct " + name + ": " + f.getName()
+                );
+            }
         }
     }
 

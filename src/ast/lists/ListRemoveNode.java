@@ -1,7 +1,8 @@
 package ast.lists;
 
 import ast.ASTNode;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
+import ast.context.StaticContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
@@ -37,6 +38,11 @@ public class ListRemoveNode extends ASTNode {
         System.out.println(prefix + "  List:");
         listNode.print(prefix + "    ");
         System.out.println(prefix + "  (Item removido)");
+    }
+
+    @Override
+    public void bind(StaticContext stx) {
+
     }
 
     public ASTNode getListNode() {

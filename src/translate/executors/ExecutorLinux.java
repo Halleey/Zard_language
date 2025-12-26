@@ -34,8 +34,8 @@ public class ExecutorLinux {
         LLVMToolchain toolchain = new LLVMToolchain();
         String exePath = toolchain.buildExecutable(llvm);
         toolchain.runExecutable(exePath);
-//        ASTInterpreter interpreter = new ASTInterpreter();
 //        interpreter.run(ast);
+//        ASTInterpreter interpreter = new ASTInterpreter();
 
     }
 }

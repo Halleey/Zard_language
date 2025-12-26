@@ -1,8 +1,10 @@
 package ast.loops;
 
 import ast.ASTNode;
+import ast.context.StaticContext;
+import ast.context.statics.ScopeKind;
 import ast.exceptions.BreakLoop;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
@@ -57,4 +59,22 @@ public class WhileNode extends ASTNode {
         System.out.println(prefix + "  Body:");
         for (ASTNode n : body) n.print(prefix + "    ");
     }
+
+    protected StaticContext childScope(ScopeKind kind, StaticContext parent) {
+        return new StaticContext(kind, parent);
+    }
+
+    @Override
+    public void bind(StaticContext stx) {
+        StaticContext whileContext = childScope(ScopeKind.WHILE, stx);
+
+        if (condition != null)
+            condition.bind(whileContext);
+
+        StaticContext bodyContext = childScope(ScopeKind.BLOCK, whileContext);
+
+        for (ASTNode node : body)
+            node.bind(bodyContext);
+    }
+
 }

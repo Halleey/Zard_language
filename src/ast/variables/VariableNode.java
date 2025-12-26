@@ -1,7 +1,8 @@
 package ast.variables;
 
 import ast.ASTNode;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
+import ast.context.StaticContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
@@ -28,9 +29,19 @@ public class VariableNode extends ASTNode {
         System.out.println(prefix + "Variable: " + name);
     }
 
+    @Override
+    public void bind(StaticContext stx) {
+        stx.resolveVariable(name);
+    }
+
     public String getName() {
         return name;
     }
 
-
+    @Override
+    public String toString() {
+        return "VariableNode{" +
+                "name='" + name + '\'' +
+                '}';
+    }
 }

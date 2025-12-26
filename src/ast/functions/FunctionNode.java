@@ -1,8 +1,10 @@
 package ast.functions;
 
 import ast.ASTNode;
+import ast.context.StaticContext;
+import ast.context.statics.ScopeKind;
 import ast.exceptions.ReturnValue;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
@@ -31,6 +33,7 @@ public class FunctionNode extends ASTNode {
     }
 
 
+
     public String getName() {
         return name;
     }
@@ -55,16 +58,8 @@ public class FunctionNode extends ASTNode {
         return body;
     }
 
-    public String getImplicitReceiverName() {
-        return implicitReceiverName;
-    }
-
     public void setImplicitReceiverName(String implicitReceiverName) {
         this.implicitReceiverName = implicitReceiverName;
-    }
-
-    public void setImplStructName(String structName) {
-        this.implStructName = structName;
     }
 
     public String getImplStructName() {
@@ -75,6 +70,33 @@ public class FunctionNode extends ASTNode {
     public List<ASTNode> getChildren() {
         return body;
     }
+    @Override
+    public void bind(StaticContext stx) {
+
+        StaticContext funcCtx =
+                new StaticContext(ScopeKind.FUNCTION, stx);
+
+        if (implicitReceiverName != null && implStructName != null) {
+            funcCtx.declareVariable(
+                    implicitReceiverName,
+                    implStructName
+            );
+        }
+
+        if (parameters != null) {
+            for (ParamInfo p : parameters) {
+                funcCtx.declareVariable(p.name(), p.type());
+            }
+        }
+
+        StaticContext bodyCtx =
+                new StaticContext(ScopeKind.BLOCK, funcCtx);
+
+        for (ASTNode node : body) {
+            node.bind(bodyCtx);
+        }
+    }
+
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {
@@ -101,16 +123,13 @@ public class FunctionNode extends ASTNode {
             ASTNode argNode = argNodes.get(i);
 
             if (param.isRef()) {
-                // &param: precisa ser uma variável simples
                 if (!(argNode instanceof ast.variables.VariableNode var)) {
                     throw new RuntimeException(
                             "Parâmetro por referência '&" + param.name() + "' exige uma variável, não uma expressão"
                     );
                 }
 
-                // pega o slot da variável no contexto do chamador
                 var slot = parentCtx.getSlot(var.getName());
-                // e liga o nome do parâmetro ao MESMO slot (aliasing)
                 localCtx.bindSlot(param.name(), slot);
 
             } else {

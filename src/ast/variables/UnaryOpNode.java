@@ -1,7 +1,8 @@
 package ast.variables;
 
 import ast.ASTNode;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
+import ast.context.StaticContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
@@ -62,6 +63,11 @@ public class UnaryOpNode extends ASTNode {
     public void print(String prefix) {
         System.out.println(prefix + "UnaryOp: " + operator);
         expr.print(prefix + "  ");
+    }
+
+    @Override
+    public void bind(StaticContext stx) {
+
     }
 
     public String getOperator() {

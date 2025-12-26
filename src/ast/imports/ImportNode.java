@@ -1,8 +1,9 @@
 package ast.imports;
 
 import ast.ASTNode;
+import ast.context.StaticContext;
 import ast.functions.FunctionNode;
-import ast.runtime.RuntimeContext;
+import ast.context.RuntimeContext;
 import ast.expressions.TypedValue;
 import ast.structs.ImplNode;
 import ast.structs.StructNode;
@@ -147,6 +148,11 @@ public class ImportNode extends ASTNode {
         System.out.println(prefix + "ImportNode:");
         System.out.println(prefix + "  ├─ Path : \"" + path + "\"");
         System.out.println(prefix + "  └─ Alias: " + alias);
+    }
+
+    @Override
+    public void bind(StaticContext stx) {
+
     }
 
 

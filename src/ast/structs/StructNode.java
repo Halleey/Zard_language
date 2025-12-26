@@ -68,7 +68,14 @@ public class StructNode extends ASTNode {
 
     @Override
     public void bind(StaticContext stx) {
-
+        Set<String> seen = new HashSet<>();
+        for (VariableDeclarationNode f : fields) {
+            if (!seen.add(f.getName())) {
+                throw new RuntimeException(
+                        "Campo duplicado no struct " + name + ": " + f.getName()
+                );
+            }
+        }
     }
 
     public StructNode cloneWithType(String elemType) {

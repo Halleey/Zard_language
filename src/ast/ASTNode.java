@@ -18,5 +18,9 @@ public abstract class ASTNode {
     public String getType() {
         return null;
     }
-    public abstract void bind(StaticContext stx);
+    public void bind(StaticContext stx) {
+        for (ASTNode child : getChildren()) {
+            child.bind(stx);
+        }
+    }
 }

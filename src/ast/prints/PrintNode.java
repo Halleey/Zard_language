@@ -71,6 +71,6 @@ public class PrintNode extends ASTNode {
 
     @Override
     public void bind(StaticContext stx) {
-
+        expr.bind(stx);
     }
 }

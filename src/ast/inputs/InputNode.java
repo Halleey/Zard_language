@@ -47,7 +47,6 @@ public class InputNode extends ASTNode {
             return new TypedValue("boolean", false);
         }
 
-        // se não for nenhum dos acima, é string
         return new TypedValue("string", input);
     }
 
@@ -55,11 +54,6 @@ public class InputNode extends ASTNode {
     public void print(String prefix) {
         System.out.println(prefix + "Input" +
                 (prompt != null && !prompt.isEmpty() ? " (\"" + prompt + "\")" : ""));
-    }
-
-    @Override
-    public void bind(StaticContext stx) {
-
     }
 
     public String getPrompt() {

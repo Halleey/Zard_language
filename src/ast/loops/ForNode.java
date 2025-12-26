@@ -2,6 +2,7 @@ package ast.loops;
 
 import ast.ASTNode;
 import ast.context.StaticContext;
+import ast.context.statics.ScopeKind;
 import ast.exceptions.BreakLoop;
 import ast.expressions.TypedValue;
 import ast.context.RuntimeContext;
@@ -110,8 +111,25 @@ public class ForNode extends ASTNode {
             for (ASTNode node : body) node.print(prefix + "    ");
         }
 
+    protected StaticContext childScope(ScopeKind kind, StaticContext parent) {
+        return new StaticContext(kind, parent);
+    }
+
+
     @Override
     public void bind(StaticContext stx) {
 
+        StaticContext forCtx = childScope(ScopeKind.FOR, stx);
+
+        if (init != null) init.bind(forCtx);
+        if (condition != null) condition.bind(forCtx);
+        if (increment != null) increment.bind(forCtx);
+
+        StaticContext bodyCtx = childScope(ScopeKind.BLOCK, forCtx);
+        for (ASTNode node : body) {
+            node.bind(bodyCtx);
+        }
     }
+
+
 }

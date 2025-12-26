@@ -10,10 +10,7 @@ import ast.context.StructDefinition;
 import ast.variables.VariableDeclarationNode;
 import low.module.LLVMEmitVisitor;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class StructInstaceNode extends ASTNode {
     private final String structName;
@@ -167,5 +164,28 @@ public class StructInstaceNode extends ASTNode {
     @Override
     public void bind(StaticContext stx) {
 
+        StructDefinition def = stx.resolveStruct(structName);
+
+        Set<String> fieldNames = new HashSet<>();
+        for (VariableDeclarationNode f : def.getFields()) {
+            fieldNames.add(f.getName());
+        }
+
+        for (String name : namedValues.keySet()) {
+            if (!fieldNames.contains(name)) {
+                throw new RuntimeException(
+                        "Campo inexistente no struct " + structName + ": " + name
+                );
+            }
+        }
+
+        for (ASTNode n : positionalValues) {
+            n.bind(stx);
+        }
+
+        for (ASTNode n : namedValues.values()) {
+            n.bind(stx);
+        }
     }
+
 }

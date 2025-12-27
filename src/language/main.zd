@@ -1,29 +1,10 @@
 
 main {
-    double a = 10;
-    double b = 3;
-    int n = 5;
-    int z = 10;
-    print(z);
-    List pessoas = ("zard","angel");
-    List pe = ("zard","angel");
-    Struct People{
-    int idade;
-    string nome;
-    }
-    print(pe);
-    print(pessoas);
-
-
-
-    while (a > 0) {
-    a --;
-    List <string> nomes;
-
-    }
-    for(int i = 0; i < 10; i ++) {
-    println("currently");
+    int x = 3;
+    function void printar(int i) {
+    print(i);
     }
 
+   call printar(x);
 }
 

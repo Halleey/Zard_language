@@ -81,7 +81,6 @@ public class FunctionEmitter {
         sb.append("define ").append(llvmRetType).append(" @").append(irName)
                 .append("(").append(String.join(", ", paramSignatures)).append(") {\nentry:\n");
 
-        // ========= ALOCAÇÃO / REGISTRO DE PONTEIROS =========
         for (ParamInfo p : fn.getParameters()) {
 
             String paramName = p.name();
@@ -97,12 +96,12 @@ public class FunctionEmitter {
                 sb.append("  store ").append(valueLLVM)
                         .append(" %").append(paramName)
                         .append(", ").append(valueLLVM).append("* ")
-                        .append(paramPtrName).append("\n")
-                        .append(";;VAL:").append(paramPtrName)
-                        .append(";;TYPE:").append(valueLLVM).append("\n");
+                        .append(paramPtrName).append("\n");
 
                 visitor.getVariableEmitter().registerVarPtr(paramName, paramPtrName);
+
             }
+
         }
         for (ASTNode stmt : fn.getBody()) {
             sb.append(stmt.accept(visitor));

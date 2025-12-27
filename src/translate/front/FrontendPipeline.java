@@ -46,8 +46,8 @@ public class FrontendPipeline {
         desugarer.desugar(ast);
 
 
-        StaticBinder binder = new StaticBinder();
-        binder.bind(ast);
+//        StaticBinder binder = new StaticBinder();
+//        binder.bind(ast);
 
         EscapeAnalyzer escapeAnalyzer = new EscapeAnalyzer();
         this.escapeInfo = escapeAnalyzer.analyze(ast);

@@ -60,13 +60,23 @@ public class StaticContext {
     }
 
     public StaticStructDefinition resolveStruct(String name) {
-        StaticStructDefinition def = structs.get(name);
+        String baseName = normalizeStructName(name);
+
+        StaticStructDefinition def = structs.get(baseName);
         if (def != null) return def;
 
-        if (parent != null) return parent.resolveStruct(name);
+        if (parent != null) return parent.resolveStruct(baseName);
 
         throw new RuntimeException("Struct não declarado: " + name);
     }
+
+
+    private String normalizeStructName(String name) {
+        int idx = name.indexOf('<');
+        return idx == -1 ? name : name.substring(0, idx);
+    }
+
+
 
 
     public Symbol declareVariable(String name, String type) {

@@ -1,8 +1,8 @@
 package ast.lists;
 
 import ast.ASTNode;
-import ast.context.runtime.RuntimeContext;
-import ast.context.statics.StaticContext;
+import context.runtime.RuntimeContext;
+import context.statics.StaticContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 

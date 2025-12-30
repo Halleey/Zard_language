@@ -1,4 +1,4 @@
-package ast.context.statics;
+package context.statics;
 
 import java.util.LinkedHashMap;
 import java.util.List;

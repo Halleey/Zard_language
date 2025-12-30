@@ -1,6 +1,4 @@
-package ast.context.statics;
-
-import ast.context.runtime.StructDefinition;
+package context.statics;
 
 import java.util.*;
 

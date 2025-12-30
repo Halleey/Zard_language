@@ -5,9 +5,12 @@ main {
 
    }
    People p = {"zard"};
-   function void alterar(People t) {
-   t.nome = "halley";
-   }
+function People alterar(People t) {
+    return t;
+    t.nome = "isso nunca executa";
+}
+
+
 
    print(p);
    call alterar(p);

@@ -3,6 +3,8 @@ package translate.front;
 import ast.ASTNode;
 
 import ast.prints.ASTPrinter;
+import context.analyzers.FlowAnalyzer;
+import context.analyzers.FlowPass;
 import memory_manager.EscapeAnalyzer;
 import memory_manager.EscapeInfo;
 import tokens.Lexer;
@@ -48,6 +50,9 @@ public class FrontendPipeline {
 
         StaticBinder binder = new StaticBinder();
         binder.bind(ast);
+        FlowPass flowPass = new FlowPass();
+        flowPass.analyze(ast);
+
 
         EscapeAnalyzer escapeAnalyzer = new EscapeAnalyzer();
         this.escapeInfo = escapeAnalyzer.analyze(ast);

@@ -1,10 +1,10 @@
 package ast.loops;
 
 import ast.ASTNode;
-import ast.context.statics.StaticContext;
-import ast.context.statics.ScopeKind;
+import context.statics.StaticContext;
+import context.statics.ScopeKind;
 import ast.exceptions.BreakLoop;
-import ast.context.runtime.RuntimeContext;
+import context.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 

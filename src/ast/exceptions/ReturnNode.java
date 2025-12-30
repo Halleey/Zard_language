@@ -1,8 +1,8 @@
 package ast.exceptions;
 
 import ast.ASTNode;
-import ast.context.runtime.RuntimeContext;
-import ast.context.statics.StaticContext;
+import context.runtime.RuntimeContext;
+import context.statics.StaticContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
@@ -41,7 +41,9 @@ public class ReturnNode extends ASTNode {
 
     @Override
     public void bind(StaticContext stx) {
-
+        if(expr != null) {
+        expr.bind(stx);
+        }
     }
 
     public ASTNode getExpr() {

@@ -1,4 +1,4 @@
-package ast.context.statics;
+package context.statics;
 
 public class StaticFields {
     private final String name;

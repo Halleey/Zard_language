@@ -6,32 +6,32 @@ main {
     int n = 5;
 
 
-    print(math.sum(a, b));
-    print(math.sub(a, b));
-    print(math.mul(a, b));
-    print(math.div(a, b));
+    println(math.sum(a, b));
+    println(math.sub(a, b));
+    println(math.mul(a, b));
+    println(math.div(a, b));
 
 
-    print(math.pow(a, 3));
+    println(math.pow(a, 3));
 
 
-    print(math.factorial(n));
+    println(math.factorial(n));
 
-    print(math.sqrt(a));
-
-
-    print(math.sin(a));
-    print(math.cos(a));
+    println(math.sqrt(a));
 
 
-    print("Tentando dividir por zero:");
-    print(math.div(a, 0));
+    println(math.sin(a));
+    println(math.cos(a));
 
-    print("Tentando fatorial de número negativo:");
-    print(math.factorial(-3));
 
-    print("Tentando raiz quadrada de número negativo:");
-    print(math.sqrt(-9));
+    println("Tentando dividir por zero:");
+    println(math.div(a, 0));
 
-    print("Fim dos testes.");
+    println("Tentando fatorial de número negativo:");
+    println(math.factorial(-3));
+
+    println("Tentando raiz quadrada de número negativo:");
+    println(math.sqrt(-9));
+
+    println("Fim dos testes.");
 }

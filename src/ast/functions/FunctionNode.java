@@ -1,10 +1,10 @@
 package ast.functions;
 
 import ast.ASTNode;
-import ast.context.statics.StaticContext;
-import ast.context.statics.ScopeKind;
+import context.statics.StaticContext;
+import context.statics.ScopeKind;
 import ast.exceptions.ReturnValue;
-import ast.context.runtime.RuntimeContext;
+import context.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
@@ -88,7 +88,6 @@ public class FunctionNode extends ASTNode {
                 funcCtx.declareVariable(p.name(), p.type());
             }
         }
-
         StaticContext bodyCtx =
                 new StaticContext(ScopeKind.BLOCK, funcCtx);
 
@@ -106,7 +105,6 @@ public class FunctionNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        // registra a própria função no contexto como valor
         ctx.declareVariable(name, new TypedValue("function", this));
         return null;
     }
@@ -150,23 +148,6 @@ public class FunctionNode extends ASTNode {
         }
 
         return null;
-    }
-
-    private TypedValue promoteTypeIfNeeded(TypedValue value, String targetType) {
-        if (value == null) return null;
-        String valueType = value.type();
-
-        if (valueType.equals(targetType)) return value;
-
-        if ("double".equals(targetType) && "int".equals(valueType)) {
-            return new TypedValue("double", ((Integer) value.value()).doubleValue());
-        }
-
-        if (targetType.startsWith("List<") && "List".equals(valueType)) {
-            return new TypedValue(targetType, value.value());
-        }
-
-        return value;
     }
 
     @Override

@@ -1,7 +1,7 @@
 package ast.inputs;
 
 import ast.ASTNode;
-import ast.context.runtime.RuntimeContext;
+import context.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 

@@ -14,7 +14,7 @@ source_filename = "programa.ll"
 @.strStr_noNL = private constant [3 x i8] c"%s\00"
 @.strEmpty = private constant [1 x i8] zeroinitializer
 @.str0 = private constant [5 x i8] c"zard\00"
-@.str1 = private constant [7 x i8] c"halley\00"
+@.str1 = private constant [19 x i8] c"isso nunca executa\00"
 
 declare i32 @printf(ptr, ...)
 
@@ -41,20 +41,20 @@ entry:
   ret void
 }
 
-define void @alterar(ptr %t) {
+define ptr @alterar(ptr %t) {
 entry:
   %tmp3 = call ptr @createString(ptr @.str1)
   store ptr %tmp3, ptr %t, align 8
-  ret void
+  ret ptr %t
 }
 
 define i32 @main() {
-  %tmp5 = call ptr @malloc(i64 8)
-  %tmp8 = call ptr @createString(ptr @.str0)
-  store ptr %tmp8, ptr %tmp5, align 8
-  call void @print_People(ptr %tmp5)
-  call void @alterar(ptr %tmp5)
-  call void @print_People(ptr %tmp5)
+  %tmp6 = call ptr @malloc(i64 8)
+  %tmp9 = call ptr @createString(ptr @.str0)
+  store ptr %tmp9, ptr %tmp6, align 8
+  call void @print_People(ptr %tmp6)
+  %tmp13 = call ptr @alterar(ptr %tmp6)
+  call void @print_People(ptr %tmp6)
   %1 = call i32 @getchar()
   ret i32 0
 }

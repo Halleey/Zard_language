@@ -1,11 +1,11 @@
 package ast.structs;
 
 import ast.ASTNode;
-import ast.context.statics.StaticContext;
+import context.statics.StaticContext;
 import ast.expressions.TypedValue;
 import ast.functions.FunctionNode;
 import ast.functions.ParamInfo;
-import ast.context.runtime.RuntimeContext;
+import context.runtime.RuntimeContext;
 import ast.variables.VariableNode;
 import low.module.LLVMEmitVisitor;
 

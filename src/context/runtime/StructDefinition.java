@@ -1,4 +1,4 @@
-package ast.context.runtime;
+package context.runtime;
 
 import ast.variables.VariableDeclarationNode;
 

@@ -1,13 +1,13 @@
 package ast.structs;
 
 import ast.ASTNode;
-import ast.context.statics.StaticContext;
-import ast.context.statics.StaticStructDefinition;
+import context.statics.StaticContext;
+import context.statics.StaticStructDefinition;
 import ast.expressions.TypedValue;
 import ast.lists.DynamicList;
 import ast.lists.ListNode;
-import ast.context.runtime.RuntimeContext;
-import ast.context.runtime.StructDefinition;
+import context.runtime.RuntimeContext;
+import context.runtime.StructDefinition;
 import ast.variables.VariableDeclarationNode;
 import low.module.LLVMEmitVisitor;
 

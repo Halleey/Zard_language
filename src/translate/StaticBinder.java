@@ -1,8 +1,8 @@
 package translate;
 
 import ast.ASTNode;
-import ast.context.statics.StaticContext;
-import ast.context.statics.ScopeKind;
+import context.statics.StaticContext;
+import context.statics.ScopeKind;
 
 import java.util.List;
 public class StaticBinder {

@@ -1,10 +1,10 @@
 package ast.variables;
 import ast.ASTNode;
-import ast.context.statics.StaticContext;
+import context.statics.StaticContext;
 import ast.lists.DynamicList;
 import ast.lists.ListNode;
 
-import ast.context.runtime.RuntimeContext;
+import context.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
 import ast.structs.StructInstaceNode;
 import low.module.LLVMEmitVisitor;

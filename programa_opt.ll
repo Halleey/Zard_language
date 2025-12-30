@@ -13,6 +13,8 @@ source_filename = "programa.ll"
 @.strStr = private constant [4 x i8] c"%s\0A\00"
 @.strStr_noNL = private constant [3 x i8] c"%s\00"
 @.strEmpty = private constant [1 x i8] zeroinitializer
+@.str0 = private constant [5 x i8] c"zard\00"
+@.str1 = private constant [7 x i8] c"halley\00"
 
 declare i32 @printf(ptr, ...)
 
@@ -32,14 +34,27 @@ declare i1 @strcmp_eq(ptr, ptr)
 
 declare i1 @strcmp_neq(ptr, ptr)
 
-define void @printar(i32 %i) {
+define void @print_People(ptr %p) {
 entry:
-  %0 = call i32 (ptr, ...) @printf(ptr @.strInt_noNL, i32 %i)
+  %v0 = load ptr, ptr %p, align 8
+  call void @printString(ptr %v0)
+  ret void
+}
+
+define void @alterar(ptr %t) {
+entry:
+  %tmp3 = call ptr @createString(ptr @.str1)
+  store ptr %tmp3, ptr %t, align 8
   ret void
 }
 
 define i32 @main() {
-  call void @printar(i32 3)
+  %tmp5 = call ptr @malloc(i64 8)
+  %tmp8 = call ptr @createString(ptr @.str0)
+  store ptr %tmp8, ptr %tmp5, align 8
+  call void @print_People(ptr %tmp5)
+  call void @alterar(ptr %tmp5)
+  call void @print_People(ptr %tmp5)
   %1 = call i32 @getchar()
   ret i32 0
 }

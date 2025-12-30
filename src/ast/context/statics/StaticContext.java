@@ -1,9 +1,7 @@
-package ast.context;
+package ast.context.statics;
 
-import ast.context.statics.ScopeKind;
-import ast.context.statics.Symbol;
+import ast.context.runtime.StructDefinition;
 
-import java.util.*;
 import java.util.*;
 
 public class StaticContext {
@@ -16,7 +14,7 @@ public class StaticContext {
     private final List<StaticContext> children = new ArrayList<>();
 
     private final Map<String, Symbol> variables = new LinkedHashMap<>();
-    private final Map<String, StructDefinition> structs = new LinkedHashMap<>();
+    private final Map<String, StaticStructDefinition> structs = new LinkedHashMap<>();
 
     private int nextSlot = 0;
 
@@ -54,8 +52,7 @@ public class StaticContext {
         return variables.values();
     }
 
-
-    public void declareStruct(String name, StructDefinition def) {
+    public void declareStruct(String name, StaticStructDefinition def) {
         if (structs.containsKey(name)) {
             throw new RuntimeException(
                     "Struct já declarado neste escopo: " + name
@@ -64,8 +61,8 @@ public class StaticContext {
         structs.put(name, def);
     }
 
-    public StructDefinition resolveStruct(String name) {
-        StructDefinition def = structs.get(name);
+    public StaticStructDefinition resolveStruct(String name) {
+        StaticStructDefinition def = structs.get(name);
         if (def != null) return def;
 
         if (parent != null) return parent.resolveStruct(name);

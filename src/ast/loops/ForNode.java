@@ -1,11 +1,11 @@
 package ast.loops;
 
 import ast.ASTNode;
-import ast.context.StaticContext;
+import ast.context.statics.StaticContext;
 import ast.context.statics.ScopeKind;
 import ast.exceptions.BreakLoop;
 import ast.expressions.TypedValue;
-import ast.context.RuntimeContext;
+import ast.context.runtime.RuntimeContext;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;

@@ -1,7 +1,7 @@
 package ast.expressions;
 
 import ast.functions.FunctionNode;
-import ast.context.RuntimeContext;
+import ast.context.runtime.RuntimeContext;
 
 import java.util.Map;
 

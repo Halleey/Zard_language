@@ -1,9 +1,11 @@
 package ast.structs;
 
 import ast.ASTNode;
-import ast.context.StaticContext;
+import ast.context.statics.StaticContext;
+import ast.context.statics.StaticFields;
+import ast.context.statics.StaticStructDefinition;
 import ast.expressions.TypedValue;
-import ast.context.RuntimeContext;
+import ast.context.runtime.RuntimeContext;
 import ast.variables.VariableDeclarationNode;
 import low.module.LLVMEmitVisitor;
 
@@ -68,6 +70,7 @@ public class StructNode extends ASTNode {
 
     @Override
     public void bind(StaticContext stx) {
+
         Set<String> seen = new HashSet<>();
         for (VariableDeclarationNode f : fields) {
             if (!seen.add(f.getName())) {
@@ -76,7 +79,28 @@ public class StructNode extends ASTNode {
                 );
             }
         }
+
+        List<StaticFields> staticFields = new ArrayList<>();
+
+        int index = 0;
+        int offset = 0;
+
+        for (VariableDeclarationNode f : fields) {
+            staticFields.add(
+                    new StaticFields(
+                            f.getName(),
+                            f.getType(),
+                            index++,
+                            offset++
+                    )
+            );
+        }
+
+        StaticStructDefinition def = new StaticStructDefinition(name, staticFields);
+
+        stx.declareStruct(name, def);
     }
+
 
     public StructNode cloneWithType(String elemType) {
         List<VariableDeclarationNode> clonedFields = new ArrayList<>();

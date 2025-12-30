@@ -1,7 +1,7 @@
 package translate;
 
 import ast.ASTNode;
-import ast.context.StaticContext;
+import ast.context.statics.StaticContext;
 import ast.context.statics.ScopeKind;
 
 import java.util.List;

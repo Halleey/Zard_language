@@ -1,10 +1,15 @@
 
 main {
-    int x = 3;
-    function void printar(int i) {
-    print(i);
-    }
+   Struct People {
+   string nome;
 
-   call printar(x);
+   }
+   People p = {"zard"};
+   function void alterar(People t) {
+   t.nome = "halley";
+   }
+
+   print(p);
+   call alterar(p);
+   print(p);
 }
-

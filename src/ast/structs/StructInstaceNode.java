@@ -1,12 +1,13 @@
 package ast.structs;
 
 import ast.ASTNode;
-import ast.context.StaticContext;
+import ast.context.statics.StaticContext;
+import ast.context.statics.StaticStructDefinition;
 import ast.expressions.TypedValue;
 import ast.lists.DynamicList;
 import ast.lists.ListNode;
-import ast.context.RuntimeContext;
-import ast.context.StructDefinition;
+import ast.context.runtime.RuntimeContext;
+import ast.context.runtime.StructDefinition;
 import ast.variables.VariableDeclarationNode;
 import low.module.LLVMEmitVisitor;
 
@@ -160,21 +161,22 @@ public class StructInstaceNode extends ASTNode {
         list.addAll(namedValues.values());
         return list;
     }
-
     @Override
     public void bind(StaticContext stx) {
 
-        StructDefinition def = stx.resolveStruct(structName);
-
-        Set<String> fieldNames = new HashSet<>();
-        for (VariableDeclarationNode f : def.getFields()) {
-            fieldNames.add(f.getName());
-        }
+        StaticStructDefinition def = stx.resolveStruct(structName);
 
         for (String name : namedValues.keySet()) {
-            if (!fieldNames.contains(name)) {
+            def.getField(name);
+        }
+
+        if (!positionalValues.isEmpty()) {
+            if (positionalValues.size() > def.getFields().size()) {
                 throw new RuntimeException(
-                        "Campo inexistente no struct " + structName + ": " + name
+                        "Struct " + structName +
+                                " recebe valores demais (" +
+                                positionalValues.size() +
+                                " > " + def.getFields().size() + ")"
                 );
             }
         }

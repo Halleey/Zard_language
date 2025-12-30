@@ -1,9 +1,9 @@
 package ast.imports;
 
 import ast.ASTNode;
-import ast.context.StaticContext;
+import ast.context.statics.StaticContext;
 import ast.functions.FunctionNode;
-import ast.context.RuntimeContext;
+import ast.context.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
 import ast.structs.ImplNode;
 import ast.structs.StructNode;

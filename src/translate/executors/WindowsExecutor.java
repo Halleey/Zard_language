@@ -4,7 +4,7 @@ import ast.ASTNode;
 import ast.TypeSpecializer;
 import ast.exceptions.ReturnValue;
 import ast.prints.ASTPrinter;
-import ast.context.RuntimeContext;
+import ast.context.runtime.RuntimeContext;
 import low.module.LLVMGenerator;
 import low.module.LLVisitorMain;
 import tokens.Lexer;

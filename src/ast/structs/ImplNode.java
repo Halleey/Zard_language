@@ -1,10 +1,10 @@
 package ast.structs;
 
 import ast.ASTNode;
-import ast.context.StaticContext;
+import ast.context.statics.StaticContext;
 import ast.expressions.TypedValue;
 import ast.functions.FunctionNode;
-import ast.context.RuntimeContext;
+import ast.context.runtime.RuntimeContext;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;

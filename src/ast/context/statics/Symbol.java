@@ -1,7 +1,5 @@
 package ast.context.statics;
 
-import ast.context.StaticContext;
-
 public class Symbol {
     private final String name;
     private final String type;

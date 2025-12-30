@@ -1,7 +1,7 @@
 package translate.front;
 
 import ast.ASTNode;
-import ast.context.RuntimeContext;
+import ast.context.runtime.RuntimeContext;
 
 import java.util.List;
 public class ASTInterpreter {

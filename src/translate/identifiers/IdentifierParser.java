@@ -151,7 +151,7 @@ public class IdentifierParser {
         }
 
         parser.eat(Token.TokenType.DELIMITER, "}");
-        return new StructUpdateNode(target, fieldUpdates, nestedUpdates);
+        return new  StructUpdateNode(target, fieldUpdates, nestedUpdates);
     }
     public ASTNode parseAsExpression(String name) {
 

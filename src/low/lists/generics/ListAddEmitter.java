@@ -48,13 +48,6 @@ public class ListAddEmitter {
             String valTmp = extractTemp(valCode);
             String valType = extractType(valCode);
 
-            System.out.println("[ListAddEmitter] (SPECIALIZED MODE)");
-            System.out.println("  listCode:\n" + listCode);
-            System.out.println("  → listTmp = " + listTmp);
-            System.out.println("  → listType = " + listType);
-            System.out.println("  valCode:\n" + valCode);
-            System.out.println("  → valTmp = " + valTmp);
-            System.out.println("  → valType = " + valType);
 
             String func = switch (specialized) {
                 case "int"    -> "arraylist_add_int";
@@ -64,16 +57,10 @@ public class ListAddEmitter {
                 default       -> "arraylist_add_ptr";
             };
 
-            System.out.println("[ListAddEmitter] Runtime function chosen = " + func);
-
             String listLLVMType;
 
-            // ========== CASO: string ==========
             if (specialized.equals("string")) {
-                // List<string> → %ArrayList* + arraylist_add_String(%String*)
-                listLLVMType = "%ArrayList*";
 
-                System.out.println("[ListAddEmitter] Specialized STRING branch acionado");
 
                 // Se por algum motivo o campo não for %ArrayList*, faz bitcast
                 if (!listType.equals("%ArrayList*")) {
@@ -86,18 +73,12 @@ public class ListAddEmitter {
                     listType = "%ArrayList*";
                 }
 
-                // valType deveria ser %String*
-                if (!valType.equals("%String*")) {
-                    // Se veio como i8* ou outra coisa, você poderia ajustar aqui se quiser
-                    System.out.println("[ListAddEmitter][WARN] string especializada com valType=" + valType);
-                }
+
 
                 llvm.append("  call void @arraylist_add_String(%ArrayList* ")
                         .append(listTmp)
                         .append(", %String* ").append(valTmp)
                         .append(")\n");
-
-                // ========== CASOS PRIMITIVOS: int/double/bool ==========
             } else if (specialized.equals("int") ||
                     specialized.equals("double") ||
                     specialized.equals("bool") ||
@@ -106,12 +87,9 @@ public class ListAddEmitter {
                 String normalized = normalizeListType(specialized);
                 listLLVMType = "%struct.ArrayList" + normalized + "*";
 
-                System.out.println("[ListAddEmitter] normalized = " + normalized);
-                System.out.println("[ListAddEmitter] listLLVMType = " + listLLVMType);
 
                 String llvmType = mapToLLVMType(specialized);
 
-                System.out.println("[ListAddEmitter] llvmType(value) = " + llvmType);
 
                 // Se listType não bater com o tipo especializado, faz bitcast
                 if (!listType.equals(listLLVMType)) {
@@ -121,7 +99,6 @@ public class ListAddEmitter {
                             .append(listType).append(" ").append(listTmp)
                             .append(" to ").append(listLLVMType).append("\n");
                     listTmp = castList;
-                    listType = listLLVMType;
                 }
 
                 // Para primitivos, valType deve bater com llvmType; se não, poderia castar aqui também
@@ -130,12 +107,7 @@ public class ListAddEmitter {
                         .append(", ").append(llvmType).append(" ").append(valTmp)
                         .append(")\n");
 
-                // ========== CASO GENÉRICO: qualquer outro tipo (Item, Pessoa, etc.) ==========
             } else {
-                // Aqui queremos usar o ArrayList genérico de ponteiros
-                listLLVMType = "%ArrayList*";
-
-                System.out.println("[ListAddEmitter] Specialized PTR branch acionado para tipo=" + specialized);
 
                 // listTmp deve ser %ArrayList*
                 if (!listType.equals("%ArrayList*")) {
@@ -177,14 +149,9 @@ public class ListAddEmitter {
                                     : "%ArrayList*"
                     ).append("\n");
 
-            System.out.println("[ListAddEmitter] ==== FIM DO SPECIALIZED ====\n");
             return llvm.toString();
         }
 
-        // =========================
-        // MODO FALLBACK (sem specialization)
-        // =========================
-        System.out.println("[ListAddEmitter] (FALLBACK MODE)");
 
         String listCode = node.getListNode().accept(visitor);
         llvm.append(listCode);
@@ -196,27 +163,16 @@ public class ListAddEmitter {
         String valTmp = extractTemp(valCode);
         String valType = extractType(valCode);
 
-        System.out.println("  listCode:\n" + listCode);
-        System.out.println("  → listTmp = " + listTmp);
-        System.out.println("  → listType = " + listType);
-        System.out.println("  valCode:\n" + valCode);
-        System.out.println("  → valTmp = " + valTmp);
-        System.out.println("  → valType = " + valType);
-
         if (valType.equals("i32")) {
-            System.out.println("[ListAddEmitter] → INT fallback");
             return intAddEmitter.emit(node, visitor);
         }
         if (valType.equals("double")) {
-            System.out.println("[ListAddEmitter] → DOUBLE fallback");
             return doubleEmitter.emit(node, visitor);
         }
         if (valType.equals("i1")) {
-            System.out.println("[ListAddEmitter] → BOOL fallback");
             return boolAddEmitter.emit(node, visitor);
         }
 
-        System.out.println("[ListAddEmitter] → PTR/STRING fallback");
 
         String listCastTmp = temps.newTemp();
         llvm.append("  ").append(listCastTmp)
@@ -244,7 +200,6 @@ public class ListAddEmitter {
 
         llvm.append(";;VAL:").append(listCastTmp).append(";;TYPE:%ArrayList*\n");
 
-        System.out.println("[ListAddEmitter] ==== FIM FALBACK ====\n");
         return llvm.toString();
     }
 
@@ -255,8 +210,6 @@ public class ListAddEmitter {
     }
 
     private String extractType(String code) {
-        // ANTES: usava primeiro ";;TYPE:" e podia pegar tipo errado.
-        // AGORA: usa o ÚLTIMO ";;TYPE:" para casar com o último ;;VAL:.
         int lastTypeIdx = code.lastIndexOf(";;TYPE:");
         int endIdx = code.indexOf("\n", lastTypeIdx);
         return code.substring(lastTypeIdx + 7, endIdx == -1 ? code.length() : endIdx).trim();

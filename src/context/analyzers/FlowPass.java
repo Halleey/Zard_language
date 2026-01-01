@@ -4,6 +4,7 @@ import ast.ASTNode;
 import ast.functions.FunctionNode;
 
 import java.util.List;
+
 public class FlowPass {
 
     private final FlowAnalyzer analyzer = new FlowAnalyzer();

@@ -6,8 +6,8 @@ main {
    }
    People p = {"zard"};
 function People alterar(People t) {
-    return t;
     t.nome = "isso nunca executa";
+    return t;
 }
 
 

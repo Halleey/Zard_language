@@ -7,6 +7,7 @@ import context.analyzers.FlowAnalyzer;
 import context.analyzers.FlowPass;
 import memory_manager.EscapeAnalyzer;
 import memory_manager.EscapeInfo;
+import memory_manager.ownership.OwnershipAnalyzer;
 import tokens.Lexer;
 import tokens.Token;
 import translate.StaticBinder;
@@ -15,6 +16,8 @@ import translate.identifiers.MethodDesugarer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+
+
 public class FrontendPipeline {
 
     private final String filePath;
@@ -53,6 +56,10 @@ public class FrontendPipeline {
         FlowPass flowPass = new FlowPass();
         flowPass.analyze(ast);
 
+
+        OwnershipAnalyzer ownershipAnalyzer = new OwnershipAnalyzer(true);
+        ownershipAnalyzer.analyzeBlock(ast);
+        ownershipAnalyzer.dumpFinalStates();
 
         EscapeAnalyzer escapeAnalyzer = new EscapeAnalyzer();
         this.escapeInfo = escapeAnalyzer.analyze(ast);

@@ -1,4 +1,6 @@
 package context.analyzers;
+
+
 public class FlowInfo {
     public boolean mayReturn;
     public boolean alwaysReturn;

@@ -4,24 +4,25 @@ import ast.ASTNode;
 import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
+import context.statics.list.ListValue;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;// Nó AST que representa uma lista tipada
 
-public class ListNode extends ASTNode {
+public final class ListNode extends ASTNode {
 
     private final DynamicList list;
-    private final String type;
+    private String type; // definido após bind()
 
     public ListNode(DynamicList list) {
         this.list = list;
-        this.type = "List<" + list.getElementType() + ">";
     }
 
     public DynamicList getList() {
         return list;
     }
 
+    @Override
     public String getType() {
         return type;
     }
@@ -29,6 +30,52 @@ public class ListNode extends ASTNode {
     @Override
     public void bind(StaticContext stx) {
 
+        for (ASTNode node : list.getElements()) {
+            node.bind(stx);
+        }
+
+        if (list.getElementType().equals("?")) {
+
+            if (list.getElements().isEmpty()) {
+                throw new RuntimeException("Lista vazia sem tipo explícito");
+            }
+
+            ASTNode first = list.getElements().get(0);
+            String inferredType = first.getType();
+
+            if (inferredType == null) {
+                throw new RuntimeException(
+                        "Não foi possível inferir o tipo da lista"
+                );
+            }
+
+            list.lockElementType(inferredType);
+        }
+
+        String expected = getString();
+
+        this.type = "List<" + expected + ">";
+    }
+
+    private String getString() {
+        String expected = list.getElementType();
+
+        for (ASTNode node : list.getElements()) {
+            String nodeType = node.getType();
+
+            if (nodeType == null) {
+                throw new RuntimeException(
+                        "Elemento da lista sem tipo inferido"
+                );
+            }
+
+            if (!nodeType.equals(expected)) {
+                throw new RuntimeException(
+                        "Tipo inválido na lista <" + expected + ">: " + nodeType
+                );
+            }
+        }
+        return expected;
     }
 
     @Override
@@ -38,7 +85,14 @@ public class ListNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        return new TypedValue(type, list);
+
+        ListValue value = new ListValue(list.getElementType());
+
+        for (ASTNode node : list.getElements()) {
+            value.add(node.evaluate(ctx));
+        }
+
+        return new TypedValue(type, value);
     }
 
     @Override

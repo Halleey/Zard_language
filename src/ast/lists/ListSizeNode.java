@@ -4,6 +4,7 @@ import ast.ASTNode;
 import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
+import context.statics.list.ListValue;
 import low.module.LLVMEmitVisitor;
 
 public class ListSizeNode extends ASTNode {
@@ -21,17 +22,10 @@ public class ListSizeNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        // Avalia o ASTNode para obter o valor
-        TypedValue listVal = nome.evaluate(ctx);
 
-        if (!listVal.type().startsWith("List")) {
-            throw new RuntimeException("O valor avaliado não é uma lista");
-        }
+        ListValue list = (ListValue)nome.evaluate(ctx).value();
 
-        DynamicList dynamicList = (DynamicList) listVal.value();
-        int size = dynamicList.size();
-
-        return new TypedValue("int", size);
+        return new TypedValue("int", list.size());
     }
 
     public ASTNode getNome() {

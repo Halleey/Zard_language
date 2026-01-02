@@ -7,6 +7,7 @@ import ast.lists.ListNode;
 import context.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
 import ast.structs.StructInstaceNode;
+import context.statics.list.ListValue;
 import low.module.LLVMEmitVisitor;
 
 import java.util.ArrayList;
@@ -15,10 +16,10 @@ import java.util.List;
 
 
 public class VariableDeclarationNode extends ASTNode {
+
     private final String name;
     private final String type;
     public final ASTNode initializer;
-
 
     public VariableDeclarationNode(String name, String type, ASTNode initializer) {
         this.name = name;
@@ -33,6 +34,7 @@ public class VariableDeclarationNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
+
         TypedValue value;
 
         if (ctxHasStruct(ctx, type)) {
@@ -46,29 +48,27 @@ public class VariableDeclarationNode extends ASTNode {
             }
 
             value = instanceNode.evaluate(ctx);
+            ctx.declareVariable(name, value);
+            return value;
+        }
 
-        } else {
+        if (initializer == null) {
             value = createInitialValue();
+            ctx.declareVariable(name, value);
+            return value;
+        }
+
+        value = initializer.evaluate(ctx);
+
+        if ("float".equals(type) && "double".equals(value.type())) {
+            double d = (Double) value.value();
+            value = new TypedValue("float", (float) d);
         }
 
         ctx.declareVariable(name, value);
-
-        if (initializer != null && !(initializer instanceof StructInstaceNode)) {
-            if (initializer instanceof ListNode) {
-                value = evaluateList(ctx, (ListNode) initializer, (DynamicList) value.value());
-            }else {
-                value = initializer.evaluate(ctx);
-
-                if ("float".equals(type) && "double".equals(value.type())) {
-                    double d = (Double) value.value();
-                    value = new TypedValue("float", (float) d);
-                }
-                ctx.setVariable(name, value);
-            }
-        }
-
         return value;
     }
+
 
     private boolean ctxHasStruct(RuntimeContext ctx, String typeName) {
         try {
@@ -94,43 +94,27 @@ public class VariableDeclarationNode extends ASTNode {
         return typeName;
     }
 
-
-
-    private TypedValue evaluateList(RuntimeContext ctx, ListNode listNode, DynamicList list) {
-        for (ASTNode elem : listNode.getList().getElements()) {
-            list.add(elem.evaluate(ctx));
-        }
-        return new TypedValue(type, list);
-    }
-
     public TypedValue createInitialValue() {
+
         if (type.startsWith("List<")) {
             String elementType = getListElementType(type);
-            return new TypedValue(type, new DynamicList(elementType, new ArrayList<>()));
-        }
-        else if (type.startsWith("Struct<")) {
-            extractStructName(type);
-            return new TypedValue(type, new LinkedHashMap<String, TypedValue>());
+            return new TypedValue(type, new ListValue(elementType));
         }
 
-        else {
-            return createDefaultValue(type);
-        }
-    }
-
-    private TypedValue createDefaultValue(String type) {
         if (type.startsWith("Struct<")) {
             return new TypedValue(type, new LinkedHashMap<String, TypedValue>());
         }
-        if (type.startsWith("Struct")) {
-            return new TypedValue(type, new LinkedHashMap<String, TypedValue>());
-        }
+
+        return createDefaultValue(type);
+    }
+
+    private TypedValue createDefaultValue(String type) {
         return switch (type) {
             case "int" -> new TypedValue("int", 0);
             case "double" -> new TypedValue("double", 0.0);
+            case "float" -> new TypedValue("float", 0.0f);
             case "string" -> new TypedValue("string", "");
             case "boolean" -> new TypedValue("boolean", false);
-            case "float" -> new TypedValue("float", 0.0);
             case "char" -> new TypedValue("char", '\0');
             default -> throw new RuntimeException("Tipo desconhecido: " + type);
         };
@@ -143,6 +127,15 @@ public class VariableDeclarationNode extends ASTNode {
         return listType.substring(5, listType.length() - 1);
     }
 
+
+    @Override
+    public void bind(StaticContext stx) {
+        stx.declareVariable(name, type);
+        if (initializer != null) {
+            initializer.bind(stx);
+        }
+    }
+
     @Override
     public void print(String prefix) {
         System.out.println(prefix + "VarDecl: " + type + " " + name);
@@ -152,31 +145,22 @@ public class VariableDeclarationNode extends ASTNode {
         }
     }
 
-    public String getName() { return name; }
-    @Override
-    public String getType() { return type; }
-
-    @Override
-    public void bind(StaticContext stx) {
-        stx.declareVariable(name, type);
-
-        if (initializer != null) {
-            initializer.bind(stx);
-        }
-    }
-
-
     @Override
     public List<ASTNode> getChildren() {
-        if (initializer == null) return java.util.Collections.emptyList();
-        return java.util.Collections.singletonList(initializer);
+        if (initializer == null) return List.of();
+        return List.of(initializer);
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String getType() {
+        return type;
     }
 
     public ASTNode getInitializer() {
         return initializer;
     }
-
-
-
-
 }

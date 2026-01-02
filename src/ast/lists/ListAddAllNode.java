@@ -4,6 +4,7 @@ import ast.ASTNode;
 import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
+import context.statics.list.ListValue;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;
@@ -31,27 +32,25 @@ public class ListAddAllNode extends ASTNode {
         return visitor.visit(this);
     }
 
-    @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        DynamicList target = (DynamicList) targetListNode.evaluate(ctx).value();
 
-        for (ASTNode argNode : args) {
-            TypedValue val = argNode.evaluate(ctx);
+        ListValue target = (ListValue) targetListNode.evaluate(ctx).value();
 
-            if (val.type().equals("List")) {
-                // Se for uma lista, adiciona cada elemento
-                DynamicList other = (DynamicList) val.value();
-                for (ASTNode elemNode : other.getElements()) {
-                    target.add(elemNode.evaluate(ctx));
+        for (ASTNode arg : args) {
+            TypedValue tv = arg.evaluate(ctx);
+
+            if (tv.value() instanceof ListValue other) {
+                for (int i = 0; i < other.size(); i++) {
+                    target.add(other.get(i));
                 }
             } else {
-                // Se for valor simples, adiciona direto
-                target.add(val);
+                target.add(tv);
             }
         }
 
-        return new TypedValue("List", target);
+        return new TypedValue("List<" + target.getElementType() + ">", target);
     }
+
 
     @Override
     public void print(String prefix) {

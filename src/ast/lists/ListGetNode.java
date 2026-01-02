@@ -4,6 +4,7 @@ import ast.ASTNode;
 import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
+import context.statics.list.ListValue;
 import low.module.LLVMEmitVisitor;
 
 public class ListGetNode extends ASTNode {
@@ -32,11 +33,13 @@ public class ListGetNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        DynamicList list = (DynamicList) listName.evaluate(ctx).value();
-        int index = ((Number) indexNode.evaluate(ctx).value()).intValue();
-        return list.get(index, ctx);
-    }
 
+        ListValue list = (ListValue) listName.evaluate(ctx).value();
+
+        int index = ((Number) indexNode.evaluate(ctx).value()).intValue();
+
+        return list.get(index);
+    }
     @Override
     public void print(String prefix) {
         System.out.println(prefix + "ListGet:");

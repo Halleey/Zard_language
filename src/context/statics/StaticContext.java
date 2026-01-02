@@ -1,5 +1,7 @@
 package context.statics;
 
+import context.statics.structs.StaticStructDefinition;
+
 import java.util.*;
 
 public class StaticContext {

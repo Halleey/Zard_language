@@ -4,6 +4,7 @@ import ast.ASTNode;
 import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
+import context.statics.list.ListValue;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;
@@ -29,7 +30,7 @@ public class ListAddNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        DynamicList list = (DynamicList) listNode.evaluate(ctx).value();
+        ListValue list = new ListValue(listNode.getType());
         TypedValue values = valuesNode.evaluate(ctx);
         list.add(values);
         return values;

@@ -1,5 +1,4 @@
 package context.statics;
-
 public class Symbol {
     private final String name;
     private final String type;
@@ -11,6 +10,18 @@ public class Symbol {
         this.type = type;
         this.slotIndex = slotIndex;
         this.declaredIn = declaredIn;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public int getSlotIndex() {
+        return slotIndex;
     }
 
     public StaticContext getDeclaredIn() {

@@ -2,7 +2,8 @@ package ast.structs;
 
 import ast.ASTNode;
 import context.statics.StaticContext;
-import context.statics.StaticStructDefinition;
+import context.statics.list.ListValue;
+import context.statics.structs.StaticStructDefinition;
 import ast.expressions.TypedValue;
 import ast.lists.DynamicList;
 import ast.lists.ListNode;
@@ -41,9 +42,9 @@ public class StructInstaceNode extends ASTNode {
     public String accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
-
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
+
         StructDefinition def = ctx.getStructType(structName);
         Map<String, TypedValue> fieldValues = new LinkedHashMap<>();
         List<VariableDeclarationNode> fields = def.getFields();
@@ -56,23 +57,29 @@ public class StructInstaceNode extends ASTNode {
             }
         }
 
-        boolean useListShortcut = (listField != null && !positionalValues.isEmpty());
+        boolean useListShortcut =
+                listField != null && !positionalValues.isEmpty();
 
         for (int i = 0; i < fields.size(); i++) {
+
             VariableDeclarationNode field = fields.get(i);
             String fname = field.getName();
             String ftype = field.getType();
-
             TypedValue value;
 
-            // caso especial: atalho p/ struct com um único campo lista e valores posicionais
             if (useListShortcut && field == listField) {
-                String innerType = ftype.substring(5, ftype.length() - 1);
-                DynamicList dyn = new DynamicList(innerType, new ArrayList<>());
+
+                String innerType =
+                        ftype.substring(5, ftype.length() - 1);
+
+                ListValue listValue = new ListValue(innerType);
+
                 for (ASTNode pv : positionalValues) {
-                    dyn.add(pv.evaluate(ctx));
+                    listValue.add(pv.evaluate(ctx));
                 }
-                fieldValues.put(fname, new TypedValue(ftype, dyn));
+
+                fieldValues.put(fname,
+                        new TypedValue(ftype, listValue));
                 continue;
             }
 
@@ -84,38 +91,53 @@ public class StructInstaceNode extends ASTNode {
             }
 
             if (ftype.startsWith("List<")) {
-                String innerType = ftype.substring(5, ftype.length() - 1);
 
-                // NOVO: Verifica se o tipo da lista é '?' e tenta inferir do tipo concreto da struct
-                if (innerType.equals("?") && this.concreteType != null) {
-                    String fullStructType = this.concreteType.substring("Struct<".length(), this.concreteType.length() - 1);
+                String innerType =
+                        ftype.substring(5, ftype.length() - 1);
 
-                    if (fullStructType.contains("<") && fullStructType.endsWith(">")) {
-                        int open = fullStructType.indexOf('<');
-                        int close = fullStructType.lastIndexOf('>');
-                        String structInnerType = fullStructType.substring(open + 1, close);
+                if (innerType.equals("?") && concreteType != null) {
+                    String full =
+                            concreteType.substring(7, concreteType.length() - 1);
 
-                        if (!structInnerType.trim().isEmpty()) {
-                            innerType = structInnerType;
-                            ftype = "List<" + innerType + ">"; // Atualiza o tipo da Lista
-                        }
+                    if (full.contains("<")) {
+                        innerType =
+                                full.substring(full.indexOf('<') + 1,
+                                        full.lastIndexOf('>'));
+                        ftype = "List<" + innerType + ">";
                     }
                 }
-                // Fim NOVO
 
+                if (astValue != null) {
+                    TypedValue tv = astValue.evaluate(ctx);
 
-                if (astValue instanceof ListNode listNode) {
-                    value = listNode.evaluate(ctx);
+                    if (tv.value() instanceof ListValue) {
+                        value = tv;
+                    } else {
+                        ListValue list = new ListValue(innerType);
+                        list.add(tv);
+                        value = new TypedValue(ftype, list);
+                    }
                 } else {
-                    DynamicList dyn = new DynamicList(innerType, new ArrayList<>());
-                    if (astValue != null) dyn.add(astValue.evaluate(ctx));
-                    value = new TypedValue(ftype, dyn);
+                    // Lista vazia
+                    value = new TypedValue(ftype,
+                            new ListValue(innerType));
                 }
-            } else if (astValue != null) {
+
+            }
+            else if (ftype.startsWith("Struct<")) {
+
+                if (astValue != null) {
+                    value = astValue.evaluate(ctx);
+                } else {
+                    String inner =
+                            ftype.substring(7, ftype.length() - 1);
+                    value = new StructInstaceNode(inner, null, null)
+                            .evaluate(ctx);
+                }
+
+            }
+            else if (astValue != null) {
                 value = astValue.evaluate(ctx);
-            } else if (ftype.startsWith("Struct<")) {
-                String inner = ftype.substring("Struct<".length(), ftype.length() - 1);
-                value = new StructInstaceNode(inner, null, null).evaluate(ctx);
             } else if (ftype.equals("string")) {
                 value = new TypedValue("string", "");
             } else if (ftype.equals("int")) {
@@ -131,7 +153,9 @@ public class StructInstaceNode extends ASTNode {
             fieldValues.put(fname, value);
         }
 
-        return new TypedValue("Struct<" + structName + ">", fieldValues);
+        return new TypedValue(
+                "Struct<" + structName + ">", fieldValues
+        );
     }
 
     @Override

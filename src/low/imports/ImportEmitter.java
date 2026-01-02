@@ -137,7 +137,7 @@ public class ImportEmitter {
             if (v.getType().startsWith("List<")) {
                 tiposDeListasUsados.add(v.getType());
             }
-            if (v.initializer != null) coletarListas(v.initializer);
+            if (v.getInitializer() != null) coletarListas(v.getInitializer());
         }
 
         if (node instanceof ListNode list) {

@@ -2,8 +2,8 @@ package ast.structs;
 
 import ast.ASTNode;
 import context.statics.StaticContext;
-import context.statics.StaticFields;
-import context.statics.StaticStructDefinition;
+import context.statics.structs.StaticFields;
+import context.statics.structs.StaticStructDefinition;
 import ast.expressions.TypedValue;
 import context.runtime.RuntimeContext;
 import ast.variables.VariableDeclarationNode;

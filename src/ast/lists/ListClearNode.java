@@ -4,6 +4,7 @@ import ast.ASTNode;
 import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
+import context.statics.list.ListValue;
 import low.module.LLVMEmitVisitor;
 
 public class ListClearNode extends ASTNode {
@@ -23,10 +24,12 @@ public class ListClearNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-        DynamicList list = (DynamicList) listNode.evaluate(ctx).value();
-        list.getElements().clear();
-        return new TypedValue("List", list);
+        ListValue list = (ListValue) listNode.evaluate(ctx).value();
+
+        list.clear();
+        return new TypedValue("List<" + list.getElementType() + ">", list);
     }
+
 
 
     public ASTNode getListNode() {

@@ -169,19 +169,21 @@ public class OwnershipAnalyzer {
         log("MOVE " + rhsName + " -> " + lhsName);
     }
 
-
     private void handleStructFieldAssignment(StructFieldAccessNode sfa) {
 
         if (!(sfa.getValue() instanceof VariableNode var)) {
             return;
         }
 
-        VarOwnerShip v = vars.get(var.getName());
+        String source = var.getName();
+        String target = resolveStructFieldTarget(sfa);
+
+        VarOwnerShip v = vars.get(source);
         if (v == null) return;
 
         if (v.state == OwnershipState.MOVED) {
             throw new RuntimeException(
-                    "Use-after-move in struct field assignment: " + var.getName()
+                    "Use-after-move in struct field assignment: " + source
             );
         }
 
@@ -190,12 +192,36 @@ public class OwnershipAnalyzer {
         annotations.add(new OwnershipAnnotation(
                 sfa,
                 OwnerShipAction.MOVED,
-                var.getName(),
-                "struct_field"
+                source,
+                target
         ));
 
-        log("MOVE " + var.getName() + " into struct field");
+        log("MOVE " + source + " -> " + target);
     }
+
+
+    private String resolveStructFieldTarget(StructFieldAccessNode sfa) {
+
+        StringBuilder sb = new StringBuilder();
+
+        ASTNode base = sfa.getStructInstance();
+
+        while (base instanceof StructFieldAccessNode nested) {
+            sb.insert(0, "." + nested.getFieldName());
+            base = nested.getStructInstance();
+        }
+
+        if (base instanceof VariableNode v) {
+            sb.insert(0, v.getName());
+        } else {
+            sb.insert(0, "<anonymous>");
+        }
+
+        sb.append(".").append(sfa.getFieldName());
+
+        return sb.toString();
+    }
+
 
     private void handleListAdd(ListAddNode add) {
 
@@ -203,12 +229,15 @@ public class OwnershipAnalyzer {
             return;
         }
 
-        VarOwnerShip v = vars.get(var.getName());
+        String source = var.getName();
+        String target = resolveListTarget(add.getListNode());
+
+        VarOwnerShip v = vars.get(source);
         if (v == null) return;
 
         if (v.state == OwnershipState.MOVED) {
             throw new RuntimeException(
-                    "Use-after-move in list add: " + var.getName()
+                    "Use-after-move in list add: " + source
             );
         }
 
@@ -217,12 +246,26 @@ public class OwnershipAnalyzer {
         annotations.add(new OwnershipAnnotation(
                 add,
                 OwnerShipAction.MOVED,
-                var.getName(),
-                "list"
+                source,
+                target
         ));
 
-        log("MOVE " + var.getName() + " into list");
+        log("MOVE " + source + " -> LIST " + target);
     }
+
+    private String resolveListTarget(ASTNode node) {
+
+        if (node instanceof VariableNode v) {
+            return v.getName();
+        }
+
+        if (node instanceof StructFieldAccessNode sfa) {
+            return sfa.getStructInstance() + "." + sfa.getFieldName();
+        }
+
+        return "<anonymous-list>";
+    }
+
 
 
     private void handleInlineUpdate(StructUpdateNode up) {

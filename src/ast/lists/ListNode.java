@@ -95,6 +95,12 @@ public final class ListNode extends ASTNode {
         return new TypedValue(type, value);
     }
 
+
+    @Override
+    public boolean isStatement() {
+        return true;
+    }
+
     @Override
     public void print(String prefix) {
         System.out.println(prefix + type + ":");

@@ -4,9 +4,10 @@ import ast.functions.FunctionNode;
 import context.runtime.RuntimeContext;
 
 import java.util.Map;
+public record TypedValue(String type, Object value) {
 
-public record
-TypedValue(String type, Object value) {
+    public static final TypedValue VOID =
+            new TypedValue("void", null);
 
     @Override
     public String toString() {
@@ -29,9 +30,9 @@ TypedValue(String type, Object value) {
         return ctx.snapshotVariables();
     }
 
-
     public FunctionNode getFunction() {
-        if (!isFunction()) throw new RuntimeException("TypedValue is not a function");
+        if (!isFunction())
+            throw new RuntimeException("TypedValue is not a function");
         return (FunctionNode) value;
     }
 }

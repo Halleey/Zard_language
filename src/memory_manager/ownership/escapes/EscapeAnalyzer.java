@@ -1,4 +1,4 @@
-package memory_manager;
+package memory_manager.ownership.escapes;
 
 import ast.ASTNode;
 import ast.exceptions.ReturnNode;

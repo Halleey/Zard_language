@@ -4,10 +4,9 @@ main {
         string nome;
     }
 
+    List<string> nomes = ("zard");
+    print(nomes);
 
-    double teste = 3.14;
-    List numeros  = (teste);
-    print(teste);
     Struct Endereco {
         string rua;
         string cidade;

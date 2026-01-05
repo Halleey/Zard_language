@@ -55,6 +55,11 @@ public class AssignmentNode extends ASTNode {
     }
 
     @Override
+    public boolean isStatement() {
+        return true;
+    }
+
+    @Override
     public void bind(StaticContext stx) {
 
     }

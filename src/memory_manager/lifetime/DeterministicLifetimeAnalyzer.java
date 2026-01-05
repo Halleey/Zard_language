@@ -3,20 +3,26 @@ package memory_manager.lifetime;
 import ast.ASTNode;
 import ast.functions.FunctionNode;
 import ast.ifstatements.IfNode;
+import ast.lists.ListAddNode;
 import ast.loops.WhileNode;
+import ast.prints.PrintNode;
 import ast.structs.StructFieldAccessNode;
 import ast.structs.StructMethodCallNode;
 import ast.structs.StructUpdateNode;
+import ast.variables.AssignmentNode;
 import ast.variables.VariableDeclarationNode;
 import ast.variables.VariableNode;
 
 import java.util.*;
 
+
+
 public class DeterministicLifetimeAnalyzer {
 
     private final Map<String, String> varTypes;
 
-    private final Map<String, Integer> lastUseStmtId =
+    // AGORA: último uso aponta para o nó real
+    private final Map<String, ASTNode> lastUseNode =
             new LinkedHashMap<>();
 
     private final Set<String> seen = new HashSet<>();
@@ -25,21 +31,16 @@ public class DeterministicLifetimeAnalyzer {
         this.varTypes = varTypes;
     }
 
-    public Map<String, Integer> analyze(List<ASTNode> roots) {
+    public Map<String, ASTNode> analyzeAndReturnNode(List<ASTNode> roots) {
 
         List<ASTNode> linear =
                 collectLinearStatements(roots);
-
-        linear.sort(
-                Comparator.comparingInt(ASTNode::getStmtId)
-        );
-
         for (int i = linear.size() - 1; i >= 0; i--) {
             ASTNode stmt = linear.get(i);
-            collectUses(stmt, stmt.getStmtId());
+            collectUses(stmt, stmt);
         }
 
-        return lastUseStmtId;
+        return lastUseNode;
     }
 
     private List<ASTNode> collectLinearStatements(List<ASTNode> roots) {
@@ -51,11 +52,12 @@ public class DeterministicLifetimeAnalyzer {
     private void walk(List<ASTNode> nodes, List<ASTNode> out) {
         for (ASTNode node : nodes) {
 
-            if (node.getStmtId() >= 0) {
+            // apenas statements reais
+            if (node.isStatement()) {
                 out.add(node);
             }
 
-            // Controle de fluxo precisa preservar ordem
+            // Controle de fluxo preserva ordem semântica
             if (node instanceof IfNode ifNode) {
                 walk(List.of(ifNode.getCondition()), out);
                 walk(ifNode.getThenBranch(), out);
@@ -81,50 +83,59 @@ public class DeterministicLifetimeAnalyzer {
         }
     }
 
+    private void collectUses(ASTNode node, ASTNode anchor) {
 
-    private void collectUses(ASTNode node, int stmtId) {
-
-        // Uso direto: variável
         if (node instanceof VariableNode v) {
-            recordOwner(v.getName(), stmtId);
+            recordOwner(v.getName(), anchor);
             return;
         }
 
-        // Uso via campo
+        if (node instanceof ListAddNode listAdd) {
+            collectUses(listAdd.getValuesNode(), anchor); // registra o valor adicionado
+            collectUses(listAdd.getListNode(), anchor);   // registra a lista
+            return;
+        }
+
+
+        if (node instanceof PrintNode print) {
+            collectUses(print.expr, print);
+            return;
+        }
+
+        if (node instanceof AssignmentNode a){
+            collectUses(a.getValueNode(), anchor);
+        return;
+    }
         if (node instanceof StructFieldAccessNode f) {
             String owner = rootOwner(f.getStructInstance());
-            recordOwner(owner, stmtId);
+            recordOwner(owner, anchor);
         }
 
-        // Uso via método
         if (node instanceof StructMethodCallNode m) {
             String owner = rootOwner(m.getStructInstance());
-            recordOwner(owner, stmtId);
+            recordOwner(owner, anchor);
         }
 
-        // Uso via update inline
         if (node instanceof StructUpdateNode u) {
             String owner = rootOwner(u.getTargetStruct());
-            recordOwner(owner, stmtId);
+            recordOwner(owner, anchor);
         }
 
-        // Declaração NÃO conta como uso
         if (node instanceof VariableDeclarationNode) {
             return;
         }
 
         for (ASTNode child : node.getChildren()) {
-            collectUses(child, stmtId);
+            collectUses(child, anchor);
         }
     }
 
-
-    private void recordOwner(String owner, int stmtId) {
+    private void recordOwner(String owner, ASTNode anchor) {
         if (owner == null) return;
         if (!isHeapOwner(owner)) return;
 
         if (seen.add(owner)) {
-            lastUseStmtId.put(owner, stmtId);
+            lastUseNode.put(owner, anchor);
         }
     }
 

@@ -5,9 +5,10 @@ import memory_manager.ownership.enums.Kind;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class OwnershipNode {
 
-    private String id;
+    private final String id;
     private final Kind kind;
     private final List<OwnershipNode> children = new ArrayList<>();
 
@@ -16,30 +17,12 @@ public class OwnershipNode {
         this.kind = kind;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public Kind getKind() {
-        return kind;
-    }
-
-    public List<OwnershipNode> getChildren() {
-        return children;
-    }
+    public String getId() { return id; }
+    public Kind getKind() { return kind; }
+    public List<OwnershipNode> getChildren() { return children; }
 
     public void addChild(OwnershipNode child) {
         children.add(child);
-    }
-
-    public void removeChild(OwnershipNode child) {
-        children.remove(child);
-    }
-
-    // Usado quando o nó é movido para outro local lógico
-    public OwnershipNode rename(String newId) {
-        this.id = newId;
-        return this;
     }
 
     public OwnershipNode deepCloneWithRebase(String oldBase, String newBase) {
@@ -56,13 +39,12 @@ public class OwnershipNode {
         return clone;
     }
 
-
-      /// Debug /
-
     public void dump(String indent) {
         System.out.println(indent + "- " + id + " [" + kind + "]");
         for (OwnershipNode child : children) {
             child.dump(indent + "  ");
         }
     }
+
+
 }

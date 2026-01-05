@@ -35,7 +35,8 @@ import low.variables.*;
 import low.variables.exps.AssignmentEmitter;
 import low.variables.exps.BinaryOpEmitter;
 import low.variables.exps.UnaryOpEmitter;
-import memory_manager.EscapeInfo;
+import memory_manager.free.FreeNode;
+import memory_manager.ownership.escapes.EscapeInfo;
 
 import java.util.*;
 
@@ -358,6 +359,11 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     @Override
     public String visit(ForNode node) {
         return controlFlow.visit(node);
+    }
+
+    @Override
+    public String visitFreeNode(FreeNode freeNode) {
+        return "";
     }
 
     @Override

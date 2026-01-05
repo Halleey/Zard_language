@@ -14,6 +14,7 @@ import ast.loops.WhileNode;
 
 import ast.prints.PrintNode;
 import ast.variables.*;
+import memory_manager.free.FreeNode;
 
 public interface LLVMEmitVisitor {
     String visit(MainAST node);
@@ -45,6 +46,7 @@ public interface LLVMEmitVisitor {
     String visit (StructMethodCallNode node);
     String visit (ImplNode node);
     String visit (ForNode node);
+    String visitFreeNode(FreeNode freeNode);
 }
 
 

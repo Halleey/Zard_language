@@ -2,8 +2,7 @@ package translate.executors;
 
 import low.module.LLVMGenerator;
 import low.module.LLVisitorMain;
-import memory_manager.EscapeInfo;
-import translate.front.ASTInterpreter;
+import memory_manager.ownership.escapes.EscapeInfo;
 import translate.front.FrontendPipeline;
 import translate.front.TypePipeline;
 import translate.llvm.LLVMToolchain;

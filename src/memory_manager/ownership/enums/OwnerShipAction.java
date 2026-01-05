@@ -1,4 +1,4 @@
-package memory_manager.ownership;
+package memory_manager.ownership.enums;
 
 public enum OwnerShipAction {
     OWNED,      // declaração

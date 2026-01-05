@@ -221,5 +221,11 @@ public class Parser {
         return methods.get(methodName);
     }
 
+    public Map<String, String> getAllVariableTypes() {
+        return Collections.unmodifiableMap(variableTypes);
+    }
+
+
+
 
 }

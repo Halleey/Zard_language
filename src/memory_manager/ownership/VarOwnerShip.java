@@ -1,5 +1,7 @@
 package memory_manager.ownership;
 
+import memory_manager.ownership.enums.OwnershipState;
+
 public class VarOwnerShip {
 
     public final String name;

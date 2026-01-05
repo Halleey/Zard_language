@@ -1,6 +1,8 @@
 package memory_manager.ownership;
 
 import ast.ASTNode;
+import memory_manager.ownership.enums.OwnerShipAction;
+
 public class OwnershipAnnotation {
 
     public final ASTNode node;
@@ -20,8 +22,6 @@ public class OwnershipAnnotation {
 
     @Override
     public String toString() {
-        return "[OWNERSHIP] " + action +
-                " :: " + from +
-                (to != null ? " -> " + to : "");
+        return "[OWNERSHIP] " + action + " :: " + from + (to != null ? " -> " + to : "");
     }
 }

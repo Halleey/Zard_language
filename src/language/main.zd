@@ -62,4 +62,7 @@ main {
 
     print("=== Clone p2 ===");
     print(p2);
+
+
+    print("TESTE");
 }

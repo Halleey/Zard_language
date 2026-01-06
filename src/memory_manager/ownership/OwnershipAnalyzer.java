@@ -48,8 +48,7 @@ public class OwnershipAnalyzer {
         boolean visitChildren = true;
 
         if (node instanceof VariableDeclarationNode decl) {
-            handleDeclaration(decl);
-            graph.declareVar(decl.getName());
+            handleDeclaration(decl); // decide tudo
         }
 
         else if (node instanceof AssignmentNode assign) {
@@ -87,9 +86,14 @@ public class OwnershipAnalyzer {
             }
         }
     }
-
     private void handleDeclaration(VariableDeclarationNode decl) {
+        String type = decl.getType(); // assume que você tem esse método
+        if (isPrimitive(type)) {
+            log("declare " + decl.getName() + " => PRIMITIVE, ignorado para ownership graph");
+            return; // não cria nó no grafo nem adiciona OWNED
+        }
 
+        // restante normal
         VarOwnerShip v = new VarOwnerShip(decl.getName());
         vars.put(decl.getName(), v);
 
@@ -100,8 +104,20 @@ public class OwnershipAnalyzer {
                 null
         ));
 
+        graph.declareVar(decl.getName());
+
         log("declare " + decl.getName() + " => OWNED");
     }
+
+
+    private boolean isPrimitive(String type) {
+        if (type == null) return false;
+        type = type.trim().toLowerCase();
+        return type.equals("int") || type.equals("float") ||
+                type.equals("double") || type.equals("bool") ||
+                type.equals("char");
+    }
+
 
     private void handleVariableUse(VariableNode var) {
 

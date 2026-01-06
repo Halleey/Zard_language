@@ -5,6 +5,8 @@ List<int> numeros;
 # Flag para controlar o loop
 
 
+int x = 3;
+
 print(nomes);
 print(numeros);
 

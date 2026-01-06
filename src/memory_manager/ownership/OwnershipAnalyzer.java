@@ -87,7 +87,7 @@ public class OwnershipAnalyzer {
         }
     }
     private void handleDeclaration(VariableDeclarationNode decl) {
-        String type = decl.getType();
+        String type = decl.getType(); // assume que você tem esse método
         if (isPrimitive(type)) {
             log("declare " + decl.getName() + " => PRIMITIVE, ignorado para ownership graph");
             return; // não cria nó no grafo nem adiciona OWNED

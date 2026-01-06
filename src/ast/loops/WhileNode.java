@@ -8,6 +8,7 @@ import context.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class WhileNode extends ASTNode {
@@ -80,5 +81,15 @@ public class WhileNode extends ASTNode {
         for (ASTNode node : body)
             node.bind(bodyContext);
     }
+
+    @Override
+    public List<ASTNode> getChildren() {
+        List<ASTNode> children = new ArrayList<>();
+        if (condition != null) children.add(condition);
+        if (body != null) children.addAll(body);
+        return children;
+    }
+
+
 
 }

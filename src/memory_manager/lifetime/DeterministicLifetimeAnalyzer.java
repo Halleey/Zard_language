@@ -14,16 +14,14 @@ import ast.variables.VariableDeclarationNode;
 import ast.variables.VariableNode;
 
 import java.util.*;
-
-
+import java.util.*;
 
 public class DeterministicLifetimeAnalyzer {
 
     private final Map<String, String> varTypes;
 
-    // AGORA: último uso aponta para o nó real
-    private final Map<String, ASTNode> lastUseNode =
-            new LinkedHashMap<>();
+    // Último uso aponta para o nó real
+    private final Map<String, ASTNode> lastUseNode = new LinkedHashMap<>();
 
     private final Set<String> seen = new HashSet<>();
 
@@ -31,10 +29,11 @@ public class DeterministicLifetimeAnalyzer {
         this.varTypes = varTypes;
     }
 
-    public Map<String, ASTNode> analyzeAndReturnNode(List<ASTNode> roots) {
 
-        List<ASTNode> linear =
-                collectLinearStatements(roots);
+    public Map<String, ASTNode> analyzeAndReturnNode(List<ASTNode> roots) {
+        List<ASTNode> linear = collectLinearStatements(roots);
+
+        // Percorre de trás pra frente para detectar último uso
         for (int i = linear.size() - 1; i >= 0; i--) {
             ASTNode stmt = linear.get(i);
             collectUses(stmt, stmt);
@@ -52,34 +51,15 @@ public class DeterministicLifetimeAnalyzer {
     private void walk(List<ASTNode> nodes, List<ASTNode> out) {
         for (ASTNode node : nodes) {
 
-            // apenas statements reais
+            // Apenas statements reais
             if (node.isStatement()) {
                 out.add(node);
             }
 
-            // Controle de fluxo preserva ordem semântica
-            if (node instanceof IfNode ifNode) {
-                walk(List.of(ifNode.getCondition()), out);
-                walk(ifNode.getThenBranch(), out);
-                if (ifNode.getElseBranch() != null) {
-                    walk(ifNode.getElseBranch(), out);
-                }
-                continue;
+            // Travessia de filhos
+            if (node.getChildren() != null && !node.getChildren().isEmpty()) {
+                walk(node.getChildren(), out);
             }
-
-            if (node instanceof WhileNode whileNode) {
-                walk(List.of(whileNode.getCondition()), out);
-                walk(whileNode.getBody(), out);
-                continue;
-            }
-
-            if (node instanceof FunctionNode fn) {
-                walk(fn.getBody(), out);
-                continue;
-            }
-
-            // fallback
-            walk(node.getChildren(), out);
         }
     }
 
@@ -91,21 +71,21 @@ public class DeterministicLifetimeAnalyzer {
         }
 
         if (node instanceof ListAddNode listAdd) {
-            collectUses(listAdd.getValuesNode(), anchor); // registra o valor adicionado
-            collectUses(listAdd.getListNode(), anchor);   // registra a lista
+            collectUses(listAdd.getValuesNode(), anchor); // valor adicionado
+            collectUses(listAdd.getListNode(), anchor);   // lista
             return;
         }
-
 
         if (node instanceof PrintNode print) {
             collectUses(print.expr, print);
             return;
         }
 
-        if (node instanceof AssignmentNode a){
+        if (node instanceof AssignmentNode a) {
             collectUses(a.getValueNode(), anchor);
-        return;
-    }
+            return;
+        }
+
         if (node instanceof StructFieldAccessNode f) {
             String owner = rootOwner(f.getStructInstance());
             recordOwner(owner, anchor);
@@ -125,10 +105,12 @@ public class DeterministicLifetimeAnalyzer {
             return;
         }
 
+        // Travessa filhos por default
         for (ASTNode child : node.getChildren()) {
             collectUses(child, anchor);
         }
     }
+
 
     private void recordOwner(String owner, ASTNode anchor) {
         if (owner == null) return;
@@ -140,6 +122,7 @@ public class DeterministicLifetimeAnalyzer {
     }
 
     private boolean isHeapOwner(String name) {
+        // No momento consideramos todas variáveis como heap
         return true;
     }
 

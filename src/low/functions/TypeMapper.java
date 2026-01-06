@@ -79,11 +79,9 @@ public class TypeMapper {
             case "int" -> "@arraylist_free_int";
             case "double" -> "@arraylist_free_double";
             case "boolean" -> "@arraylist_free_bool";
-            case "String" -> "@arraylist_free_ptr";
-            default -> "@arraylist_free_ptr";
+            case "String" -> "@freeList";
+            default -> "@freeList";
         };
     }
-
-
 
 }

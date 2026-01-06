@@ -8,22 +8,11 @@ import low.module.LLVMEmitVisitor;
 import java.util.Collections;
 import java.util.List;
 public abstract class ASTNode {
-
-    private int stmtId = -1;
-
-    public void setStmtId(int id) {
-        this.stmtId = id;
-    }
-
+    
     public boolean isStatement() {
         return false;
     }
 
-    /*
-                || this instanceof StructUpdateNode
-                || this instanceof ListAddNode
-                || this instanceof FreeNode;
-     */
 
 
     public abstract String accept(LLVMEmitVisitor visitor);

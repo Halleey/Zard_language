@@ -33,19 +33,20 @@ public class DeterministicLifetimeAnalyzer {
 
     private final Map<String, String> varTypes;
     private final Map<String, ASTNode> lastUseNode = new LinkedHashMap<>();
-
+    private List<ASTNode> linearizedStatements; // salva linearização para achar blocos
     public DeterministicLifetimeAnalyzer(Map<String, String> varTypes) {
         this.varTypes = varTypes;
     }
 
     public Map<String, ASTNode> analyzeAndReturnNode(List<ASTNode> roots) {
-        List<ASTNode> linear = collectLinearStatements(roots);
-        for (int i = linear.size() - 1; i >= 0; i--) {
-            ASTNode stmt = linear.get(i);
+        linearizedStatements = collectLinearStatements(roots); // simple test
+        for (int i = linearizedStatements.size() - 1; i >= 0; i--) {
+            ASTNode stmt = linearizedStatements.get(i);
             collectUses(stmt, stmt);
         }
         return lastUseNode;
     }
+
 
     private List<ASTNode> collectLinearStatements(List<ASTNode> roots) {
         List<ASTNode> out = new ArrayList<>();
@@ -207,12 +208,36 @@ public class DeterministicLifetimeAnalyzer {
     }
 
 
+
+    private boolean contains(ASTNode parent, ASTNode child) {
+        if (parent == child) return true;
+        if (parent.getChildren() != null) {
+            for (ASTNode c : parent.getChildren()) {
+                if (contains(c, child)) return true;
+            }
+        }
+        return false;
+    }
+
     private void recordOwner(String owner, ASTNode anchor) {
         if (owner == null) return;
         if (!isHeapOwner(owner)) return;
 
-        lastUseNode.putIfAbsent(owner, anchor);
+        // Se o anchor estiver dentro de While ou If, registra o bloco inteiro
+        ASTNode block = findEnclosingBlock(anchor);
+        lastUseNode.putIfAbsent(owner, block != null ? block : anchor);
     }
+
+    private ASTNode findEnclosingBlock(ASTNode node) {
+        for (ASTNode stmt : linearizedStatements) {
+            if ((stmt instanceof WhileNode || stmt instanceof IfNode) &&
+                    contains(stmt, node)) {
+                return stmt;
+            }
+        }
+        return null;
+    }
+
 
 
     private boolean isHeapOwner(String name) {

@@ -9,11 +9,12 @@ import memory_manager.ownership.graphs.OwnershipGraph;
 import memory_manager.ownership.graphs.OwnershipNode;
 
 import java.util.*;
+import java.util.*;
 
 public class FreePlanner {
 
     private final OwnershipGraph ownership;
-    private final Map<String,   ASTNode> lastUseNode;
+    private final Map<String, ASTNode> lastUseNode;
     private final EscapeInfo escapeInfo;
     private final List<OwnershipAnnotation> annotations;
 
@@ -48,25 +49,34 @@ public class FreePlanner {
         if (alreadyPlanned.contains(var)) {
             return;
         }
-
         alreadyPlanned.add(var);
 
+        // Ignora se a variável escapou
         if (escapeInfo != null && escapeInfo.escapes(var)) {
             return;
         }
 
+        // Ignora se a variável foi movida
         if (wasMoved(var)) {
             return;
         }
 
+        // Obtém o nó de último uso
         ASTNode anchor = lastUseNode.get(var);
         if (anchor == null) {
+            // Se não houver uso, podemos liberar logo na declaração ou ignorar
             return;
         }
 
+        // Adiciona FreeAction imediatamente após o último uso
         result
                 .computeIfAbsent(anchor, k -> new ArrayList<>())
                 .add(new FreeAction(anchor, root));
+
+        // Planeja recursivamente para filhos (campos de structs / listas internas)
+        for (OwnershipNode child : root.getChildren()) {
+            planRoot(child, result);
+        }
     }
 
     private boolean wasMoved(String var) {

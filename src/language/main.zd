@@ -1,16 +1,12 @@
 main {
 List<string> nomes;
 
-nomes.add("zard");
-nomes.add("zhu");
-int x = 0;
-if(x < nomes.size()) {
-println("qlqr coisa");
-}
-else {
-println("não era maior");
+function List addname(string x, List nomes) {
+    nomes.add(x);
+    return nomes;
 }
 
-print("fim do programa");
+call addname("testando", nomes);
+print(nomes);
 
 }

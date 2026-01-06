@@ -101,7 +101,9 @@ public class DeterministicLifetimeAnalyzer {
             recordOwner(owner, anchor);
         }
 
-        if (node instanceof VariableDeclarationNode) {
+        if (node instanceof VariableDeclarationNode decl) {
+            String name = decl.getName();
+            recordOwner(name, decl);
             return;
         }
 

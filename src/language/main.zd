@@ -1,16 +1,12 @@
 main  {
-# Criar uma lista de strings vazia
-List<string> nomes;
-List<int> numeros;
-# Flag para controlar o loop
-
 
 int x = 3;
+print(x);
+string nome = "zardelas";
+List nomes = (nome);
 
 print(nomes);
-print(numeros);
 
 
-print("acabou");
-print("fim");
+
 }

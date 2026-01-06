@@ -151,6 +151,12 @@ public class VariableDeclarationNode extends ASTNode {
         return List.of(initializer);
     }
 
+
+    @Override
+    public boolean isStatement() {
+        return true;
+    }
+
     public String getName() {
         return name;
     }

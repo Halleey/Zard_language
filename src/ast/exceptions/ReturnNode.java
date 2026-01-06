@@ -46,6 +46,11 @@ public class ReturnNode extends ASTNode {
         }
     }
 
+    @Override
+    public boolean isStatement() {
+        return true;
+    }
+
     public ASTNode getExpr() {
         return expr;
     }

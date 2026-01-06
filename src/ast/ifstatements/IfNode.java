@@ -6,6 +6,7 @@ import context.statics.StaticContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class IfNode extends ASTNode {
@@ -71,6 +72,16 @@ public class IfNode extends ASTNode {
             for (ASTNode n : elseBranch) n.print(prefix + "    ");
         }
     }
+
+    @Override
+    public List<ASTNode> getChildren() {
+        List<ASTNode> children = new ArrayList<>();
+        if (condition != null) children.add(condition);
+        if (thenBranch != null) children.addAll(thenBranch);
+        if (elseBranch != null) children.addAll(elseBranch);
+        return children;
+    }
+
 
     @Override
     public void bind(StaticContext stx) {

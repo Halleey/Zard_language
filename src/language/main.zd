@@ -1,65 +1,14 @@
-main {
+main  {
+# Criar uma lista de strings vazia
+List<string> nomes;
+List<int> numeros;
+# Flag para controlar o loop
 
-    Struct Pais {
-        string nome;
-    }
+
+print(nomes);
+print(numeros);
 
 
-    double teste = 3.14;
-    List numeros  = (teste);
-    print(teste);
-    Struct Endereco {
-        string rua;
-        string cidade;
-        Struct Pais pais;
-    }
-
-    Struct Pessoa {
-        string nome;
-        int idade;
-        Struct Endereco endereco;
-        List<string> telefones;
-    }
-
-    # ---- Instâncias base ----
-    Pais brasil;
-    brasil.nome = "Brasil";
-
-    Endereco e1;
-    e1.rua = "Rua A";
-    e1.cidade = "São Paulo";
-    e1.pais = brasil;
-
-    Pessoa p1;
-    p1.nome = "Alice";
-    p1.idade = 25;
-    p1.endereco = e1;
-    p1.telefones.add("11 99999-1111");
-    p1.telefones.add("11 22222-3333");
-
-    # === Cópia profunda ===
-    Pessoa p2;
-    p2 = p1;
-
-    # === Alterações independentes ===
-    p2.nome = "Zard";
-    p2.telefones.add("21 44444-5555");
-
-    e1.rua = "teste";
-    e1.cidade = "Santo andré";
-
-    print("=== Original p1 ===");
-    print(p1);
-
-    # Atualização inline aninhada com lista e sub-struct
-    p2.endereco {
-        rua: "Nova Rua";
-        cidade: "Zurique";
-        pais {
-            nome: "Suíça";
-        }
-    }
-
-    print("=== Clone p2 ===");
-    print(p2);
+print("acabou");
+print("fim");
 }

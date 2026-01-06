@@ -40,6 +40,8 @@ public class StaticContext {
         return kind;
     }
 
+
+    //node que pode vir de modo via children
     public StaticContext getParent() {
         return parent;
     }
@@ -77,9 +79,6 @@ public class StaticContext {
         int idx = name.indexOf('<');
         return idx == -1 ? name : name.substring(0, idx);
     }
-
-
-
 
     public Symbol declareVariable(String name, String type) {
         if (variables.containsKey(name)) {

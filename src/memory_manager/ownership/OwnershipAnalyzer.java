@@ -8,19 +8,22 @@ import ast.structs.StructUpdateNode;
 import ast.variables.AssignmentNode;
 import ast.variables.VariableDeclarationNode;
 import ast.variables.VariableNode;
+import memory_manager.ownership.enums.OwnerShipAction;
+import memory_manager.ownership.enums.OwnershipState;
+import memory_manager.ownership.graphs.OwnershipGraph;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.*;
-import java.util.*;
 
 public class OwnershipAnalyzer {
 
     private final Map<String, VarOwnerShip> vars = new LinkedHashMap<>();
     private final List<OwnershipAnnotation> annotations = new ArrayList<>();
     private final boolean debug;
+
+    private final OwnershipGraph graph = new OwnershipGraph();
 
     public OwnershipAnalyzer(boolean debug) {
         this.debug = debug;
@@ -30,6 +33,9 @@ public class OwnershipAnalyzer {
         return annotations;
     }
 
+    public OwnershipGraph getGraph() {
+        return graph;
+    }
 
     public void analyzeBlock(List<ASTNode> nodes) {
         for (ASTNode node : nodes) {
@@ -43,6 +49,7 @@ public class OwnershipAnalyzer {
 
         if (node instanceof VariableDeclarationNode decl) {
             handleDeclaration(decl);
+            graph.declareVar(decl.getName());
         }
 
         else if (node instanceof AssignmentNode assign) {
@@ -81,7 +88,6 @@ public class OwnershipAnalyzer {
         }
     }
 
-
     private void handleDeclaration(VariableDeclarationNode decl) {
 
         VarOwnerShip v = new VarOwnerShip(decl.getName());
@@ -118,20 +124,18 @@ public class OwnershipAnalyzer {
         log("BORROW use " + var.getName());
     }
 
-
     private void handleAssignment(AssignmentNode assign) {
 
         if (!(assign.getValueNode() instanceof VariableNode rhs)) {
             return;
         }
 
-        String lhsName = assign.getName();
+        String lhs = assign.getName();
         String rhsName = rhs.getName();
-
         VarOwnerShip rhsVar = vars.get(rhsName);
 
-        // p2 = p1 → DEEP COPY
-        if (vars.containsKey(lhsName) && rhsVar != null) {
+        /* ===== DEEP COPY ===== */
+        if (vars.containsKey(lhs) && rhsVar != null) {
 
             if (rhsVar.state == OwnershipState.MOVED) {
                 throw new RuntimeException(
@@ -139,41 +143,43 @@ public class OwnershipAnalyzer {
                 );
             }
 
-            vars.put(lhsName, new VarOwnerShip(lhsName));
+            vars.put(lhs, new VarOwnerShip(lhs));
 
             annotations.add(new OwnershipAnnotation(
                     assign,
                     OwnerShipAction.DEEP_COPY,
                     rhsName,
-                    lhsName
+                    lhs
             ));
 
-            log("DEEP_COPY " + rhsName + " -> " + lhsName);
+            graph.deepCopy(rhsName, lhs);
+
+            log("DEEP_COPY " + rhsName + " -> " + lhs);
             return;
         }
 
-        // MOVE
+        /* ===== MOVE ===== */
         if (rhsVar != null) {
             rhsVar.state = OwnershipState.MOVED;
         }
 
-        vars.put(lhsName, new VarOwnerShip(lhsName));
+        vars.put(lhs, new VarOwnerShip(lhs));
 
         annotations.add(new OwnershipAnnotation(
                 assign,
                 OwnerShipAction.MOVED,
                 rhsName,
-                lhsName
+                lhs
         ));
 
-        log("MOVE " + rhsName + " -> " + lhsName);
+        graph.move(rhsName, lhs);
+
+        log("MOVE " + rhsName + " -> " + lhs);
     }
 
     private void handleStructFieldAssignment(StructFieldAccessNode sfa) {
 
-        if (!(sfa.getValue() instanceof VariableNode var)) {
-            return;
-        }
+        if (!(sfa.getValue() instanceof VariableNode var)) return;
 
         String source = var.getName();
         String target = resolveStructFieldTarget(sfa);
@@ -196,38 +202,14 @@ public class OwnershipAnalyzer {
                 target
         ));
 
+        graph.move(source, target);
+
         log("MOVE " + source + " -> " + target);
     }
 
-
-    private String resolveStructFieldTarget(StructFieldAccessNode sfa) {
-
-        StringBuilder sb = new StringBuilder();
-
-        ASTNode base = sfa.getStructInstance();
-
-        while (base instanceof StructFieldAccessNode nested) {
-            sb.insert(0, "." + nested.getFieldName());
-            base = nested.getStructInstance();
-        }
-
-        if (base instanceof VariableNode v) {
-            sb.insert(0, v.getName());
-        } else {
-            sb.insert(0, "<anonymous>");
-        }
-
-        sb.append(".").append(sfa.getFieldName());
-
-        return sb.toString();
-    }
-
-
     private void handleListAdd(ListAddNode add) {
 
-        if (!(add.getValuesNode() instanceof VariableNode var)) {
-            return;
-        }
+        if (!(add.getValuesNode() instanceof VariableNode var)) return;
 
         String source = var.getName();
         String target = resolveListTarget(add.getListNode());
@@ -250,29 +232,14 @@ public class OwnershipAnalyzer {
                 target
         ));
 
+        graph.move(source, target);
+
         log("MOVE " + source + " -> LIST " + target);
     }
 
-    private String resolveListTarget(ASTNode node) {
-
-        if (node instanceof VariableNode v) {
-            return v.getName();
-        }
-
-        if (node instanceof StructFieldAccessNode sfa) {
-            return sfa.getStructInstance() + "." + sfa.getFieldName();
-        }
-
-        return "<anonymous-list>";
-    }
-
-
-
     private void handleInlineUpdate(StructUpdateNode up) {
 
-        if (!(up.getTargetStruct() instanceof VariableNode var)) {
-            return;
-        }
+        if (!(up.getTargetStruct() instanceof VariableNode var)) return;
 
         VarOwnerShip v = vars.get(var.getName());
         if (v == null) return;
@@ -283,8 +250,7 @@ public class OwnershipAnalyzer {
             );
         }
 
-        // não move, mas consome ownership exclusivo
-        log("INLINE UPDATE consumes ownership of " + var.getName());
+        log("INLINE UPDATE consumes exclusive ownership of " + var.getName());
     }
 
     private void handleReturn(ReturnNode ret) {
@@ -303,15 +269,53 @@ public class OwnershipAnalyzer {
                 "return"
         ));
 
+        graph.move(var.getName(), "return");
+
         log("MOVE via return: " + var.getName());
+    }
+
+    private String resolveStructFieldTarget(StructFieldAccessNode sfa) {
+
+        StringBuilder sb = new StringBuilder();
+        ASTNode base = sfa.getStructInstance();
+
+        while (base instanceof StructFieldAccessNode nested) {
+            sb.insert(0, "." + nested.getFieldName());
+            base = nested.getStructInstance();
+        }
+
+        if (base instanceof VariableNode v) {
+            sb.insert(0, v.getName());
+        } else {
+            sb.insert(0, "<anonymous>");
+        }
+
+        sb.append(".").append(sfa.getFieldName());
+        return sb.toString();
+    }
+
+    private String resolveListTarget(ASTNode node) {
+
+        if (node instanceof VariableNode v) {
+            return v.getName();
+        }
+
+        if (node instanceof StructFieldAccessNode sfa) {
+            return resolveStructFieldTarget(sfa);
+        }
+
+        return "<anonymous-list>";
     }
 
 
     public void dumpFinalStates() {
-        System.out.println("==== FINAL OWNERSHIP STATE ====");
+        System.out.println("==== FINAL OWNERSHIP STATE (linear) ====");
         for (VarOwnerShip v : vars.values()) {
             System.out.println(v);
         }
+
+        System.out.println();
+        graph.dump();
     }
 
     private void log(String msg) {

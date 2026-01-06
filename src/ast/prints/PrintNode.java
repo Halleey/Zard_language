@@ -69,6 +69,12 @@ public class PrintNode extends ASTNode {
         expr.print(prefix + "  ");
     }
 
+
+    @Override
+    public boolean isStatement() {
+        return true;
+    }
+
     @Override
     public void bind(StaticContext stx) {
         expr.bind(stx);

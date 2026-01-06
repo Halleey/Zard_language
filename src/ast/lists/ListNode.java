@@ -7,6 +7,7 @@ import ast.expressions.TypedValue;
 import context.statics.list.ListValue;
 import low.module.LLVMEmitVisitor;
 
+import java.util.ArrayList;
 import java.util.List;// Nó AST que representa uma lista tipada
 
 public final class ListNode extends ASTNode {
@@ -95,6 +96,12 @@ public final class ListNode extends ASTNode {
         return new TypedValue(type, value);
     }
 
+
+    @Override
+    public boolean isStatement() {
+        return true;
+    }
+
     @Override
     public void print(String prefix) {
         System.out.println(prefix + type + ":");
@@ -109,4 +116,11 @@ public final class ListNode extends ASTNode {
             }
         }
     }
+    @Override
+    public List<ASTNode> getChildren() {
+        // retorna os elementos da lista como filhos
+        return new ArrayList<>(list.getElements());
+    }
+
+
 }

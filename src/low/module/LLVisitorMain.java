@@ -35,7 +35,9 @@ import low.variables.*;
 import low.variables.exps.AssignmentEmitter;
 import low.variables.exps.BinaryOpEmitter;
 import low.variables.exps.UnaryOpEmitter;
-import memory_manager.EscapeInfo;
+import memory_manager.free.FreeEmitter;
+import memory_manager.free.FreeNode;
+import memory_manager.ownership.escapes.EscapeInfo;
 
 import java.util.*;
 
@@ -110,6 +112,10 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     // ==== TIPO ESPECIALIZAÇÃO (estado atual) ====
     private String currentSpecializationType = null;
+
+    // === Memory
+    private final FreeEmitter freeEmitter;
+
 
     public void enterTypeSpecialization(String innerType) {
         this.currentSpecializationType = innerType;
@@ -200,6 +206,10 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         this.structFieldAccessEmitter = new StructFieldAccessEmitter(temps);
         this.methodCallEmitter = new StructMethodCallEmitter(temps);
         this.implEmitter = new ImplEmitter(this, temps);
+
+
+        //memory
+        this.freeEmitter = new FreeEmitter(this);
 
         this.listVisitor = new ListVisitor(this, temps, globalStrings);
 
@@ -358,6 +368,13 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     @Override
     public String visit(ForNode node) {
         return controlFlow.visit(node);
+    }
+
+
+    //teste
+    @Override
+    public String visitFreeNode(FreeNode freeNode) {
+        return freeEmitter.emit(freeNode);
     }
 
     @Override

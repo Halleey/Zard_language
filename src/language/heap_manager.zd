@@ -38,28 +38,28 @@ Struct Item {
   function prints() {
     int i = 0;
 
-    print("Set {");
 
     while (i < s.data.size()) {
       Item cur = s.data.get(i);
 
-      print("  Item {");
-      print("    id:");
-      print(cur.id);
-      print("    name:");
-      print(cur.name);
-      print("  }");
+      println("Item {");
+      print("id: ");
+      println(cur.id);
+      print("name: ");
+      println(cur.name);
+      print("Quantidade : ");
+      println(cur.quantidade);
+      println("}");
 
       i++;
     }
-    print("}");
     return s;
   }
 
 }
 
 # ==== Item ====
-  Set<Item> items;
+  Set items;
   Item teste;
   items.addItem(1, "Sword",3);
   items.addItem(2, "Shield",2);

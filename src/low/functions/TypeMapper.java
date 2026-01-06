@@ -2,6 +2,7 @@ package low.functions;
 import low.utils.LLVMNameUtils;
 
 public class TypeMapper {
+
     public String toLLVM(String type) {
         if (type == null || type.isEmpty()) {
             throw new RuntimeException("Tipo inválido ou vazio");
@@ -71,4 +72,16 @@ public class TypeMapper {
             }
         };
     }
+
+
+    public String freeFunctionForElement(String elementType) {
+        return switch (elementType) {
+            case "int" -> "@arraylist_free_int";
+            case "double" -> "@arraylist_free_double";
+            case "boolean" -> "@arraylist_free_bool";
+            case "String" -> "@freeList";
+            default -> "@freeList";
+        };
+    }
+
 }

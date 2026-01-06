@@ -2,6 +2,7 @@ package low.main;
 
 import ast.ASTNode;
 import ast.exceptions.ReturnNode;
+import ast.functions.FunctionCallNode;
 import ast.functions.FunctionNode;
 import ast.functions.ParamInfo;
 import ast.home.MainAST;
@@ -230,6 +231,8 @@ public class MainEmitter {
             }
             return;
         }
+
+
         if (node instanceof ForNode forNode) {
 
             if (forNode.getInit() != null) {
@@ -250,6 +253,17 @@ public class MainEmitter {
 
             return;
         }
+
+        if (node instanceof FunctionCallNode callNode) {
+            if (callNode.getArgs() != null) {
+                for (ASTNode arg : callNode.getArgs()) {
+                    coletarStringsRecursivo(arg);
+                }
+            }
+            return;
+        }
+
+
 
         if (node instanceof WhileNode whileNode) {
             coletarStringsRecursivo(whileNode.condition);

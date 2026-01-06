@@ -13,7 +13,7 @@ import java.util.List;
 
 public class WhileNode extends ASTNode {
     public final ASTNode condition;
-    public final List<ASTNode> body;
+    public  List<ASTNode> body;
 
     public ASTNode getCondition() {
         return condition;
@@ -23,9 +23,13 @@ public class WhileNode extends ASTNode {
         return body;
     }
 
+    public void setBody(List<ASTNode> body) {
+        this.body = new ArrayList<>(body);
+    }
+
     public WhileNode(ASTNode condition, List<ASTNode> body) {
         this.condition = condition;
-        this.body = body;
+        this.body = new ArrayList<>(body); // garante mutabilidade
     }
 
     @Override

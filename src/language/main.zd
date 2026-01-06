@@ -1,12 +1,8 @@
-main  {
+main {
 
-int x = 3;
-print(x);
-string nome = "zardelas";
-List nomes = (nome);
+    List<int> numeros;
 
-print(nomes);
-
-
+    print(numeros);
+    print("fim do programa");
 
 }

@@ -11,11 +11,21 @@ import java.util.List;
 
 public class IfNode extends ASTNode {
     public final ASTNode condition;
-    public final List<ASTNode> thenBranch;
-    public final List<ASTNode> elseBranch; // pode ser null
+    public  List<ASTNode> thenBranch;
+    public  List<ASTNode> elseBranch; // pode ser null
 
     public ASTNode getCondition() {
         return condition;
+    }
+    public void setThenBranch(List<ASTNode> thenBranch) {
+        this.thenBranch = new ArrayList<>(thenBranch);
+    }
+
+    public void setElseBranch(List<ASTNode> elseBranch) {
+        if (elseBranch != null)
+            this.elseBranch = new ArrayList<>(elseBranch);
+        else
+            this.elseBranch = null;
     }
 
     public List<ASTNode> getThenBranch() {
@@ -28,9 +38,10 @@ public class IfNode extends ASTNode {
 
     public IfNode(ASTNode condition, List<ASTNode> thenBranch, List<ASTNode> elseBranch) {
         this.condition = condition;
-        this.thenBranch = thenBranch;
-        this.elseBranch = elseBranch;
+        this.thenBranch = new ArrayList<>(thenBranch);
+        this.elseBranch = (elseBranch != null) ? new ArrayList<>(elseBranch) : null;
     }
+
 
     @Override
     public String accept(LLVMEmitVisitor visitor) {

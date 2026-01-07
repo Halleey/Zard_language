@@ -13,6 +13,7 @@ import ast.loops.ForParser;
 import ast.loops.WhileParser;
 import ast.prints.PrintParser;
 import ast.structs.ImplementsParser;
+import ast.structs.StructNode;
 import ast.structs.StructParser;
 import ast.variables.VarDeclarationParser;
 import tokens.Token;
@@ -87,6 +88,24 @@ public class StatemantParser {
                     parser.eat(Token.TokenType.DELIMITER, ";");
                     return new ReturnNode(expr);
                 }
+                case "Shd" -> {
+                    parser.advance(); // consome "Shd"
+
+                    // garante que vem "Struct" em seguida
+                    parser.eat(Token.TokenType.KEYWORD, "Struct");
+
+                    String structName = parser.current().getValue();
+                    parser.eat(Token.TokenType.IDENTIFIER);
+
+                    StructParser structParser = new StructParser(parser);
+                    StructNode node = structParser.parseStructAfterKeyword(structName);
+
+                    node.setShared(true);
+
+                    return node;
+                }
+
+
                 case "break" -> {
                     parser.advance();
                     parser.eat(Token.TokenType.DELIMITER, ";");

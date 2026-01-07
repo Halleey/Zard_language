@@ -1,12 +1,19 @@
 main {
-List<string> nomes;
 
-function List addname(string x, List nomes) {
-    nomes.add(x);
-    return nomes;
+Shd Struct Pais {
+string nome;
 }
 
-call addname("testando", nomes);
-print(nomes);
+Struct People {
+string nome;
+int idade;
+Struct Pais pais;
 
+}
+Pais brasil = {"Brasil"};
+People p;
+p.nome = "zard";
+p.idade = 19;
+p.pais = brasil;
+print(p);
 }

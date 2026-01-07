@@ -1,7 +1,7 @@
 package low.structs;
 
 import ast.ASTNode;
-import ast.structs.StructInstaceNode;
+import ast.structs.StructInstanceNode;
 import ast.structs.StructNode;
 import ast.variables.VariableDeclarationNode;
 import low.TempManager;
@@ -21,7 +21,7 @@ public class StructInstanceEmitter {
         this.stringManager = stringManager;
     }
 
-    public String emit(StructInstaceNode node, LLVisitorMain visitor) {
+    public String emit(StructInstanceNode node, LLVisitorMain visitor) {
 
         StringBuilder llvm = new StringBuilder();
 

@@ -5,8 +5,6 @@ import context.statics.StaticContext;
 import context.statics.list.ListValue;
 import context.statics.structs.StaticStructDefinition;
 import ast.expressions.TypedValue;
-import ast.lists.DynamicList;
-import ast.lists.ListNode;
 import context.runtime.RuntimeContext;
 import context.runtime.StructDefinition;
 import ast.variables.VariableDeclarationNode;
@@ -14,15 +12,15 @@ import low.module.LLVMEmitVisitor;
 
 import java.util.*;
 
-public class StructInstaceNode extends ASTNode {
+public class StructInstanceNode extends ASTNode {
     private final String structName;
     private final List<ASTNode> positionalValues;
     private final Map<String, ASTNode> namedValues;
     private String concreteType;
 
-    public StructInstaceNode(String structName,
-                             List<ASTNode> positionalValues,
-                             Map<String, ASTNode> namedValues) {
+    public StructInstanceNode(String structName,
+                              List<ASTNode> positionalValues,
+                              Map<String, ASTNode> namedValues) {
         this.structName = structName;
         this.positionalValues = (positionalValues != null) ? positionalValues : new ArrayList<>();
         this.namedValues = (namedValues != null) ? namedValues : new LinkedHashMap<>();
@@ -131,7 +129,7 @@ public class StructInstaceNode extends ASTNode {
                 } else {
                     String inner =
                             ftype.substring(7, ftype.length() - 1);
-                    value = new StructInstaceNode(inner, null, null)
+                    value = new StructInstanceNode(inner, null, null)
                             .evaluate(ctx);
                 }
 

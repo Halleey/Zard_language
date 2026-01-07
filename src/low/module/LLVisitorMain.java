@@ -334,7 +334,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     }
 
     @Override
-    public String visit(StructInstaceNode node) {
+    public String visit(StructInstanceNode node) {
         return instanceEmitter.emit(node, this);
     }
 

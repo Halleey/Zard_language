@@ -1,7 +1,7 @@
 package low.variables;
 import ast.inputs.InputNode;
 import ast.lists.ListNode;
-import ast.structs.StructInstaceNode;
+import ast.structs.StructInstanceNode;
 import low.inputs.InputEmitter;
 import low.lists.generics.ListEmitter;
 import low.lists.bool.ListBoolEmitter;
@@ -57,7 +57,7 @@ public class VariableEmitter {
                 return structInitEmitter.emit(node, info);
             }
 
-            if (node.initializer instanceof StructInstaceNode) {
+            if (node.initializer instanceof StructInstanceNode) {
                 String code = node.initializer.accept(visitor);
                 String tmp = extractTemp(code);
 

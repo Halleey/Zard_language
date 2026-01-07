@@ -6,7 +6,7 @@ import ast.functions.FunctionCallNode;
 import ast.functions.FunctionNode;
 import ast.lists.ListAddNode;
 import ast.structs.ImplNode;
-import ast.structs.StructInstaceNode;
+import ast.structs.StructInstanceNode;
 import ast.variables.AssignmentNode;
 import ast.variables.VariableDeclarationNode;
 import ast.variables.VariableNode;
@@ -16,7 +16,7 @@ import java.util.*;
 public class EscapeAnalyzer {
 
     private final EscapeInfo info = new EscapeInfo();
-    private final Map<String, StructInstaceNode> structInstances = new HashMap<>();
+    private final Map<String, StructInstanceNode> structInstances = new HashMap<>();
     private final Set<String> returnedStructs = new HashSet<>();
 
     public EscapeInfo analyze(List<ASTNode> ast) {
@@ -41,7 +41,7 @@ public class EscapeAnalyzer {
             ASTNode val = asg.getValueNode();
 
             // se a variável recebe uma struct literal
-            if (val instanceof StructInstaceNode sin) {
+            if (val instanceof StructInstanceNode sin) {
                 structInstances.put(asg.getName(), sin);
             }
 
@@ -53,7 +53,7 @@ public class EscapeAnalyzer {
                 }
             }
         }
-        if (node instanceof StructInstaceNode sin) {
+        if (node instanceof StructInstanceNode sin) {
         }
 
         if (node instanceof ListAddNode add) {
@@ -61,7 +61,7 @@ public class EscapeAnalyzer {
             if (value instanceof VariableNode v) {
                 info.markEscapes(v.getName()); // struct usado na lista => heap
             }
-            if (value instanceof StructInstaceNode sin) {
+            if (value instanceof StructInstanceNode sin) {
                 info.markEscapes("<inline_struct@" + sin.hashCode() + ">");
             }
         }
@@ -72,7 +72,7 @@ public class EscapeAnalyzer {
                 info.markEscapes(v.getName());
                 returnedStructs.add(v.getName());
             }
-            if (val instanceof StructInstaceNode sin) {
+            if (val instanceof StructInstanceNode sin) {
                 info.markEscapes("<inline_struct@" + sin.hashCode() + ">");
             }
         }
@@ -106,7 +106,7 @@ public class EscapeAnalyzer {
             for (var entry : structInstances.entrySet()) {
 
                 String varName = entry.getKey();
-                StructInstaceNode instance = entry.getValue();
+                StructInstanceNode instance = entry.getValue();
 
                 if (info.escapes(varName)) {
 

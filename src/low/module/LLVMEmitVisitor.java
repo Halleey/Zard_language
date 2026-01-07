@@ -40,7 +40,7 @@ public interface LLVMEmitVisitor {
     String visit (ReturnNode node);
     String visit (ImportNode node);
     String visit (StructNode node);
-    String visit (StructInstaceNode node);
+    String visit (StructInstanceNode node);
     String visit (StructFieldAccessNode node);
     String visit (StructUpdateNode node);
     String visit (StructMethodCallNode node);

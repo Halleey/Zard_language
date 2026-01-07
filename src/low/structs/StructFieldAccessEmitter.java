@@ -4,7 +4,7 @@ import ast.ASTNode;
 import ast.inputs.InputNode;
 import ast.lists.ListGetNode;
 import ast.structs.StructFieldAccessNode;
-import ast.structs.StructInstaceNode;
+import ast.structs.StructInstanceNode;
 import ast.structs.StructNode;
 import ast.variables.VariableDeclarationNode;
 import ast.variables.VariableNode;
@@ -202,7 +202,7 @@ public class StructFieldAccessEmitter {
             String name = normalizeOwnerName(t);
             if (name != null) return name;
         }
-        if (instance instanceof StructInstaceNode inst) {
+        if (instance instanceof StructInstanceNode inst) {
             return inst.getName();
         }
         if (instance instanceof ListGetNode getNode) {

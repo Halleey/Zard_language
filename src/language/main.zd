@@ -9,6 +9,7 @@ function void adicionar(List nomes) {
 call adicionar(nomes);
 println("testando");
 int x = 3;
+println(nomes);
 print(x);
 
 }

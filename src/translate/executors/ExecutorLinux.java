@@ -24,8 +24,6 @@ public class ExecutorLinux {
 
         llvmVisitor.setEscapeInfo(escapeInfo);
 
-        System.out.println("[DEBUG ExecutorLinux] visitor no backend @"
-                + System.identityHashCode(llvmVisitor));
 
         LLVMGenerator llgen = new LLVMGenerator(llvmVisitor);
         String llvm = llgen.generate(ast);

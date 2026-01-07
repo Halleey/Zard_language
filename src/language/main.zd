@@ -1,19 +1,10 @@
 main {
+List<string> nomes;
 
-Shd Struct Pais {
-string nome;
-}
+print(nomes);
 
-Struct People {
-string nome;
-int idade;
-Struct Pais pais;
+print("testando");
+int x = 3;
+print(x);
 
-}
-Pais brasil = {"Brasil"};
-People p;
-p.nome = "zard";
-p.idade = 19;
-p.pais = brasil;
-print(p);
 }

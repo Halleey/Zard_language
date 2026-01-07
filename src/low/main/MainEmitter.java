@@ -308,7 +308,7 @@ public class MainEmitter {
             return;
         }
 
-        if (node instanceof StructInstaceNode structInstance) {
+        if (node instanceof StructInstanceNode structInstance) {
             for (ASTNode val : structInstance.getPositionalValues()) {
                 coletarStringsRecursivo(val);
             }

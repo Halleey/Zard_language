@@ -12,14 +12,10 @@ import low.module.LLVisitorMain;
 
 import java.util.*;
 
-
-import java.util.*;
-import java.util.*;
-
 public class TypeSpecializer {
 
-    private final Map<StructInstaceNode, String> inferredStructTypes = new IdentityHashMap<>();
-    private final Map<String, StructInstaceNode> structVars = new HashMap<>();
+    private final Map<StructInstanceNode, String> inferredStructTypes = new IdentityHashMap<>();
+    private final Map<String, StructInstanceNode> structVars = new HashMap<>();
     private final Map<String, String> variableTypes = new HashMap<>();
 
     private LLVisitorMain visitor;
@@ -42,7 +38,7 @@ public class TypeSpecializer {
         if (visitor == null) return;
 
         for (var entry : inferredStructTypes.entrySet()) {
-            StructInstaceNode si = entry.getKey();
+            StructInstanceNode si = entry.getKey();
             String elemType = entry.getValue();
             String baseName = si.getName();
 
@@ -73,7 +69,7 @@ public class TypeSpecializer {
                 variableTypes.putIfAbsent(name, "Struct<" + name + ">");
             }
 
-            if (node instanceof StructInstaceNode structNode) {
+            if (node instanceof StructInstanceNode structNode) {
                 handleStructInstanceInference(structNode);
             }
 
@@ -105,10 +101,10 @@ public class TypeSpecializer {
                 if (inner.startsWith("Set<") && inner.endsWith(">")) {
                     String elemType = inner.substring("Set<".length(), inner.length() - 1).trim();
 
-                    StructInstaceNode si = getStructInstaceNode(decl);
+                    StructInstanceNode si = getStructInstaceNode(decl);
 
                     if (si == null) {
-                        si = new StructInstaceNode(
+                        si = new StructInstanceNode(
                                 "Set",
                                 Collections.emptyList(),
                                 Collections.emptyMap()
@@ -130,13 +126,13 @@ public class TypeSpecializer {
         }
 
         // Inicializador é uma struct real
-        if (decl.getInitializer() instanceof StructInstaceNode si) {
+        if (decl.getInitializer() instanceof StructInstanceNode si) {
             structVars.put(varName, si);
             if (visitor != null) visitor.markStructUsed(si.getName());
         }
     }
 
-    private void handleStructInstanceInference(StructInstaceNode structNode) {
+    private void handleStructInstanceInference(StructInstanceNode structNode) {
         Map<String, ASTNode> named = structNode.getNamedValues();
         if (named == null || named.isEmpty()) return;
 
@@ -154,7 +150,7 @@ public class TypeSpecializer {
         String varName = call.getReceiverName();
         if (varName == null) return;
 
-        StructInstaceNode target = structVars.get(varName);
+        StructInstanceNode target = structVars.get(varName);
         if (target == null) return;
         if (!"Set".equals(target.getName())) {
             return;
@@ -185,14 +181,14 @@ public class TypeSpecializer {
         }
     }
 
-    private static StructInstaceNode getStructInstaceNode(VariableDeclarationNode decl) {
-        if (decl.getInitializer() instanceof StructInstaceNode si) {
+    private static StructInstanceNode getStructInstaceNode(VariableDeclarationNode decl) {
+        if (decl.getInitializer() instanceof StructInstanceNode si) {
             return si;
         }
         return null;
     }
 
-    private void registerStructInference(StructInstaceNode node, String elemType, String origem) {
+    private void registerStructInference(StructInstanceNode node, String elemType, String origem) {
         if (node == null) return;
         if (elemType == null) return;
 
@@ -241,7 +237,7 @@ public class TypeSpecializer {
         if (arg instanceof VariableNode var)
             return variableTypes.get(var.getName());
 
-        if (arg instanceof StructInstaceNode s)
+        if (arg instanceof StructInstanceNode s)
             return "Struct<" + s.getName() + ">";
 
         if (arg instanceof ListNode list)
@@ -329,7 +325,7 @@ public class TypeSpecializer {
 
             if (node instanceof VariableDeclarationNode decl) {
 
-                StructInstaceNode si = structVars.get(decl.getName());
+                StructInstanceNode si = structVars.get(decl.getName());
                 if (si != null && inferredStructTypes.containsKey(si)) {
 
                     String elemType = inferredStructTypes.get(si);

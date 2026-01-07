@@ -1,7 +1,7 @@
 package low.variables;
 
 
-import ast.structs.StructInstaceNode;
+import ast.structs.StructInstanceNode;
 import ast.variables.VariableDeclarationNode;
 import low.TempManager;
 import low.main.TypeInfos;
@@ -29,7 +29,7 @@ public class ExpressionInitEmitter {
         String llvmType = info.getLLVMType();
         String varName  = node.getName();
 
-        if (node.initializer instanceof StructInstaceNode
+        if (node.initializer instanceof StructInstanceNode
                 && visitor.escapesVar(varName)
                 && llvmType.endsWith("*")) {
 

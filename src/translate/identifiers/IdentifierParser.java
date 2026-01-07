@@ -3,7 +3,6 @@ package translate.identifiers;
 import ast.ASTNode;
 import ast.functions.FunctionCallNode;
 import ast.functions.FunctionNode;
-import ast.functions.FunctionReferenceNode;
 import ast.structs.*;
 import ast.variables.VariableDeclarationNode;
 import helpers_ast.variables.AssignmentParser;
@@ -57,7 +56,7 @@ public class IdentifierParser {
 
             // Declaração simples:
             parser.eat(Token.TokenType.DELIMITER, ";");
-            StructInstaceNode instanceNode = new StructInstaceNode(structName, null, null);
+            StructInstanceNode instanceNode = new StructInstanceNode(structName, null, null);
 
             parser.declareVariable(varName, "Struct<" + structName + ">");
             return new VariableDeclarationNode(varName, "Struct<" + structName + ">", instanceNode);

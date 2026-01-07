@@ -49,8 +49,8 @@ public class StructInstanceParser {
         // Monta tipo final "Struct<Set<int>>"
         String variableType = buildStructType(structName, innerType);
 
-        StructInstaceNode instanceNode =
-                new StructInstaceNode(structName, positionalValues, namedValues);
+        StructInstanceNode instanceNode =
+                new StructInstanceNode(structName, positionalValues, namedValues);
         instanceNode.setConcreteType(variableType);
 
         parser.declareVariable(varName, variableType);
@@ -157,7 +157,7 @@ public class StructInstanceParser {
         ASTNode v = values.get(0);
 
         if (v instanceof LiteralNode lit) return lit.getValue().type();
-        if (v instanceof StructInstaceNode s) return "Struct<" + s.getName() + ">";
+        if (v instanceof StructInstanceNode s) return "Struct<" + s.getName() + ">";
 
         return "any";
     }

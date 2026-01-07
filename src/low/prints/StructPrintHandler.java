@@ -1,7 +1,7 @@
 package low.prints;
 
 import ast.ASTNode;
-import ast.structs.StructInstaceNode;
+import ast.structs.StructInstanceNode;
 import ast.structs.StructNode;
 import ast.variables.VariableNode;
 import low.TempManager;
@@ -22,7 +22,7 @@ public class StructPrintHandler implements PrintHandler {
         if (node instanceof VariableNode var) {
             TypeInfos info = visitor.getVarType(var.getName());
             if (info != null) llvmType = info.getLLVMType();
-        } else if (node instanceof StructInstaceNode inst) {
+        } else if (node instanceof StructInstanceNode inst) {
             llvmType = "%" + inst.getName() + "*";
         }
 

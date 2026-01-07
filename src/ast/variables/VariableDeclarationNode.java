@@ -1,16 +1,13 @@
 package ast.variables;
 import ast.ASTNode;
 import context.statics.StaticContext;
-import ast.lists.DynamicList;
-import ast.lists.ListNode;
 
 import context.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
-import ast.structs.StructInstaceNode;
+import ast.structs.StructInstanceNode;
 import context.statics.list.ListValue;
 import low.module.LLVMEmitVisitor;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -40,11 +37,11 @@ public class VariableDeclarationNode extends ASTNode {
         if (ctxHasStruct(ctx, type)) {
             String structName = extractStructName(type);
 
-            StructInstaceNode instanceNode;
-            if (initializer instanceof StructInstaceNode) {
-                instanceNode = (StructInstaceNode) initializer;
+            StructInstanceNode instanceNode;
+            if (initializer instanceof StructInstanceNode) {
+                instanceNode = (StructInstanceNode) initializer;
             } else {
-                instanceNode = new StructInstaceNode(structName, null, null);
+                instanceNode = new StructInstanceNode(structName, null, null);
             }
 
             value = instanceNode.evaluate(ctx);

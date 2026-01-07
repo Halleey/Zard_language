@@ -1,9 +1,13 @@
 main {
 List<string> nomes;
 
-print(nomes);
+println(nomes);
+function void adicionar(List nomes) {
+    nomes.add("delicia");
+}
 
-print("testando");
+call adicionar(nomes);
+println("testando");
 int x = 3;
 print(x);
 

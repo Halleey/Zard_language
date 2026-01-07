@@ -1,6 +1,7 @@
 package memory_manager.lifetime;
 
 import ast.ASTNode;
+import ast.functions.FunctionCallNode;
 import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
@@ -63,9 +64,21 @@ public class DeterministicLifetimeAnalyzer {
         }
 
         if (node instanceof FunctionNode fn) {
-            for (ASTNode stmt : fn.getBody()) analyzeNodeForLinearization(stmt, out);
+            out.add(fn); // opcional
             return;
         }
+
+        if (node instanceof FunctionCallNode call) {
+            for (ASTNode arg : call.getArgs()) {
+                analyzeNodeForLinearization(arg, out);
+            }
+            out.add(call);
+            return;
+        }
+
+
+
+
 
         if (node instanceof IfNode ifn) {
             out.add(ifn);
@@ -152,6 +165,14 @@ public class DeterministicLifetimeAnalyzer {
             if (decl.getInitializer() != null) collectUses(decl.getInitializer(), anchor);
             return;
         }
+
+        if (node instanceof FunctionCallNode call) {
+            for (ASTNode arg : call.getArgs()) {
+                collectUses(arg, anchor);
+            }
+            return;
+        }
+
 
         if (node instanceof AssignmentNode a) {
             collectUses(a.getValueNode(), anchor);

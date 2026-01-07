@@ -4,23 +4,7 @@ import ast.ASTNode;
 import memory_manager.ownership.graphs.OwnershipNode;
 
 
-public final class FreeAction {
-
-    private final ASTNode anchor;
-    private final OwnershipNode root;
-
-    public FreeAction(ASTNode anchor, OwnershipNode root) {
-        this.anchor = anchor;
-        this.root = root;
-    }
-
-    public ASTNode getAnchor() {
-        return anchor;
-    }
-
-    public OwnershipNode getRoot() {
-        return root;
-    }
+public record FreeAction(ASTNode anchor, OwnershipNode root) {
 
     @Override
     public String toString() {

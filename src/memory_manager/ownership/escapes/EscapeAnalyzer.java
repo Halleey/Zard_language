@@ -85,15 +85,6 @@ public class EscapeAnalyzer {
         }
 
 
-
-        if (node instanceof FunctionCallNode fc) {
-            for (ASTNode a : fc.getArgs()) {
-                if (a instanceof VariableNode v) {
-                    info.markEscapes(v.getName());
-                }
-            }
-        }
-
         for (ASTNode child : node.getChildren()) {
             visit(child);
         }

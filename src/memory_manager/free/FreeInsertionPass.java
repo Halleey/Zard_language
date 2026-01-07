@@ -8,7 +8,6 @@ import ast.loops.WhileNode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.*;
 
 
 public class FreeInsertionPass {
@@ -31,7 +30,7 @@ public class FreeInsertionPass {
             List<FreeAction> frees = plan.get(stmt);
             if (frees != null) {
                 for (FreeAction action : frees) {
-                    newBlock.add(new FreeNode(action.getRoot()));
+                    newBlock.add(new FreeNode(action.root()));
                 }
             }
         }

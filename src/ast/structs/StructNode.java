@@ -16,6 +16,16 @@ public class StructNode extends ASTNode {
     private final String name;
     private final List<VariableDeclarationNode> fields;
     private String llvmName; // nome LLVM único, ex: Set_int, Set_double
+    private boolean shared = false;
+
+
+    public boolean isShared() {
+        return shared;
+    }
+
+    public void setShared(boolean shared) {
+        this.shared = shared;
+    }
 
     public StructNode(String name, List<VariableDeclarationNode> fields) {
         this.name = name;

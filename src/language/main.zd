@@ -1,22 +1,15 @@
 main {
+    int a = 1;
 
-int a = 0;
+    while(a < 5) {
+        int b = a * 2;   # permitido, loop tem escopo próprio
+        println(b);
 
-if(a == 0) {
-int a = 3;
-println(a);
-while(a < 10) {
-    List nomes = ("zard", "ok");
-    print(nomes);
-    a++;
-  }
-}
-else if(a == 2) {
-List te = ("zard", "ok");
-print(te);
-}
+        while(b < 10) {
+            int a = 0;  # proibido, shadowing do pai
+            b++;
+        }
 
-
-print("acabou o programa");
-
+        a++;
+    }
 }

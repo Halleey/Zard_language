@@ -87,25 +87,36 @@ public final class StaticContext {
         int idx = name.indexOf('<');
         return idx == -1 ? name : name.substring(0, idx);
     }
-
-
     public Symbol declareVariable(String name, String type) {
+        boolean isPrimitive = switch(type) {
+            case "int", "double", "float", "bool", "char", "string" -> true;
+            default -> false;  // structs, listas e outros tipos compostos
+        };
+
+        // percorre todos os pais até ROOT
+        StaticContext cur = this.parent;
+        while (cur != null) {
+            // se algum pai já tem a variável, e o bloco atual é um loop, proíbe
+            if (isPrimitive && cur.variables.containsKey(name) && this.kind.isLoop()) {
+                throw new RuntimeException(
+                        "Shadowing de variável primitiva não permitido dentro de loops ou blocos aninhados: '" + name + "'"
+                );
+            }
+            cur = cur.parent;
+        }
+
+        // ok para shadowing em IF/ELSE ou para structs/listas
         if (variables.containsKey(name)) {
             throw new RuntimeException(
                     "Variável já declarada neste escopo (" + kind + "): " + name
             );
         }
 
-        Symbol sym = new Symbol(
-                name,
-                type,
-                nextSlot++,
-                this
-        );
-
+        Symbol sym = new Symbol(name, type, nextSlot++, this);
         variables.put(name, sym);
         return sym;
     }
+
 
     public Symbol resolveVariable(String name) {
         Symbol sym = variables.get(name);

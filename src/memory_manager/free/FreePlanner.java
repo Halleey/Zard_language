@@ -1,6 +1,9 @@
 package memory_manager.free;
 
 import ast.ASTNode;
+import ast.ifstatements.IfNode;
+import ast.loops.WhileNode;
+import context.statics.ScopeKind;
 import context.statics.StaticContext;
 import context.statics.Symbol;
 import memory_manager.ownership.OwnershipAnnotation;
@@ -12,6 +15,8 @@ import memory_manager.ownership.graphs.OwnershipNode;
 
 import java.util.*;
 import java.util.*;
+
+
 public class FreePlanner {
 
     private final OwnershipGraph ownership;
@@ -46,12 +51,6 @@ public class FreePlanner {
         if (alreadyPlanned.contains(var)) return;
         alreadyPlanned.add(var);
 
-        // não libera se a variável foi MOVED
-        if (wasMoved(var)) {
-            System.out.println("[FREE PLANNER] " + var + " foi movida, não libera.");
-            return;
-        }
-
         ASTNode anchor = lastUseNode.get(var);
         if (anchor == null) {
             System.out.println("[FREE PLANNER] " + var + " não tem uso, ignora.");
@@ -62,37 +61,63 @@ public class FreePlanner {
         StaticContext declCtx = sym.getDeclaredIn();
         StaticContext useCtx = anchor.getStaticContext();
 
+        // define se é global/root
+        boolean isRootOrGlobal = declCtx.getKind() == ScopeKind.ROOT
+                || declCtx.getKind() == ScopeKind.GLOBAL;
 
-        // se a variável escapa para um escopo maior que o de declaração, não libera
-        if (!declCtx.isAncestorOf(useCtx)) {
-            System.out.println("[FREE PLANNER] " + var + " escapa para escopo maior, não libera.");
-            return;
+        ASTNode freeAnchor = anchor;
+
+        if (isRootOrGlobal) {
+            // variáveis globais/root → sobe até bloco que engloba último uso
+            while (freeAnchor.getParent() != null &&
+                    (freeAnchor.getParent() instanceof IfNode
+                            || freeAnchor.getParent() instanceof WhileNode)) {
+                freeAnchor = freeAnchor.getParent();
+            }
+        } else {
+            // variáveis locais → insere free **no final do bloco onde foi declarada**
+            // se declCtx != useCtx e useCtx está dentro do bloco, free vai no mesmo bloco
+            // se houver boundary de lifetime, ignora (como antes)
+            if (useCtx.hasLifetimeBoundary() && useCtx != declCtx) {
+                System.out.println("[FREE PLANNER] " + var + " está em boundary de lifetime, não libera.");
+                return;
+            }
+
+            // free no final do bloco onde a variável foi declarada
+            freeAnchor = findBlockEndForDeclaration(declCtx, anchor);
         }
 
-        // se o contexto do uso tem boundary de lifetime mas não é o contexto de declaração, não libera
-        if (useCtx.hasLifetimeBoundary() && useCtx != declCtx) {
-            System.out.println("[FREE PLANNER] " + var + " está em boundary de lifetime, não libera.");
-            return;
-        }
+        // Planeja o free
+        result.computeIfAbsent(freeAnchor, k -> new ArrayList<>())
+                .add(new FreeAction(freeAnchor, root));
 
-        // se passou nos testes, pode liberar
-        result.computeIfAbsent(anchor, k -> new ArrayList<>())
-                .add(new FreeAction(anchor, root));
-
-        System.out.println("[FREE PLANNER] Planejando free para " + var + " após " + anchor.getClass().getSimpleName());
-
-        // planeja recursivamente para filhos
-        for (OwnershipNode child : root.getChildren()) {
-            planRoot(child, result);
-        }
+        System.out.println("[FREE PLANNER] Planejando free da lista " + var +
+                " após " + freeAnchor.getClass().getSimpleName());
     }
 
-    private boolean wasMoved(String var) {
-        for (OwnershipAnnotation ann : annotations) {
-            if (ann.action == OwnerShipAction.MOVED && var.equals(ann.from)) {
-                return true;
-            }
+    /**
+     * Procura o nó do bloco que corresponde ao final do escopo onde a variável foi declarada.
+     * Para While/If, retorna o último nó do corpo do bloco.
+     */
+    private ASTNode findBlockEndForDeclaration(StaticContext declCtx, ASTNode anchor) {
+        ASTNode block = anchor;
+        // sobe até o nó que representa o escopo da declaração
+        while (block != null && block.getStaticContext() != declCtx) {
+            block = block.getParent();
         }
-        return false;
+
+        if (block == null) {
+            // fallback: ainda usamos anchor
+            return anchor;
+        }
+
+        // agora block é o nó do escopo onde a variável foi declarada
+        // se tiver getChildren, pegamos o último para inserir free
+        List<ASTNode> children = block.getChildren();
+        if (children != null && !children.isEmpty()) {
+            return children.get(children.size() - 1);
+        }
+
+        return block;
     }
 }

@@ -75,15 +75,17 @@ public class WhileNode extends ASTNode {
 
     @Override
     protected void bindChildren(StaticContext parent) {
-
+        condition.setParent(this);
         condition.bind(parent);
 
         StaticContext loopCtx = new StaticContext(ScopeKind.WHILE, parent);
 
         for (ASTNode stmt : body) {
+            stmt.setParent(this);
             stmt.bind(loopCtx);
         }
     }
+
 
     @Override
     public List<ASTNode> getChildren() {

@@ -1,15 +1,70 @@
 main {
+Struct Item {
+ int id;
+ string name;
+ List<int> quantidade;
+}
+ Struct Set{
+  List<Item> data;
+ }
 
-int a = 0;
+ impl Set {
+ function  addItem(int id, string name, int quantidade) {
+   Item it;
+   it.id = id;
+   it.name = name;
+   it.quantidade.add(quantidade);
+   s.data.add(it);
+   return s;
+  }
 
-if(a == 0) {
-while(a < 10) {
-List nomes = ("zard", "ok");
-print(nomes);
-a++;
+  function removeFirst() {
+   if (s.data.size() > 0) {
+   s.data.remove(0);
+   }
+    return s;
+  }
+  function  removeItemById(int id) {
+  int i = 0; while (i < s.data.size()) {
+  Item cur = s.data.get(i);
+   if (cur.id == id) {
+   s.data.remove(i);
+   return s;
+   }
+   i++;
+  }
+  return s;
+ }
+  function prints() {
+    int i = 0;
+
+
+    while (i < s.data.size()) {
+      Item cur = s.data.get(i);
+
+      println("Item {");
+      print("id: ");
+      println(cur.id);
+      print("name: ");
+      println(cur.name);
+      print("Quantidade : ");
+      println(cur.quantidade);
+      println("}");
+
+      i++;
+    }
+    return s;
+  }
+
 }
 
-}
-print("acabou o programa");
+# ==== Item ====
+  Set items;
+  Item teste;
+  items.addItem(1, "Sword",3);
+  items.addItem(2, "Shield",2);
+  items.addItem(3, "Potion",6);
+  items.removeItemById(2);
 
-}
+  items.prints();
+ }

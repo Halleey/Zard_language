@@ -74,16 +74,15 @@ public class WhileNode extends ASTNode {
     }
 
     @Override
-    public void bind(StaticContext stx) {
-        StaticContext whileContext = childScope(ScopeKind.WHILE, stx);
+    protected void bindChildren(StaticContext parent) {
 
-        if (condition != null)
-            condition.bind(whileContext);
+        condition.bind(parent);
 
-        StaticContext bodyContext = childScope(ScopeKind.BLOCK, whileContext);
+        StaticContext loopCtx = new StaticContext(ScopeKind.WHILE, parent);
 
-        for (ASTNode node : body)
-            node.bind(bodyContext);
+        for (ASTNode stmt : body) {
+            stmt.bind(loopCtx);
+        }
     }
 
     @Override

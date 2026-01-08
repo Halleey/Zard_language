@@ -4,12 +4,15 @@ import context.statics.structs.StaticStructDefinition;
 
 import java.util.*;
 
-public class StaticContext {
+
+public final class StaticContext {
 
     private static int NEXT_ID = 0;
 
     private final int id;
+    private final int depth;
     private final ScopeKind kind;
+
     private final StaticContext parent;
     private final List<StaticContext> children = new ArrayList<>();
 
@@ -23,36 +26,42 @@ public class StaticContext {
         this.id = NEXT_ID++;
         this.kind = kind;
         this.parent = null;
+        this.depth = 0;
     }
 
     public StaticContext(ScopeKind kind, StaticContext parent) {
         this.id = NEXT_ID++;
         this.kind = kind;
         this.parent = parent;
+        this.depth = parent.depth + 1;
         parent.children.add(this);
     }
 
+
     public int getId() {
         return id;
+    }
+
+    public int getDepth() {
+        return depth;
     }
 
     public ScopeKind getKind() {
         return kind;
     }
 
-
-    //node que pode vir de modo via children
     public StaticContext getParent() {
         return parent;
     }
 
     public List<StaticContext> getChildren() {
-        return children;
+        return List.copyOf(children);
     }
 
-    public Collection<Symbol> getVariables() {
+    public Collection<Symbol> getDeclaredVariables() {
         return variables.values();
     }
+
 
     public void declareStruct(String name, StaticStructDefinition def) {
         if (structs.containsKey(name)) {
@@ -64,21 +73,21 @@ public class StaticContext {
     }
 
     public StaticStructDefinition resolveStruct(String name) {
-        String baseName = normalizeStructName(name);
+        String base = normalizeStructName(name);
 
-        StaticStructDefinition def = structs.get(baseName);
+        StaticStructDefinition def = structs.get(base);
         if (def != null) return def;
 
-        if (parent != null) return parent.resolveStruct(baseName);
+        if (parent != null) return parent.resolveStruct(base);
 
         throw new RuntimeException("Struct não declarado: " + name);
     }
-
 
     private String normalizeStructName(String name) {
         int idx = name.indexOf('<');
         return idx == -1 ? name : name.substring(0, idx);
     }
+
 
     public Symbol declareVariable(String name, String type) {
         if (variables.containsKey(name)) {
@@ -87,7 +96,13 @@ public class StaticContext {
             );
         }
 
-        Symbol sym = new Symbol(name, type, nextSlot++, this);
+        Symbol sym = new Symbol(
+                name,
+                type,
+                nextSlot++,
+                this
+        );
+
         variables.put(name, sym);
         return sym;
     }
@@ -102,15 +117,41 @@ public class StaticContext {
     }
 
 
+    public boolean isRoot() {
+        return parent == null;
+    }
+
+    public boolean isLoopScope() {
+        return kind.isLoop();
+    }
+
+    public boolean isConditionalScope() {
+        return kind.isConditional();
+    }
+
+    public boolean hasLifetimeBoundary() {
+        return kind.hasLifetimeBoundary();
+    }
+
+    public boolean isAncestorOf(StaticContext other) {
+        StaticContext cur = other;
+        while (cur != null) {
+            if (cur == this) return true;
+            cur = cur.parent;
+        }
+        return false;
+    }
+
+
     public void debugPrint(String indent) {
         System.out.println(
-                indent + "Scope #" + id + " [" + kind + "] {"
+                indent + "Scope #" + id +
+                        " depth=" + depth +
+                        " [" + kind + "] {"
         );
 
         for (Symbol sym : variables.values()) {
-            System.out.println(
-                    indent + "  " + sym
-            );
+            System.out.println(indent + "  " + sym);
         }
 
         for (StaticContext child : children) {

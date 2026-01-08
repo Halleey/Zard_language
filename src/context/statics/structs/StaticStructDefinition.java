@@ -2,8 +2,7 @@ package context.statics.structs;
 
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-public class StaticStructDefinition {
+import java.util.Map;public final class StaticStructDefinition {
 
     private final String name;
     private final List<StaticFields> fields;
@@ -32,11 +31,11 @@ public class StaticStructDefinition {
         return fields;
     }
 
-    public StaticFields getField(String name) {
-        StaticFields f = fieldMap.get(name);
+    public StaticFields getField(String fieldName) {
+        StaticFields f = fieldMap.get(fieldName);
         if (f == null) {
             throw new RuntimeException(
-                    "Campo não existe no struct " + this.name + ": " + name
+                    "Campo não existe no struct " + name + ": " + fieldName
             );
         }
         return f;

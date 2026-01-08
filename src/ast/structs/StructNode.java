@@ -79,7 +79,7 @@ public class StructNode extends ASTNode {
     }
 
     @Override
-    public void bind(StaticContext stx) {
+    public void bindChildren(StaticContext stx) {
 
         Set<String> seen = new HashSet<>();
         for (VariableDeclarationNode f : fields) {

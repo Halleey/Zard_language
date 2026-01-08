@@ -72,7 +72,7 @@ public class FunctionNode extends ASTNode {
         return body;
     }
     @Override
-    public void bind(StaticContext stx) {
+    public void bindChildren(StaticContext stx) {
 
         StaticContext funcCtx =
                 new StaticContext(ScopeKind.FUNCTION, stx);

@@ -2,6 +2,7 @@ package ast.ifstatements;
 
 import ast.ASTNode;
 import context.runtime.RuntimeContext;
+import context.statics.ScopeKind;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
@@ -95,7 +96,30 @@ public class IfNode extends ASTNode {
 
 
     @Override
-    public void bind(StaticContext stx) {
+    protected void bindChildren(StaticContext parent) {
 
+        // condição usa o mesmo escopo
+        if (condition != null) {
+            condition.bind(parent);
+        }
+
+        // then cria escopo condicional
+        StaticContext thenCtx =
+                new StaticContext(ScopeKind.IF_THEN, parent);
+
+        for (ASTNode node : thenBranch) {
+            node.bind(thenCtx);
+        }
+
+        if (elseBranch != null) {
+            StaticContext elseCtx =
+                    new StaticContext(ScopeKind.IF_ELSE, parent);
+
+            for (ASTNode node : elseBranch) {
+                node.bind(elseCtx);
+            }
+        }
     }
+
+
 }

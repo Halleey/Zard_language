@@ -17,7 +17,7 @@ public class LiteralNode extends ASTNode {
     }
 
     @Override
-    public void bind(StaticContext stx) {
+    public void bindChildren(StaticContext stx) {
 
     }
 

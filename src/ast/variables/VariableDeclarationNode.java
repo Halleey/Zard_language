@@ -126,11 +126,18 @@ public class VariableDeclarationNode extends ASTNode {
 
 
     @Override
-    public void bind(StaticContext stx) {
-        stx.declareVariable(name, type);
+    public void bindChildren(StaticContext ctx) {
+
+        ctx.declareVariable(name, type);
+
         if (initializer != null) {
-            initializer.bind(stx);
+            initializer.bind(ctx);
         }
+    }
+
+    @Override
+    public boolean isStatement() {
+        return true;
     }
 
     @Override
@@ -146,12 +153,6 @@ public class VariableDeclarationNode extends ASTNode {
     public List<ASTNode> getChildren() {
         if (initializer == null) return List.of();
         return List.of(initializer);
-    }
-
-
-    @Override
-    public boolean isStatement() {
-        return true;
     }
 
     public String getName() {

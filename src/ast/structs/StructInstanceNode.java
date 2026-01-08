@@ -184,7 +184,7 @@ public class StructInstanceNode extends ASTNode {
         return list;
     }
     @Override
-    public void bind(StaticContext stx) {
+    public void bindChildren(StaticContext stx) {
 
         StaticStructDefinition def = stx.resolveStruct(structName);
 

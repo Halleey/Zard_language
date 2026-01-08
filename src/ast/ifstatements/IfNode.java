@@ -93,29 +93,25 @@ public class IfNode extends ASTNode {
         if (elseBranch != null) children.addAll(elseBranch);
         return children;
     }
-
-
     @Override
     protected void bindChildren(StaticContext parent) {
-
-        // condição usa o mesmo escopo
         if (condition != null) {
+            condition.setParent(this);
             condition.bind(parent);
         }
 
-        // then cria escopo condicional
-        StaticContext thenCtx =
-                new StaticContext(ScopeKind.IF_THEN, parent);
-
-        for (ASTNode node : thenBranch) {
-            node.bind(thenCtx);
+        if (thenBranch != null) {
+            StaticContext thenCtx = new StaticContext(ScopeKind.IF_THEN, parent);
+            for (ASTNode node : thenBranch) {
+                node.setParent(this);
+                node.bind(thenCtx);
+            }
         }
 
         if (elseBranch != null) {
-            StaticContext elseCtx =
-                    new StaticContext(ScopeKind.IF_ELSE, parent);
-
+            StaticContext elseCtx = new StaticContext(ScopeKind.IF_ELSE, parent);
             for (ASTNode node : elseBranch) {
+                node.setParent(this);
                 node.bind(elseCtx);
             }
         }

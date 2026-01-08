@@ -2,12 +2,12 @@ package memory_manager.lifetime;
 
 import ast.ASTNode;
 import ast.functions.FunctionCallNode;
+
 import ast.ifstatements.IfNode;
 import ast.lists.ListAddNode;
 import ast.lists.ListGetNode;
 import ast.lists.ListRemoveNode;
 import ast.lists.ListSizeNode;
-import ast.loops.WhileNode;
 import ast.prints.PrintNode;
 import ast.structs.StructFieldAccessNode;
 import ast.structs.StructMethodCallNode;
@@ -19,6 +19,8 @@ import ast.variables.VariableNode;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import ast.loops.WhileNode;
 
 class UsageCollector {
 
@@ -93,6 +95,22 @@ class UsageCollector {
             return;
         }
 
+        if (node instanceof IfNode ifn) {
+            collectUses(ifn.getCondition(), anchor); // condição não consome variáveis
+            ifn.getThenBranch().forEach(stmt -> collectUses(stmt, anchor));
+            if (ifn.getElseBranch() != null)
+                ifn.getElseBranch().forEach(stmt -> collectUses(stmt, anchor));
+            return;
+        }
+
+        if (node instanceof WhileNode wn) {
+            collectUses(wn.getCondition(), anchor); // condição
+            wn.getBody().forEach(stmt -> collectUses(stmt, anchor)); // corpo
+            return;
+        }
+
+
+
         if (node instanceof StructFieldAccessNode f) {
             recordOwner(rootOwner(f.getStructInstance()), anchor);
             return;
@@ -147,3 +165,11 @@ class UsageCollector {
         return null;
     }
 }
+
+/*
+    private void recordOwner(String owner, ASTNode anchor) {
+        if (owner == null || !isHeapOwner(owner)) return;
+        // Marca o nó real, não o bloco
+        lastUseNode.put(owner, anchor);
+    }
+ */

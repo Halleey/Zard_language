@@ -1,16 +1,13 @@
 package memory_manager.lifetime;
-
 import ast.ASTNode;
-
 import java.util.*;
 import java.util.*;
-
-
 import java.util.*;
 import java.util.*;
-
 import java.util.List;
 import java.util.Map;
+
+
 public class DeterministicLifetimeAnalyzer {
 
     private final Map<String, String> varTypes;

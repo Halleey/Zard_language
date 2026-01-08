@@ -20,6 +20,7 @@ import ast.variables.VariableDeclarationNode;
 import java.util.ArrayList;
 import java.util.List;
 
+
 class Linearizer {
 
     public List<ASTNode> collectLinearStatements(List<ASTNode> roots) {
@@ -37,7 +38,7 @@ class Linearizer {
         }
 
         if (node instanceof FunctionNode fn) {
-            out.add(fn); // opcional
+            out.add(fn); // opcional, você pode ignorar se não quiser trackear funções
             return;
         }
 
@@ -48,21 +49,19 @@ class Linearizer {
         }
 
         if (node instanceof IfNode ifn) {
-            out.add(ifn);
+            // Não adiciona o IfNode em si
             analyzeNode(ifn.getCondition(), out);
             ifn.getThenBranch().forEach(stmt -> analyzeNode(stmt, out));
-            if (ifn.getElseBranch() != null) {
-                ifn.getElseBranch().forEach(stmt -> analyzeNode(stmt, out));
-            }
+            if (ifn.getElseBranch() != null) ifn.getElseBranch().forEach(stmt -> analyzeNode(stmt, out));
             return;
         }
 
         if (node instanceof WhileNode wn) {
-            out.add(wn);
             analyzeNode(wn.getCondition(), out);
             wn.getBody().forEach(stmt -> analyzeNode(stmt, out));
             return;
         }
+
 
         if (node instanceof VariableDeclarationNode decl) {
             if (decl.getInitializer() != null) analyzeNode(decl.getInitializer(), out);

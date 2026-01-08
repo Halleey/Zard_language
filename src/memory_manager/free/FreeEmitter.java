@@ -18,24 +18,24 @@ public class FreeEmitter {
 
         // Nome da variável
         String varName = root.getId();
-        System.out.println("[FreeEmitter][DEBUG] Var name: " + varName);
+//        System.out.println("[FreeEmitter][DEBUG] Var name: " + varName);
 
         // Tipo do elemento da lista
         String elementType = visitor.getListElementType(varName);
-        System.out.println("[FreeEmitter][DEBUG] Raw varType from getListElementType: " + elementType);
+//        System.out.println("[FreeEmitter][DEBUG] Raw varType from getListElementType: " + elementType);
 
         if (elementType == null) {
-            System.out.println("[FreeEmitter][DEBUG] Tipo nulo, não é lista, ignorando free.");
+//            System.out.println("[FreeEmitter][DEBUG] Tipo nulo, não é lista, ignorando free.");
             return "";
         }
 
         // LLVM type da lista (usando TypeMapper)
         String llvmType = typeMapper.toLLVM("List<" + elementType + ">");
-        System.out.println("[FreeEmitter][DEBUG] LLVM Type mapeado: " + llvmType);
+//        System.out.println("[FreeEmitter][DEBUG] LLVM Type mapeado: " + llvmType);
 
         // Função de free usando TypeMapper
         String freeFunc = typeMapper.freeFunctionForElement(elementType);
-        System.out.println("[FreeEmitter][DEBUG] Função de free: " + freeFunc);
+//        System.out.println("[FreeEmitter][DEBUG] Função de free: " + freeFunc);
 
         // LLVM IR
         String ir = String.format(
@@ -45,7 +45,7 @@ public class FreeEmitter {
                 freeFunc, llvmType, varName
         );
 
-        System.out.println("[FreeEmitter][DEBUG] IR gerado:\n" + ir);
+//        System.out.println("[FreeEmitter][DEBUG] IR gerado:\n" + ir);
         return ir;
     }
 

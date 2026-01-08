@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 
+
 public class FreeInsertionPass {
 
     private final Map<ASTNode, List<FreeAction>> plan;
@@ -19,10 +20,13 @@ public class FreeInsertionPass {
     }
 
     public void insert(List<ASTNode> block) {
+        insertInBlock(block);
+    }
+
+    private void insertInBlock(List<ASTNode> block) {
         List<ASTNode> newBlock = new ArrayList<>();
 
         for (ASTNode stmt : block) {
-
             newBlock.add(stmt);
 
             insertIntoNode(stmt);
@@ -30,7 +34,8 @@ public class FreeInsertionPass {
             List<FreeAction> frees = plan.get(stmt);
             if (frees != null) {
                 for (FreeAction action : frees) {
-                    newBlock.add(new FreeNode(action.root()));
+                    int idx = newBlock.indexOf(stmt);
+                    newBlock.add(idx + 1, new FreeNode(action.root()));
                 }
             }
         }
@@ -40,22 +45,21 @@ public class FreeInsertionPass {
     }
 
     private void insertIntoNode(ASTNode node) {
-
         if (node instanceof IfNode ifn) {
-            insert(ifn.getThenBranch());
+            insertInBlock(ifn.getThenBranch());
             if (ifn.getElseBranch() != null) {
-                insert(ifn.getElseBranch());
+                insertInBlock(ifn.getElseBranch());
             }
             return;
         }
 
         if (node instanceof WhileNode wn) {
-            insert(wn.getBody());
+            insertInBlock(wn.getBody());
             return;
         }
 
         if (node instanceof FunctionNode fn) {
-            insert(fn.getBody());
+            insertInBlock(fn.getBody());
         }
     }
 }

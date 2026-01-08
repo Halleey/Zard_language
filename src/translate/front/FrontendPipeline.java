@@ -80,7 +80,6 @@ public class FrontendPipeline {
         FreePlanner freePlanner = new FreePlanner(
                 ownershipGraph,
                 lastUseNode,
-                escapeInfo,
                 ownershipAnalyzer.getAnnotations()
         );
 

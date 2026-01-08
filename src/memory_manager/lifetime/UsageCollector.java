@@ -79,26 +79,31 @@ class UsageCollector {
             return;
         }
 
-        // listas
         if (node instanceof ListAddNode add) {
-            collectUses(add.getListNode(), useCtx, anchor);
+            // mark list itself as used
+            if (add.getListNode() instanceof VariableNode vn) registerUse(resolveSymbol(vn, useCtx), useCtx, anchor);
+            // mark values inside add
             collectUses(add.getValuesNode(), useCtx, anchor);
             return;
         }
-        if (node instanceof ListRemoveNode rem) {
-            collectUses(rem.getListNode(), useCtx, anchor);
-            collectUses(rem.getIndexNode(), useCtx, anchor);
-            return;
-        }
+
         if (node instanceof ListGetNode get) {
-            collectUses(get.getListName(), useCtx, anchor);
+            if (get.getListName() instanceof VariableNode vn) registerUse(resolveSymbol(vn, useCtx), useCtx, anchor);
             collectUses(get.getIndexNode(), useCtx, anchor);
             return;
         }
-        if (node instanceof ListSizeNode size) {
-            collectUses(size.getNome(), useCtx, anchor);
+
+        if (node instanceof ListRemoveNode rem) {
+            if (rem.getListNode() instanceof VariableNode vn) registerUse(resolveSymbol(vn, useCtx), useCtx, anchor);
+            collectUses(rem.getIndexNode(), useCtx, anchor);
             return;
         }
+
+        if (node instanceof ListSizeNode size) {
+            if (size.getNome() instanceof VariableNode vn) registerUse(resolveSymbol(vn, useCtx), useCtx, anchor);
+            return;
+        }
+
 
         // structs
         if (node instanceof StructFieldAccessNode sfa) return;
@@ -121,16 +126,18 @@ class UsageCollector {
             return symbols.get(v.getName()); // fallback global
         }
     }
-
     private void registerUse(Symbol sym, StaticContext useCtx, ASTNode anchor) {
-        // já registrado
+        if (sym == null) {
+            System.out.println("[USAGE COLLECTOR] WARNING: tentado registrar uso de símbolo null");
+            return;
+        }
+
         if (lastUse.containsKey(sym)) return;
 
         StaticContext declCtx = sym.getDeclaredIn();
         StaticContext cur = useCtx;
 
         while (cur != null) {
-            // última posição antes de sair do escopo da declaração
             if (!declCtx.isAncestorOf(cur) || (cur.hasLifetimeBoundary() && cur != declCtx)) {
                 lastUse.put(sym, anchor);
                 return;
@@ -138,7 +145,7 @@ class UsageCollector {
             cur = cur.getParent();
         }
 
-        // se chegou até a raiz, ainda marca
         lastUse.put(sym, anchor);
     }
+
 }

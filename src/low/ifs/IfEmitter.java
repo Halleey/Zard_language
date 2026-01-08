@@ -20,51 +20,42 @@ public class IfEmitter {
     public String emit(IfNode node) {
         StringBuilder llvm = new StringBuilder();
 
-        // avalia a condição
         String condCode = node.condition.accept(visitor);
         String condTemp = extractVal(condCode);
         llvm.append(condCode).append("\n");
 
-        // labels únicos
         String thenLabel = "then_" + labelCounter;
         String elseLabel = "else_" + labelCounter;
         String endLabel = "endif_" + labelCounter;
         labelCounter++;
 
-        // branch condicional
         llvm.append("  br i1 ").append(condTemp)
                 .append(", label %").append(thenLabel)
                 .append(", label %").append(node.elseBranch != null ? elseLabel : endLabel).append("\n");
 
-        // then block
         llvm.append(thenLabel).append(":\n");
-        boolean thenHasBreak = false;
+        visitor.getVariableEmitter().enterScope();
         for (ASTNode stmt : node.thenBranch) {
-            if (stmt instanceof BreakNode) thenHasBreak = true;
             llvm.append(stmt.accept(visitor));
         }
-        if (!thenHasBreak) {
+        visitor.getVariableEmitter().exitScope();
+        llvm.append("  br label %").append(endLabel).append("\n");
+
+        if (node.elseBranch != null) {
+            llvm.append(elseLabel).append(":\n");
+            visitor.getVariableEmitter().enterScope();
+            for (ASTNode stmt : node.elseBranch) {
+                llvm.append(stmt.accept(visitor));
+            }
+            visitor.getVariableEmitter().exitScope();
             llvm.append("  br label %").append(endLabel).append("\n");
         }
 
-        // else block (se existir)
-        if (node.elseBranch != null) {
-            llvm.append(elseLabel).append(":\n");
-            boolean elseHasBreak = false;
-            for (ASTNode stmt : node.elseBranch) {
-                if (stmt instanceof BreakNode) elseHasBreak = true;
-                llvm.append(stmt.accept(visitor));
-            }
-            if (!elseHasBreak) {
-                llvm.append("  br label %").append(endLabel).append("\n");
-            }
-        }
-
-        // end label
         llvm.append(endLabel).append(":\n");
 
         return llvm.toString();
     }
+
 
     private String extractVal(String code) {
         int idxVal = code.lastIndexOf(";;VAL:");

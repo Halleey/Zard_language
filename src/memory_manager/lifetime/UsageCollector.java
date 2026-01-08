@@ -105,10 +105,17 @@ class UsageCollector {
         }
 
 
-        // structs
-        if (node instanceof StructFieldAccessNode sfa) return;
-        if (node instanceof StructUpdateNode su) return;
-        if (node instanceof StructMethodCallNode smc) collectUses(smc, useCtx, anchor);
+        if (node instanceof StructMethodCallNode smc) {
+            if (smc.getStructInstance() instanceof VariableNode vn) {
+                registerUse(resolveSymbol(vn, useCtx), useCtx, anchor);
+            }
+
+            for (ASTNode arg : smc.getArgs()) {
+                collectUses(arg, useCtx, anchor);
+            }
+            return; // não cai no fallback
+        }
+
 
         // fallback: percorre filhos gerais
         if (node.getChildren() != null) {

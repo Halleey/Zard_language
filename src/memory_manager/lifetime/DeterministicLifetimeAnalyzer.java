@@ -1,31 +1,9 @@
 package memory_manager.lifetime;
-
 import ast.ASTNode;
-import ast.functions.FunctionCallNode;
-import ast.functions.FunctionNode;
-import ast.home.MainAST;
-import ast.ifstatements.IfNode;
-import ast.lists.ListAddNode;
-import ast.lists.ListGetNode;
-import ast.lists.ListRemoveNode;
-import ast.lists.ListSizeNode;
-import ast.loops.WhileNode;
-import ast.prints.PrintNode;
-import ast.structs.StructFieldAccessNode;
-import ast.structs.StructMethodCallNode;
-import ast.structs.StructUpdateNode;
-import ast.variables.AssignmentNode;
-import ast.variables.VariableDeclarationNode;
-import ast.variables.VariableNode;
-
 import java.util.*;
 import java.util.*;
-
-
 import java.util.*;
 import java.util.*;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,244 +11,18 @@ import java.util.Map;
 public class DeterministicLifetimeAnalyzer {
 
     private final Map<String, String> varTypes;
-    private final Map<String, ASTNode> lastUseNode = new LinkedHashMap<>();
-    private List<ASTNode> linearizedStatements; // salva linearização para achar blocos
+    private final Linearizer linearizer;
+    private final UsageCollector usageCollector;
+
     public DeterministicLifetimeAnalyzer(Map<String, String> varTypes) {
         this.varTypes = varTypes;
+        this.linearizer = new Linearizer();
+        this.usageCollector = new UsageCollector(varTypes);
     }
 
     public Map<String, ASTNode> analyzeAndReturnNode(List<ASTNode> roots) {
-        linearizedStatements = collectLinearStatements(roots); // simple test
-        for (int i = linearizedStatements.size() - 1; i >= 0; i--) {
-            ASTNode stmt = linearizedStatements.get(i);
-            collectUses(stmt, stmt);
-        }
-        return lastUseNode;
-    }
-
-
-    private List<ASTNode> collectLinearStatements(List<ASTNode> roots) {
-        List<ASTNode> out = new ArrayList<>();
-        for (ASTNode node : roots) analyzeNodeForLinearization(node, out);
-        return out;
-    }
-
-    private void analyzeNodeForLinearization(ASTNode node, List<ASTNode> out) {
-        if (node == null) return;
-
-        if (node instanceof MainAST main) {
-            for (ASTNode stmt : main.getBody()) analyzeNodeForLinearization(stmt, out);
-            return;
-        }
-
-        if (node instanceof FunctionNode fn) {
-            out.add(fn); // opcional
-            return;
-        }
-
-        if (node instanceof FunctionCallNode call) {
-            for (ASTNode arg : call.getArgs()) {
-                analyzeNodeForLinearization(arg, out);
-            }
-            out.add(call);
-            return;
-        }
-
-
-
-
-
-        if (node instanceof IfNode ifn) {
-            out.add(ifn);
-            analyzeNodeForLinearization(ifn.getCondition(), out);
-            for (ASTNode stmt : ifn.getThenBranch()) analyzeNodeForLinearization(stmt, out);
-            if (ifn.getElseBranch() != null)
-                for (ASTNode stmt : ifn.getElseBranch()) analyzeNodeForLinearization(stmt, out);
-            return;
-        }
-
-        if (node instanceof WhileNode wn) {
-            out.add(wn);
-            analyzeNodeForLinearization(wn.getCondition(), out);
-            for (ASTNode stmt : wn.getBody()) analyzeNodeForLinearization(stmt, out);
-            return;
-        }
-
-        if (node instanceof VariableDeclarationNode decl) {
-            if (decl.getInitializer() != null) analyzeNodeForLinearization(decl.getInitializer(), out);
-            out.add(decl); // sempre adiciona declaração, mesmo sem initializer
-            return;
-        }
-
-        if (node instanceof AssignmentNode assign) {
-            analyzeNodeForLinearization(assign.getValueNode(), out);
-            out.add(assign);
-            return;
-        }
-
-        if (node instanceof PrintNode print) {
-            analyzeNodeForLinearization(print.expr, out);
-            out.add(print);
-            return;
-        }
-
-        if (node instanceof ListAddNode add) {
-            analyzeNodeForLinearization(add.getListNode(), out);
-            analyzeNodeForLinearization(add.getValuesNode(), out);
-            out.add(add);
-            return;
-        }
-
-        if (node instanceof ListRemoveNode rem) {
-            analyzeNodeForLinearization(rem.getListNode(), out);
-            analyzeNodeForLinearization(rem.getIndexNode(), out);
-            out.add(rem);
-            return;
-        }
-
-        if (node instanceof ListGetNode get) {
-            analyzeNodeForLinearization(get.getListName(), out);
-            analyzeNodeForLinearization(get.getIndexNode(), out);
-            out.add(get);
-            return;
-        }
-
-        if (node instanceof ListSizeNode size) {
-            analyzeNodeForLinearization(size.getNome(), out);
-            out.add(size);
-            return;
-        }
-
-        if (node instanceof StructFieldAccessNode || node instanceof StructUpdateNode ||
-                node instanceof StructMethodCallNode) {
-            out.add(node);
-            return;
-        }
-
-        if (node.isStatement()) out.add(node);
-
-        if (node.getChildren() != null)
-            for (ASTNode child : node.getChildren()) analyzeNodeForLinearization(child, out);
-    }
-
-    private void collectUses(ASTNode node, ASTNode anchor) {
-        if (node == null) return;
-
-        if (node instanceof VariableNode v) {
-            recordOwner(v.getName(), anchor);
-            return;
-        }
-
-        if (node instanceof VariableDeclarationNode decl) {
-            if (decl.getInitializer() != null) collectUses(decl.getInitializer(), anchor);
-            return;
-        }
-
-        if (node instanceof FunctionCallNode call) {
-            for (ASTNode arg : call.getArgs()) {
-                collectUses(arg, anchor);
-            }
-            return;
-        }
-
-
-        if (node instanceof AssignmentNode a) {
-            collectUses(a.getValueNode(), anchor);
-            return;
-        }
-
-        if (node instanceof PrintNode p) {
-            collectUses(p.expr, anchor);
-            return;
-        }
-
-        if (node instanceof ListAddNode add) {
-            collectUses(add.getListNode(), anchor);
-            collectUses(add.getValuesNode(), anchor);
-            return;
-        }
-
-        if (node instanceof ListGetNode get) {
-            collectUses(get.getListName(), anchor);
-            collectUses(get.getIndexNode(), anchor);
-            return;
-        }
-
-        if (node instanceof ListSizeNode size) {
-            collectUses(size.getNome(), anchor);
-            return;
-        }
-
-        if (node instanceof ListRemoveNode rem) {
-            collectUses(rem.getListNode(), anchor);
-            collectUses(rem.getIndexNode(), anchor);
-            return;
-        }
-
-        if (node instanceof StructFieldAccessNode f) {
-            recordOwner(rootOwner(f.getStructInstance()), anchor);
-            return;
-        }
-
-        if (node instanceof StructMethodCallNode m) {
-            recordOwner(rootOwner(m.getStructInstance()), anchor);
-            for (ASTNode arg : m.getArgs()) collectUses(arg, anchor);
-            return;
-        }
-
-        if (node instanceof StructUpdateNode u) {
-            recordOwner(rootOwner(u.getTargetStruct()), anchor);
-            return;
-        }
-
-        // fallback para filhos genéricos
-        if (node.getChildren() != null)
-            for (ASTNode child : node.getChildren()) collectUses(child, anchor);
-    }
-
-
-
-    private boolean contains(ASTNode parent, ASTNode child) {
-        if (parent == child) return true;
-        if (parent.getChildren() != null) {
-            for (ASTNode c : parent.getChildren()) {
-                if (contains(c, child)) return true;
-            }
-        }
-        return false;
-    }
-
-    private void recordOwner(String owner, ASTNode anchor) {
-        if (owner == null) return;
-        if (!isHeapOwner(owner)) return;
-
-        // Se o anchor estiver dentro de While ou If, registra o bloco inteiro
-        ASTNode block = findEnclosingBlock(anchor);
-        lastUseNode.putIfAbsent(owner, block != null ? block : anchor);
-    }
-
-    private ASTNode findEnclosingBlock(ASTNode node) {
-        for (ASTNode stmt : linearizedStatements) {
-            if ((stmt instanceof WhileNode || stmt instanceof IfNode) &&
-                    contains(stmt, node)) {
-                return stmt;
-            }
-        }
-        return null;
-    }
-
-
-
-    private boolean isHeapOwner(String name) {
-        // Aqui você pode filtrar int/double se quiser, mas por enquanto tudo é heap
-        return true;
-    }
-
-    private String rootOwner(ASTNode expr) {
-        if (expr instanceof VariableNode v) return v.getName();
-        if (expr instanceof StructFieldAccessNode f) return rootOwner(f.getStructInstance());
-        if (expr instanceof StructMethodCallNode m) return rootOwner(m.getStructInstance());
-        if (expr instanceof StructUpdateNode u) return rootOwner(u.getTargetStruct());
-        return null;
+        List<ASTNode> linearized = linearizer.collectLinearStatements(roots);
+        usageCollector.collect(linearized);
+        return usageCollector.getLastUseNode();
     }
 }

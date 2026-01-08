@@ -50,12 +50,11 @@ public class MainAST extends ASTNode {
 
     @Override
     public void bind(StaticContext parent) {
-        StaticContext mainCtx = new StaticContext(ScopeKind.GLOBAL, parent);
-
         for (ASTNode n : body) {
-            n.bind(mainCtx);
+            n.bind(parent);
         }
     }
+
 
 
 }

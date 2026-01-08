@@ -1,14 +1,14 @@
 main {
-List<string> nomes;
-
-println(nomes);
-function void adicionar(List nomes) {
-    nomes.add("delicia");
+int x = 10;
+while ( x > 0 ) {
+List nomes =("zard");
+print(nomes);
+if(x == 4) {
+   List teste = ("angel");
+    print(teste);
+}
+x--;
 }
 
-call adicionar(nomes);
-println("testando");
-int x = 3;
-print(x);
 
 }

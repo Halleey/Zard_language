@@ -20,7 +20,6 @@ import ast.variables.VariableDeclarationNode;
 import java.util.ArrayList;
 import java.util.List;
 
-
 class Linearizer {
 
     public List<ASTNode> collectLinearStatements(List<ASTNode> roots) {
@@ -37,10 +36,7 @@ class Linearizer {
             return;
         }
 
-        if (node instanceof FunctionNode fn) {
-            out.add(fn); // opcional, você pode ignorar se não quiser trackear funções
-            return;
-        }
+        if (node instanceof FunctionNode fn) return;
 
         if (node instanceof FunctionCallNode call) {
             call.getArgs().forEach(arg -> analyzeNode(arg, out));
@@ -49,16 +45,24 @@ class Linearizer {
         }
 
         if (node instanceof IfNode ifn) {
-            // Não adiciona o IfNode em si
             analyzeNode(ifn.getCondition(), out);
             ifn.getThenBranch().forEach(stmt -> analyzeNode(stmt, out));
-            if (ifn.getElseBranch() != null) ifn.getElseBranch().forEach(stmt -> analyzeNode(stmt, out));
+            if (ifn.getElseBranch() != null)
+                ifn.getElseBranch().forEach(stmt -> analyzeNode(stmt, out));
             return;
         }
 
         if (node instanceof WhileNode wn) {
+
+            out.add(wn);
+            System.out.println("[LINEARIZER] Visitando WhileNode com condição: " + wn.getCondition());
+
             analyzeNode(wn.getCondition(), out);
-            wn.getBody().forEach(stmt -> analyzeNode(stmt, out));
+
+            for (ASTNode stmt : wn.getBody()) {
+                System.out.println("[LINEARIZER] Visitando nó do corpo do While: " + stmt.getClass().getSimpleName());
+                analyzeNode(stmt, out);
+            }
             return;
         }
 

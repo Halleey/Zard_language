@@ -40,7 +40,7 @@ public class ReturnNode extends ASTNode {
     }
 
     @Override
-    public void bind(StaticContext stx) {
+    public void bindChildren(StaticContext stx) {
         if(expr != null) {
         expr.bind(stx);
         }

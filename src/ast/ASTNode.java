@@ -7,13 +7,32 @@ import low.module.LLVMEmitVisitor;
 
 import java.util.Collections;
 import java.util.List;
+
+
 public abstract class ASTNode {
-    
+
+    private StaticContext staticContext;
+
     public boolean isStatement() {
         return false;
     }
 
+    public final void bind(StaticContext ctx) {
+        this.staticContext = ctx;
+        bindChildren(ctx);
+    }
 
+    protected void bindChildren(StaticContext ctx) {
+        for (ASTNode child : getChildren()) {
+            if (child != null) {
+                child.bind(ctx);
+            }
+        }
+    }
+
+    public StaticContext getStaticContext() {
+        return staticContext;
+    }
 
     public abstract String accept(LLVMEmitVisitor visitor);
     public abstract TypedValue evaluate(RuntimeContext ctx);
@@ -25,11 +44,5 @@ public abstract class ASTNode {
 
     public String getType() {
         return null;
-    }
-
-    public void bind(StaticContext stx) {
-        for (ASTNode child : getChildren()) {
-            child.bind(stx);
-        }
     }
 }

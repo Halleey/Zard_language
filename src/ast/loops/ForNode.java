@@ -117,7 +117,7 @@ public class ForNode extends ASTNode {
 
 
     @Override
-    public void bind(StaticContext stx) {
+    public void bindChildren(StaticContext stx) {
 
         StaticContext forCtx = childScope(ScopeKind.FOR, stx);
 

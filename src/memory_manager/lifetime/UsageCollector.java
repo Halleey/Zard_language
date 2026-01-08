@@ -1,13 +1,12 @@
 package memory_manager.lifetime;
 
 import ast.ASTNode;
-import ast.functions.FunctionCallNode;
-
 import ast.ifstatements.IfNode;
 import ast.lists.ListAddNode;
 import ast.lists.ListGetNode;
 import ast.lists.ListRemoveNode;
 import ast.lists.ListSizeNode;
+import ast.loops.WhileNode;
 import ast.prints.PrintNode;
 import ast.structs.StructFieldAccessNode;
 import ast.structs.StructMethodCallNode;
@@ -15,161 +14,131 @@ import ast.structs.StructUpdateNode;
 import ast.variables.AssignmentNode;
 import ast.variables.VariableDeclarationNode;
 import ast.variables.VariableNode;
+import context.statics.StaticContext;
+import context.statics.Symbol;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import ast.loops.WhileNode;
 
 class UsageCollector {
 
-    private final Map<String, String> varTypes;
-    private final Map<String, ASTNode> lastUseNode = new LinkedHashMap<>();
-    private List<ASTNode> linearizedStatements;
+    private final Map<String, Symbol> symbols;
+    private final Map<Symbol, ASTNode> lastUse = new LinkedHashMap<>();
 
-    public UsageCollector(Map<String, String> varTypes) {
-        this.varTypes = varTypes;
+    public UsageCollector(Map<String, Symbol> symbols) {
+        this.symbols = symbols;
     }
 
-    public void collect(List<ASTNode> linearizedStatements) {
-        this.linearizedStatements = linearizedStatements;
-        for (int i = linearizedStatements.size() - 1; i >= 0; i--) {
-            ASTNode stmt = linearizedStatements.get(i);
-            collectUses(stmt, stmt);
+    public void collect(List<ASTNode> linearized) {
+        for (int i = linearized.size() - 1; i >= 0; i--) {
+            ASTNode stmt = linearized.get(i);
+            collectUses(stmt, stmt.getStaticContext(), stmt);
         }
     }
 
-    public Map<String, ASTNode> getLastUseNode() {
-        return lastUseNode;
+    public Map<Symbol, ASTNode> getLastUses() {
+        return lastUse;
     }
-
-    private void collectUses(ASTNode node, ASTNode anchor) {
+    private void collectUses(ASTNode node, StaticContext useCtx, ASTNode anchor) {
         if (node == null) return;
 
         if (node instanceof VariableNode v) {
-            recordOwner(v.getName(), anchor);
-            return;
-        }
-
-        if (node instanceof VariableDeclarationNode decl) {
-            if (decl.getInitializer() != null) collectUses(decl.getInitializer(), anchor);
-            return;
-        }
-
-        if (node instanceof FunctionCallNode call) {
-            call.getArgs().forEach(arg -> collectUses(arg, anchor));
-            return;
-        }
-
-        if (node instanceof AssignmentNode a) {
-            collectUses(a.getValueNode(), anchor);
-            return;
-        }
-
-        if (node instanceof PrintNode p) {
-            collectUses(p.expr, anchor);
-            return;
-        }
-
-        if (node instanceof ListAddNode add) {
-            collectUses(add.getListNode(), anchor);
-            collectUses(add.getValuesNode(), anchor);
-            return;
-        }
-
-        if (node instanceof ListGetNode get) {
-            collectUses(get.getListName(), anchor);
-            collectUses(get.getIndexNode(), anchor);
-            return;
-        }
-
-        if (node instanceof ListSizeNode size) {
-            collectUses(size.getNome(), anchor);
-            return;
-        }
-
-        if (node instanceof ListRemoveNode rem) {
-            collectUses(rem.getListNode(), anchor);
-            collectUses(rem.getIndexNode(), anchor);
+            Symbol sym = resolveSymbol(v, useCtx);
+            if (sym != null) registerUse(sym, useCtx, anchor);
             return;
         }
 
         if (node instanceof IfNode ifn) {
-            collectUses(ifn.getCondition(), anchor); // condição não consome variáveis
-            ifn.getThenBranch().forEach(stmt -> collectUses(stmt, anchor));
+            collectUses(ifn.getCondition(), useCtx, anchor);
+            for (ASTNode stmt : ifn.getThenBranch()) collectUses(stmt, useCtx, anchor);
             if (ifn.getElseBranch() != null)
-                ifn.getElseBranch().forEach(stmt -> collectUses(stmt, anchor));
+                for (ASTNode stmt : ifn.getElseBranch()) collectUses(stmt, useCtx, anchor);
             return;
         }
 
         if (node instanceof WhileNode wn) {
-            collectUses(wn.getCondition(), anchor); // condição
-            wn.getBody().forEach(stmt -> collectUses(stmt, anchor)); // corpo
+            collectUses(wn.getCondition(), useCtx, anchor);
+            for (ASTNode stmt : wn.getBody()) collectUses(stmt, useCtx, anchor);
             return;
         }
 
-
-
-        if (node instanceof StructFieldAccessNode f) {
-            recordOwner(rootOwner(f.getStructInstance()), anchor);
+        if (node instanceof PrintNode print) {
+            collectUses(print.expr, useCtx, anchor);
             return;
         }
 
-        if (node instanceof StructMethodCallNode m) {
-            recordOwner(rootOwner(m.getStructInstance()), anchor);
-            m.getArgs().forEach(arg -> collectUses(arg, anchor));
+        if (node instanceof VariableDeclarationNode decl && decl.getInitializer() != null) {
+            collectUses(decl.getInitializer(), useCtx, anchor);
             return;
         }
 
-        if (node instanceof StructUpdateNode u) {
-            recordOwner(rootOwner(u.getTargetStruct()), anchor);
+        if (node instanceof AssignmentNode assign) {
+            collectUses(assign.getValueNode(), useCtx, anchor);
             return;
         }
 
-        if (node.getChildren() != null)
-            node.getChildren().forEach(child -> collectUses(child, anchor));
-    }
-
-    private void recordOwner(String owner, ASTNode anchor) {
-        if (owner == null || !isHeapOwner(owner)) return;
-        ASTNode block = findEnclosingBlock(anchor);
-        lastUseNode.putIfAbsent(owner, block != null ? block : anchor);
-    }
-
-    private ASTNode findEnclosingBlock(ASTNode node) {
-        for (ASTNode stmt : linearizedStatements) {
-            if ((stmt instanceof WhileNode || stmt instanceof IfNode) &&
-                    contains(stmt, node)) return stmt;
+        // listas
+        if (node instanceof ListAddNode add) {
+            collectUses(add.getListNode(), useCtx, anchor);
+            collectUses(add.getValuesNode(), useCtx, anchor);
+            return;
         }
-        return null;
+        if (node instanceof ListRemoveNode rem) {
+            collectUses(rem.getListNode(), useCtx, anchor);
+            collectUses(rem.getIndexNode(), useCtx, anchor);
+            return;
+        }
+        if (node instanceof ListGetNode get) {
+            collectUses(get.getListName(), useCtx, anchor);
+            collectUses(get.getIndexNode(), useCtx, anchor);
+            return;
+        }
+        if (node instanceof ListSizeNode size) {
+            collectUses(size.getNome(), useCtx, anchor);
+            return;
+        }
+
+        // structs
+        if (node instanceof StructFieldAccessNode sfa) return;
+        if (node instanceof StructUpdateNode su) return;
+        if (node instanceof StructMethodCallNode smc) collectUses(smc, useCtx, anchor);
+
+        // fallback: percorre filhos gerais
+        if (node.getChildren() != null) {
+            for (ASTNode child : node.getChildren()) {
+                collectUses(child, useCtx, anchor);
+            }
+        }
     }
 
-    private boolean contains(ASTNode parent, ASTNode child) {
-        if (parent == child) return true;
-        if (parent.getChildren() != null)
-            for (ASTNode c : parent.getChildren())
-                if (contains(c, child)) return true;
-        return false;
+
+    private Symbol resolveSymbol(VariableNode v, StaticContext ctx) {
+        try {
+            return ctx.resolveVariable(v.getName());
+        } catch (RuntimeException e) {
+            return symbols.get(v.getName()); // fallback global
+        }
     }
 
-    private boolean isHeapOwner(String name) {
-        return true;
-    }
+    private void registerUse(Symbol sym, StaticContext useCtx, ASTNode anchor) {
+        // já registrado
+        if (lastUse.containsKey(sym)) return;
 
-    private String rootOwner(ASTNode expr) {
-        if (expr instanceof VariableNode v) return v.getName();
-        if (expr instanceof StructFieldAccessNode f) return rootOwner(f.getStructInstance());
-        if (expr instanceof StructMethodCallNode m) return rootOwner(m.getStructInstance());
-        if (expr instanceof StructUpdateNode u) return rootOwner(u.getTargetStruct());
-        return null;
+        StaticContext declCtx = sym.getDeclaredIn();
+        StaticContext cur = useCtx;
+
+        while (cur != null) {
+            // última posição antes de sair do escopo da declaração
+            if (!declCtx.isAncestorOf(cur) || (cur.hasLifetimeBoundary() && cur != declCtx)) {
+                lastUse.put(sym, anchor);
+                return;
+            }
+            cur = cur.getParent();
+        }
+
+        // se chegou até a raiz, ainda marca
+        lastUse.put(sym, anchor);
     }
 }
-
-/*
-    private void recordOwner(String owner, ASTNode anchor) {
-        if (owner == null || !isHeapOwner(owner)) return;
-        // Marca o nó real, não o bloco
-        lastUseNode.put(owner, anchor);
-    }
- */

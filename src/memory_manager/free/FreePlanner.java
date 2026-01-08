@@ -41,43 +41,38 @@ public class FreePlanner {
 
         return result;
     }
-
     private void planRoot(OwnershipNode root, Map<ASTNode, List<FreeAction>> result) {
-
         String var = root.getId();
 
-        if (alreadyPlanned.contains(var)) {
-            return;
-        }
+        if (alreadyPlanned.contains(var)) return;
         alreadyPlanned.add(var);
 
-        // Ignora se a variável escapou
         if (escapeInfo != null && escapeInfo.escapes(var)) {
+            System.out.println("[FREE PLANNER] " + var + " escapa, não libera.");
             return;
         }
 
-        // Ignora se a variável foi movida
         if (wasMoved(var)) {
+            System.out.println("[FREE PLANNER] " + var + " foi movida, não libera.");
             return;
         }
 
-        // Obtém o nó de último uso
         ASTNode anchor = lastUseNode.get(var);
         if (anchor == null) {
-            // Se não houver uso, podemos liberar logo na declaração ou ignorar
+            System.out.println("[FREE PLANNER] " + var + " não tem uso, ignora.");
             return;
         }
 
-        // Adiciona FreeAction imediatamente após o último uso
-        result
-                .computeIfAbsent(anchor, k -> new ArrayList<>())
+        result.computeIfAbsent(anchor, k -> new ArrayList<>())
                 .add(new FreeAction(anchor, root));
 
-        // Planeja recursivamente para filhos (campos de structs / listas internas)
+        System.out.println("[FREE PLANNER] Planejando free para " + var + " após " + anchor.getClass().getSimpleName());
+
         for (OwnershipNode child : root.getChildren()) {
             planRoot(child, result);
         }
     }
+
 
     private boolean wasMoved(String var) {
         for (OwnershipAnnotation ann : annotations) {

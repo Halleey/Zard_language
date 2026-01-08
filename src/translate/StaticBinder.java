@@ -5,17 +5,19 @@ import context.statics.StaticContext;
 import context.statics.ScopeKind;
 
 import java.util.List;
-public class StaticBinder {
 
-    public void bind(List<ASTNode> nodes) {
-        StaticContext root = new StaticContext(ScopeKind.GLOBAL);
+public final class StaticBinder {
 
-        for (ASTNode node : nodes) {
-            node.bind(root);
+    private static StaticContext rootContext;
+
+    public void bind(List<ASTNode> ast) {
+        rootContext = new StaticContext(ScopeKind.ROOT);
+        for (ASTNode node : ast) {
+            node.bind(rootContext);
         }
+    }
 
-        System.out.println("========");
-        root.debugPrint(" ");
-        System.out.println("========");
+    public static StaticContext getRootContext() {
+        return rootContext;
     }
 }

@@ -29,7 +29,7 @@ public final class ListNode extends ASTNode {
     }
 
     @Override
-    public void bind(StaticContext stx) {
+    protected void bindChildren(StaticContext stx) {
 
         for (ASTNode node : list.getElements()) {
             node.bind(stx);
@@ -38,7 +38,9 @@ public final class ListNode extends ASTNode {
         if (list.getElementType().equals("?")) {
 
             if (list.getElements().isEmpty()) {
-                throw new RuntimeException("Lista vazia sem tipo explícito");
+                throw new RuntimeException(
+                        "Lista vazia sem tipo explícito"
+                );
             }
 
             ASTNode first = list.getElements().get(0);
@@ -53,9 +55,7 @@ public final class ListNode extends ASTNode {
             list.lockElementType(inferredType);
         }
 
-        String expected = getString();
-
-        this.type = "List<" + expected + ">";
+        this.type = "List<" + list.getElementType() + ">";
     }
 
     private String getString() {

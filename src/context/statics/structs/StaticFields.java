@@ -1,6 +1,6 @@
 package context.statics.structs;
+public final class StaticFields {
 
-public class StaticFields {
     private final String name;
     private final String type;
     private final int index;

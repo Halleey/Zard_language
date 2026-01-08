@@ -1,5 +1,7 @@
 package context.statics;
-public class Symbol {
+
+public final class Symbol {
+
     private final String name;
     private final String type;
     private final int slotIndex;
@@ -11,6 +13,7 @@ public class Symbol {
         this.slotIndex = slotIndex;
         this.declaredIn = declaredIn;
     }
+
 
     public String getName() {
         return name;
@@ -32,11 +35,30 @@ public class Symbol {
         return declaredIn.getKind();
     }
 
+    public int getDeclarationDepth() {
+        return declaredIn.getDepth();
+    }
+
+
+    public boolean isGlobal() {
+        return declaredIn.getKind() == ScopeKind.GLOBAL;
+    }
+
+    public boolean isLocalTo(StaticContext ctx) {
+        return declaredIn.isAncestorOf(ctx);
+    }
+
+    public boolean diesAtScopeExit(StaticContext ctx) {
+        return isLocalTo(ctx) && ctx.hasLifetimeBoundary();
+    }
+
+
     @Override
     public String toString() {
         return name + ":" + type +
                 " (slot " + slotIndex + ")" +
                 " declared in " + declaredIn.getKind() +
-                " [scope #" + declaredIn.getId() + "]";
+                " [scope #" + declaredIn.getId() +
+                ", depth=" + declaredIn.getDepth() + "]";
     }
 }

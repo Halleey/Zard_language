@@ -9,22 +9,18 @@ import low.main.TypeInfos;
 import low.module.LLVisitorMain;
 
 import java.util.Map;
-
 public class AllocaEmitter {
 
     private final Map<String, TypeInfos> varTypes;
     private final TempManager temps;
     private final LLVisitorMain visitor;
-    private final Map<String, String> localVars; // compartilhado do VariableEmitter
 
     public AllocaEmitter(Map<String, TypeInfos> varTypes,
                          TempManager temps,
-                         LLVisitorMain visitor,
-                         Map<String, String> localVars) {
+                         LLVisitorMain visitor) {
         this.varTypes = varTypes;
         this.temps = temps;
         this.visitor = visitor;
-        this.localVars = localVars;
     }
 
     private String mapLLVMType(String sourceType) {
@@ -33,7 +29,8 @@ public class AllocaEmitter {
 
     private String newPtr(String varName) {
         String ptr = temps.newNamedVar(varName);
-        localVars.put(varName, ptr);
+        // registra no VariableEmitter atual
+        visitor.getVariableEmitter().registerVarPtr(varName, ptr);
         return ptr;
     }
 

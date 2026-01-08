@@ -16,29 +16,57 @@ import low.variables.structs.StructInitEmitter;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.*;
 
 public class VariableEmitter {
+
     private final Map<String, TypeInfos> varTypes;
     private final TempManager temps;
     private final LLVisitorMain visitor;
     private final StringEmitter stringEmitter;
-    private final Map<String, String> localVars = new HashMap<>(); // nome -> ponteiro (alloca)
     private final AllocaEmitter allocaEmitter;
     private final StoreEmitter storeEmitter;
     private final StructInitEmitter structInitEmitter;
     private final ExpressionInitEmitter expressionInitEmitter;
-    private final TempExtractor tempExtractor  = new TempExtractor();
-
+    private final TempExtractor tempExtractor = new TempExtractor();
+    // ======= pilha de escopos =======
+    private final Deque<Map<String, String>> scopes = new ArrayDeque<>();
 
     public VariableEmitter(Map<String, TypeInfos> varTypes, TempManager temps, LLVisitorMain visitor) {
         this.varTypes = varTypes;
         this.temps = temps;
         this.visitor = visitor;
         this.stringEmitter = new StringEmitter(temps, visitor.getGlobalStrings());
-        this.allocaEmitter = new AllocaEmitter(varTypes, temps, visitor, localVars);
-        this.storeEmitter = new StoreEmitter(stringEmitter, localVars);
-        this.structInitEmitter =  new StructInitEmitter(temps,visitor,localVars);
-        this.expressionInitEmitter = new ExpressionInitEmitter(temps,visitor,storeEmitter,tempExtractor);
+        this.allocaEmitter = new AllocaEmitter(varTypes, temps, visitor); // não precisa do mapa único mais
+        this.storeEmitter = new StoreEmitter(stringEmitter, this);
+        this.structInitEmitter = new StructInitEmitter(temps, visitor, null);
+        this.expressionInitEmitter = new ExpressionInitEmitter(temps, visitor, storeEmitter, tempExtractor);
+
+        // escopo global
+        scopes.push(new HashMap<>());
+    }
+
+    public void enterScope() {
+        scopes.push(new HashMap<>());
+    }
+
+    public void exitScope() {
+        scopes.pop();
+    }
+
+    private Map<String, String> currentScope() {
+        return scopes.peek();
+    }
+
+    public void registerVarPtr(String name, String ptr) {
+        currentScope().put(name, ptr);
+    }
+
+    public String getVarPtr(String name) {
+        for (Map<String, String> scope : scopes) {
+            if (scope.containsKey(name)) return scope.get(name);
+        }
+        throw new RuntimeException("Ptr não encontrado para variável: " + name);
     }
 
     public String emitAlloca(VariableDeclarationNode node) {
@@ -46,37 +74,22 @@ public class VariableEmitter {
     }
 
     public String emitInit(VariableDeclarationNode node) {
-
         TypeInfos info = varTypes.get(node.getName());
         String srcType = info.getSourceType();
-        String varPtr  = getVarPtr(node.getName());
+        String varPtr = getVarPtr(node.getName());
 
         if (srcType != null && srcType.startsWith("Struct<")) {
-
             if (node.initializer == null) {
                 return structInitEmitter.emit(node, info);
             }
-
-            if (node.initializer instanceof StructInstanceNode) {
-                String code = node.initializer.accept(visitor);
-                String tmp = extractTemp(code);
-
-                return code
-                        + "  store " + info.getLLVMType() + " " + tmp
-                        + ", " + info.getLLVMType() + "* " + varPtr + "\n";
-            }
-
-            String exprCode = node.initializer.accept(visitor);
-            String tmp = extractTemp(exprCode);
-
-            return exprCode
+            String code = node.initializer.accept(visitor);
+            String tmp = extractTemp(code);
+            return code
                     + "  store " + info.getLLVMType() + " " + tmp
                     + ", " + info.getLLVMType() + "* " + varPtr + "\n";
         }
 
-        if (node.initializer == null) {
-            return handleDefaultInit(node, info);
-        }
+        if (node.initializer == null) return handleDefaultInit(node, info);
 
         if (node.initializer instanceof InputNode inputNode) {
             return handleInputInit(node, inputNode, info);
@@ -90,17 +103,10 @@ public class VariableEmitter {
     }
 
     private String handleNormalExpressionInit(VariableDeclarationNode node, TypeInfos info) {
-        return  expressionInitEmitter.emit(node,info);
+        return expressionInitEmitter.emit(node, info);
     }
-
-
-    private String handleSpecializedStructDefaultInit(VariableDeclarationNode node, TypeInfos info) {
-    return structInitEmitter.emit(node, info);
-    }
-
 
     private String handleDefaultInit(VariableDeclarationNode node, TypeInfos info) {
-
         String varPtr = getVarPtr(node.getName());
 
         if (info.isList()) {
@@ -112,38 +118,20 @@ public class VariableEmitter {
             };
         }
 
-        if ("string".equals(info.getSourceType())) {
-            return stringEmitter.createEmptyString(varPtr);
-        }
-
-        if ("char".equals(info.getSourceType())) {
-            return "  store i8 0, i8* " + varPtr + "\n";
-        }
-
+        if ("string".equals(info.getSourceType())) return stringEmitter.createEmptyString(varPtr);
+        if ("char".equals(info.getSourceType())) return "  store i8 0, i8* " + varPtr + "\n";
         return "";
     }
 
-
-    private String handleInputInit(
-            VariableDeclarationNode node,
-            InputNode inputNode,
-            TypeInfos info
-    ) {
+    private String handleInputInit(VariableDeclarationNode node, InputNode inputNode, TypeInfos info) {
         InputEmitter inputEmitter = new InputEmitter(temps, visitor.getGlobalStrings());
         String code = inputEmitter.emit(inputNode, info.getLLVMType());
         String temp = extractTemp(code);
         return code + emitStore(node.getName(), info.getLLVMType(), temp);
     }
 
-
-
-    private String handleListLiteralInit(
-            VariableDeclarationNode node,
-            ListNode listNode,
-            TypeInfos info
-    ) {
+    private String handleListLiteralInit(VariableDeclarationNode node, ListNode listNode, TypeInfos info) {
         visitor.registerListElementType(node.getName(), info.getElementType());
-
         String varPtr = getVarPtr(node.getName());
 
         return switch (info.getSourceType()) {
@@ -178,7 +166,7 @@ public class VariableEmitter {
         };
     }
 
-
+    // ================= UTILIDADES =================
     private String callArrayListCreateAndStore(String varPtr) {
         String tmp = temps.newTemp();
         String casted = temps.newTemp();
@@ -209,7 +197,7 @@ public class VariableEmitter {
                 "  store %struct.ArrayListBool* " + tmp + ", %struct.ArrayListBool** " + varPtr + "\n";
     }
 
-    private String emitStore(String name, String type, String value) {
+    public String emitStore(String name, String type, String value) {
         return storeEmitter.emit(name, type, value);
     }
 
@@ -222,26 +210,9 @@ public class VariableEmitter {
                 "\n;;VAL:" + tmp + ";;TYPE:" + llvmType + "\n";
     }
 
-    public String getVarPtr(String name) {
-        String ptr = localVars.get(name);
-        if (ptr == null) {
-            throw new RuntimeException("Ptr não encontrado para variável: " + name);
-        }
-        return ptr;
-    }
-
-    public void registerVarPtr(String name, String ptr) {
-        localVars.put(name, ptr);
-    }
-
     private String extractTemp(String code) {
         int lastValIdx = code.lastIndexOf(";;VAL:");
         int typeIdx = code.indexOf(";;TYPE:", lastValIdx);
         return code.substring(lastValIdx + 6, typeIdx).trim();
-    }
-
-    private String extractType(String code) {
-        int lastTypeIdx = code.lastIndexOf(";;TYPE:");
-        return code.substring(lastTypeIdx + 7).trim();
     }
 }

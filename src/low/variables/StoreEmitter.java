@@ -1,21 +1,20 @@
 package low.variables;
 
-import java.util.Map;
 
 public class StoreEmitter {
     private final StringEmitter stringEmitter;
-    private final Map<String, String> localVars;
+    private final VariableEmitter varEmitter; // link para pegar ptrs
 
-    public StoreEmitter(StringEmitter stringEmitter, Map<String, String> localVars) {
+    public StoreEmitter(StringEmitter stringEmitter, VariableEmitter varEmitter) {
         this.stringEmitter = stringEmitter;
-        this.localVars = localVars;
+        this.varEmitter = varEmitter;
     }
+
 
     private String getPtr(String name) {
-        String ptr = localVars.get(name);
-        if(ptr == null) throw new RuntimeException("Pointer not found for variable " + name);
-        return ptr;
+        return varEmitter.getVarPtr(name); // busca na pilha de escopos
     }
+
 
     public String emit(String name, String type, String value) {
         return switch (type) {

@@ -49,11 +49,11 @@ public class MainAST extends ASTNode {
     }
 
     @Override
-    protected void bindChildren(StaticContext ignored) {
-        StaticContext global = new StaticContext(ScopeKind.GLOBAL);
+    protected void bindChildren(StaticContext ctx) {
         for (ASTNode stmt : body) {
-            stmt.bind(global);
+            stmt.bind(ctx);
         }
     }
+
 
 }

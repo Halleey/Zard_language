@@ -15,6 +15,7 @@ public final class StaticBinder {
         for (ASTNode node : ast) {
             node.bind(rootContext);
         }
+        rootContext.debugPrintRecursive(" ");
     }
 
     public static StaticContext getRootContext() {

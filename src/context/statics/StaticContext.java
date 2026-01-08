@@ -143,21 +143,26 @@ public final class StaticContext {
     }
 
 
-    public void debugPrint(String indent) {
+    public void debugPrintRecursive(String indent) {
         System.out.println(
                 indent + "Scope #" + id +
                         " depth=" + depth +
                         " [" + kind + "] {"
         );
 
-        for (Symbol sym : variables.values()) {
-            System.out.println(indent + "  " + sym);
+        if (variables.isEmpty()) {
+            System.out.println(indent + "  (nenhuma variável)");
+        } else {
+            for (Symbol sym : variables.values()) {
+                System.out.println(indent + "  " + sym);
+            }
         }
 
         for (StaticContext child : children) {
-            child.debugPrint(indent + "  ");
+            child.debugPrintRecursive(indent + "  ");
         }
 
         System.out.println(indent + "}");
     }
+
 }

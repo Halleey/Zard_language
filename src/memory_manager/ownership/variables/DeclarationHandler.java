@@ -2,6 +2,7 @@ package memory_manager.ownership.variables;
 
 import ast.ASTNode;
 import ast.variables.VariableDeclarationNode;
+import context.statics.Symbol;
 import memory_manager.ownership.OwnershipAnnotation;
 import memory_manager.ownership.VarOwnerShip;
 import memory_manager.ownership.enums.OwnerShipAction;
@@ -19,28 +20,56 @@ public class DeclarationHandler implements NodeHandler<VariableDeclarationNode> 
 
     @Override
     public void handle(VariableDeclarationNode decl,
-                       Map<String, VarOwnerShip> vars,
+                       Map<Symbol, VarOwnerShip> vars,
                        OwnershipGraph graph,
                        List<OwnershipAnnotation> annotations,
                        boolean debug) {
+
         String type = decl.getType();
         if (type == null || isPrimitive(type)) {
-            if (debug) System.out.println("[OWNERSHIP] declare " + decl.getName() + " => PRIMITIVE, ignorado");
+            if (debug) {
+                System.out.println("[OWNERSHIP] declare "
+                        + decl.getName() + " => PRIMITIVE, ignorado");
+            }
             return;
         }
 
-        VarOwnerShip v = new VarOwnerShip(decl.getName());
-        vars.put(decl.getName(), v);
+        Symbol symbol = decl.getSymbol();
+        if (symbol == null) {
+            throw new IllegalStateException(
+                    "VariableDeclarationNode sem Symbol: " + decl.getName()
+            );
+        }
 
-        annotations.add(new OwnershipAnnotation(decl, OwnerShipAction.OWNED, decl.getName(), null));
-        graph.declareVar(decl.getName());
+        // Ownership state
+        VarOwnerShip ownership = new VarOwnerShip(symbol);
+        vars.put(symbol, ownership);
 
-        if (debug) System.out.println("[OWNERSHIP] declare " + decl.getName() + " => OWNED");
+        // Ownership graph
+        graph.declareVar(symbol);
+
+        // Annotation
+        annotations.add(
+                new OwnershipAnnotation(
+                        decl,
+                        OwnerShipAction.OWNED,
+                        symbol,
+                        null
+                )
+        );
+
+        if (debug) {
+            System.out.println("[OWNERSHIP] declare "
+                    + symbol.getName() + " => OWNED");
+        }
     }
 
     private boolean isPrimitive(String type) {
         type = type.trim().toLowerCase();
-        return type.equals("int") || type.equals("float") || type.equals("double")
-                || type.equals("bool") || type.equals("char");
+        return type.equals("int")
+                || type.equals("float")
+                || type.equals("double")
+                || type.equals("bool")
+                || type.equals("char");
     }
 }

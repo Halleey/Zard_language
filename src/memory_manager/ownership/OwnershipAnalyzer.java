@@ -1,6 +1,8 @@
 package memory_manager.ownership;
 
 import ast.ASTNode;
+import context.statics.StaticContext;
+import context.statics.Symbol;
 import memory_manager.ownership.functions.FunctionCallHandler;
 import memory_manager.ownership.functions.ReturnHandler;
 import memory_manager.ownership.graphs.OwnershipGraph;
@@ -18,15 +20,17 @@ import java.util.List;
 import java.util.Map;
 public class OwnershipAnalyzer {
 
-    private final Map<String, VarOwnerShip> vars = new LinkedHashMap<>();
+    private final Map<Symbol, VarOwnerShip> vars = new LinkedHashMap<>();
     private final List<OwnershipAnnotation> annotations = new ArrayList<>();
-    private final OwnershipGraph graph = new OwnershipGraph();
+    private final OwnershipGraph graph;
     private final boolean debug;
 
     private final List<NodeHandler<?>> handlers = new ArrayList<>();
 
-    public OwnershipAnalyzer(boolean debug) {
+    public OwnershipAnalyzer(StaticContext rootContext, boolean debug) {
         this.debug = debug;
+        this.graph = new OwnershipGraph(rootContext);
+
         handlers.add(new DeclarationHandler());
         handlers.add(new AssignmentHandler());
         handlers.add(new VariableUseHandler());
@@ -46,23 +50,30 @@ public class OwnershipAnalyzer {
     private void analyzeNode(ASTNode node) {
         for (NodeHandler<?> handler : handlers) {
             if (handler.canHandle(node)) {
-                ((NodeHandler<ASTNode>) handler).handle(node, vars, graph, annotations, debug);
-                return; // se handler cuidou, não visita filhos
+                ((NodeHandler<ASTNode>) handler)
+                        .handle(node, vars, graph, annotations, debug);
+                return;
             }
         }
 
-        // visita filhos se ninguém tratou
         for (ASTNode child : node.getChildren()) {
             analyzeNode(child);
         }
     }
 
-    public List<OwnershipAnnotation> getAnnotations() { return annotations; }
-    public OwnershipGraph getGraph() { return graph; }
+    public List<OwnershipAnnotation> getAnnotations() {
+        return annotations;
+    }
+
+    public OwnershipGraph getGraph() {
+        return graph;
+    }
 
     public void dumpFinalStates() {
         System.out.println("==== FINAL OWNERSHIP STATE (linear) ====");
-        for (VarOwnerShip v : vars.values()) System.out.println(v);
+        for (VarOwnerShip v : vars.values()) {
+            System.out.println(v);
+        }
         System.out.println();
         graph.dump();
     }

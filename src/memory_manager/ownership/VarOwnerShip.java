@@ -1,22 +1,41 @@
 package memory_manager.ownership;
 
+import context.statics.Symbol;
 import memory_manager.ownership.enums.OwnershipState;
-
 public class VarOwnerShip {
 
-    public final String name;
-    public OwnershipState state;
-    public boolean isShared;
+    private final Symbol symbol;
+    private OwnershipState state;
+    private boolean shared;
 
-
-    public VarOwnerShip(String name) {
-        this.name = name;
+    public VarOwnerShip(Symbol symbol) {
+        this.symbol = symbol;
         this.state = OwnershipState.OWNED;
-        this.isShared = false;
+        this.shared = false;
+    }
+
+    public Symbol getSymbol() {
+        return symbol;
+    }
+
+    public OwnershipState getState() {
+        return state;
+    }
+
+    public void setState(OwnershipState state) {
+        this.state = state;
+    }
+
+    public boolean isShared() {
+        return shared;
+    }
+
+    public void setShared(boolean shared) {
+        this.shared = shared;
     }
 
     @Override
     public String toString() {
-        return name + " => " + state;
+        return symbol.getName() + " => " + state;
     }
 }

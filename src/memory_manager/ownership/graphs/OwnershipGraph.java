@@ -1,59 +1,71 @@
 package memory_manager.ownership.graphs;
 
+import context.statics.StaticContext;
+import context.statics.Symbol;
 import memory_manager.ownership.enums.Kind;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-
 public class OwnershipGraph {
 
-    private final Map<String, OwnershipNode> roots = new LinkedHashMap<>();
+    private final Map<Symbol, OwnershipNode> roots = new LinkedHashMap<>();
+    private final StaticContext rootContext;
 
-    public Map<String, OwnershipNode> getRoots() {
+    public OwnershipGraph(StaticContext rootContext) {
+        this.rootContext = rootContext;
+    }
+
+    public Map<Symbol, OwnershipNode> getRoots() {
         return roots;
     }
 
-    public void declareVar(String name) {
-        roots.put(name, new OwnershipNode(name, Kind.VAR));
+    public void declareVar(Symbol symbol) {
+        roots.put(symbol, new OwnershipNode(symbol, Kind.VAR));
     }
 
-    public boolean isRoot(String name) {
-        return roots.containsKey(name);
+    public boolean isRoot(Symbol symbol) {
+        return roots.containsKey(symbol);
     }
 
-    public void move(String source, String targetPath) {
+    public void move(Symbol source, Symbol target) {
 
         OwnershipNode sourceNode = roots.remove(source);
-        if (sourceNode == null) {
-            return; // já movido ou literal
-        }
+        if (sourceNode == null) return;
 
-        OwnershipNode targetParent = resolveOrCreatePath(targetPath);
+        OwnershipNode targetParent =
+                resolveOrCreatePath(target.getName());
 
         OwnershipNode moved =
-                sourceNode.deepCloneWithRebase(source, targetPath);
+                sourceNode.deepCloneWithRebase(
+                        source.getName(),
+                        target.getName()
+                );
 
         targetParent.addChild(moved);
     }
 
-    public void deepCopy(String from, String to) {
+    public void deepCopy(Symbol from, Symbol to) {
 
         OwnershipNode source = roots.get(from);
         if (source == null) return;
 
         OwnershipNode clone =
-                source.deepCloneWithRebase(from, to);
+                source.deepCloneWithRebase(
+                        from.getName(),
+                        to.getName()
+                );
 
         roots.put(to, clone);
     }
+
 
     private OwnershipNode resolveOrCreatePath(String path) {
 
         String[] parts = path.split("\\.");
 
         OwnershipNode current = roots.computeIfAbsent(
-                parts[0],
-                n -> new OwnershipNode(n, Kind.VAR)
+                rootContext.resolveVariable(parts[0]),
+                sym -> new OwnershipNode(sym, Kind.VAR)
         );
 
         for (int i = 1; i < parts.length; i++) {
@@ -62,10 +74,10 @@ public class OwnershipGraph {
             OwnershipNode next = findChild(current, part);
 
             if (next == null) {
-                next = new OwnershipNode(
-                        current.getId() + "." + part,
-                        Kind.FIELD
-                );
+                Symbol fieldSymbol = current.getSymbol()
+                        .rebased(current.getSymbol().getName() + "." + part);
+
+                next = new OwnershipNode(fieldSymbol, Kind.FIELD);
                 current.addChild(next);
             }
 
@@ -77,7 +89,7 @@ public class OwnershipGraph {
 
     private OwnershipNode findChild(OwnershipNode parent, String fieldName) {
         for (OwnershipNode child : parent.getChildren()) {
-            if (child.getId().endsWith("." + fieldName)) {
+            if (child.getSymbol().getName().endsWith("." + fieldName)) {
                 return child;
             }
         }

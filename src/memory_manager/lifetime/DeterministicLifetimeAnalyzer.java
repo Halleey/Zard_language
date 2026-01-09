@@ -16,7 +16,7 @@ public class DeterministicLifetimeAnalyzer {
     private final UsageCollector usageCollector;
 
     public DeterministicLifetimeAnalyzer(StaticContext rootCtx) {
-        Map<String, Symbol> allSymbols = collectAllSymbols(rootCtx);
+        Set<Symbol> allSymbols = collectAllSymbols(rootCtx);
         this.usageCollector = new UsageCollector(allSymbols);
     }
 
@@ -26,18 +26,17 @@ public class DeterministicLifetimeAnalyzer {
         return usageCollector.getLastUses();
     }
 
-    private Map<String, Symbol> collectAllSymbols(StaticContext root) {
-        Map<String, Symbol> map = new LinkedHashMap<>();
-        collectRecursive(root, map);
-        return map;
+    private Set<Symbol> collectAllSymbols(StaticContext root) {
+        Set<Symbol> set = new LinkedHashSet<>();
+        collectRecursive(root, set);
+        return set;
     }
 
-    private void collectRecursive(StaticContext ctx, Map<String, Symbol> map) {
-        for (Symbol sym : ctx.getDeclaredVariables()) {
-            map.put(sym.getName(), sym);
-        }
+    private void collectRecursive(StaticContext ctx, Set<Symbol> set) {
+        set.addAll(ctx.getDeclaredVariables());
         for (StaticContext child : ctx.getChildren()) {
-            collectRecursive(child, map);
+            collectRecursive(child, set);
         }
     }
+
 }

@@ -1,36 +1,48 @@
 package memory_manager.ownership.graphs;
 
+import context.statics.Symbol;
 import memory_manager.ownership.enums.Kind;
 
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class OwnershipNode {
 
-    private final String id;
+    private final Symbol symbol;
     private final Kind kind;
     private final List<OwnershipNode> children = new ArrayList<>();
 
-    public OwnershipNode(String id, Kind kind) {
-        this.id = id;
+    public OwnershipNode(Symbol symbol, Kind kind) {
+        this.symbol = symbol;
         this.kind = kind;
     }
 
-    public String getId() { return id; }
-    public Kind getKind() { return kind; }
-    public List<OwnershipNode> getChildren() { return children; }
+    public Symbol getSymbol() {
+        return symbol;
+    }
+
+    public Kind getKind() {
+        return kind;
+    }
+
+    public List<OwnershipNode> getChildren() {
+        return children;
+    }
 
     public void addChild(OwnershipNode child) {
         children.add(child);
     }
 
     public OwnershipNode deepCloneWithRebase(String oldBase, String newBase) {
-        String newId = id.startsWith(oldBase)
-                ? newBase + id.substring(oldBase.length())
-                : id;
+        Symbol newSymbol = symbol;
 
-        OwnershipNode clone = new OwnershipNode(newId, kind);
+        String name = symbol.getName();
+        if (name.startsWith(oldBase)) {
+            String rebased = newBase + name.substring(oldBase.length());
+            newSymbol = symbol.rebased(rebased);
+        }
+
+        OwnershipNode clone = new OwnershipNode(newSymbol, kind);
 
         for (OwnershipNode child : children) {
             clone.addChild(child.deepCloneWithRebase(oldBase, newBase));
@@ -40,11 +52,10 @@ public class OwnershipNode {
     }
 
     public void dump(String indent) {
-        System.out.println(indent + "- " + id + " [" + kind + "]");
+        System.out.println(indent + "- " + symbol.getName() + " [" + kind + "]");
         for (OwnershipNode child : children) {
             child.dump(indent + "  ");
         }
     }
-
-
 }
+

@@ -53,6 +53,8 @@ public final class Symbol {
     }
 
 
+
+
     @Override
     public String toString() {
         return name + ":" + type +
@@ -61,4 +63,14 @@ public final class Symbol {
                 " [scope #" + declaredIn.getId() +
                 ", depth=" + declaredIn.getDepth() + "]";
     }
+
+    public Symbol rebased(String newName) {
+        return new Symbol(
+                newName,
+                this.type,
+                this.slotIndex,
+                this.declaredIn
+        );
+    }
+
 }

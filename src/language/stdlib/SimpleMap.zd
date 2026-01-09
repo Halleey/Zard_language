@@ -1,0 +1,74 @@
+main {
+
+Struct Entry {
+  int key;
+  string value;
+}
+
+Struct maps {
+  List<Entry> data;
+}
+
+impl maps {
+
+  function put(int key, string value) {
+    int i = 0;
+    while (i < s.data.size()) {
+      Entry e = s.data.get(i);
+      if (e.key == key) {
+        e.value = value;
+        return s;
+      }
+      i++;
+    }
+
+    Entry n;
+    n.key = key;
+    n.value = value;
+    s.data.add(n);
+    return s;
+  }
+
+  function get(int key) {
+    int i = 0;
+    while (i < s.data.size()) {
+      Entry e = s.data.get(i);
+      if (e.key == key) {
+        println(e.value);
+        return s;
+      }
+      i++;
+    }
+    println("key not found");
+    return s;
+  }
+
+  function remove(int key) {
+    int i = 0;
+    while (i < s.data.size()) {
+      Entry e = s.data.get(i);
+      if (e.key == key) {
+        s.data.remove(i);
+        return s;
+      }
+      i++;
+    }
+    return s;
+  }
+}
+
+maps m;
+
+m.put(1, "Sword");
+m.put(2, "Shield");
+m.put(3, "Potion");
+
+
+m.get(2);
+m.remove(1);
+m.get(2);
+m.get(1);
+m.get(3);
+
+
+}

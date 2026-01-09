@@ -79,7 +79,16 @@ public class StructFieldAccessNode extends ASTNode {
     }
 
     @Override
-    public void bindChildren(StaticContext stx) {
+    public void bindChildren(StaticContext ctx) {
+        if (structInstance != null) {
+            structInstance.setParent(this);
+            structInstance.bind(ctx);
+        }
 
+        if (value != null) {
+            value.setParent(this);
+            value.bind(ctx);
+        }
     }
+
 }

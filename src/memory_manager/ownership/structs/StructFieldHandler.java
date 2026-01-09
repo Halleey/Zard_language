@@ -14,6 +14,8 @@ import memory_manager.ownership.variables.NodeHandler;
 
 import java.util.List;
 import java.util.Map;
+
+
 public class StructFieldHandler implements NodeHandler<StructFieldAccessNode> {
 
     @Override

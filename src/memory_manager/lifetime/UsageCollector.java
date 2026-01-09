@@ -20,14 +20,14 @@ import context.statics.Symbol;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Set;
 
 class UsageCollector {
 
-    private final Map<String, Symbol> symbols;
+    private final Set<Symbol> symbols;
     private final Map<Symbol, ASTNode> lastUse = new LinkedHashMap<>();
 
-    public UsageCollector(Map<String, Symbol> symbols) {
+    public UsageCollector(Set<Symbol> symbols) {
         this.symbols = symbols;
     }
 
@@ -41,83 +41,105 @@ class UsageCollector {
     public Map<Symbol, ASTNode> getLastUses() {
         return lastUse;
     }
+
     private void collectUses(ASTNode node, StaticContext useCtx, ASTNode anchor) {
         if (node == null) return;
 
+        // === variável simples ===
         if (node instanceof VariableNode v) {
             Symbol sym = resolveSymbol(v, useCtx);
-            if (sym != null) registerUse(sym, useCtx, anchor);
+            registerUse(sym, useCtx, anchor);
             return;
         }
 
+        // === if ===
         if (node instanceof IfNode ifn) {
             collectUses(ifn.getCondition(), useCtx, anchor);
-            for (ASTNode stmt : ifn.getThenBranch()) collectUses(stmt, useCtx, anchor);
-            if (ifn.getElseBranch() != null)
-                for (ASTNode stmt : ifn.getElseBranch()) collectUses(stmt, useCtx, anchor);
+            for (ASTNode stmt : ifn.getThenBranch())
+                collectUses(stmt, useCtx, anchor);
+
+            if (ifn.getElseBranch() != null) {
+                for (ASTNode stmt : ifn.getElseBranch())
+                    collectUses(stmt, useCtx, anchor);
+            }
             return;
         }
 
+        // === while ===
         if (node instanceof WhileNode wn) {
             collectUses(wn.getCondition(), useCtx, anchor);
-            for (ASTNode stmt : wn.getBody()) collectUses(stmt, useCtx, anchor);
+            for (ASTNode stmt : wn.getBody())
+                collectUses(stmt, useCtx, anchor);
             return;
         }
 
+        // === print ===
         if (node instanceof PrintNode print) {
             collectUses(print.expr, useCtx, anchor);
             return;
         }
 
-        if (node instanceof VariableDeclarationNode decl && decl.getInitializer() != null) {
-            collectUses(decl.getInitializer(), useCtx, anchor);
+        // === declaração de variável ===
+        if (node instanceof VariableDeclarationNode decl) {
+            if (decl.getInitializer() != null) {
+                collectUses(decl.getInitializer(), useCtx, anchor);
+            }
             return;
         }
 
+        // === atribuição ===
         if (node instanceof AssignmentNode assign) {
             collectUses(assign.getValueNode(), useCtx, anchor);
             return;
         }
 
+        // === list.add ===
         if (node instanceof ListAddNode add) {
-            // mark list itself as used
-            if (add.getListNode() instanceof VariableNode vn) registerUse(resolveSymbol(vn, useCtx), useCtx, anchor);
-            // mark values inside add
+            if (add.getListNode() instanceof VariableNode vn) {
+                registerUse(resolveSymbol(vn, useCtx), useCtx, anchor);
+            }
             collectUses(add.getValuesNode(), useCtx, anchor);
             return;
         }
 
+        // === list.get ===
         if (node instanceof ListGetNode get) {
-            if (get.getListName() instanceof VariableNode vn) registerUse(resolveSymbol(vn, useCtx), useCtx, anchor);
+            if (get.getListName() instanceof VariableNode vn) {
+                registerUse(resolveSymbol(vn, useCtx), useCtx, anchor);
+            }
             collectUses(get.getIndexNode(), useCtx, anchor);
             return;
         }
 
+        // === list.remove ===
         if (node instanceof ListRemoveNode rem) {
-            if (rem.getListNode() instanceof VariableNode vn) registerUse(resolveSymbol(vn, useCtx), useCtx, anchor);
+            if (rem.getListNode() instanceof VariableNode vn) {
+                registerUse(resolveSymbol(vn, useCtx), useCtx, anchor);
+            }
             collectUses(rem.getIndexNode(), useCtx, anchor);
             return;
         }
 
+        // === list.size ===
         if (node instanceof ListSizeNode size) {
-            if (size.getNome() instanceof VariableNode vn) registerUse(resolveSymbol(vn, useCtx), useCtx, anchor);
+            if (size.getNome() instanceof VariableNode vn) {
+                registerUse(resolveSymbol(vn, useCtx), useCtx, anchor);
+            }
             return;
         }
 
-
+        // === chamada de método de struct ===
         if (node instanceof StructMethodCallNode smc) {
             if (smc.getStructInstance() instanceof VariableNode vn) {
                 registerUse(resolveSymbol(vn, useCtx), useCtx, anchor);
             }
-
             for (ASTNode arg : smc.getArgs()) {
                 collectUses(arg, useCtx, anchor);
             }
-            return; // não cai no fallback
+            return;
         }
 
-
-        // fallback: percorre filhos gerais
+        // === fallback genérico ===
         if (node.getChildren() != null) {
             for (ASTNode child : node.getChildren()) {
                 collectUses(child, useCtx, anchor);
@@ -125,27 +147,24 @@ class UsageCollector {
         }
     }
 
-
     private Symbol resolveSymbol(VariableNode v, StaticContext ctx) {
         try {
             return ctx.resolveVariable(v.getName());
         } catch (RuntimeException e) {
-            return symbols.get(v.getName()); // fallback global
+            return null;
         }
     }
-    private void registerUse(Symbol sym, StaticContext useCtx, ASTNode anchor) {
-        if (sym == null) {
-            System.out.println("[USAGE COLLECTOR] WARNING: tentado registrar uso de símbolo null");
-            return;
-        }
 
+    private void registerUse(Symbol sym, StaticContext useCtx, ASTNode anchor) {
+        if (sym == null) return;
         if (lastUse.containsKey(sym)) return;
 
         StaticContext declCtx = sym.getDeclaredIn();
         StaticContext cur = useCtx;
 
         while (cur != null) {
-            if (!declCtx.isAncestorOf(cur) || (cur.hasLifetimeBoundary() && cur != declCtx)) {
+            if (!declCtx.isAncestorOf(cur)
+                    || (cur.hasLifetimeBoundary() && cur != declCtx)) {
                 lastUse.put(sym, anchor);
                 return;
             }
@@ -154,5 +173,4 @@ class UsageCollector {
 
         lastUse.put(sym, anchor);
     }
-
 }

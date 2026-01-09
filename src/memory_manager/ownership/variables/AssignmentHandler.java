@@ -3,6 +3,8 @@ package memory_manager.ownership.variables;
 import ast.ASTNode;
 import ast.variables.AssignmentNode;
 import ast.variables.VariableNode;
+import context.statics.StaticContext;
+import context.statics.Symbol;
 import memory_manager.ownership.OwnershipAnnotation;
 import memory_manager.ownership.VarOwnerShip;
 import memory_manager.ownership.enums.OwnerShipAction;
@@ -11,7 +13,6 @@ import memory_manager.ownership.graphs.OwnershipGraph;
 
 import java.util.List;
 import java.util.Map;
-
 public class AssignmentHandler implements NodeHandler<AssignmentNode> {
 
     @Override
@@ -20,36 +21,74 @@ public class AssignmentHandler implements NodeHandler<AssignmentNode> {
     }
 
     @Override
-    public void handle(AssignmentNode assign,
-                       Map<String, VarOwnerShip> vars,
-                       OwnershipGraph graph,
-                       List<OwnershipAnnotation> annotations,
-                       boolean debug) {
+    public void handle(
+            AssignmentNode assign,
+            Map<Symbol, VarOwnerShip> vars,
+            OwnershipGraph graph,
+            List<OwnershipAnnotation> annotations,
+            boolean debug
+    ) {
 
         if (!(assign.getValueNode() instanceof VariableNode rhs)) return;
 
-        String lhs = assign.getName();
-        String rhsName = rhs.getName();
-        VarOwnerShip rhsVar = vars.get(rhsName);
+        StaticContext ctx = assign.getStaticContext();
 
-        if (vars.containsKey(lhs) && rhsVar != null) {
-            if (rhsVar.state == OwnershipState.MOVED) {
-                throw new RuntimeException("Copy from moved value: " + rhsName);
+        Symbol lhsSym = ctx.resolveVariable(assign.getName());
+        Symbol rhsSym = ctx.resolveVariable(rhs.getName());
+
+        if (lhsSym == null || rhsSym == null) return;
+
+        VarOwnerShip rhsOwnership = vars.get(rhsSym);
+
+        if (vars.containsKey(lhsSym) && rhsOwnership != null) {
+
+            if (rhsOwnership.getState() == OwnershipState.MOVED) {
+                throw new RuntimeException(
+                        "Copy from moved value: " + rhsSym.getName()
+                );
             }
 
-            vars.put(lhs, new VarOwnerShip(lhs));
-            annotations.add(new OwnershipAnnotation(assign, OwnerShipAction.DEEP_COPY, rhsName, lhs));
-            graph.deepCopy(rhsName, lhs);
+            VarOwnerShip newOwnership = new VarOwnerShip(lhsSym);
+            vars.put(lhsSym, newOwnership);
 
-            if (debug) System.out.println("[OWNERSHIP] DEEP_COPY " + rhsName + " -> " + lhs);
+            annotations.add(
+                    new OwnershipAnnotation(
+                            assign,
+                            OwnerShipAction.DEEP_COPY,
+                            rhsSym,
+                            lhsSym
+                    )
+            );
+
+            graph.deepCopy(rhsSym, lhsSym);
+
+            if (debug) {
+                System.out.println("[OWNERSHIP] DEEP_COPY "
+                        + rhsSym.getName() + " -> " + lhsSym.getName());
+            }
             return;
         }
 
-        if (rhsVar != null) rhsVar.state = OwnershipState.MOVED;
-        vars.put(lhs, new VarOwnerShip(lhs));
-        annotations.add(new OwnershipAnnotation(assign, OwnerShipAction.MOVED, rhsName, lhs));
-        graph.move(rhsName, lhs);
+        if (rhsOwnership != null) {
+            rhsOwnership.setState(OwnershipState.MOVED);
+        }
 
-        if (debug) System.out.println("[OWNERSHIP] MOVE " + rhsName + " -> " + lhs);
+        vars.put(lhsSym, new VarOwnerShip(lhsSym));
+
+        annotations.add(
+                new OwnershipAnnotation(
+                        assign,
+                        OwnerShipAction.MOVED,
+                        rhsSym,
+                        lhsSym
+                )
+        );
+
+        graph.move(rhsSym, lhsSym);
+
+        if (debug) {
+            System.out.println("[OWNERSHIP] MOVE "
+                    + rhsSym.getName() + " -> " + lhsSym.getName());
+        }
     }
 }

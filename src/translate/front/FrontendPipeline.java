@@ -23,7 +23,6 @@ import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
 public class FrontendPipeline {
 
     private final String filePath;
@@ -55,7 +54,11 @@ public class FrontendPipeline {
         new StaticBinder().bind(ast);
         new FlowPass().analyze(ast);
 
-        OwnershipAnalyzer ownershipAnalyzer = new OwnershipAnalyzer(true);
+        OwnershipAnalyzer ownershipAnalyzer =
+                new OwnershipAnalyzer(
+                        StaticBinder.getRootContext(),
+                        true
+                );
         ownershipAnalyzer.analyzeBlock(ast);
         ownershipAnalyzer.dumpFinalStates();
 
@@ -72,14 +75,9 @@ public class FrontendPipeline {
         EscapeAnalyzer escapeAnalyzer = new EscapeAnalyzer();
         this.escapeInfo = escapeAnalyzer.analyze(ast);
 
-        Map<String, ASTNode> lastUseNode = new LinkedHashMap<>();
-        for (var entry : lastUses.entrySet()) {
-            lastUseNode.put(entry.getKey().getName(), entry.getValue());
-        }
-
         FreePlanner freePlanner = new FreePlanner(
                 ownershipGraph,
-                lastUseNode,
+                lastUses,
                 ownershipAnalyzer.getAnnotations()
         );
 

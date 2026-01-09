@@ -1,15 +1,17 @@
 main {
-    int a = 1;
 
-    while(a < 5) {
-        int b = a * 2;   # permitido, loop tem escopo próprio
-        println(b);
+int a = 0;
 
-        while(b < 10) {
-            int a = 0;  # proibido, shadowing do pai
-            b++;
-        }
+if(a == 0) {
+    int a = 2;
+    List nomes = ("zhum");
+    print(nomes);
+while(a < 10) {
+    List nomes = ( "zard");
+    print(nomes);
+    a++;
+}
 
-        a++;
-    }
+}
+
 }

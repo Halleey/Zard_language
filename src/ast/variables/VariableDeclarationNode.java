@@ -5,6 +5,7 @@ import context.statics.StaticContext;
 import context.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
 import ast.structs.StructInstanceNode;
+import context.statics.Symbol;
 import context.statics.list.ListValue;
 import low.module.LLVMEmitVisitor;
 
@@ -17,7 +18,7 @@ public class VariableDeclarationNode extends ASTNode {
     private final String name;
     private final String type;
     public final ASTNode initializer;
-
+    private Symbol symbol;
     public VariableDeclarationNode(String name, String type, ASTNode initializer) {
         this.name = name;
         this.type = type;
@@ -128,11 +129,15 @@ public class VariableDeclarationNode extends ASTNode {
     @Override
     public void bindChildren(StaticContext ctx) {
 
-        ctx.declareVariable(name, type);
+        this.symbol = ctx.declareVariable(name, type);
 
         if (initializer != null) {
             initializer.bind(ctx);
         }
+    }
+
+    public Symbol getSymbol() {
+        return symbol;
     }
 
     @Override

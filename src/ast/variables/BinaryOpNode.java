@@ -106,8 +106,13 @@ public class BinaryOpNode extends ASTNode {
 
     @Override
     public void bindChildren(StaticContext stx) {
+        left.setParent(this);
+        left.bind(stx);
 
+        right.setParent(this);
+        right.bind(stx);
     }
+
 
 
     private Object unwrap(TypedValue tv) {

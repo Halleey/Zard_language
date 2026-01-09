@@ -8,7 +8,6 @@ import memory_manager.ownership.graphs.OwnershipNode;
 
 import java.util.Collections;
 import java.util.List;
-
 public class FreeNode extends ASTNode {
 
     private final OwnershipNode root;
@@ -34,10 +33,8 @@ public class FreeNode extends ASTNode {
     @Override
     public void print(String prefix) {
         System.out.println(prefix + "Free:");
-        System.out.println(prefix + "  " + root.getId());
+        System.out.println(prefix + "  " + root.getSymbol().getName());
     }
-
-
 
     @Override
     public List<ASTNode> getChildren() {

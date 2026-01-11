@@ -6,6 +6,8 @@ import memory_manager.ownership.enums.Kind;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+
 public class OwnershipGraph {
 
     private final Map<Symbol, OwnershipNode> roots = new LinkedHashMap<>();
@@ -20,6 +22,7 @@ public class OwnershipGraph {
     }
 
     public void declareVar(Symbol symbol) {
+
         roots.put(symbol, new OwnershipNode(symbol, Kind.VAR));
     }
 

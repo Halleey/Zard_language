@@ -1,66 +1,15 @@
 main {
 
-    Struct Endereco {
-        string rua;
-        string cidade;
-    }
-
-    Struct Pessoa {
-        string nome;
-        int idade;
-        Struct Endereco endereco;
-    }
-
-    List<Pessoa> pessoas;
-
-    Pessoa p1;
-    p1.nome = "Alice";
-    p1.idade = 25;
-    Endereco e1;
-    e1.rua = "Rua A";
-    e1.cidade = "São Paulo";
-    p1.endereco = e1;
-
-    Pessoa p2;
-    p2.nome = "Bob";
-    p2.idade = 17;
-    Endereco e2;
-    e2.rua = "Av. Central";
-    e2.cidade = "Rio de Janeiro";
-    p2.endereco = e2;
-
-    pessoas.add(p1);
-    pessoas.add(p2);
-
-    println(pessoas.get(0).nome);
-    println(pessoas.get(0).endereco.rua);
-    println(pessoas.get(0).endereco.cidade);
-
-    println(pessoas.get(1).nome);
-    println(pessoas.get(1).endereco.rua);
-    println(pessoas.get(1).endereco.cidade);
-
-    if (pessoas.get(0).endereco.cidade == "São Paulo") {
-        println("A primeira pessoa mora em São Paulo");
-    }
-
-    if (pessoas.get(1).idade < 18) {
-        println(pessoas.get(1).nome);
-        println(" é menor de idade");
-    }
+int x = 0;
+if(x == 0) {
+List nomes =("teste", "ok");
+print(nomes);
+}
+else if(x == 2){
+List nomes =("teste");
+print(nomes);
+}
 
 
-    println("teste");
-    println(pessoas.get(0));
-    pessoas.remove(0);
-    print("print pos remoção ");
-    println(pessoas.get(0));
-    int i = 0;
-    while (i < pessoas.size()) {
-        println("Pessoa:");
-        println(pessoas.get(i).nome);
-        println(pessoas.get(i).endereco.rua);
-        println(pessoas.get(i).endereco.cidade);
-        i = i + 1;
-    }
+print("fim do programa");
 }

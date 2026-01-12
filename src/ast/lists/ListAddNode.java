@@ -55,8 +55,11 @@ public class ListAddNode extends ASTNode {
 
     @Override
     public void bindChildren(StaticContext stx) {
-
+        if (listNode != null) listNode.bind(stx);
+        if (valuesNode != null) valuesNode.bind(stx);
     }
+
+
 
     public ASTNode getListNode() {
         return listNode;

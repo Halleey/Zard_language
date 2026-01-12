@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.*;
 
+
 public class VariableEmitter {
 
     private final Map<String, TypeInfos> varTypes;
@@ -29,15 +30,17 @@ public class VariableEmitter {
     private final StructInitEmitter structInitEmitter;
     private final ExpressionInitEmitter expressionInitEmitter;
     private final TempExtractor tempExtractor = new TempExtractor();
+
     // ======= pilha de escopos =======
     private final Deque<Map<String, String>> scopes = new ArrayDeque<>();
+    private int scopeId = 0; // ID para gerar nomes únicos
 
     public VariableEmitter(Map<String, TypeInfos> varTypes, TempManager temps, LLVisitorMain visitor) {
         this.varTypes = varTypes;
         this.temps = temps;
         this.visitor = visitor;
         this.stringEmitter = new StringEmitter(temps, visitor.getGlobalStrings());
-        this.allocaEmitter = new AllocaEmitter(varTypes, temps, visitor); // não precisa do mapa único mais
+        this.allocaEmitter = new AllocaEmitter(varTypes, temps, visitor, this); // passou this
         this.storeEmitter = new StoreEmitter(stringEmitter, this);
         this.structInitEmitter = new StructInitEmitter(temps, visitor, null);
         this.expressionInitEmitter = new ExpressionInitEmitter(temps, visitor, storeEmitter, tempExtractor);
@@ -47,11 +50,16 @@ public class VariableEmitter {
     }
 
     public void enterScope() {
+        scopeId++;
         scopes.push(new HashMap<>());
     }
 
     public void exitScope() {
         scopes.pop();
+    }
+
+    public int getScopeId() {
+        return scopeId;
     }
 
     private Map<String, String> currentScope() {
@@ -68,6 +76,7 @@ public class VariableEmitter {
         }
         throw new RuntimeException("Ptr não encontrado para variável: " + name);
     }
+
 
     public String emitAlloca(VariableDeclarationNode node) {
         return allocaEmitter.emit(node);

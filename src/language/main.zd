@@ -1,64 +1,66 @@
 main {
 
-    Struct Pais {
-        string nome;
-    }
-
-
-    float teste = 3.14;
-    print(teste);
     Struct Endereco {
         string rua;
         string cidade;
-        Struct Pais pais;
     }
 
     Struct Pessoa {
         string nome;
         int idade;
         Struct Endereco endereco;
-        List<string> telefones;
     }
 
-    # ---- Instâncias base ----
-    Pais brasil;
-    brasil.nome = "Brasil";
-
-    Endereco e1;
-    e1.rua = "Rua A";
-    e1.cidade = "São Paulo";
-    e1.pais = brasil;
+    List<Pessoa> pessoas;
 
     Pessoa p1;
     p1.nome = "Alice";
     p1.idade = 25;
+    Endereco e1;
+    e1.rua = "Rua A";
+    e1.cidade = "São Paulo";
     p1.endereco = e1;
-    p1.telefones.add("11 99999-1111");
-    p1.telefones.add("11 22222-3333");
 
-    # === Cópia profunda ===
     Pessoa p2;
-    p2 = p1;
+    p2.nome = "Bob";
+    p2.idade = 17;
+    Endereco e2;
+    e2.rua = "Av. Central";
+    e2.cidade = "Rio de Janeiro";
+    p2.endereco = e2;
 
-    # === Alterações independentes ===
-    p2.nome = "Zard";
-    p2.telefones.add("21 44444-5555");
+    pessoas.add(p1);
+    pessoas.add(p2);
 
-    e1.rua = "teste";
-    e1.cidade = "Santo andré";
+    println(pessoas.get(0).nome);
+    println(pessoas.get(0).endereco.rua);
+    println(pessoas.get(0).endereco.cidade);
 
-    print("=== Original p1 ===");
-    print(p1);
+    println(pessoas.get(1).nome);
+    println(pessoas.get(1).endereco.rua);
+    println(pessoas.get(1).endereco.cidade);
 
-    # Atualização inline aninhada com lista e sub-struct
-    p2.endereco {
-        rua: "Nova Rua";
-        cidade: "Zurique";
-        pais {
-            nome: "Suíça";
-        }
+    if (pessoas.get(0).endereco.cidade == "São Paulo") {
+        println("A primeira pessoa mora em São Paulo");
     }
 
-    print("=== Clone p2 ===");
-    print(p2);
+    if (pessoas.get(1).idade < 18) {
+        println(pessoas.get(1).nome);
+        println(" é menor de idade");
+    }
+
+
+    println("teste");
+    println(pessoas.get(0));
+    pessoas.remove(0);
+    print("print pos remoção ");
+    println(pessoas.get(0));
+    int i = 0;
+    while (i < pessoas.size()) {
+        println("Pessoa:");
+        println(pessoas.get(i).nome);
+        println(pessoas.get(i).endereco.rua);
+        println(pessoas.get(i).endereco.cidade);
+        i = i + 1;
+    }
 }

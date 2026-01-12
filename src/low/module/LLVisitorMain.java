@@ -209,7 +209,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
 
         //memory
-        this.freeEmitter = new FreeEmitter(this);
+        this.freeEmitter = new FreeEmitter(this, temps);
 
         this.listVisitor = new ListVisitor(this, temps, globalStrings);
 

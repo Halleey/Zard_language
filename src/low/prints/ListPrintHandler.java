@@ -7,7 +7,10 @@ import ast.variables.VariableNode;
 import low.TempManager;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
+
+
 public class ListPrintHandler implements PrintHandler {
+
     private final TempManager temps;
 
     public ListPrintHandler(TempManager temps) {
@@ -30,6 +33,7 @@ public class ListPrintHandler implements PrintHandler {
         }
         return false;
     }
+
     @Override
     public String emit(ASTNode node, LLVisitorMain visitor, boolean newline) {
         StringBuilder sb = new StringBuilder();
@@ -38,9 +42,9 @@ public class ListPrintHandler implements PrintHandler {
         String tmp = temps.newTemp();
 
         if (node instanceof VariableNode varNode) {
-            String varName = varNode.getName();
-            TypeInfos info = visitor.getVarType(varName);
-            if (info == null) throw new RuntimeException("Variável não registrada: " + varName);
+            String llvmVar = visitor.varEmitter.getVarPtr(varNode.getName()); // ✅ pega o ptr correto
+            TypeInfos info = visitor.getVarType(varNode.getName());
+            if (info == null) throw new RuntimeException("Variável não registrada: " + varNode.getName());
 
             elemType = info.getElementType();
             llvmType = info.getLLVMType();
@@ -48,36 +52,36 @@ public class ListPrintHandler implements PrintHandler {
             switch (llvmType) {
                 case "%struct.ArrayListInt*" -> {
                     sb.append("  ").append(tmp)
-                            .append(" = load %struct.ArrayListInt*, %struct.ArrayListInt** %")
-                            .append(varName).append("\n");
+                            .append(" = load %struct.ArrayListInt*, %struct.ArrayListInt** ")
+                            .append(llvmVar).append("\n");
                     sb.append("  call void @arraylist_print_int(%struct.ArrayListInt* ")
                             .append(tmp).append(", i1 ").append(newline ? "1" : "0").append(")\n");
                 }
                 case "%struct.ArrayListDouble*" -> {
                     sb.append("  ").append(tmp)
-                            .append(" = load %struct.ArrayListDouble*, %struct.ArrayListDouble** %")
-                            .append(varName).append("\n");
+                            .append(" = load %struct.ArrayListDouble*, %struct.ArrayListDouble** ")
+                            .append(llvmVar).append("\n");
                     sb.append("  call void @arraylist_print_double(%struct.ArrayListDouble* ")
                             .append(tmp).append(", i1 ").append(newline ? "1" : "0").append(")\n");
                 }
                 case "%struct.ArrayListBool*" -> {
                     sb.append("  ").append(tmp)
-                            .append(" = load %struct.ArrayListBool*, %struct.ArrayListBool** %")
-                            .append(varName).append("\n");
+                            .append(" = load %struct.ArrayListBool*, %struct.ArrayListBool** ")
+                            .append(llvmVar).append("\n");
                     sb.append("  call void @arraylist_print_bool(%struct.ArrayListBool* ")
                             .append(tmp).append(", i1 ").append(newline ? "1" : "0").append(")\n");
                 }
                 default -> {
                     sb.append("  ").append(tmp)
-                            .append(" = load %ArrayList*, %ArrayList** %")
-                            .append(varName).append("\n");
+                            .append(" = load %ArrayList*, %ArrayList** ").append(llvmVar).append("\n");
                     handleGeneric(elemType, sb, tmp, newline);
                 }
             }
         }
 
+
         else if (node instanceof StructFieldAccessNode sfa) {
-            String accessIR = visitor.visit(sfa); // código + markers ;;VAL: ;;TYPE:
+            String accessIR = visitor.visit(sfa);
             sb.append(accessIR);
 
             String val = extractTemp(accessIR);
@@ -120,9 +124,9 @@ public class ListPrintHandler implements PrintHandler {
             }
 
             TypeInfos fnType = visitor.getFunctionType(callNode.getName());
-            if (fnType == null || !fnType.isList()) {
+            if (fnType == null || !fnType.isList())
                 throw new RuntimeException("Função não retorna lista: " + callNode.getName());
-            }
+
             elemType = fnType.getElementType();
 
             if (llvmType.endsWith("**")) {
@@ -167,14 +171,11 @@ public class ListPrintHandler implements PrintHandler {
             case "boolean" -> sb.append("  call void @arraylist_print_bool(%struct.ArrayListBool* ")
                     .append(tmp).append(", i1 ").append(newline ? "1" : "0").append(")\n");
             case "string" -> sb.append("  call void @arraylist_print_string(%ArrayList* ")
-                    .append(tmp).append(", i1 ").append(newline ? "1" : "0").append(")\n");
+                    .append(tmp).append(", i1 ").append(newline ? "1" : "0").append(")\n"); // ✅ segura
             default -> {
-                String structName;
-                if (elemType.startsWith("Struct<")) {
-                    structName = elemType.substring("Struct<".length(), elemType.length() - 1).replace('.', '_');
-                } else {
-                    structName = elemType.replace('.', '_');
-                }
+                String structName = elemType.startsWith("Struct<")
+                        ? elemType.substring("Struct<".length(), elemType.length() - 1).replace('.', '_')
+                        : elemType.replace('.', '_');
                 sb.append("  call void @arraylist_print_ptr(%ArrayList* ")
                         .append(tmp)
                         .append(", void (i8*)* @print_").append(structName)

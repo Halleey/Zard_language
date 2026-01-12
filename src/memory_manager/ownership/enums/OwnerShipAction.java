@@ -4,5 +4,6 @@ public enum OwnerShipAction {
     OWNED,      // declaração
     BORROW,     // uso (print, expr, arg)
     MOVED,      // composição / return
-    DEEP_COPY   // p2 = p1 (mesmo nível)
+    DEEP_COPY,   // p2 = p1 (mesmo nível)
+    READ
 }

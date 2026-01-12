@@ -9,6 +9,7 @@ import memory_manager.ownership.graphs.OwnershipGraph;
 import memory_manager.ownership.lists.ListAddHandler;
 import memory_manager.ownership.structs.InlineUpdateHandler;
 import memory_manager.ownership.structs.StructFieldHandler;
+import memory_manager.ownership.utils.PrintNodeHandler;
 import memory_manager.ownership.variables.AssignmentHandler;
 import memory_manager.ownership.variables.DeclarationHandler;
 import memory_manager.ownership.variables.NodeHandler;
@@ -18,6 +19,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+
 public class OwnershipAnalyzer {
 
     private final Map<Symbol, VarOwnerShip> vars = new LinkedHashMap<>();
@@ -39,6 +42,7 @@ public class OwnershipAnalyzer {
         handlers.add(new ListAddHandler());
         handlers.add(new ReturnHandler());
         handlers.add(new InlineUpdateHandler());
+        handlers.add(new PrintNodeHandler());
     }
 
     public void analyzeBlock(List<ASTNode> nodes) {

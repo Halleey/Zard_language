@@ -26,7 +26,6 @@ public class VariableUseHandler implements NodeHandler<VariableNode> {
                        boolean debug) {
 
         Symbol sym = var.getStaticContext().resolveVariable(var.getName());
-        if (sym == null) return;
 
         VarOwnerShip ownership = vars.get(sym);
         if (ownership == null) return;

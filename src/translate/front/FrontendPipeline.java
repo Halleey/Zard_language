@@ -28,7 +28,7 @@ public class FrontendPipeline {
     private final String filePath;
     private Parser parser;
     private EscapeInfo escapeInfo;
-    private Map<ASTNode, List<FreeAction>> freePlan;
+    private Map<ASTNode, List<FreeAction>>  freePlan;
 
     public FrontendPipeline(String filePath) {
         this.filePath = filePath;

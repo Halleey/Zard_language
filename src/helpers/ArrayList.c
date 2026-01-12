@@ -82,15 +82,24 @@ int length(ArrayList* list) {
     return list ? list->length : 0;
 }
 
+
+/*
+fiz uma pequena mudança,agora libera os itens internos mas provavel q tera 2 metodos
+ um para referencias e outro objets bruto
+*/
 void freeList(ArrayList* list) {
     if (!list) return;
+
     for (size_t i = 0; i < list->length; i++) {
         if (list->data[i]) {
+            free(list->data[i]);
         }
     }
+
     free(list->data);
     free(list);
 }
+
 
 
 void clearList(ArrayList* list) {

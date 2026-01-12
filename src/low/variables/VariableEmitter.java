@@ -66,15 +66,16 @@ public class VariableEmitter {
         return scopes.peek();
     }
 
-    public void registerVarPtr(String name, String ptr) {
-        currentScope().put(name, ptr);
+    public void registerVarPtr(String name, String llvmPtr) {
+        currentScope().put(name, llvmPtr); // escopo atual
     }
 
+    // ao buscar:
     public String getVarPtr(String name) {
-        for (Map<String, String> scope : scopes) {
+        for (Map<String,String> scope : scopes) {
             if (scope.containsKey(name)) return scope.get(name);
         }
-        throw new RuntimeException("Ptr não encontrado para variável: " + name);
+        throw new RuntimeException("Ptr não encontrado: " + name);
     }
 
 

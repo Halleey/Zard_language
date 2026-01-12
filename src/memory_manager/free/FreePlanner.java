@@ -79,6 +79,10 @@ public class FreePlanner {
 
             freeAnchor = findBlockEndForDeclaration(declCtx, anchor);
         }
+        System.out.println("[FREE PLANNER] Anchoring free at node: "
+                + freeAnchor.getClass().getSimpleName()
+                + " (scope=" + freeAnchor.getStaticContext().getId() + ")");
+
 
         result.computeIfAbsent(freeAnchor, k -> new ArrayList<>())
                 .add(new FreeAction(freeAnchor, root));

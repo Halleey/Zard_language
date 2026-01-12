@@ -15,6 +15,7 @@ public class FreeEmitter {
         this.visitor = visitor;
         this.temps = temps;
         this.typeMapper = new TypeMapper();
+        this.temps  = temps;
     }
 
     public String emit(FreeNode freeNode) {

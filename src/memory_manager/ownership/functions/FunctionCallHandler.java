@@ -29,7 +29,7 @@ public class FunctionCallHandler implements NodeHandler<FunctionCallNode> {
 
         for (ASTNode arg : call.getArgs()) {
             if (arg instanceof VariableNode var) {
-                Symbol sym = var.getStaticContext().resolveVariable(var.getName());
+                Symbol sym = var.getSymbol();  // usa o símbolo resolvido em bindChildren
                 if (sym == null) continue;
 
                 VarOwnerShip v = vars.get(sym);
@@ -48,5 +48,6 @@ public class FunctionCallHandler implements NodeHandler<FunctionCallNode> {
                 }
             }
         }
+
     }
 }

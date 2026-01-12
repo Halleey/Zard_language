@@ -18,10 +18,18 @@ public class VariableNode extends ASTNode {
         return name;
     }
 
+    private StaticContext staticContext;
+
     @Override
     public void bindChildren(StaticContext stx) {
+        this.staticContext = stx;       // salvar contexto
         this.symbol = stx.resolveVariable(name);
     }
+
+    public StaticContext getStaticContext() {
+        return staticContext;
+    }
+
 
     @Override
     public String getType() {

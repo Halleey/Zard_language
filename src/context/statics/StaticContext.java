@@ -1,5 +1,6 @@
 package context.statics;
 
+import ast.functions.FunctionNode;
 import context.statics.structs.StaticStructDefinition;
 
 import java.util.*;
@@ -18,6 +19,20 @@ public final class StaticContext {
 
     private final Map<String, Symbol> variables = new LinkedHashMap<>();
     private final Map<String, StaticStructDefinition> structs = new LinkedHashMap<>();
+    private final Map<String, FunctionNode> functions = new HashMap<>();
+
+    public void declareFunction(FunctionNode fn) {
+        functions.put(fn.getName(), fn);
+    }
+
+    public FunctionNode resolveFunction(String name) {
+        FunctionNode fn = functions.get(name);
+        if (fn != null) return fn;
+        if (parent != null) return parent.resolveFunction(name);
+        throw new RuntimeException("Função não declarada: " + name);
+    }
+
+
 
     private int nextSlot = 0;
 

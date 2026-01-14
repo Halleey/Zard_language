@@ -1,5 +1,7 @@
 package ast.variables;
 import ast.ASTNode;
+import ast.functions.FunctionCallNode;
+import ast.functions.FunctionNode;
 import context.statics.StaticContext;
 
 import context.runtime.RuntimeContext;
@@ -28,6 +30,36 @@ public class VariableDeclarationNode extends ASTNode {
     @Override
     public String accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
+    }
+
+
+    @Override
+    public void bindChildren(StaticContext ctx) {
+
+        this.symbol = ctx.declareVariable(name, type);
+
+        if (initializer != null) {
+
+            initializer.bind(ctx);
+
+            if (initializer instanceof FunctionCallNode call) {
+
+                FunctionNode fn = ctx.resolveFunction(call.getName());
+
+                if ("void".equals(fn.getReturnType())) {
+                    throw new RuntimeException(
+                            "Semantic error: function '" + fn.getName() +
+                                    "' returns void and cannot be used to initialize the variable '" +
+                                    name + "'"
+                    );
+                }
+            }
+        }
+    }
+
+
+    public Symbol getSymbol() {
+        return symbol;
     }
 
     @Override
@@ -126,19 +158,7 @@ public class VariableDeclarationNode extends ASTNode {
     }
 
 
-    @Override
-    public void bindChildren(StaticContext ctx) {
 
-        this.symbol = ctx.declareVariable(name, type);
-
-        if (initializer != null) {
-            initializer.bind(ctx);
-        }
-    }
-
-    public Symbol getSymbol() {
-        return symbol;
-    }
 
     @Override
     public boolean isStatement() {

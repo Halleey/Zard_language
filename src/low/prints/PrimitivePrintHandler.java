@@ -23,7 +23,7 @@ public class PrimitivePrintHandler implements PrintHandler {
         if (info == null) return false;
 
         return switch (info.getLLVMType()) {
-            case "i32", "double", "float", "i1" -> true;
+            case "i32","i8", "double", "float", "i1" -> true;
             default -> false;
         };
     }
@@ -78,6 +78,21 @@ public class PrimitivePrintHandler implements PrintHandler {
 
                 appendPrintf(sb, ext, newline, ".strFloat", "double");
             }
+
+            case "i8" -> {
+                String ext = temps.newTemp();
+                sb.append("  ")
+                        .append(ext)
+                        .append(" = zext i8 ")
+                        .append(valTmp)
+                        .append(" to i32\n")
+                        .append(";;VAL:")
+                        .append(ext)
+                        .append(";;TYPE:i32\n");
+
+                appendPrintf(sb, ext, newline, ".strChar", "i32");
+            }
+
 
             case "i1" ->
                     emitBoolPrint(sb, valTmp, newline);

@@ -2,5 +2,90 @@ main {
 string x = "zard";
 println(x);
 
-print("testando ");
+    Shd Struct Pais {
+        string nome;
+    }
+
+    Struct Endereco {
+        string rua;
+        string cidade;
+        Struct Pais pais;
+    }
+
+    Struct Pessoa {
+        string nome;
+        int idade;
+        Struct Endereco endereco;
+    }
+
+    List<Pessoa> pessoas;
+
+    # ---- Criação dos países ----
+    Pais brasil;
+    brasil.nome = "Brasil";
+
+    Pais argentina;
+    argentina.nome = "Argentina";
+
+    # ---- Pessoa 1 ----
+    Pessoa p1;
+    p1.nome = "Alice";
+    p1.idade = 25;
+    Endereco e1;
+    e1.rua = "Rua A";
+    e1.cidade = "São Paulo";
+    e1.pais = brasil;
+    p1.endereco = e1;
+
+    # ---- Pessoa 2 ----
+    Pessoa p2;
+    p2.nome = "Bob";
+    p2.idade = 17;
+    Endereco e2;
+    e2.rua = "Av. Central";
+    e2.cidade = "Rio de Janeiro";
+    e2.pais = brasil;
+    p2.endereco = e2;
+
+    # ---- Pessoa 3 ----
+    Pessoa p3;
+    p3.nome = "Carlos";
+    p3.idade = 32;
+    Endereco e3;
+    e3.rua = "Calle 9";
+    e3.cidade = "Buenos Aires";
+    e3.pais = argentina;
+    p3.endereco = e3;
+
+    pessoas.add(p1);
+    pessoas.add(p2);
+    pessoas.add(p3);
+
+    # ---- Busca por todos que moram no Brasil ----
+    println("=== Pessoas que moram no Brasil ===");
+    int i = 0;
+    while (i < pessoas.size()) {
+        if (pessoas.get(i).endereco.pais.nome == "Brasil") {
+            println(pessoas.get(i).nome);
+            println(pessoas.get(i).endereco.cidade);
+        }
+        i = i + 1;
+    }
+
+    # ---- Calcular idade média ----
+    int soma = 0;
+    i = 0;
+    while (i < pessoas.size()) {
+        soma = soma + pessoas.get(i).idade;
+        i = i + 1;
+    }
+    int media = soma / pessoas.size();
+    println("Idade média:");
+    println(media);
+
+    # ---- Verificação complexa ----
+    if (pessoas.get(2).endereco.pais.nome == "Argentina" && pessoas.get(2).idade > 30) {
+        println(pessoas.get(2).nome);
+        println(" é argentino e tem mais de 30 anos");
+    }
 }

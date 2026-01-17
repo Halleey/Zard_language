@@ -64,19 +64,6 @@ public class StructNode extends ASTNode {
         return visitor.visit(this);
     }
 
-    @Override
-    public TypedValue evaluate(RuntimeContext ctx) {
-        ctx.registerStructType(name, fields);
-        return null;
-    }
-
-    @Override
-    public void print(String prefix) {
-        System.out.println(prefix + "Struct " + name);
-        for (VariableDeclarationNode f : fields) {
-            System.out.println(prefix + "  " + f.getName() + " : " + f.getType());
-        }
-    }
 
     @Override
     public void bindChildren(StaticContext stx) {
@@ -90,6 +77,13 @@ public class StructNode extends ASTNode {
             }
         }
 
+        StaticStructDefinition def = getStaticStructDefinition();
+        System.out.println("vamos ver: " + def.getName());
+        System.out.println("vamos ver: " + def.isShared());
+        stx.declareStruct(name, def);
+    }
+
+    private StaticStructDefinition getStaticStructDefinition() {
         List<StaticFields> staticFields = new ArrayList<>();
 
         int index = 0;
@@ -105,11 +99,25 @@ public class StructNode extends ASTNode {
                     )
             );
         }
-
-        StaticStructDefinition def = new StaticStructDefinition(name, staticFields);
-
-        stx.declareStruct(name, def);
+        return new StaticStructDefinition(name, staticFields, isShared());
     }
+
+
+
+    @Override
+    public TypedValue evaluate(RuntimeContext ctx) {
+        ctx.registerStructType(name, fields);
+        return null;
+    }
+
+    @Override
+    public void print(String prefix) {
+        System.out.println(prefix + "Struct " + name);
+        for (VariableDeclarationNode f : fields) {
+            System.out.println(prefix + "  " + f.getName() + " : " + f.getType());
+        }
+    }
+
 
 
     public StructNode cloneWithType(String elemType) {

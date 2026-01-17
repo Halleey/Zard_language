@@ -2,16 +2,24 @@ package context.statics.structs;
 
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;public final class StaticStructDefinition {
+import java.util.Map;
+public final class StaticStructDefinition {
 
     private final String name;
     private final List<StaticFields> fields;
     private final Map<String, StaticFields> fieldMap;
+    private final boolean isShared;
 
-    public StaticStructDefinition(String name, List<StaticFields> fields) {
+    public boolean isShared() {
+        return isShared;
+    }
+
+    public StaticStructDefinition(String name, List<StaticFields> fields, boolean isShared) {
         this.name = name;
         this.fields = List.copyOf(fields);
+        this.isShared = isShared;
         this.fieldMap = new LinkedHashMap<>();
+
 
         for (StaticFields f : fields) {
             if (fieldMap.containsKey(f.getName())) {

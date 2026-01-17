@@ -37,16 +37,6 @@ public class VariableUseHandler implements NodeHandler<VariableNode> {
             );
         }
 
-        // BORROW annotation
-        annotations.add(
-                new OwnershipAnnotation(
-                        var,
-                        OwnerShipAction.BORROW,
-                        sym,
-                        null
-                )
-        );
-
         if (debug) {
             System.out.println("[OWNERSHIP] BORROW use " + sym.getName());
         }

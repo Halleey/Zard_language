@@ -50,7 +50,8 @@ public class FreePlanner {
 
         ASTNode anchor = lastUseNode.get(sym);
         if (anchor == null) {
-            System.out.println("[FREE PLANNER] " + sym.getName() + " não tem uso, ignora.");
+            System.out.println("[FREE PLANNER] " + sym.getName
+                    () + " não tem uso, ignora.");
             return;
         }
 

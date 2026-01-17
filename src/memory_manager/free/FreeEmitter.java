@@ -4,7 +4,6 @@ import low.TempManager;
 import low.functions.TypeMapper;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
-
 public class FreeEmitter {
 
     private final LLVisitorMain visitor;
@@ -34,6 +33,7 @@ public class FreeEmitter {
 
         String llvmType = info.getLLVMType();
         String elemType = info.getElementType();
+
         System.out.println("LLVM type da variável: " + llvmType);
         System.out.println("Elemento da lista: " + elemType);
         System.out.println("É lista? " + info.isList());
@@ -42,6 +42,8 @@ public class FreeEmitter {
         System.out.println("Temp gerado para load: " + tmpFree);
 
         StringBuilder sb = new StringBuilder();
+
+        // load do valor
         sb.append("  ").append(tmpFree)
                 .append(" = load ").append(llvmType)
                 .append(", ").append(llvmType).append("* ").append(varPtr).append("\n");
@@ -50,23 +52,27 @@ public class FreeEmitter {
             String freeFunc;
 
             if (elemType == null || elemType.equals("?") || llvmType.equals("%ArrayList*")) {
-                // listas genéricas
                 freeFunc = "@freeList";
                 System.out.println("Lista genérica detectada. Função de free: " + freeFunc);
             } else {
-                // listas tipadas
                 freeFunc = typeMapper.freeFunctionForElement(elemType);
                 System.out.println("Lista tipada. Função de free escolhida: " + freeFunc);
             }
 
-            sb.append("  call void ").append(freeFunc)
+            sb.append("  call void ")
+                    .append(freeFunc)
                     .append("(").append(llvmType).append(" ").append(tmpFree).append(")\n");
-
-            System.out.println("LLVM call gerado: " + sb.toString());
         }
 
-        System.out.println("=== FreeEmitter: emit finalizado ===\n");
+        else if ("%String*".equals(llvmType)) {
+            sb.append("  call void @freeString(")
+                    .append(llvmType).append(" ").append(tmpFree).append(")\n");
 
+            System.out.println("String detectada. Função de free: @freeString");
+        }
+
+
+        System.out.println("=== FreeEmitter: emit finalizado ===\n");
         return sb.toString();
     }
 }

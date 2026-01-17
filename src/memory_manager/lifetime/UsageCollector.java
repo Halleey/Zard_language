@@ -2,10 +2,7 @@ package memory_manager.lifetime;
 
 import ast.ASTNode;
 import ast.ifstatements.IfNode;
-import ast.lists.ListAddNode;
-import ast.lists.ListGetNode;
-import ast.lists.ListRemoveNode;
-import ast.lists.ListSizeNode;
+import ast.lists.*;
 import ast.loops.WhileNode;
 import ast.prints.PrintNode;
 import ast.structs.StructFieldAccessNode;
@@ -86,6 +83,8 @@ class UsageCollector {
             }
             return;
         }
+
+
 
         // === atribuição ===
         if (node instanceof AssignmentNode assign) {

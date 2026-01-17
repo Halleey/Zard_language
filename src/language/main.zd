@@ -1,4 +1,6 @@
 main {
+string x = "zard";
+println(x);
 
     Shd Struct Pais {
         string nome;

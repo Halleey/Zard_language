@@ -8,6 +8,8 @@ import memory_manager.ownership.graphs.OwnershipNode;
 
 import java.util.Collections;
 import java.util.List;
+
+
 public class FreeNode extends ASTNode {
 
     private final OwnershipNode root;

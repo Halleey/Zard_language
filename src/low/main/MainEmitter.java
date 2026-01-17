@@ -355,7 +355,8 @@ public class MainEmitter {
         declare %String* @createString(i8*)
         declare i1 @strcmp_eq(%String*, %String*)
         declare i1 @strcmp_neq(%String*, %String*)
-        
+        declare void @freeString(%String*)
+                
         %String = type { i8*, i64 }
 """);
 

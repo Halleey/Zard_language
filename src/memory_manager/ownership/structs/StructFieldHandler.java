@@ -2,8 +2,10 @@ package memory_manager.ownership.structs;
 
 import ast.ASTNode;
 import ast.structs.StructFieldAccessNode;
+import ast.structs.StructNode;
 import ast.variables.VariableNode;
 import context.statics.Symbol;
+import context.statics.structs.StaticStructDefinition;
 import memory_manager.ownership.OwnershipAnnotation;
 import memory_manager.ownership.VarOwnerShip;
 import memory_manager.ownership.enums.OwnerShipAction;
@@ -41,17 +43,57 @@ public class StructFieldHandler implements NodeHandler<StructFieldAccessNode> {
         VarOwnerShip v = vars.get(source);
         if (v == null) return;
 
+        StaticStructDefinition def = OwnershipUtils.resolveStructDefFromSymbol(source);
+
+        boolean isShared = def != null && def.isShared();
+
+
+        System.out.println("COMPARTILHAVEL  " + isShared);
+        if (isShared) {
+
+            annotations.add(new OwnershipAnnotation(
+                    sfa,
+                    OwnerShipAction.BORROW,
+                    source,
+                    target
+            ));
+
+            // não remove da raiz
+
+            if (debug) {
+                System.out.println(
+                        "[OWNERSHIP] BORROW " +
+                                source.getName() + " -> " + target.getName()
+                );
+            }
+            return;
+        }
+
         if (v.getState() == OwnershipState.MOVED) {
-            throw new RuntimeException("Use-after-move in struct field assignment: " + source.getName());
+            throw new RuntimeException(
+                    "Use-after-move in struct field assignment: "
+                            + source.getName()
+            );
         }
 
         v.setState(OwnershipState.MOVED);
-        annotations.add(new OwnershipAnnotation(sfa, OwnerShipAction.MOVED, source, target));
+
+        annotations.add(new OwnershipAnnotation(
+                sfa,
+                OwnerShipAction.MOVED,
+                source,
+                target
+        ));
+
         graph.move(source, target);
 
         if (debug) {
-            System.out.println("[OWNERSHIP] MOVE " + source.getName() + " -> " + target.getName());
+            System.out.println(
+                    "[OWNERSHIP] MOVE " +
+                            source.getName() + " -> " + target.getName()
+            );
         }
     }
+
 }
 

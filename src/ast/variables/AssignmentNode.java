@@ -1,6 +1,8 @@
 package ast.variables;
 
 import ast.ASTNode;
+import ast.functions.FunctionCallNode;
+import ast.functions.FunctionNode;
 import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
@@ -61,6 +63,14 @@ public class AssignmentNode extends ASTNode {
 
     @Override
     public void bindChildren(StaticContext stx) {
+
+        if(valueNode instanceof FunctionCallNode functionCallNode) {
+            FunctionNode fn = stx.resolveFunction(functionCallNode.getName());
+            if("void".equals(fn.getReturnType())) {
+                throw new RuntimeException("It is not possible to use a void type function: "+ fn.getName() + " for assignment");
+            }
+
+        }
 
     }
 }

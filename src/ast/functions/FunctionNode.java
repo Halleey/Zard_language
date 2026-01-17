@@ -89,9 +89,8 @@ public class FunctionNode extends ASTNode {
                 funcCtx.declareVariable(p.name(), p.type());
             }
         }
-        StaticContext bodyCtx =
-                new StaticContext(ScopeKind.BLOCK, funcCtx);
-
+        StaticContext bodyCtx = new StaticContext(ScopeKind.BLOCK, funcCtx);
+        stx.declareFunction(this);
         for (ASTNode node : body) {
             node.bind(bodyCtx);
         }
@@ -175,8 +174,6 @@ public class FunctionNode extends ASTNode {
             for (ASTNode stmt : body) stmt.print(prefix + "    ");
         }
     }
-
-
 
 
 }

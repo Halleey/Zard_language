@@ -63,10 +63,14 @@ public class VariableDeclarationNode extends ASTNode {
     }
 
 
-
     private void checkTypeCompatibility(String declared, String currently) {
+
+        if (isStructType(declared) || isStructType(currently)) {
+            return;
+        }
+
         if (declared.equals(currently)) return;
-        //valores que podem receber promoção
+
         if (declared.equals("double") && currently.equals("int")) return;
         if (declared.equals("float")  && currently.equals("int")) return;
         if (declared.equals("double") && currently.equals("float")) return;
@@ -77,6 +81,12 @@ public class VariableDeclarationNode extends ASTNode {
                         declared + "'"
         );
     }
+
+
+    private boolean isStructType(String type) {
+        return type != null && type.startsWith("Struct<");
+    }
+
 
 
     public Symbol getSymbol() {

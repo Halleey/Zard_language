@@ -1,9 +1,11 @@
 package ast.lists;
 
 import ast.ASTNode;
+import ast.variables.VariableNode;
 import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
+import context.statics.Symbol;
 import context.statics.list.ListValue;
 import low.module.LLVMEmitVisitor;
 
@@ -46,10 +48,33 @@ public class ListGetNode extends ASTNode {
         listName.print(prefix + "  ");
         indexNode.print(prefix + "  ");
     }
+    @Override
+    public String getType() {
+        return elementType;
+    }
+
+
 
     @Override
     public void bindChildren(StaticContext stx) {
 
+        listName.bind(stx);
+        indexNode.bind(stx);
+
+        if (!(listName instanceof VariableNode var)) {
+            throw new RuntimeException("ListGet deve operar sobre uma variável");
+        }
+
+        Symbol listSym = stx.resolveVariable(var.getName());
+        String listType = listSym.getType();
+
+        if (!listType.startsWith("List<")) {
+            throw new RuntimeException(
+                    "Variável '" + var.getName() + "' não é uma lista"
+            );
+        }
+
+        this.elementType = listType.substring(5, listType.length() - 1);
     }
 
     public ASTNode getListName() {

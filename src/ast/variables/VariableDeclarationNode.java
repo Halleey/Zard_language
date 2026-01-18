@@ -2,6 +2,7 @@ package ast.variables;
 import ast.ASTNode;
 import ast.functions.FunctionCallNode;
 import ast.functions.FunctionNode;
+import ast.lists.ListGetNode;
 import context.statics.StaticContext;
 
 import context.runtime.RuntimeContext;
@@ -46,20 +47,15 @@ public class VariableDeclarationNode extends ASTNode {
 
             if (initializer instanceof FunctionCallNode call) {
                 FunctionNode fn = ctx.resolveFunction(call.getName());
-
-                if ("void".equals(fn.getReturnType())) {
-                    throw new RuntimeException(
-                            "Semantic error: function '" + fn.getName() +
-                                    "' returns void and cannot be used to initialize '" +
-                                    name + "'"
-                    );
-                }
                 initType = fn.getReturnType();
-            } else {
+
+            }  else {
                 initType = initializer.getType();
             }
+
             checkTypeCompatibility(this.type, initType);
         }
+
     }
 
 

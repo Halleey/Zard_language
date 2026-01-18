@@ -37,24 +37,45 @@ public class VariableDeclarationNode extends ASTNode {
     public void bindChildren(StaticContext ctx) {
 
         this.symbol = ctx.declareVariable(name, type);
+        System.out.println("debug " + symbol);
 
         if (initializer != null) {
-
             initializer.bind(ctx);
 
-            if (initializer instanceof FunctionCallNode call) {
+            String initType;
 
+            if (initializer instanceof FunctionCallNode call) {
                 FunctionNode fn = ctx.resolveFunction(call.getName());
 
                 if ("void".equals(fn.getReturnType())) {
                     throw new RuntimeException(
                             "Semantic error: function '" + fn.getName() +
-                                    "' returns void and cannot be used to initialize the variable '" +
+                                    "' returns void and cannot be used to initialize '" +
                                     name + "'"
                     );
                 }
+                initType = fn.getReturnType();
+            } else {
+                initType = initializer.getType();
             }
+            checkTypeCompatibility(this.type, initType);
         }
+    }
+
+
+
+    private void checkTypeCompatibility(String declared, String currently) {
+        if (declared.equals(currently)) return;
+        //valores que podem receber promoção
+        if (declared.equals("double") && currently.equals("int")) return;
+        if (declared.equals("float")  && currently.equals("int")) return;
+        if (declared.equals("double") && currently.equals("float")) return;
+
+        throw new RuntimeException(
+                "Semantic error: cannot assign value of type '" +
+                        currently + "' to variable of type '" +
+                        declared + "'"
+        );
     }
 
 

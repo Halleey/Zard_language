@@ -1,5 +1,16 @@
 main {
 
+
+function int somar(int x, int z) {
+return x + z;
+}
+
+
+int k = 3;
+int z = 2;
+int t = somar(2,k);
+println(t);
+
 char x = 'x';
 println(x);
 print(x);

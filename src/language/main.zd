@@ -1,17 +1,8 @@
+
 main {
 
-
-function int somar(int x, int z) {
-return x + z;
+List i = (0,1,10,3,4);
+int soma = i.get(2);
+print(soma);
 }
 
-
-int k = 3;
-int z = 2;
-int t = somar(2,k);
-println(t);
-
-char x = 'x';
-println(x);
-print(x);
-}

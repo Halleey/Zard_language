@@ -6,6 +6,7 @@ import ast.functions.FunctionNode;
 import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
+import context.statics.Symbol;
 import low.module.LLVMEmitVisitor;
 
 public class AssignmentNode extends ASTNode {
@@ -64,13 +65,48 @@ public class AssignmentNode extends ASTNode {
     @Override
     public void bindChildren(StaticContext stx) {
 
-        if(valueNode instanceof FunctionCallNode functionCallNode) {
-            FunctionNode fn = stx.resolveFunction(functionCallNode.getName());
-            if("void".equals(fn.getReturnType())) {
-                throw new RuntimeException("It is not possible to use a void type function: "+ fn.getName() + " for assignment");
-            }
+        // variável deve existir
+        Symbol sym = stx.resolveVariable(name);
+        String expectedType = sym.getType();
 
+        // resolve tipos do RHS
+        valueNode.bind(stx);
+        String actualType = valueNode.getType();
+
+        // bloqueia void
+        if ("void".equals(actualType)) {
+            throw new RuntimeException(
+                    "Semantic error: cannot assign void value to variable '" + name + "'"
+            );
         }
 
+        checkTypeCompatibility(expectedType, actualType);
     }
+
+    protected void checkTypeCompatibility(String declared, String currently) {
+
+        if (isStructType(declared) || isStructType(currently)) {
+            return;
+        }
+
+        if (declared.equals(currently)) return;
+
+        if (declared.equals("double") && currently.equals("int")) return;
+        if (declared.equals("float")  && currently.equals("int")) return;
+        if (declared.equals("double") && currently.equals("float")) return;
+
+        throw new RuntimeException(
+                "Semantic error: cannot assign value of type '" +
+                        currently + "' to variable of type '" +
+                        declared + "'"
+        );
+    }
+
+    private boolean isStructType(String type) {
+        return type != null && type.startsWith("Struct<");
+    }
+
+
+
+
 }

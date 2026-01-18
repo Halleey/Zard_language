@@ -1,8 +1,10 @@
 
 main {
-
+List nomes = ("zard","teste");
 List i = (0,1,10,3,4);
-int soma = i.get(2);
+int soma;
+soma = i.get(2);
 print(soma);
+
 }
 

@@ -59,7 +59,7 @@ public class VariableDeclarationNode extends ASTNode {
     }
 
 
-    private void checkTypeCompatibility(String declared, String currently) {
+    protected void checkTypeCompatibility(String declared, String currently) {
 
         if (isStructType(declared) || isStructType(currently)) {
             return;

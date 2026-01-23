@@ -3,7 +3,7 @@ package translate.front;
 import ast.ASTNode;
 import ast.functions.FunctionNode;
 import ast.structs.StructFieldAccessNode;
-import ast.variables.ExpressionParser;
+import ast.expressions.ExpressionParser;
 import ast.variables.VariableNode;
 import tokens.Token;
 import translate.front.specializers.StatemantParser;

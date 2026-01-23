@@ -1,8 +1,8 @@
-package ast.variables;
+package ast.expressions;
 
 import ast.ASTNode;
 import ast.inputs.InputParser;
-import ast.expressions.TypedValue;
+import ast.variables.LiteralNode;
 import tokens.Token;
 import translate.front.Parser;
 import translate.identifiers.IdentifierParser;

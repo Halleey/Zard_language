@@ -4,7 +4,7 @@ import ast.ASTNode;
 import tokens.Token;
 import translate.front.Parser;
 import java.util.List;
-import ast.variables.UnaryOpNode;
+import ast.expressions.UnaryOpNode;
 import ast.variables.VariableNode;
 
 

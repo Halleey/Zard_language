@@ -36,10 +36,8 @@ public class VariableDeclarationNode extends ASTNode {
 
     @Override
     public void bindChildren(StaticContext ctx) {
-
         this.symbol = ctx.declareVariable(name, type);
         System.out.println("debug " + symbol);
-
         if (initializer != null) {
             initializer.bind(ctx);
 
@@ -57,7 +55,6 @@ public class VariableDeclarationNode extends ASTNode {
         }
 
     }
-
 
     protected void checkTypeCompatibility(String declared, String currently) {
 

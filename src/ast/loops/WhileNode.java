@@ -74,7 +74,7 @@ public class WhileNode extends ASTNode {
     }
 
     @Override
-    protected void bindChildren(StaticContext parent) {
+    public void bindChildren(StaticContext parent) {
         condition.setParent(this);
         condition.bind(parent);
 

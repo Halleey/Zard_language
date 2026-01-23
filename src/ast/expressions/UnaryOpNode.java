@@ -1,9 +1,9 @@
-package ast.variables;
+package ast.expressions;
 
 import ast.ASTNode;
+import ast.variables.VariableNode;
 import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
-import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
 public class UnaryOpNode extends ASTNode {

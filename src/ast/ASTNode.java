@@ -22,7 +22,7 @@ public abstract class ASTNode {
         bindChildren(ctx);
     }
 
-    protected void bindChildren(StaticContext ctx) {
+    public void bindChildren(StaticContext ctx) {
         for (ASTNode child : getChildren()) {
             if (child != null) {
                 child.setParent(this);

@@ -7,7 +7,7 @@ import ast.functions.FunctionNode;
 import ast.functions.ParamInfo;
 import ast.ifstatements.IfNode;
 import ast.loops.WhileNode;
-import ast.variables.BinaryOpNode;
+import ast.expressions.BinaryOpNode;
 import ast.variables.LiteralNode;
 import ast.variables.VariableDeclarationNode;
 import ast.variables.VariableNode;

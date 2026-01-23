@@ -1,6 +1,7 @@
 package translate.identifiers;
 
 import ast.ASTNode;
+import ast.expressions.CompoundParser;
 import ast.functions.FunctionCallNode;
 import ast.functions.FunctionNode;
 import ast.structs.*;
@@ -22,10 +23,11 @@ public class IdentifierParser {
     public IdentifierParser(Parser parser) {
         this.parser = parser;
     }
+
+
     public ASTNode parseAsStatement(String name) {
         ASTNode receiver = new VariableNode(name);
         String tokenVal = parser.current().getValue();
-
         String structName = parseTypeStruct(name);
 
         if (parser.isKnownStruct(name)) {
@@ -117,6 +119,10 @@ public class IdentifierParser {
             case "++", "--" -> {
                 return new UnaryParser(parser).parser(name, tokenVal);
             }
+            case "+=", "-=" -> {
+                return new CompoundParser(parser).parse(name, tokenVal);
+            }
+
         }
 
         return receiver;

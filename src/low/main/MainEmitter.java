@@ -17,7 +17,7 @@ import ast.loops.WhileNode;
 import ast.prints.PrintNode;
 import ast.structs.*;
 import ast.variables.AssignmentNode;
-import ast.variables.BinaryOpNode;
+import ast.expressions.BinaryOpNode;
 import low.TempManager;
 
 import low.functions.FunctionEmitter;

@@ -94,7 +94,7 @@ public class IfNode extends ASTNode {
         return children;
     }
     @Override
-    protected void bindChildren(StaticContext parent) {
+    public void bindChildren(StaticContext parent) {
         if (condition != null) {
             condition.setParent(this);
             condition.bind(parent);

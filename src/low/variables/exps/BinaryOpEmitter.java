@@ -3,7 +3,7 @@ import ast.ASTNode;
 import ast.variables.VariableNode;
 import low.module.LLVisitorMain;
 import low.TempManager;
-import ast.variables.BinaryOpNode;
+import ast.expressions.BinaryOpNode;
 public class BinaryOpEmitter {
     private final TempManager temps;
     private final LLVisitorMain visitor;

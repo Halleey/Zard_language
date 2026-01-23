@@ -2,8 +2,7 @@ package translate.identifiers;
 
 import ast.ASTNode;
 import ast.lists.*;
-import ast.structs.StructFieldAccessNode;
-import ast.variables.ExpressionParser;
+import ast.expressions.ExpressionParser;
 import tokens.Token;
 import translate.front.Parser;
 

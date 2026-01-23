@@ -79,20 +79,30 @@ public class Lexer {
         advance();
 
         if ((result.toString().equals("+") && currentChar == '+') ||
-                (result.toString().equals("-") && currentChar == '-') ||
-                (result.toString().equals("=") && currentChar == '=') ||
-                (result.toString().equals("!") && currentChar == '=') ||
-                (result.toString().equals("<") && (currentChar == '=' || currentChar == '>')) ||
-                (result.toString().equals(">") && currentChar == '=') ||
-                (result.toString().equals("&") && currentChar == '&') ||
-                (result.toString().equals("|") && currentChar == '|')) {
+                        (result.toString().equals("-") && currentChar == '-') ||
 
+                        (result.toString().equals("+") && currentChar == '=') ||
+                        (result.toString().equals("-") && currentChar == '=') ||
+                        (result.toString().equals("*") && currentChar == '=') ||
+                        (result.toString().equals("/") && currentChar == '=') ||
+
+                        // comparação
+                        (result.toString().equals("=") && currentChar == '=') ||
+                        (result.toString().equals("!") && currentChar == '=') ||
+                        (result.toString().equals("<") && (currentChar == '=' || currentChar == '>')) ||
+                        (result.toString().equals(">") && currentChar == '=') ||
+
+                        // lógicos
+                        (result.toString().equals("&") && currentChar == '&') ||
+                        (result.toString().equals("|") && currentChar == '|')
+        ) {
             result.append(currentChar);
             advance();
         }
 
         return new Token(Token.TokenType.OPERATOR, result.toString());
     }
+
 
 
 

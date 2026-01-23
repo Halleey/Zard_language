@@ -3,6 +3,9 @@ import ast.ASTNode;
 import ast.TypeSpecializer;
 import ast.exceptions.BreakNode;
 import ast.exceptions.ReturnNode;
+import ast.expressions.BinaryOpNode;
+import ast.expressions.CompoundAssignmentNode;
+import ast.expressions.UnaryOpNode;
 import ast.functions.FunctionCallNode;
 import ast.functions.FunctionNode;
 import ast.home.MainAST;
@@ -34,6 +37,7 @@ import low.structs.*;
 import low.variables.*;
 import low.variables.exps.AssignmentEmitter;
 import low.variables.exps.BinaryOpEmitter;
+import low.variables.exps.CompoundAssignmentEmitter;
 import low.variables.exps.UnaryOpEmitter;
 import memory_manager.free.FreeEmitter;
 import memory_manager.free.FreeNode;
@@ -87,7 +91,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final BinaryOpEmitter binaryEmitter;
     private final FunctionCallEmitter callEmiter;
     private final StructUpdateEmitter updateEmitter;
-
+    private final CompoundAssignmentEmitter compoundAssignmentEmitter;
     // ==== LISTA: AGORA CONTROLADA POR ListVisitor ====
     private final ListVisitor listVisitor;
 
@@ -206,7 +210,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         this.structFieldAccessEmitter = new StructFieldAccessEmitter(temps);
         this.methodCallEmitter = new StructMethodCallEmitter(temps);
         this.implEmitter = new ImplEmitter(this, temps);
-
+        this.compoundAssignmentEmitter = new CompoundAssignmentEmitter(varTypesView, temps, varEmitter, this);
 
         //memory
         this.freeEmitter = new FreeEmitter(this, temps);
@@ -243,13 +247,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         structRegistry.markUsed(name);
     }
 
-    public void markStructImported(String name) {
-        importRegistry.markStructImported(name);
-    }
-
-    public boolean isStructUsed(String name) {
-        return structRegistry.isUsed(name);
-    }
 
     // ==== LÓGICA DE STRUCTS ESPECIALIZADAS ====
     public StructNode getOrCreateSpecializedStruct(StructNode base, String elemType) {
@@ -375,6 +372,11 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     @Override
     public String visitFreeNode(FreeNode freeNode) {
         return freeEmitter.emit(freeNode);
+    }
+
+    @Override
+    public String visit(CompoundAssignmentNode compoundAssignmentNode) {
+        return compoundAssignmentEmitter.emit(compoundAssignmentNode);
     }
 
     @Override

@@ -1,9 +1,8 @@
-package ast.variables;
+package ast.expressions;
 
 import ast.ASTNode;
 import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
-import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
 
 import java.util.ArrayList;

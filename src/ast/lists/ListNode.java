@@ -29,7 +29,7 @@ public final class ListNode extends ASTNode {
     }
 
     @Override
-    protected void bindChildren(StaticContext stx) {
+    public void bindChildren(StaticContext stx) {
 
         for (ASTNode node : list.getElements()) {
             node.bind(stx);

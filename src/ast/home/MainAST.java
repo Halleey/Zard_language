@@ -49,7 +49,7 @@ public class MainAST extends ASTNode {
     }
 
     @Override
-    protected void bindChildren(StaticContext ctx) {
+    public void bindChildren(StaticContext ctx) {
         for (ASTNode stmt : body) {
             stmt.bind(ctx);
         }

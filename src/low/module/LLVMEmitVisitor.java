@@ -2,6 +2,9 @@ package low.module;
 
 import ast.exceptions.BreakNode;
 import ast.exceptions.ReturnNode;
+import ast.expressions.BinaryOpNode;
+import ast.expressions.CompoundAssignmentNode;
+import ast.expressions.UnaryOpNode;
 import ast.functions.FunctionCallNode;
 import ast.functions.FunctionNode;
 import ast.home.MainAST;
@@ -47,6 +50,7 @@ public interface LLVMEmitVisitor {
     String visit (ImplNode node);
     String visit (ForNode node);
     String visitFreeNode(FreeNode freeNode);
+    String visit(CompoundAssignmentNode compoundAssignmentNode);
 }
 
 

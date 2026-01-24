@@ -1,6 +1,9 @@
 main {
 
 List <int> x;
+int t;
+t++;
+println(t);
 int z;
 for(int i = 0; i < 10; i++) {
 x.add(i);

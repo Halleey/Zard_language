@@ -128,10 +128,24 @@ public class VariableEmitter {
             };
         }
 
-        if ("string".equals(info.getSourceType())) return stringEmitter.createEmptyString(varPtr);
-        if ("char".equals(info.getSourceType())) return "  store i8 0, i8* " + varPtr + "\n";
-        return "";
+        return switch (info.getSourceType()) {
+            case "int" ->
+                    "  store i32 0, i32* " + varPtr + "\n";
+            case "double" ->
+                    "  store double 0.0, double* " + varPtr + "\n";
+            case "float" ->
+                    "  store float 0.0, float* " + varPtr + "\n";
+            case "boolean" ->
+                    "  store i1 0, i1* " + varPtr + "\n";
+            case "char" ->
+                    "  store i8 0, i8* " + varPtr + "\n";
+            case "string" ->
+                    stringEmitter.createEmptyString(varPtr);
+            default ->
+                    "";
+        };
     }
+
 
     private String handleInputInit(VariableDeclarationNode node, InputNode inputNode, TypeInfos info) {
         InputEmitter inputEmitter = new InputEmitter(temps, visitor.getGlobalStrings());

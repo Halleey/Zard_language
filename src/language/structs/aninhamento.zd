@@ -32,29 +32,29 @@ main {
     pessoas.add(p1);
     pessoas.add(p2);
 
-    print(pessoas.get(0).nome);
-    print(pessoas.get(0).endereco.rua);
-    print(pessoas.get(0).endereco.cidade);
+    println(pessoas.get(0).nome);
+    println(pessoas.get(0).endereco.rua);
+    println(pessoas.get(0).endereco.cidade);
 
-    print(pessoas.get(1).nome);
-    print(pessoas.get(1).endereco.rua);
-    print(pessoas.get(1).endereco.cidade);
+    println(pessoas.get(1).nome);
+    println(pessoas.get(1).endereco.rua);
+    println(pessoas.get(1).endereco.cidade);
 
     if (pessoas.get(0).endereco.cidade == "São Paulo") {
-        print("A primeira pessoa mora em São Paulo");
+        println("A primeira pessoa mora em São Paulo");
     }
 
     if (pessoas.get(1).idade < 18) {
-        print(pessoas.get(1).nome);
-        print(" é menor de idade");
+        println(pessoas.get(1).nome);
+        println(" é menor de idade");
     }
 
     int i = 0;
     while (i < pessoas.size()) {
-        print("Pessoa:");
-        print(pessoas.get(i).nome);
-        print(pessoas.get(i).endereco.rua);
-        print(pessoas.get(i).endereco.cidade);
-        i = i + 1;
+        println("Pessoa:");
+        println(pessoas.get(i).nome);
+        println(pessoas.get(i).endereco.rua);
+        println(pessoas.get(i).endereco.cidade);
+        i++;
     }
 }

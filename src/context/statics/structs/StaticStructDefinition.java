@@ -3,6 +3,9 @@ package context.statics.structs;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+
+
 public final class StaticStructDefinition {
 
     private final String name;

@@ -12,6 +12,8 @@ public class BinaryOpNode extends ASTNode {
     public final ASTNode left;
     public final String operator;
     public final ASTNode right;
+    private String type;
+
 
     public BinaryOpNode(ASTNode left, String operator, ASTNode right) {
         this.left = left;
@@ -105,14 +107,67 @@ public class BinaryOpNode extends ASTNode {
 
     @Override
     public void bindChildren(StaticContext stx) {
+
         left.setParent(this);
         left.bind(stx);
 
         right.setParent(this);
         right.bind(stx);
+
+        String lt = left.getType();
+        String rt = right.getType();
+
+        if (lt == null || rt == null) {
+            throw new RuntimeException("BinaryOp with null operand type: " + operator);
+        }
+
+        this.type = resolveType(lt, rt);
     }
 
+    private String resolveType(String lt, String rt) {
 
+        switch (operator) {
+
+            case "+":
+            case "-":
+            case "*":
+            case "/":
+
+                if (lt.equals("int") && rt.equals("int"))
+                    return "int";
+
+                if (lt.equals("double") || rt.equals("double"))
+                    return "double";
+
+                if (lt.equals("float") || rt.equals("float"))
+                    return "float";
+
+                if (lt.equals("string") || rt.equals("string"))
+                    return "string";
+
+                break;
+
+            case ">":
+            case "<":
+            case ">=":
+            case "<=":
+            case "==":
+            case "!=":
+            case "&&":
+            case "||":
+                return "boolean";
+        }
+
+        throw new RuntimeException(
+                "Semantic error: incompatible types '" + lt +
+                        "' and '" + rt + "' for operator '" + operator + "'"
+        );
+    }
+
+    @Override
+    public String getType() {
+        return type;
+    }
 
     private Object unwrap(TypedValue tv) {
         return tv.value();

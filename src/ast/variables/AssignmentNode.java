@@ -98,7 +98,7 @@ public class AssignmentNode extends ASTNode {
         throw new RuntimeException(
                 "Semantic error: cannot assign value of type '" +
                         currently + "' to variable of type '" +
-                        declared + "'"
+                        declared +" " +name +"'"
         );
     }
 

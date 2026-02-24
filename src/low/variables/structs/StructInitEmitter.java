@@ -6,6 +6,7 @@ import ast.variables.VariableDeclarationNode;
 import low.TempManager;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
+import low.variables.VariableEmitter;
 
 import java.util.Map;
 
@@ -14,25 +15,22 @@ public class StructInitEmitter {
 
     private final TempManager temps;
     private final LLVisitorMain visitor;
-    private final Map<String, String> localVars;
+    private final VariableEmitter varEmitter;
 
     public StructInitEmitter(
             TempManager temps,
             LLVisitorMain visitor,
-            Map<String, String> localVars
+            VariableEmitter varEmitter
     ) {
         this.temps = temps;
         this.visitor = visitor;
-        this.localVars = localVars;
+        this.varEmitter = varEmitter;
     }
 
     private String getVarPtr(String name) {
-        String ptr = localVars.get(name);
-        if (ptr == null) {
-            throw new RuntimeException("Ptr não encontrado para variável: " + name);
-        }
-        return ptr;
+        return varEmitter.getVarPtr(name);
     }
+
 
     public String emit(VariableDeclarationNode node, TypeInfos info) {
 

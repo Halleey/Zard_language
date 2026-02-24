@@ -1,5 +1,9 @@
 package context.statics.structs;
 
+import ast.structs.StructNode;
+import ast.variables.VariableDeclarationNode;
+
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,5 +54,48 @@ public final class StaticStructDefinition {
             );
         }
         return f;
+    }
+
+
+    public static StaticStructDefinition fromAST(StructNode node) {
+
+        List<StaticFields> staticFields = new ArrayList<>();
+
+        int index = 0;
+        int offset = 0;
+
+        for (VariableDeclarationNode field : node.getFields()) {
+
+            String type = field.getType();
+
+            staticFields.add(
+                    new StaticFields(
+                            field.getName(),
+                            type,
+                            index++,
+                            offset
+                    )
+            );
+
+            offset += estimateSize(type); // 👈 importante
+        }
+
+        return new StaticStructDefinition(
+                node.getName(),
+                staticFields,
+                false
+        );
+    }
+
+    private static int estimateSize(String type) {
+        return switch (type) {
+            case "int" -> 4;
+            case "double" -> 8;
+            case "float" -> 4;
+            case "boolean", "bool" -> 1;
+            case "char" -> 1;
+            case "string" -> 8; // ponteiro
+            default -> 8; // structs / listas / refs
+        };
     }
 }

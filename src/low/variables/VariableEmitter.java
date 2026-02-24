@@ -42,7 +42,7 @@ public class VariableEmitter {
         this.stringEmitter = new StringEmitter(temps, visitor.getGlobalStrings());
         this.allocaEmitter = new AllocaEmitter(varTypes, temps, visitor, this); // passou this
         this.storeEmitter = new StoreEmitter(stringEmitter, this);
-        this.structInitEmitter = new StructInitEmitter(temps, visitor, null);
+        this.structInitEmitter = new StructInitEmitter(temps, visitor, this);
         this.expressionInitEmitter = new ExpressionInitEmitter(temps, visitor, storeEmitter, tempExtractor);
 
         // escopo global

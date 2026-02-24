@@ -7,6 +7,7 @@ import context.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
 import ast.structs.ImplNode;
 import ast.structs.StructNode;
+import context.statics.structs.StaticStructDefinition;
 import low.module.LLVMEmitVisitor;
 import tokens.Lexer;
 import tokens.Token;
@@ -153,8 +154,45 @@ public class ImportNode extends ASTNode {
     @Override
     public void bindChildren(StaticContext stx) {
 
-    }
+        try {
+            String code = Files.readString(Path.of(path));
 
+            Lexer lexer = new Lexer(code);
+            Parser parser = new Parser(lexer.tokenize());
+            List<ASTNode> ast = parser.parse();
+
+            boolean hasAlias = alias != null && !alias.isEmpty();
+
+            for (ASTNode node : ast) {
+
+                if (node instanceof StructNode structNode) {
+
+                    stx.declareStruct(
+                            hasAlias ? alias + "." + structNode.getName()
+                                    : structNode.getName(),
+                            StaticStructDefinition.fromAST(structNode)
+                    );
+                }
+
+                else if (node instanceof FunctionNode fn) {
+
+                    stx.declareFunction(fn);
+                }
+
+                else if (node instanceof VariableDeclarationNode var) {
+
+                    stx.declareVariable(
+                            hasAlias ? alias + "." + var.getName()
+                                    : var.getName(),
+                            var.getType()
+                    );
+                }
+            }
+
+        } catch (IOException e) {
+            throw new RuntimeException("Erro ao bindar import: " + path, e);
+        }
+    }
 
     public String alias() {
         return alias;

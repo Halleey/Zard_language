@@ -6,6 +6,12 @@ public class TempManager {
     private int tempCount = 0;
     private int labelCount = 0;
     private String lastTemp; // guarda o último temp gerado
+    private int varIdCounter = 0;
+
+    public int nextVarId() {
+        return varIdCounter++;
+    }
+
 
     // contador por nome de variável lógica (i, j, k, numeros, etc)
     private final Map<String, Integer> varCounters = new HashMap<>();

@@ -39,7 +39,7 @@ public class VariableEmitter {
         this.varTypes = varTypes;
         this.temps = temps;
         this.visitor = visitor;
-        this.stringEmitter = new StringEmitter(temps, visitor.getGlobalStrings());
+        this.stringEmitter = new StringEmitter(temps, visitor.getGlobalStrings(), this);
         this.allocaEmitter = new AllocaEmitter(varTypes, temps, visitor, this); // passou this
         this.storeEmitter = new StoreEmitter(stringEmitter, this);
         this.structInitEmitter = new StructInitEmitter(temps, visitor, null);

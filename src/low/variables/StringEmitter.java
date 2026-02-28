@@ -2,39 +2,50 @@ package low.variables;
 
 import low.TempManager;
 import low.main.GlobalStringManager;
-
 public class StringEmitter {
+
     private final TempManager temps;
-    private final GlobalStringManager globalStrings;
+    private final GlobalStringManager globals;
+    private final VariableEmitter varEmitter;
 
-    public StringEmitter(TempManager temps, GlobalStringManager globalStrings) {
+    public StringEmitter(TempManager temps,
+                         GlobalStringManager globals,
+                         VariableEmitter varEmitter) {
         this.temps = temps;
-        this.globalStrings = globalStrings;
+        this.globals = globals;
+        this.varEmitter = varEmitter;
     }
 
-    public String createEmptyString(String varPtr) {
-        String tmpRaw = temps.newTemp();
-        String tmpStruct = temps.newTemp();
+    public String emitStore(String name, String valueTemp) {
+        String ptr = varEmitter.getVarPtr(name); // 🔥 usa lookup correto
+        return "  store %String* " + valueTemp +
+                ", %String** " + ptr + "\n";
+    }
+
+    public String createEmptyString(String varName) {
+        String emptyStrName = globals.getOrCreateString("");
+        int len = globals.getLength("");
+
+        String tmp = temps.newTemp();
+        String ptr = varEmitter.getVarPtr(varName);
+
         StringBuilder sb = new StringBuilder();
-        sb.append("  ").append(tmpRaw)
-                .append(" = call i8* @malloc(i64 ptrtoint (%String* getelementptr (%String, %String* null, i32 1) to i64))\n");
-        sb.append("  ").append(tmpStruct)
-                .append(" = bitcast i8* ").append(tmpRaw).append(" to %String*\n");
 
-        String ptrField = temps.newTemp();
-        sb.append("  ").append(ptrField)
-                .append(" = getelementptr inbounds %String, %String* ").append(tmpStruct).append(", i32 0, i32 0\n");
-        sb.append("  store i8* null, i8** ").append(ptrField).append("\n");
+        sb.append("  ").append(tmp)
+                .append(" = call %String* @createString(i8* getelementptr ([")
+                .append(len).append(" x i8], [")
+                .append(len).append(" x i8]* ")
+                .append(emptyStrName)
+                .append(", i32 0, i32 0))\n");
 
-        String lenField = temps.newTemp();
-        sb.append("  ").append(lenField)
-                .append(" = getelementptr inbounds %String, %String* ").append(tmpStruct).append(", i32 0, i32 1\n");
-        sb.append("  store i64 0, i64* ").append(lenField).append("\n");
+        sb.append(";;VAL:").append(tmp).append(";;TYPE:%String*\n");
 
-        sb.append("  store %String* ").append(tmpStruct).append(", %String** ").append(varPtr).append("\n");
+        sb.append("  store %String* ")
+                .append(tmp)
+                .append(", %String** ")
+                .append(ptr)
+                .append("\n");
+
         return sb.toString();
-    }
-    public String emitStore(String varName, String value) {
-        return "  store %String* " + value + ", %String** %" + varName + "\n";
     }
 }

@@ -49,6 +49,7 @@ public class MainEmitter {
 
     public String emit(MainAST node, LLVisitorMain visitor) {
         visitor.registrarStructs(node);
+        globalStrings.getOrCreateString("");
         StringBuilder llvm = new StringBuilder();
         ImportEmitter importEmitter = new ImportEmitter(visitor, this.tiposDeListasUsados);
 

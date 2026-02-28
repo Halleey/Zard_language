@@ -1,60 +1,11 @@
 main {
+string x;
+string test;
+string nome = "zard";
+x = "testando aqui";
+char l = 'z';
+println(l);
+println(x);
+println(nome);
 
-  Struct Linha {
-    List<int> valores;
-  }
-
-  Struct Matriz {
-    List<Linha> linhas;
-  }
-
-  impl Matriz {
-
-    function addLinha(Linha l) {
-      s.linhas.add(l);
-      return s;
-    }
-
-function printMatriz() {
-  int i = 0;
-  while (i < s.linhas.size()) {
-
-    Linha ln = s.linhas.get(i);
-
-    int j = 0;
-    while (j < ln.valores.size()) {
-      print(ln.valores.get(j));
-      print(" ");
-      j++;
-    }
-
-    println("");
-    i++;
-  }
-}
-
-
-  }
-
-  Matriz m;
-
-  Linha l0;
-  l0.valores.add(1);
-  l0.valores.add(2);
-  l0.valores.add(3);
-  m.addLinha(l0);
-
-  Linha l1;
-  l1.valores.add(4);
-  l1.valores.add(5);
-  l1.valores.add(6);
-  m.addLinha(l1);
-
-  Linha l2;
-  l2.valores.add(7);
-  l2.valores.add(8);
-  l2.valores.add(9);
-  m.addLinha(l2);
-
-  m.printMatriz();
 }

@@ -9,6 +9,7 @@ import memory_manager.free.FreeAction;
 import memory_manager.free.FreeInsertionPass;
 import memory_manager.free.FreePlanner;
 import memory_manager.lifetime.DeterministicLifetimeAnalyzer;
+import memory_manager.lifetime.Linearizer;
 import memory_manager.ownership.OwnershipAnalyzer;
 import memory_manager.ownership.escapes.EscapeAnalyzer;
 import memory_manager.ownership.escapes.EscapeInfo;
@@ -77,10 +78,14 @@ public class FrontendPipeline {
         EscapeAnalyzer escapeAnalyzer = new EscapeAnalyzer();
         this.escapeInfo = escapeAnalyzer.analyze(ast);
 
+        Linearizer linearizer = new Linearizer();
+        List<ASTNode> linear = linearizer.collectLinearStatements(ast);
+
         FreePlanner freePlanner = new FreePlanner(
                 ownershipGraph,
                 lastUses,
-                ownershipAnalyzer.getAnnotations()
+                ownershipAnalyzer.getAnnotations(),
+                linear
         );
 
         this.freePlan = freePlanner.plan();

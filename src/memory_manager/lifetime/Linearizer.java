@@ -20,7 +20,7 @@ import ast.variables.VariableDeclarationNode;
 import java.util.ArrayList;
 import java.util.List;
 
-class Linearizer {
+public class Linearizer {
 
     public List<ASTNode> collectLinearStatements(List<ASTNode> roots) {
         List<ASTNode> out = new ArrayList<>();

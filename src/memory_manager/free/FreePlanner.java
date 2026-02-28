@@ -3,6 +3,7 @@ package memory_manager.free;
 import ast.ASTNode;
 import ast.ifstatements.IfNode;
 import ast.loops.WhileNode;
+import ast.variables.VariableDeclarationNode;
 import context.statics.ScopeKind;
 import context.statics.StaticContext;
 import context.statics.Symbol;
@@ -19,17 +20,18 @@ public class FreePlanner {
     private final OwnershipGraph ownership;
     private final Map<Symbol, ASTNode> lastUseNode;
     private final List<OwnershipAnnotation> annotations;
-
+    private final List<ASTNode> linearized;
     private final Set<Symbol> alreadyPlanned = new HashSet<>();
 
     public FreePlanner(
             OwnershipGraph ownership,
             Map<Symbol, ASTNode> lastUseNode,
-            List<OwnershipAnnotation> annotations
+            List<OwnershipAnnotation> annotations, List<ASTNode> linearized
     ) {
         this.ownership = ownership;
         this.lastUseNode = lastUseNode;
         this.annotations = annotations;
+        this.linearized = linearized;
     }
 
     public Map<ASTNode, List<FreeAction>> plan() {
@@ -50,8 +52,21 @@ public class FreePlanner {
 
         ASTNode anchor = lastUseNode.get(sym);
         if (anchor == null) {
-            System.out.println("[FREE PLANNER] " + sym.getName
-                    () + " não tem uso, ignora.");
+
+            ASTNode declNode = findDeclarationNode(sym);
+
+            if (declNode == null) {
+                System.out.println("[FREE PLANNER] Declaração não encontrada para " + sym.getName());
+                return;
+            }
+
+            System.out.println("[FREE PLANNER] "
+                    + sym.getName()
+                    + " nunca usado → liberando após declaração.");
+
+            result.computeIfAbsent(declNode, k -> new ArrayList<>())
+                    .add(new FreeAction(declNode, root));
+
             return;
         }
 
@@ -91,6 +106,19 @@ public class FreePlanner {
         System.out.println("[FREE PLANNER] Planejando free de "
                 + sym.getName() + " após "
                 + freeAnchor.getClass().getSimpleName());
+    }
+
+    private ASTNode findDeclarationNode(Symbol sym) {
+
+        for (ASTNode node : linearized) {
+            if (node instanceof VariableDeclarationNode decl) {
+                if (decl.getSymbol() == sym) {
+                    return node;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**

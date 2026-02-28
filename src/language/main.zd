@@ -1,20 +1,60 @@
-import "src/language/structs/impls/monomorfizacao.zd";
-    #Isso requer correção futura
-
 main {
-    Set<int> numeros;
-    numeros.add(3);
-    numeros.add(3);
-    print(numeros);
 
-    Set<boolean> real;
-    real.add(true);
-    real.add(false);
-    real.add(true);
-    print(real);
+  Struct Linha {
+    List<int> valores;
+  }
 
-    Set<string> names;
-    names.add("zard");
-    names.add("zard");
-    print(names);
+  Struct Matriz {
+    List<Linha> linhas;
+  }
+
+  impl Matriz {
+
+    function addLinha(Linha l) {
+      s.linhas.add(l);
+      return s;
+    }
+
+function printMatriz() {
+  int i = 0;
+  while (i < s.linhas.size()) {
+
+    Linha ln = s.linhas.get(i);
+
+    int j = 0;
+    while (j < ln.valores.size()) {
+      print(ln.valores.get(j));
+      print(" ");
+      j++;
+    }
+
+    println("");
+    i++;
+  }
+}
+
+
+  }
+
+  Matriz m;
+
+  Linha l0;
+  l0.valores.add(1);
+  l0.valores.add(2);
+  l0.valores.add(3);
+  m.addLinha(l0);
+
+  Linha l1;
+  l1.valores.add(4);
+  l1.valores.add(5);
+  l1.valores.add(6);
+  m.addLinha(l1);
+
+  Linha l2;
+  l2.valores.add(7);
+  l2.valores.add(8);
+  l2.valores.add(9);
+  m.addLinha(l2);
+
+  m.printMatriz();
 }

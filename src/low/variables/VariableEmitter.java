@@ -140,7 +140,7 @@ public class VariableEmitter {
             case "char" ->
                     "  store i8 0, i8* " + varPtr + "\n";
             case "string" ->
-                    stringEmitter.createEmptyString(varPtr);
+                    stringEmitter.createEmptyString(node.getName());
             default ->
                     "";
         };

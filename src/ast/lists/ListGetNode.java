@@ -61,17 +61,10 @@ public class ListGetNode extends ASTNode {
         listName.bind(stx);
         indexNode.bind(stx);
 
-        if (!(listName instanceof VariableNode var)) {
-            throw new RuntimeException("ListGet deve operar sobre uma variável");
-        }
+        String listType = listName.getType();
 
-        Symbol listSym = stx.resolveVariable(var.getName());
-        String listType = listSym.getType();
-
-        if (!listType.startsWith("List<")) {
-            throw new RuntimeException(
-                    "Variável '" + var.getName() + "' não é uma lista"
-            );
+        if (listType == null || !listType.startsWith("List<")) {
+            throw new RuntimeException("Expressão não é uma lista");
         }
 
         this.elementType = listType.substring(5, listType.length() - 1);

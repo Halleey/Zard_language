@@ -33,25 +33,11 @@ public class AllocaEmitter {
         return new TypeMapper().toLLVM(sourceType);
     }
 
-    private String newPtr(String varName) {
-        // Se estamos no escopo global (escopo raiz = 0), não adiciona sufixo
-        int currentScopeId = varEmitter.getScopeId();
-        String ptr;
-        if (currentScopeId == 0) {
-            ptr = "%" + varName; // nome “limpo” para global
-        } else {
-            ptr = "%" + varName + "_" + currentScopeId; // nome único para escopos internos
-        }
-
-        varEmitter.registerVarPtr(varName, ptr);
-        return ptr;
-    }
-
-
     public String emit(VariableDeclarationNode node) {
         String srcType = node.getType();
         String varName = node.getName();
-        String ptr = newPtr(varName);
+        String ptr = temps.newNamedVar(varName);
+        varEmitter.registerVarPtr(varName, ptr);
 
         String llvmType;
         String elemType = null;

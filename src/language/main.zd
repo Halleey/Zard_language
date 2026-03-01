@@ -1,10 +1,14 @@
 main {
-string x = "queen";
-string h = x;
+println("char");
+char x = input();
+println("string");
+string z = input();
+println("int");
+int a = input();
+println("double");
+double c = input();
 println(x);
-println(h);
-h = "teste";
-println(h);
-
-
+println(z);
+println(a);
+println(c);
 }

@@ -61,6 +61,7 @@ public class VariableDeclarationNode extends ASTNode {
         if (isStructType(declared) || isStructType(currently)) {
             return;
         }
+        if (currently.equals("input")) return;
 
         if (declared.equals(currently)) return;
 

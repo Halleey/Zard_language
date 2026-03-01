@@ -50,6 +50,11 @@ public class InputNode extends ASTNode {
     }
 
     @Override
+    public String getType() {
+        return "input";
+    }
+
+    @Override
     public void print(String prefix) {
         System.out.println(prefix + "Input" +
                 (prompt != null && !prompt.isEmpty() ? " (\"" + prompt + "\")" : ""));

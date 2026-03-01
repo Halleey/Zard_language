@@ -1,11 +1,10 @@
 main {
-string x;
-string test;
-string nome = "zard";
-x = "testando aqui";
-char l = 'z';
-println(l);
+string x = "queen";
+string h = x;
 println(x);
-println(nome);
+println(h);
+h = "teste";
+println(h);
+
 
 }

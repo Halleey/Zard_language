@@ -62,6 +62,37 @@ public class ExpressionInitEmitter {
             }
         }
 
+
+        if ("%String*".equals(llvmType)) {
+
+            String tmpDataPtr = temps.newTemp();
+            String tmpData    = temps.newTemp();
+            String tmpClone   = temps.newTemp();
+
+            sb.append("  ").append(tmpDataPtr)
+                    .append(" = getelementptr %String, %String* ")
+                    .append(temp)
+                    .append(", i32 0, i32 0\n");
+
+            sb.append("  ").append(tmpData)
+                    .append(" = load i8*, i8** ")
+                    .append(tmpDataPtr)
+                    .append("\n");
+
+            sb.append("  ").append(tmpClone)
+                    .append(" = call %String* @createString(i8* ")
+                    .append(tmpData)
+                    .append(")\n");
+
+            sb.append(store.emit(varName, llvmType, tmpClone));
+
+            sb.append(";;VAL:")
+                    .append(tmpClone)
+                    .append(";;TYPE:%String*\n");
+
+            return sb.toString();
+        }
+
         sb.append(store.emit(varName, llvmType, temp));
 
         return sb.toString();

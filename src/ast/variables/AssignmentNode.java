@@ -89,6 +89,8 @@ public class AssignmentNode extends ASTNode {
             return;
         }
 
+
+        if(currently.equals("input")) return;
         if (declared.equals(currently)) return;
 
         if (declared.equals("double") && currently.equals("int")) return;

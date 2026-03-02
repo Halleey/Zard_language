@@ -4,14 +4,16 @@ import context.statics.StaticContext;
 import context.statics.Symbol;
 import memory_manager.ownership.enums.Kind;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-
 public class OwnershipGraph {
 
     private final Map<Symbol, OwnershipNode> roots = new LinkedHashMap<>();
     private final StaticContext rootContext;
+
+    // contador lógico de elementos por lista
+    private final Map<Symbol, Integer> listCounters = new HashMap<>();
 
     public OwnershipGraph(StaticContext rootContext) {
         this.rootContext = rootContext;
@@ -22,7 +24,6 @@ public class OwnershipGraph {
     }
 
     public void declareVar(Symbol symbol) {
-
         roots.put(symbol, new OwnershipNode(symbol, Kind.VAR));
     }
 
@@ -30,6 +31,9 @@ public class OwnershipGraph {
         return roots.containsKey(symbol);
     }
 
+    /*
+     * MOVE NORMAL (atribuição)
+     */
     public void move(Symbol source, Symbol target) {
 
         OwnershipNode sourceNode = roots.remove(source);
@@ -47,6 +51,33 @@ public class OwnershipGraph {
         targetParent.addChild(moved);
     }
 
+    //MOVE PARA DENTRO DE LISTA
+
+
+    public void moveIntoList(Symbol element, Symbol list) {
+
+        OwnershipNode sourceNode = roots.remove(element);
+        if (sourceNode == null) return;
+
+        OwnershipNode listNode = roots.get(list);
+        if (listNode == null) return;
+
+        int index = listCounters.getOrDefault(list, 0);
+        listCounters.put(list, index + 1);
+
+        // símbolo lógico do elemento
+        String elemName = list.getName() + "[" + index + "]";
+        Symbol elemSymbol = element.rebased(elemName);
+
+        OwnershipNode listElemNode = new OwnershipNode(elemSymbol, Kind.LIST_ELEM);
+
+        OwnershipNode moved = sourceNode.deepCloneWithRebase(element.getName(), elemName);
+
+        listElemNode.addChild(moved);
+        listNode.addChild(listElemNode);
+    }
+
+
     public void deepCopy(Symbol from, Symbol to) {
 
         OwnershipNode source = roots.get(from);
@@ -61,6 +92,8 @@ public class OwnershipGraph {
         roots.put(to, clone);
     }
 
+
+     // RESOLVER PATH (struct.field)
 
     private OwnershipNode resolveOrCreatePath(String path) {
 

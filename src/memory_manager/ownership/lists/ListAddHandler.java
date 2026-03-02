@@ -47,7 +47,8 @@ public class ListAddHandler implements NodeHandler<ListAddNode> {
 
         v.setState(OwnershipState.MOVED);
         annotations.add(new OwnershipAnnotation(add, OwnerShipAction.MOVED, source, target));
-        graph.move(source, target);
+        graph.moveIntoList(source, target);
+
 
         if (debug) {
             System.out.println("[OWNERSHIP] MOVE " + source.getName() + " -> LIST " + target.getName());

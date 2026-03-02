@@ -1,11 +1,15 @@
 package memory_manager.ownership.variables;
 
 import ast.ASTNode;
+import ast.lists.ListNode;
 import ast.variables.VariableDeclarationNode;
+import ast.variables.VariableNode;
+import context.statics.StaticContext;
 import context.statics.Symbol;
 import memory_manager.ownership.OwnershipAnnotation;
 import memory_manager.ownership.VarOwnerShip;
 import memory_manager.ownership.enums.OwnerShipAction;
+import memory_manager.ownership.enums.OwnershipState;
 import memory_manager.ownership.graphs.OwnershipGraph;
 
 import java.util.List;
@@ -41,14 +45,10 @@ public class DeclarationHandler implements NodeHandler<VariableDeclarationNode> 
             );
         }
 
-        // Ownership state
         VarOwnerShip ownership = new VarOwnerShip(symbol);
         vars.put(symbol, ownership);
-
-        // Ownership graph
         graph.declareVar(symbol);
 
-        // Annotation
         annotations.add(
                 new OwnershipAnnotation(
                         decl,
@@ -59,8 +59,54 @@ public class DeclarationHandler implements NodeHandler<VariableDeclarationNode> 
         );
 
         if (debug) {
-            System.out.println("[OWNERSHIP] declare "
-                    + symbol.getName() + " => OWNED");
+            System.out.println("[OWNERSHIP] declare " + symbol.getName() + " => OWNED");
+        }
+
+        ASTNode init = decl.getInitializer();
+
+        if (init instanceof ListNode listNode) {
+
+            for (ASTNode element : listNode.getChildren()) {
+
+                if (element instanceof VariableNode varNode) {
+
+                    Symbol source = varNode.getStaticContext()
+                            .resolveVariable(varNode.getName());
+
+                    if (source == null) continue;
+
+                    VarOwnerShip sourceOwnership = vars.get(source);
+                    if (sourceOwnership == null) continue;
+
+                    if (sourceOwnership.getState() == OwnershipState.MOVED) {
+                        throw new RuntimeException(
+                                "Use-after-move in list initializer: "
+                                        + source.getName());
+                    }
+
+                    // 🔥 MOVE LINEAR
+                    sourceOwnership.setState(OwnershipState.MOVED);
+
+                    // 🔥 MOVE NO GRAFO
+                    graph.moveIntoList(source, symbol);
+
+                    annotations.add(
+                            new OwnershipAnnotation(
+                                    decl,
+                                    OwnerShipAction.MOVED,
+                                    source,
+                                    symbol
+                            )
+                    );
+
+                    if (debug) {
+                        System.out.println("[OWNERSHIP] MOVE "
+                                + source.getName()
+                                + " -> LIST "
+                                + symbol.getName());
+                    }
+                }
+            }
         }
     }
 

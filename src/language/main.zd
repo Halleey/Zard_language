@@ -1,12 +1,9 @@
 main {
 
-string x = "zard";
-List<string> z;
-z.add(x);
-println(z);
-float t = 3.55555;
-float v = 3.55555;
-float p = t + v;
-println(p);
-println(t);
+float a;
+float c;
+a = 3.14;
+c = 3.22;
+println(c);
+println(a);
 }

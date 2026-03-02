@@ -50,7 +50,26 @@ public class AssignmentEmitter {
                 case "double" -> llvm.append("  store double ").append(val)
                         .append(", double* ").append(varPtr).append("\n");
 
-                case "float" ->llvm.append("  store float").append(val).append(", float*").append(varPtr).append("\n");
+                case "float" -> {
+                    String tmpDouble = temps.newTemp();
+                    String tmpFloat = temps.newTemp();
+
+                    llvm.append("  ").append(tmpDouble)
+                            .append(" = fadd double 0.0, ").append(val).append("\n");
+
+                    llvm.append("  ").append(tmpFloat)
+                            .append(" = fptrunc double ")
+                            .append(tmpDouble)
+                            .append(" to float\n");
+
+                    llvm.append("  store float ")
+                            .append(tmpFloat)
+                            .append(", float* ")
+                            .append(varPtr)
+                            .append("\n");
+
+                    llvm.append(";;VAL:").append(tmpFloat).append(";;TYPE:float\n");
+                }
 
                 case "i1" -> llvm.append("  store i1 ").append((Boolean) val ? "1" : "0")
                         .append(", i1* ").append(varPtr).append("\n");

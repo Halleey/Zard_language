@@ -4,6 +4,9 @@ import ast.variables.VariableNode;
 import low.module.LLVisitorMain;
 import low.TempManager;
 import ast.expressions.BinaryOpNode;
+
+
+
 public class BinaryOpEmitter {
     private final TempManager temps;
     private final LLVisitorMain visitor;
@@ -87,21 +90,74 @@ public class BinaryOpEmitter {
             return llvm.toString();
         }
 
+        if (leftType.equals("float") && rightType.equals("float")) {
+
+            String bop = switch (op) {
+                case "+" -> "fadd";
+                case "-" -> "fsub";
+                case "*" -> "fmul";
+                case "/" -> "fdiv";
+                case ">" -> "fcmp ogt";
+                case "<" -> "fcmp olt";
+                case ">=" -> "fcmp oge";
+                case "<=" -> "fcmp ole";
+                case "==" -> "fcmp oeq";
+                case "!=" -> "fcmp one";
+                default -> throw new RuntimeException("Operador inválido para float: " + op);
+            };
+
+            llvm.append("  ").append(resultTemp)
+                    .append(" = ").append(bop)
+                    .append(" float ")
+                    .append(leftTemp).append(", ")
+                    .append(rightTemp).append("\n")
+                    .append(";;VAL:").append(resultTemp)
+                    .append(";;TYPE:")
+                    .append(bop.startsWith("fcmp") ? "i1" : "float")
+                    .append("\n");
+
+            return llvm.toString();
+        }
+
         if (leftType.equals("double") || rightType.equals("double")) {
 
+            // int -> double
             if (leftType.equals("i32")) {
                 String tmp = temps.newTemp();
-                llvm.append("  ").append(tmp).append(" = sitofp i32 ").append(leftTemp).append(" to double\n")
-                        .append(";;VAL:").append(tmp).append(";;TYPE:double\n");
+                llvm.append("  ").append(tmp)
+                        .append(" = sitofp i32 ")
+                        .append(leftTemp)
+                        .append(" to double\n");
                 leftTemp = tmp;
             }
+
             if (rightType.equals("i32")) {
                 String tmp = temps.newTemp();
-                llvm.append("  ").append(tmp).append(" = sitofp i32 ").append(rightTemp).append(" to double\n")
-                        .append(";;VAL:").append(tmp).append(";;TYPE:double\n");
+                llvm.append("  ").append(tmp)
+                        .append(" = sitofp i32 ")
+                        .append(rightTemp)
+                        .append(" to double\n");
                 rightTemp = tmp;
             }
 
+            // float -> double
+            if (leftType.equals("float")) {
+                String tmp = temps.newTemp();
+                llvm.append("  ").append(tmp)
+                        .append(" = fpext float ")
+                        .append(leftTemp)
+                        .append(" to double\n");
+                leftTemp = tmp;
+            }
+
+            if (rightType.equals("float")) {
+                String tmp = temps.newTemp();
+                llvm.append("  ").append(tmp)
+                        .append(" = fpext float ")
+                        .append(rightTemp)
+                        .append(" to double\n");
+                rightTemp = tmp;
+            }
             String bop = switch (op) {
                 case "+" -> "fadd";
                 case "-" -> "fsub";
@@ -116,10 +172,16 @@ public class BinaryOpEmitter {
                 default -> throw new RuntimeException("Operador inválido para double: " + op);
             };
 
-            llvm.append("  ").append(resultTemp).append(" = ").append(bop)
-                    .append(" double ").append(leftTemp).append(", ").append(rightTemp).append("\n")
-                    .append(";;VAL:").append(resultTemp).append(";;TYPE:")
-                    .append(bop.startsWith("fcmp") ? "i1" : "double").append("\n");
+            llvm.append("  ").append(resultTemp)
+                    .append(" = ").append(bop)
+                    .append(" double ")
+                    .append(leftTemp).append(", ")
+                    .append(rightTemp).append("\n")
+                    .append(";;VAL:").append(resultTemp)
+                    .append(";;TYPE:")
+                    .append(bop.startsWith("fcmp") ? "i1" : "double")
+                    .append("\n");
+
             return llvm.toString();
         }
 
@@ -283,11 +345,12 @@ public class BinaryOpEmitter {
     private String toLLVMType(String type) {
         return switch (type) {
             case "int" -> "i32";
+            case "float" -> "float";
             case "double" -> "double";
             case "boolean" -> "i1";
             case "string" -> "%String*";
-            case "List" -> "i8*";     // fallback genérico para lista opaca
-            default -> type;           // já vem em %Struct*, %ArrayList*, i1, etc.
+            case "List" -> "i8*";
+            default -> type;
         };
     }
 

@@ -47,14 +47,13 @@ public class OwnershipUtils {
         String type = symbol.getType();
 
         switch (type) {
-            case "int", "double", "float", "bool", "char", "string":
+            case "int", "double", "float", "bool", "char":
                 System.out.println("  -> primitive, returning null");
                 return null;
         }
 
         String structName = type;
 
-        // 🔑 EXTRAÇÃO DO NOME REAL DO STRUCT
         if (type.startsWith("Struct<") && type.endsWith(">")) {
             structName = type.substring(
                     "Struct<".length(),

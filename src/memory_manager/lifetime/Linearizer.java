@@ -55,12 +55,10 @@ public class Linearizer {
         if (node instanceof WhileNode wn) {
 
             out.add(wn);
-            System.out.println("[LINEARIZER] Visitando WhileNode com condição: " + wn.getCondition());
 
             analyzeNode(wn.getCondition(), out);
 
             for (ASTNode stmt : wn.getBody()) {
-                System.out.println("[LINEARIZER] Visitando nó do corpo do While: " + stmt.getClass().getSimpleName());
                 analyzeNode(stmt, out);
             }
             return;

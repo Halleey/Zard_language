@@ -1,8 +1,12 @@
 main {
 
 string x = "zard";
-List<string> z = (x);
-List c = (x);
+List<string> z;
+z.add(x);
 println(z);
-
+float t = 3.55555;
+float v = 3.55555;
+float p = t + v;
+println(p);
+println(t);
 }

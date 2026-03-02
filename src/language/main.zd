@@ -1,6 +1,8 @@
 main {
-int x;
-x = input();
-print(x);
+
+string x = "zard";
+List<string> z = (x);
+List c = (x);
+println(z);
 
 }

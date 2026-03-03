@@ -1,6 +1,9 @@
 main {
 
-List<string*> t;
-List<string> x;
-
+string nome  = "zard";
+List<string*> t = (nome, "bsk", "jnk");
+string z = "ok";
+List<string> x = ("teste", z);
+println(t);
+print(x);
 }

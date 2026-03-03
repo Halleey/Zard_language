@@ -101,6 +101,12 @@ void freeList(ArrayList* list) {
 }
 
 
+void freeListRef(ArrayList* list){
+    if(!list) return;
+
+    free(list->data);
+    free(list);
+}
 
 void clearList(ArrayList* list) {
     if (!list) return;

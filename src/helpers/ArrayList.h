@@ -23,5 +23,5 @@ void* arraylist_get_ptr(ArrayList* list, size_t index);
 
 void clearList(ArrayList* list);
 void freeList(ArrayList* list);
-
+void freeListRef(ArrayList* list);
 #endif

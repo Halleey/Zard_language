@@ -33,9 +33,6 @@ public class ListAddEmitter {
             specialized = mainVisitor.getCurrentSpecializationType();
         }
 
-        // =========================
-        // MODO ESPECIALIZADO (Set<int>, Set<Item>, etc.)
-        // =========================
         if (specialized != null) {
 
             String listCode = node.getListNode().accept(visitor);
@@ -70,11 +67,7 @@ public class ListAddEmitter {
                             .append(listType).append(" ").append(listTmp)
                             .append(" to %ArrayList*\n");
                     listTmp = castList;
-                    listType = "%ArrayList*";
                 }
-
-
-
                 llvm.append("  call void @arraylist_add_String(%ArrayList* ")
                         .append(listTmp)
                         .append(", %String* ").append(valTmp)
@@ -129,7 +122,6 @@ public class ListAddEmitter {
                             .append(valType).append(" ").append(valTmp)
                             .append(" to i8*\n");
                     castValTmp = castVal;
-                    valType = "i8*";
                 }
 
                 llvm.append("  call void @arraylist_add_ptr(%ArrayList* ")
@@ -152,7 +144,6 @@ public class ListAddEmitter {
             return llvm.toString();
         }
 
-
         String listCode = node.getListNode().accept(visitor);
         llvm.append(listCode);
         String listTmp = extractTemp(listCode);
@@ -163,16 +154,17 @@ public class ListAddEmitter {
         String valTmp = extractTemp(valCode);
         String valType = extractType(valCode);
 
-        if (valType.equals("i32")) {
-            return intAddEmitter.emit(node, visitor);
+        switch (valType) {
+            case "i32" -> {
+                return intAddEmitter.emit(node, visitor);
+            }
+            case "double" -> {
+                return doubleEmitter.emit(node, visitor);
+            }
+            case "i1" -> {
+                return boolAddEmitter.emit(node, visitor);
+            }
         }
-        if (valType.equals("double")) {
-            return doubleEmitter.emit(node, visitor);
-        }
-        if (valType.equals("i1")) {
-            return boolAddEmitter.emit(node, visitor);
-        }
-
 
         String listCastTmp = temps.newTemp();
         llvm.append("  ").append(listCastTmp)
@@ -188,7 +180,6 @@ public class ListAddEmitter {
                     .append(listCastTmp).append(", i8* ").append(valTmp).append(")\n");
         }
         else {
-            // qualquer outro ponteiro vira i8* via bitcast
             String castVal = temps.newTemp();
             llvm.append("  ").append(castVal)
                     .append(" = bitcast ").append(valType).append(" ").append(valTmp)

@@ -368,7 +368,7 @@ public class MainEmitter {
         declare i8* @arraylist_create(i64)
         declare void @clearList(%ArrayList*)
         declare void @freeList(%ArrayList*)
-        declare void @freeListRef(ArrayList* list)
+        declare void @freeListRef(%ArrayList*)
         declare void @arraylist_add_ptr(%ArrayList*, i8*)
         declare i32 @length(%ArrayList*)
         declare i8* @arraylist_get_ptr(%ArrayList*, i64)

@@ -141,10 +141,18 @@ public class StructInstanceParser {
             }
 
             String innerType = expectedType.substring(5, expectedType.length() - 1);
+
+            boolean isReference = false;
+
+            if (innerType.endsWith("*")) {
+                isReference = true;
+                innerType = innerType.substring(0, innerType.length() - 1);
+            }
+
             if (innerType.equals("?"))
                 innerType = inferListTypeFromValues(listValues);
 
-            DynamicList dyn = new DynamicList(innerType, listValues);
+            DynamicList dyn = new DynamicList(innerType, listValues, isReference);
             return new ListNode(dyn);
         }
 

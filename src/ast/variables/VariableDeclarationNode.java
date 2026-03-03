@@ -3,6 +3,7 @@ import ast.ASTNode;
 import ast.functions.FunctionCallNode;
 import ast.functions.FunctionNode;
 import ast.lists.ListGetNode;
+import ast.lists.ListNode;
 import context.statics.StaticContext;
 
 import context.runtime.RuntimeContext;
@@ -152,8 +153,19 @@ public class VariableDeclarationNode extends ASTNode {
     public TypedValue createInitialValue() {
 
         if (type.startsWith("List<")) {
+
             String elementType = getListElementType(type);
-            return new TypedValue(type, new ListValue(elementType));
+            boolean isReference = false;
+
+            if (initializer instanceof ListNode listNode) {
+                isReference = listNode.isReference();
+
+            }
+
+            return new TypedValue(
+                    type,
+                    new ListValue(elementType, isReference)
+            );
         }
 
         if (type.startsWith("Struct<")) {

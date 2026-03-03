@@ -1,6 +1,7 @@
 package ast.structs;
 
 import ast.ASTNode;
+import ast.lists.ListNode;
 import context.statics.StaticContext;
 import context.statics.list.ListValue;
 import context.statics.structs.StaticStructDefinition;
@@ -70,7 +71,7 @@ public class StructInstanceNode extends ASTNode {
                 String innerType =
                         ftype.substring(5, ftype.length() - 1);
 
-                ListValue listValue = new ListValue(innerType);
+                ListValue listValue = new ListValue(innerType, isReferenceField(field));
 
                 for (ASTNode pv : positionalValues) {
                     listValue.add(pv.evaluate(ctx));
@@ -111,14 +112,13 @@ public class StructInstanceNode extends ASTNode {
                     if (tv.value() instanceof ListValue) {
                         value = tv;
                     } else {
-                        ListValue list = new ListValue(innerType);
+                        ListValue list = new ListValue(innerType, isReferenceField(field));
                         list.add(tv);
                         value = new TypedValue(ftype, list);
                     }
                 } else {
                     // Lista vazia
-                    value = new TypedValue(ftype,
-                            new ListValue(innerType));
+                    value = new TypedValue(ftype, new ListValue(innerType, isReferenceField(field)));
                 }
 
             }
@@ -211,5 +211,14 @@ public class StructInstanceNode extends ASTNode {
             n.bind(stx);
         }
     }
+    private boolean isReferenceField(VariableDeclarationNode field) {
+
+        if (!(field.getInitializer() instanceof ListNode listNode)) {
+            return false;
+        }
+
+        return listNode.isReference();
+    }
+
 
 }

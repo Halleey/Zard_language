@@ -1,12 +1,9 @@
 main {
 
-float a;
-float c;
-a = 3.14;
-c = 3.22;
-string t;
-t = input();
+string nome  = "zard";
+List<string*> t = (nome, "bsk", "jnk");
+string z = "ok";
+List<string> x = ("teste", z);
 println(t);
-println(c);
-println(a);
+print(x);
 }

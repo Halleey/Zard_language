@@ -1,12 +1,6 @@
 main {
 
-float a;
-float c;
-a = 3.14;
-c = 3.22;
-string t;
-t = input();
-println(t);
-println(c);
-println(a);
+List<string*> t;
+List<string> x;
+
 }

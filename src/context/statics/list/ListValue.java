@@ -5,15 +5,16 @@ import ast.expressions.TypedValue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
 public final class ListValue {
 
     private final UUID id = UUID.randomUUID();
     private final String elementType;
+    private final boolean isReference;
     private final List<TypedValue> elements = new ArrayList<>();
 
-    public ListValue(String elementType) {
+    public ListValue(String elementType, boolean isReference) {
         this.elementType = elementType;
+        this.isReference = isReference;
     }
 
     public UUID getId() {
@@ -24,12 +25,18 @@ public final class ListValue {
         return elementType;
     }
 
+    public boolean isReference() {
+        return isReference;
+    }
+
     public void add(TypedValue value) {
+
         if (!value.type().equals(elementType)) {
             throw new RuntimeException(
                     "Tipo inválido para lista <" + elementType + ">: " + value.type()
             );
         }
+
         elements.add(value);
     }
 
@@ -51,12 +58,12 @@ public final class ListValue {
         return elements.size();
     }
 
+    public void clear() {
+        elements.clear();
+    }
+
     @Override
     public String toString() {
         return elements.toString();
-    }
-
-    public void clear() {
-        elements.clear();
     }
 }

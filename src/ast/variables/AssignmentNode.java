@@ -95,6 +95,7 @@ public class AssignmentNode extends ASTNode {
         if (declared.equals("float")  && currently.equals("int")) return;
         if (declared.equals("double") && currently.equals("float")) return;
         if(declared.equals("float") && currently.equals("double"))return;
+        if(currently.equals("input")) return;
         throw new RuntimeException(
                 "Semantic error: cannot assign value of type '" +
                         currently + "' to variable of type '" +

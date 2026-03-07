@@ -2,6 +2,10 @@ package low.variables;
 import ast.inputs.InputNode;
 import ast.lists.ListNode;
 import ast.structs.StructInstanceNode;
+import context.statics.symbols.ListType;
+import context.statics.symbols.PrimitiveTypes;
+import context.statics.symbols.StructType;
+import context.statics.symbols.Type;
 import low.inputs.InputEmitter;
 import low.lists.generics.ListEmitter;
 import low.lists.bool.ListBoolEmitter;
@@ -84,30 +88,33 @@ public class VariableEmitter {
     }
 
     public String emitInit(VariableDeclarationNode node) {
+
         TypeInfos info = varTypes.get(node.getName());
-        String srcType = info.getSourceType();
+        Type type = info.getType();
         String varPtr = getVarPtr(node.getName());
 
-        if (srcType != null && srcType.startsWith("Struct<")) {
-            if (node.initializer == null) {
+        if (type instanceof StructType) {
+
+            if (node.getInitializer() == null) {
                 return structInitEmitter.emit(node, info);
             }
-            String code = node.initializer.accept(visitor);
+
+            String code = node.getInitializer().accept(visitor);
             String tmp = extractTemp(code);
+
             return code
                     + "  store " + info.getLLVMType() + " " + tmp
                     + ", " + info.getLLVMType() + "* " + varPtr + "\n";
         }
 
-        if (node.initializer == null) return handleDefaultInit(node, info);
+        if (node.getInitializer() == null)
+            return handleDefaultInit(node, info);
 
-        if (node.initializer instanceof InputNode inputNode) {
+        if (node.getInitializer() instanceof InputNode inputNode)
             return handleInputInit(node, inputNode, info);
-        }
 
-        if (info.isList() && node.initializer instanceof ListNode listNode) {
+        if (type instanceof ListType && node.getInitializer() instanceof ListNode listNode)
             return handleListLiteralInit(node, listNode, info);
-        }
 
         return handleNormalExpressionInit(node, info);
     }
@@ -115,37 +122,47 @@ public class VariableEmitter {
     private String handleNormalExpressionInit(VariableDeclarationNode node, TypeInfos info) {
         return expressionInitEmitter.emit(node, info);
     }
-
     private String handleDefaultInit(VariableDeclarationNode node, TypeInfos info) {
-        String varPtr = getVarPtr(node.getName());
 
-        if (info.isList()) {
-            return switch (info.getSourceType()) {
-                case "List<int>" -> callArrayListCreateIntAndStore(varPtr);
-                case "List<boolean>" -> callArrayListCreateBoolAndStore(varPtr);
-                case "List<double>" -> callArrayListCreateDoubleAndStore(varPtr);
-                default -> callArrayListCreateAndStore(varPtr);
-            };
+        String varPtr = getVarPtr(node.getName());
+        Type type = info.getType();
+
+        if (type instanceof ListType listType) {
+
+            Type element = listType.elementType();
+
+            if (element == PrimitiveTypes.INT)
+                return callArrayListCreateIntAndStore(varPtr);
+
+            if (element == PrimitiveTypes.BOOL)
+                return callArrayListCreateBoolAndStore(varPtr);
+
+            if (element == PrimitiveTypes.DOUBLE)
+                return callArrayListCreateDoubleAndStore(varPtr);
+
+            return callArrayListCreateAndStore(varPtr);
         }
 
-        return switch (info.getSourceType()) {
-            case "int" ->
-                    "  store i32 0, i32* " + varPtr + "\n";
-            case "double" ->
-                    "  store double 0.0, double* " + varPtr + "\n";
-            case "float" ->
-                    "  store float 0.0, float* " + varPtr + "\n";
-            case "boolean" ->
-                    "  store i1 0, i1* " + varPtr + "\n";
-            case "char" ->
-                    "  store i8 0, i8* " + varPtr + "\n";
-            case "string" ->
-                    stringEmitter.createEmptyString(node.getName());
-            default ->
-                    "";
-        };
-    }
+        if (type == PrimitiveTypes.INT)
+            return "  store i32 0, i32* " + varPtr + "\n";
 
+        if (type == PrimitiveTypes.DOUBLE)
+            return "  store double 0.0, double* " + varPtr + "\n";
+
+        if (type == PrimitiveTypes.FLOAT)
+            return "  store float 0.0, float* " + varPtr + "\n";
+
+        if (type == PrimitiveTypes.BOOL)
+            return "  store i1 0, i1* " + varPtr + "\n";
+
+        if (type == PrimitiveTypes.CHAR)
+            return "  store i8 0, i8* " + varPtr + "\n";
+
+        if (type == PrimitiveTypes.STRING)
+            return stringEmitter.createEmptyString(node.getName());
+
+        return "";
+    }
 
     private String handleInputInit(VariableDeclarationNode node, InputNode inputNode, TypeInfos info) {
         InputEmitter inputEmitter = new InputEmitter(temps, visitor.getGlobalStrings());
@@ -154,40 +171,49 @@ public class VariableEmitter {
         return code + emitStore(node.getName(), info.getLLVMType(), temp);
     }
 
-    private String handleListLiteralInit(VariableDeclarationNode node, ListNode listNode, TypeInfos info) {
-        visitor.registerListElementType(node.getName(), info.getElementType());
+    private String handleListLiteralInit(VariableDeclarationNode node,
+                                         ListNode listNode,
+                                         TypeInfos info) {
+
+        Type type = info.getType();
         String varPtr = getVarPtr(node.getName());
 
-        return switch (info.getSourceType()) {
-            case "List<int>" -> {
-                IntListEmitter e = new IntListEmitter(temps);
-                String code = e.emit(listNode, visitor);
-                yield code + "  store %struct.ArrayListInt* " + extractTemp(code)
-                        + ", %struct.ArrayListInt** " + varPtr + "\n";
-            }
-            case "List<boolean>" -> {
-                ListBoolEmitter e = new ListBoolEmitter(temps);
-                String code = e.emit(listNode, visitor);
-                yield code + "  store %struct.ArrayListBool* " + extractTemp(code)
-                        + ", %struct.ArrayListBool** " + varPtr + "\n";
-            }
-            case "List<double>" -> {
-                ListDoubleEmitter e = new ListDoubleEmitter(temps);
-                String code = e.emit(listNode, visitor);
-                yield code + "  store %struct.ArrayListDouble* " + extractTemp(code)
-                        + ", %struct.ArrayListDouble** " + varPtr + "\n";
-            }
-            default -> {
-                ListEmitter e = new ListEmitter(temps);
-                String code = e.emit(listNode, visitor);
-                String tmp = extractTemp(code);
-                String casted = temps.newTemp();
-                yield code
-                        + "  " + casted + " = bitcast i8* " + tmp + " to %ArrayList*\n"
-                        + ";;VAL:" + casted + ";;TYPE:%ArrayList*\n"
-                        + "  store %ArrayList* " + casted + ", %ArrayList** " + varPtr + "\n";
-            }
-        };
+        if (!(type instanceof ListType listType))
+            throw new RuntimeException("Esperado ListType");
+
+        Type element = listType.elementType();
+
+        if (element == PrimitiveTypes.INT) {
+            IntListEmitter e = new IntListEmitter(temps);
+            String code = e.emit(listNode, visitor);
+            return code + "  store %struct.ArrayListInt* " + extractTemp(code)
+                    + ", %struct.ArrayListInt** " + varPtr + "\n";
+        }
+
+        if (element == PrimitiveTypes.BOOL) {
+            ListBoolEmitter e = new ListBoolEmitter(temps);
+            String code = e.emit(listNode, visitor);
+            return code + "  store %struct.ArrayListBool* " + extractTemp(code)
+                    + ", %struct.ArrayListBool** " + varPtr + "\n";
+        }
+
+        if (element == PrimitiveTypes.DOUBLE) {
+            ListDoubleEmitter e = new ListDoubleEmitter(temps);
+            String code = e.emit(listNode, visitor);
+            return code + "  store %struct.ArrayListDouble* " + extractTemp(code)
+                    + ", %struct.ArrayListDouble** " + varPtr + "\n";
+        }
+
+        // fallback genérico
+        ListEmitter e = new ListEmitter(temps);
+        String code = e.emit(listNode, visitor);
+        String tmp = extractTemp(code);
+        String casted = temps.newTemp();
+
+        return code
+                + "  " + casted + " = bitcast i8* " + tmp + " to %ArrayList*\n"
+                + ";;VAL:" + casted + ";;TYPE:%ArrayList*\n"
+                + "  store %ArrayList* " + casted + ", %ArrayList** " + varPtr + "\n";
     }
 
     // ================= UTILIDADES =================
@@ -233,6 +259,35 @@ public class VariableEmitter {
         return "  " + tmp + " = load " + llvmType + ", " + llvmType + "* " + ptr +
                 "\n;;VAL:" + tmp + ";;TYPE:" + llvmType + "\n";
     }
+
+
+    public final class LLVMTypeMapper {
+
+        public static String toLLVM(Type type) {
+
+            if (type == PrimitiveTypes.INT) return "i32";
+            if (type == PrimitiveTypes.DOUBLE) return "double";
+            if (type == PrimitiveTypes.FLOAT) return "float";
+            if (type == PrimitiveTypes.BOOL) return "i1";
+            if (type == PrimitiveTypes.STRING) return "i8*";
+
+            if (type instanceof ListType list) {
+                Type element = list.elementType();
+
+                if (element == PrimitiveTypes.INT)
+                    return "%struct.ArrayListInt*";
+
+                if (element == PrimitiveTypes.DOUBLE)
+                    return "%struct.ArrayListDouble*";
+
+                if (element == PrimitiveTypes.BOOL)
+                    return "%struct.ArrayListBool*";
+            }
+
+            throw new RuntimeException("Tipo LLVM não suportado: " + type);
+        }
+    }
+
 
     private String extractTemp(String code) {
         int lastValIdx = code.lastIndexOf(";;VAL:");

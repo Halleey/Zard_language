@@ -5,15 +5,19 @@ import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
 import context.statics.list.ListValue;
+import context.statics.symbols.ListType;
+import context.statics.symbols.Type;
+import context.statics.symbols.UnknownType;
 import low.module.LLVMEmitVisitor;
 
 import java.util.ArrayList;
 import java.util.List;// Nó AST que representa uma lista tipada
 
+
 public final class ListNode extends ASTNode {
 
     private final DynamicList list;
-    private String type;
+    private Type type;
     private final boolean isReference;
 
     public ListNode(DynamicList list) {
@@ -30,23 +34,25 @@ public final class ListNode extends ASTNode {
     }
 
     @Override
-    public String getType() {
+    public Type getType() {
         return type;
     }
 
     @Override
     public void bindChildren(StaticContext stx) {
+        // Vincula todos os elementos da lista
         for (ASTNode node : list.getElements()) {
             node.bind(stx);
         }
 
-        if (list.getElementType().equals("?")) {
+        // Inferir tipo da lista se ainda não definido
+        if (list.getElementType() instanceof UnknownType) {
             if (list.getElements().isEmpty()) {
                 throw new RuntimeException("Lista vazia sem tipo explícito");
             }
 
             ASTNode first = list.getElements().get(0);
-            String inferredType = first.getType();
+            Type inferredType = first.getType();
 
             if (inferredType == null) {
                 throw new RuntimeException("Não foi possível inferir o tipo da lista");
@@ -55,7 +61,8 @@ public final class ListNode extends ASTNode {
             list.lockElementType(inferredType);
         }
 
-        this.type = "List<" + list.getElementType() + ">";
+        // Agora o tipo do nó é ListType
+        this.type = new ListType(list.getElementType(), isReference);
     }
 
     @Override
@@ -65,24 +72,19 @@ public final class ListNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-
-        ListValue value = new ListValue(
-                list.getElementType(),
-                isReference
-        );
+        ListValue value = new ListValue(list.getElementType(), isReference);
 
         for (ASTNode node : list.getElements()) {
             value.add(node.evaluate(ctx));
         }
 
-        return new TypedValue(type, value);
+        return new TypedValue(type, value); // type agora é Type
     }
 
     @Override
     public boolean isStatement() {
         return true;
     }
-
 
     @Override
     public void print(String prefix) {

@@ -3,6 +3,7 @@ package low.structs;
 import ast.structs.StructNode;
 import ast.structs.StructUpdateNode;
 import ast.variables.VariableDeclarationNode;
+import context.statics.symbols.*;
 import low.TempManager;
 import low.functions.TypeMapper;
 import low.module.LLVisitorMain;
@@ -111,14 +112,19 @@ public class StructUpdateEmitter {
         return llvm.toString();
     }
 
-    // subemissão recursiva para aninhamentos
-    private String emitNested(StructUpdateNode node, String structVal, String structLangType) {
+    private String emitNested(StructUpdateNode node, String structVal, Type structType) {
+
         StringBuilder llvm = new StringBuilder();
 
-        String structName = structLangType.replace("Struct<", "").replace(">", "").trim();
+        if (!(structType instanceof StructType struct)) {
+            throw new RuntimeException("Nested update em tipo não-struct: " + structType);
+        }
+
+        String structName = struct.name(); // ou getName()
         StructNode def = visitor.getStructNode(structName);
 
         for (var entry : node.getFieldUpdates().entrySet()) {
+
             String field = entry.getKey();
             String exprCode = entry.getValue().accept(visitor);
             llvm.append(exprCode);
@@ -128,6 +134,7 @@ public class StructUpdateEmitter {
 
             VariableDeclarationNode fieldDecl = findField(def, field);
             int fieldIndex = findFieldIndex(def, fieldDecl);
+
             String fieldLLType = mapFieldType(fieldDecl.getType());
 
             String fieldPtr = temps.newTemp();
@@ -139,17 +146,24 @@ public class StructUpdateEmitter {
             if (!rhsTy.equals(fieldLLType)) {
                 String casted = temps.newTemp();
                 llvm.append("  ").append(casted)
-                        .append(" = bitcast ").append(rhsTy).append(" ").append(rhsVal)
+                        .append(" = bitcast ")
+                        .append(rhsTy).append(" ")
+                        .append(rhsVal)
                         .append(" to ").append(fieldLLType).append("\n");
                 rhsVal = casted;
             }
 
-            llvm.append("  store ").append(fieldLLType).append(" ").append(rhsVal)
-                    .append(", ").append(fieldLLType).append("* ").append(fieldPtr).append("\n");
+            llvm.append("  store ")
+                    .append(fieldLLType).append(" ")
+                    .append(rhsVal)
+                    .append(", ")
+                    .append(fieldLLType).append("* ")
+                    .append(fieldPtr).append("\n");
         }
 
-        // aplica aninhados dentro do aninhado (pais { nome: ... })
+        // nested dentro de nested
         for (var nested : node.getNestedUpdates().entrySet()) {
+
             String field = nested.getKey();
             StructUpdateNode inner = nested.getValue();
 
@@ -164,9 +178,13 @@ public class StructUpdateEmitter {
 
             String fieldLLType = mapFieldType(fieldDecl.getType());
             String fieldVal = temps.newTemp();
+
             llvm.append("  ").append(fieldVal)
-                    .append(" = load ").append(fieldLLType)
-                    .append(", ").append(fieldLLType).append("* ").append(fieldPtr).append("\n");
+                    .append(" = load ")
+                    .append(fieldLLType)
+                    .append(", ")
+                    .append(fieldLLType).append("* ")
+                    .append(fieldPtr).append("\n");
 
             llvm.append(emitNested(inner, fieldVal, fieldDecl.getType()));
         }
@@ -188,14 +206,26 @@ public class StructUpdateEmitter {
         return -1;
     }
 
-    private String mapFieldType(String type) {
-        if (type.startsWith("Struct<") && type.endsWith(">"))
-            return "%" + type.substring(7, type.length() - 1).trim() + "*";
-        if (type.startsWith("Struct "))
-            return "%" + type.substring("Struct ".length()).trim() + "*";
-        return typeMapper.toLLVM(type);
-    }
+    private String mapFieldType(Type type) {
 
+        if (type instanceof StructType structType) {
+            return "%" + structType.name() + "*";
+        }
+
+        if (type instanceof ListType) {
+            return "%ArrayList*";
+        }
+
+        if (type instanceof PrimitiveTypes primitive) {
+            return typeMapper.toLLVM(primitive);
+        }
+
+        if (type instanceof UnknownType) {
+            throw new RuntimeException("Tipo desconhecido em StructUpdateEmitter");
+        }
+
+        throw new RuntimeException("Tipo não suportado no emitter: " + type);
+    }
     private String extractTemp(String code) {
         int idx = code.lastIndexOf(";;VAL:");
         if (idx == -1) return "";

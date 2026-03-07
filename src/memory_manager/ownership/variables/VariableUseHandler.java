@@ -2,10 +2,9 @@ package memory_manager.ownership.variables;
 
 import ast.ASTNode;
 import ast.variables.VariableNode;
-import context.statics.Symbol;
+import context.statics.symbols.Symbol;
 import memory_manager.ownership.OwnershipAnnotation;
 import memory_manager.ownership.VarOwnerShip;
-import memory_manager.ownership.enums.OwnerShipAction;
 import memory_manager.ownership.enums.OwnershipState;
 import memory_manager.ownership.graphs.OwnershipGraph;
 

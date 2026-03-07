@@ -1,6 +1,5 @@
 package low.module;
 import ast.ASTNode;
-import ast.TypeSpecializer;
 import ast.exceptions.BreakNode;
 import ast.exceptions.ReturnNode;
 import ast.expressions.BinaryOpNode;
@@ -18,6 +17,7 @@ import ast.loops.WhileNode;
 
 import ast.prints.PrintNode;
 import ast.variables.*;
+import context.statics.symbols.Type;
 import low.TempManager;
 import low.exceptions.ReturnEmitter;
 import low.functions.FunctionCallEmitter;
@@ -98,7 +98,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     // ==== FUNÇÕES / STRUCTS / IMPORTS ====
     public final Map<String, FunctionNode> functions;
     public final Map<String, FunctionNode> importedFunctions;
-    public final Set<String> tiposDeListasUsados;
+    public final Set<Type> tiposDeListasUsados;
 
     private final ImportEmitter importEmitter;
     private final StructEmitter structEmitter;
@@ -107,27 +107,12 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     private final StructMethodCallEmitter methodCallEmitter;
     private final ImplEmitter implEmitter;
 
-    // ==== TYPE SPECIALIZER ====
-    private final TypeSpecializer typeSpecializer;
-
-    public TypeSpecializer getTypeSpecializer() {
-        return typeSpecializer;
-    }
-
     // ==== TIPO ESPECIALIZAÇÃO (estado atual) ====
     private String currentSpecializationType = null;
 
     // === Memory
     private final FreeEmitter freeEmitter;
 
-
-    public void enterTypeSpecialization(String innerType) {
-        this.currentSpecializationType = innerType;
-    }
-
-    public void exitTypeSpecialization() {
-        this.currentSpecializationType = null;
-    }
 
     public String getCurrentSpecializationType() {
         return currentSpecializationType;
@@ -140,18 +125,8 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         this.escapeInfo = info;
     }
 
-    // novo construtor público
-    public LLVisitorMain(TypeSpecializer typeSpecializer, EscapeInfo escapeInfo) {
-        this(typeSpecializer);
-        this.escapeInfo = escapeInfo;
-    }
-
-    public boolean escapesVar(String name) {
-        return escapeInfo != null && escapeInfo.escapes(name);
-    }
-    public LLVisitorMain(TypeSpecializer typeSpecializer) {
+    public LLVisitorMain(EscapeInfo escapeInfo) {
         this(
-                typeSpecializer,
                 new TypeTable(),
                 new HashMap<>(),
                 new HashMap<>(),
@@ -161,20 +136,24 @@ public class LLVisitorMain implements LLVMEmitVisitor {
                 new ArrayList<>(),
                 new GlobalStringManager()
         );
+        this.escapeInfo = escapeInfo;
+    }
+
+
+    public boolean escapesVar(String name) {
+        return escapeInfo != null && escapeInfo.escapes(name);
     }
 
     private LLVisitorMain(
-            TypeSpecializer typeSpecializer,
             TypeTable types,
             Map<String, FunctionNode> functions,
             Map<String, FunctionNode> importedFunctions,
             Map<String, StructNode> structNodes,
             Map<String, StructNode> specializedStructs,
-            Set<String> tiposDeListasUsados,
+            Set<Type> tiposDeListasUsados,
             List<String> structDefinitions,
             GlobalStringManager globalStrings
     ) {
-        this.typeSpecializer = typeSpecializer;
         this.types = types;
         this.functions = functions;
         this.importedFunctions = importedFunctions;
@@ -186,11 +165,11 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         this.temps = new TempManager();
         this.controlFlow = new FlowControllVisitor(this, temps);
 
-
         // Registries
         this.structRegistry = new StructRegistry(structNodes, new HashSet<>(), new HashSet<>());
         this.structEmitter = new StructEmitter(this);
-        this.specializedManager = new SpecializedStructManager(specializedStructs, structEmitter, structRegistry, structDefinitions);
+        this.specializedManager =
+                new SpecializedStructManager(specializedStructs, structEmitter, structRegistry, structDefinitions);
         this.importRegistry = new ImportRegistry(importedFunctions, structRegistry);
         this.structTypeResolver = new StructTypeResolver(types, structRegistry);
 
@@ -210,13 +189,11 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         this.structFieldAccessEmitter = new StructFieldAccessEmitter(temps);
         this.methodCallEmitter = new StructMethodCallEmitter(temps);
         this.implEmitter = new ImplEmitter(this, temps);
-        this.compoundAssignmentEmitter = new CompoundAssignmentEmitter(varTypesView, temps, varEmitter, this);
+        this.compoundAssignmentEmitter =
+                new CompoundAssignmentEmitter(varTypesView, temps, varEmitter, this);
 
-        //memory
         this.freeEmitter = new FreeEmitter(this, temps);
-
         this.listVisitor = new ListVisitor(this, temps, globalStrings);
-
     }
 
     public LLVisitorMain fork() {
@@ -227,7 +204,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         );
 
         return new LLVisitorMain(
-                this.typeSpecializer,
                 forkTypes,
                 this.functions,
                 this.importedFunctions,
@@ -238,35 +214,27 @@ public class LLVisitorMain implements LLVMEmitVisitor {
                 this.globalStrings
         );
     }
+
+
     public FlowControllVisitor getControlFlow() {
         return controlFlow;
     }
 
-    // ==== STRUCTS USO / IMPORT ====
-    public void markStructUsed(String name) {
-        structRegistry.markUsed(name);
-    }
-
-
-    // ==== LÓGICA DE STRUCTS ESPECIALIZADAS ====
-    public StructNode getOrCreateSpecializedStruct(StructNode base, String elemType) {
-        return specializedManager.getOrCreateSpecializedStruct(base, elemType);
-    }
 
     public boolean hasSpecializationFor(String baseName) {
         return specializedManager.hasSpecializationFor(baseName);
     }
 
     // ==== LIST TYPES INFERENCE (wrappers) ====
-    public String inferListElementType(ASTNode node) {
+    public Type inferListElementType(ASTNode node) {
         return structTypeResolver.inferListElementType(node);
     }
 
-    public void registerListElementType(String varName, String elementType) {
+    public void registerListElementType(String varName, Type elementType) {
         structTypeResolver.registerListElementType(varName, elementType);
     }
 
-    public String getListElementType(String varName) {
+    public Type getListElementType(String varName) {
         return structTypeResolver.getListElementType(varName);
     }
 
@@ -515,36 +483,8 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     }
 
 
-
-    public int getStructSizeInBytes(StructNode def) {
-        int size = 0;
-        for (VariableDeclarationNode f : def.getFields()) {
-            size += sizeOf(f.getType());
-        }
-        return size;
-    }
-
-    private int sizeOf(String type) {
-        return switch (type) {
-            case "int" -> 4;
-            case "boolean" -> 1;
-            case "double", "float" -> 8;
-            case "string" -> 8; // ponteiro
-            default -> 8; // List, Struct, qualquer ponteiro
-        };
-    }
-
-
-
-    public String getStructFieldType(StructFieldAccessNode node) {
-        return structTypeResolver.getStructFieldType(node);
-    }
-
     public String resolveStructName(ASTNode node) {
         return structTypeResolver.resolveStructName(node);
     }
 
-    public Map<String, String> getListElementTypesLegacyView() {
-        return listElementTypesLegacyView;
-    }
 }

@@ -1,6 +1,6 @@
 package memory_manager.ownership;
 
-import context.statics.Symbol;
+import context.statics.symbols.Symbol;
 import memory_manager.ownership.enums.OwnershipState;
 public class VarOwnerShip {
 

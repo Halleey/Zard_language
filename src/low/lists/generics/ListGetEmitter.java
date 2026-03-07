@@ -1,6 +1,9 @@
 package low.lists.generics;
 
 import ast.lists.ListGetNode;
+import context.statics.symbols.PrimitiveTypes;
+import context.statics.symbols.StructType;
+import context.statics.symbols.Type;
 import low.TempManager;
 import low.lists.bool.ListBoolGetEmitter;
 import low.lists.doubles.ListGetDoubleEmitter;
@@ -41,7 +44,6 @@ public class ListGetEmitter {
             return boolGetEmitter.emit(node, visitor);
         }
 
-        // ===== Caminho genérico (listas de ponteiros / structs / strings) =====
 
         String idxCode = node.getIndexNode().accept(visitor);
         appendCodePrefix(llvm, idxCode);
@@ -56,60 +58,72 @@ public class ListGetEmitter {
                 .append(" = call i8* @arraylist_get_ptr(%ArrayList* ")
                 .append(listTemp).append(", i64 ").append(idx64).append(")\n");
 
-        String elemType = visitor.inferListElementType(node.getListName());
+        Type elemType = visitor.inferListElementType(node.getListName());
+
         String castTemp = temps.newTemp();
 
-        if ("string".equals(elemType)) {
+        if (elemType instanceof PrimitiveTypes prim) {
 
-            llvm.append(";;VAL:").append(rawTemp).append("\n");
-            llvm.append(";;TYPE:i8*\n");
+            if (prim == PrimitiveTypes.STRING) {
+
+                llvm.append(";;VAL:").append(rawTemp).append("\n");
+                llvm.append(";;TYPE:%String*\n");
+            }
+
+            else if (prim == PrimitiveTypes.INT) {
+
+                String intPtr = temps.newTemp();
+                llvm.append("  ").append(intPtr)
+                        .append(" = bitcast i8* ").append(rawTemp).append(" to i32*\n");
+
+                String intVal = temps.newTemp();
+                llvm.append("  ").append(intVal)
+                        .append(" = load i32, i32* ").append(intPtr).append("\n");
+
+                llvm.append(";;VAL:").append(intVal).append("\n");
+                llvm.append(";;TYPE:i32\n");
+            }
+
+            else if (prim == PrimitiveTypes.DOUBLE) {
+
+                String dblPtr = temps.newTemp();
+                llvm.append("  ").append(dblPtr)
+                        .append(" = bitcast i8* ").append(rawTemp).append(" to double*\n");
+
+                String dblVal = temps.newTemp();
+                llvm.append("  ").append(dblVal)
+                        .append(" = load double, double* ").append(dblPtr).append("\n");
+
+                llvm.append(";;VAL:").append(dblVal).append("\n");
+                llvm.append(";;TYPE:double\n");
+            }
+
+            else if (prim == PrimitiveTypes.BOOL) {
+
+                String boolPtr = temps.newTemp();
+                llvm.append("  ").append(boolPtr)
+                        .append(" = bitcast i8* ").append(rawTemp).append(" to i1*\n");
+
+                String boolVal = temps.newTemp();
+                llvm.append("  ").append(boolVal)
+                        .append(" = load i1, i1* ").append(boolPtr).append("\n");
+
+                llvm.append(";;VAL:").append(boolVal).append("\n");
+                llvm.append(";;TYPE:i1\n");
+            }
         }
-        else if ("int".equals(elemType)) {
-            String intPtr = temps.newTemp();
-            llvm.append("  ").append(intPtr)
-                    .append(" = bitcast i8* ").append(rawTemp).append(" to i32*\n");
-            String intVal = temps.newTemp();
-            llvm.append("  ").append(intVal)
-                    .append(" = load i32, i32* ").append(intPtr).append("\n");
-            llvm.append(";;VAL:").append(intVal).append("\n");
-            llvm.append(";;TYPE:i32\n");
-        } else if ("double".equals(elemType)) {
-            String dblPtr = temps.newTemp();
-            llvm.append("  ").append(dblPtr)
-                    .append(" = bitcast i8* ").append(rawTemp).append(" to double*\n");
-            String dblVal = temps.newTemp();
-            llvm.append("  ").append(dblVal)
-                    .append(" = load double, double* ").append(dblPtr).append("\n");
-            llvm.append(";;VAL:").append(dblVal).append("\n");
-            llvm.append(";;TYPE:double\n");
-        } else if ("boolean".equals(elemType)) {
-            String boolPtr = temps.newTemp();
-            llvm.append("  ").append(boolPtr)
-                    .append(" = bitcast i8* ").append(rawTemp).append(" to i1*\n");
-            String boolVal = temps.newTemp();
-            llvm.append("  ").append(boolVal)
-                    .append(" = load i1, i1* ").append(boolPtr).append("\n");
-            llvm.append(";;VAL:").append(boolVal).append("\n");
-            llvm.append(";;TYPE:i1\n");
-        } else {
-            // structs
-            String structName = normalizeStructName(elemType);
+        else if (elemType instanceof StructType struct) {
+
+            String structName = struct.name();
+
             llvm.append("  ").append(castTemp)
                     .append(" = bitcast i8* ").append(rawTemp)
                     .append(" to %").append(structName).append("*\n");
+
             llvm.append(";;VAL:").append(castTemp).append("\n");
             llvm.append(";;TYPE:%").append(structName).append("*\n");
         }
-
         return llvm.toString();
-    }
-
-    private String normalizeStructName(String elemType) {
-        String s = elemType.trim();
-        if (s.startsWith("Struct<") && s.endsWith(">")) {
-            s = s.substring("Struct<".length(), s.length() - 1);
-        }
-        return s.replace('.', '_');
     }
 
     private void appendCodePrefix(StringBuilder llvm, String code) {

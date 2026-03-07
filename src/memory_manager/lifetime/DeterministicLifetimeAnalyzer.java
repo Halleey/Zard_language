@@ -1,11 +1,8 @@
 package memory_manager.lifetime;
 import ast.ASTNode;
 import context.statics.StaticContext;
-import context.statics.Symbol;
+import context.statics.symbols.Symbol;
 
-import java.util.*;
-import java.util.*;
-import java.util.*;
 import java.util.*;
 import java.util.List;
 import java.util.Map;

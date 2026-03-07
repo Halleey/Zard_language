@@ -3,6 +3,7 @@ package ast.expressions;
 import ast.ASTNode;
 import ast.inputs.InputParser;
 import ast.variables.LiteralNode;
+import context.statics.symbols.PrimitiveTypes;
 import tokens.Token;
 import translate.front.Parser;
 import translate.identifiers.IdentifierParser;
@@ -112,20 +113,20 @@ public class ExpressionParser {
                 parent.advance();
                 String num = tok.getValue();
                 return num.contains(".")
-                        ? new LiteralNode(new TypedValue("double", Double.parseDouble(num)))
-                        : new LiteralNode(new TypedValue("int", Integer.parseInt(num)));
+                        ? new LiteralNode(new TypedValue(PrimitiveTypes.DOUBLE, Double.parseDouble(num)))
+                        : new LiteralNode(new TypedValue(PrimitiveTypes.INT, Integer.parseInt(num)));
             }
             case STRING -> {
                 parent.advance();
-                return new LiteralNode(new TypedValue("string", tok.getValue()));
+                return new LiteralNode(new TypedValue(PrimitiveTypes.STRING, tok.getValue()));
             }
             case CHAR -> {
                 parent.advance();
-                return new LiteralNode(new TypedValue("char", tok.getValue()));
+                return new LiteralNode(new TypedValue(PrimitiveTypes.CHAR, tok.getValue()));
             }
             case BOOLEAN -> {
                 parent.advance();
-                return new LiteralNode(new TypedValue("boolean", Boolean.parseBoolean(tok.getValue())));
+                return new LiteralNode(new TypedValue(PrimitiveTypes.BOOL, Boolean.parseBoolean(tok.getValue())));
             }
             case KEYWORD -> {
                 if (tok.getValue().equals("input")) {

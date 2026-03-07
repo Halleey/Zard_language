@@ -1,7 +1,7 @@
 package memory_manager.ownership;
 
 import ast.ASTNode;
-import context.statics.Symbol;
+import context.statics.symbols.Symbol;
 import memory_manager.ownership.enums.OwnerShipAction;
 public class OwnershipAnnotation {
 

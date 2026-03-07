@@ -3,12 +3,15 @@ package low.variables.structs;
 
 import ast.structs.StructNode;
 import ast.variables.VariableDeclarationNode;
+import context.statics.symbols.ListType;
+import context.statics.symbols.PrimitiveTypes;
+import context.statics.symbols.StructType;
+import context.statics.symbols.Type;
 import low.TempManager;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
 import low.variables.VariableEmitter;
 
-import java.util.Map;
 
 
 public class StructInitEmitter {
@@ -31,27 +34,25 @@ public class StructInitEmitter {
         return varEmitter.getVarPtr(name);
     }
 
-
     public String emit(VariableDeclarationNode node, TypeInfos info) {
-
         StringBuilder sb = new StringBuilder();
 
-        String srcType  = info.getSourceType();   // Struct<Row>
-        String llvmType = info.getLLVMType();     // %Row*
-        String varPtr   = getVarPtr(node.getName());
-
-        // ==== resolver nome da struct ====
-        String structName = srcType.substring("Struct<".length(), srcType.length() - 1).trim();
-        StructNode structDef = visitor.getStructNode(structName);
-
-        if (structDef == null) {
-            throw new RuntimeException("Struct não encontrada: " + structName);
+        Type type = info.getType(); // agora Type
+        if (!(type instanceof StructType structType)) {
+            throw new RuntimeException("Esperado StructType, encontrado: " + type);
         }
 
-        // %Row*
-        String structLLVMPtr = llvmType;
-        // %Row
-        String structLLVM = structLLVMPtr.substring(0, structLLVMPtr.length() - 1);
+        String llvmType = info.getLLVMType(); // %Row*
+        String varPtr   = getVarPtr(node.getName());
+
+        StructNode structDef = visitor.getStructNode(structType.name());
+        if (structDef == null) {
+            throw new RuntimeException("Struct não encontrada: " + structType.name());
+        }
+
+        // LLVM pointers
+        String structLLVMPtr = llvmType;               // %Row*
+        String structLLVM = structLLVMPtr.substring(0, structLLVMPtr.length() - 1); // %Row
 
         String gepTmp  = temps.newTemp();
         String sizeTmp = temps.newTemp();
@@ -76,38 +77,34 @@ public class StructInitEmitter {
         sb.append(";;VAL:").append(objPtr)
                 .append(";;TYPE:").append(structLLVM).append("*\n");
 
+        // ====== Iterar campos da struct ======
         var fields = structDef.getFields();
-
         for (int i = 0; i < fields.size(); i++) {
-
             VariableDeclarationNode field = fields.get(i);
-            String fieldType = field.getType();
+            Type fieldType = field.getType();
 
-            if (!fieldType.startsWith("List<")) continue;
+            if (!(fieldType instanceof ListType listType)) continue;
 
-            String elemType = fieldType.substring(5, fieldType.length() - 1).trim();
-            visitor.registerListElementType(node.getName(), elemType);
+            // registrar tipo do elemento da lista
+            visitor.registerListElementType(node.getName(), listType.elementType());
 
+            // determinar LLVM type da lista
             String listLLVMType;
             String listCreateFn;
 
-            switch (elemType) {
-                case "int" -> {
-                    listLLVMType = "%struct.ArrayListInt*";
-                    listCreateFn = "@arraylist_create_int";
-                }
-                case "double" -> {
-                    listLLVMType = "%struct.ArrayListDouble*";
-                    listCreateFn = "@arraylist_create_double";
-                }
-                case "boolean" -> {
-                    listLLVMType = "%struct.ArrayListBool*";
-                    listCreateFn = "@arraylist_create_bool";
-                }
-                default -> {
-                    listLLVMType = "%ArrayList*";
-                    listCreateFn = "@arraylist_create";
-                }
+            Type elemType = listType.elementType();
+            if (elemType.equals(PrimitiveTypes.INT)) {
+                listLLVMType = "%struct.ArrayListInt*";
+                listCreateFn = "@arraylist_create_int";
+            } else if (elemType.equals(PrimitiveTypes.DOUBLE)) {
+                listLLVMType = "%struct.ArrayListDouble*";
+                listCreateFn = "@arraylist_create_double";
+            } else if (elemType.equals(PrimitiveTypes.BOOL)) {
+                listLLVMType = "%struct.ArrayListBool*";
+                listCreateFn = "@arraylist_create_bool";
+            } else {
+                listLLVMType = "%ArrayList*";
+                listCreateFn = "@arraylist_create";
             }
 
             String listTmp  = temps.newTemp();
@@ -133,6 +130,7 @@ public class StructInitEmitter {
                     .append(", ").append(listLLVMType).append("* ").append(fieldPtr).append("\n");
         }
 
+        // armazenar struct final na variável
         sb.append("  store ").append(structLLVM).append("* ").append(objPtr)
                 .append(", ").append(structLLVM).append("** ").append(varPtr).append("\n");
 

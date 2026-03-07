@@ -5,6 +5,7 @@ import context.statics.StaticContext;
 import ast.expressions.TypedValue;
 import ast.functions.FunctionNode;
 import context.runtime.RuntimeContext;
+import context.statics.structs.StaticStructDefinition;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;
@@ -52,5 +53,11 @@ public class ImplNode extends ASTNode {
     @Override
     public void bindChildren(StaticContext stx) {
 
+        StaticStructDefinition def = stx.resolveStruct(structName);
+
+        for (FunctionNode fn : methods) {
+            def.addMethod(fn);
+            fn.bind(stx);
+        }
     }
 }

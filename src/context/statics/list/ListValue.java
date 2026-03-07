@@ -1,18 +1,21 @@
 package context.statics.list;
 
 import ast.expressions.TypedValue;
+import context.statics.symbols.Type;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+
 public final class ListValue {
 
     private final UUID id = UUID.randomUUID();
-    private final String elementType;
+    private final Type elementType;
     private final boolean isReference;
     private final List<TypedValue> elements = new ArrayList<>();
 
-    public ListValue(String elementType, boolean isReference) {
+    public ListValue(Type elementType, boolean isReference) {
         this.elementType = elementType;
         this.isReference = isReference;
     }
@@ -21,7 +24,7 @@ public final class ListValue {
         return id;
     }
 
-    public String getElementType() {
+    public Type getElementType() {
         return elementType;
     }
 
@@ -33,7 +36,8 @@ public final class ListValue {
 
         if (!value.type().equals(elementType)) {
             throw new RuntimeException(
-                    "Tipo inválido para lista <" + elementType + ">: " + value.type()
+                    "Tipo inválido para lista <" + elementType +
+                            ">: " + value.type()
             );
         }
 

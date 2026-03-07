@@ -4,10 +4,16 @@ import ast.functions.FunctionNode;
 import context.runtime.RuntimeContext;
 
 import java.util.Map;
-public record TypedValue(String type, Object value) {
+
+
+import context.statics.symbols.Type;
+
+import java.util.Map;
+
+public record TypedValue(Type type, Object value) {
 
     public static final TypedValue VOID =
-            new TypedValue("void", null);
+            new TypedValue(null, null);
 
     @Override
     public String toString() {
@@ -15,11 +21,11 @@ public record TypedValue(String type, Object value) {
     }
 
     public boolean isFunction() {
-        return "function".equals(type);
+        return type != null && type.toString().equals("function");
     }
 
     public boolean isNamespace() {
-        return "namespace".equals(type);
+        return type != null && type.toString().equals("namespace");
     }
 
     public Map<String, TypedValue> getNamespace() {

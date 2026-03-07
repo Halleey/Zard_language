@@ -4,7 +4,8 @@ import ast.ASTNode;
 import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
-import context.statics.Symbol;
+import context.statics.symbols.Symbol;
+import context.statics.symbols.Type;
 import low.module.LLVMEmitVisitor;
 public class VariableNode extends ASTNode {
     public final String name;
@@ -32,7 +33,7 @@ public class VariableNode extends ASTNode {
 
 
     @Override
-    public String getType() {
+    public Type getType() {
         return symbol.getType();
     }
 

@@ -5,14 +5,12 @@ import ast.ifstatements.IfNode;
 import ast.lists.*;
 import ast.loops.WhileNode;
 import ast.prints.PrintNode;
-import ast.structs.StructFieldAccessNode;
 import ast.structs.StructMethodCallNode;
-import ast.structs.StructUpdateNode;
 import ast.variables.AssignmentNode;
 import ast.variables.VariableDeclarationNode;
 import ast.variables.VariableNode;
 import context.statics.StaticContext;
-import context.statics.Symbol;
+import context.statics.symbols.Symbol;
 
 import java.util.LinkedHashMap;
 import java.util.List;

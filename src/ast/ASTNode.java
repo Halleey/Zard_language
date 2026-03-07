@@ -3,6 +3,7 @@ package ast;
 import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
+import context.statics.symbols.Type;
 import low.module.LLVMEmitVisitor;
 
 import java.util.Collections;
@@ -53,8 +54,7 @@ public abstract class ASTNode {
     public List<ASTNode> getChildren() {
         return Collections.emptyList();
     }
-
-    public String getType() {
+    public Type getType() {
         return null;
     }
 }

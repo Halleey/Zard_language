@@ -5,12 +5,15 @@ import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
 import context.statics.list.ListValue;
+import context.statics.symbols.ListType;
+import context.statics.symbols.PrimitiveTypes;
+import context.statics.symbols.Type;
 import low.module.LLVMEmitVisitor;
-
 public class ListSizeNode extends ASTNode {
 
-    private final ASTNode nome; // pode ser variável ou expressão que retorne lista
-    private String type;
+    private final ASTNode nome; // pode ser variável ou expressão que retorna lista
+    private Type type;          // agora Type
+
     public ListSizeNode(ASTNode nome) {
         this.nome = nome;
     }
@@ -22,10 +25,8 @@ public class ListSizeNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
-
-        ListValue list = (ListValue)nome.evaluate(ctx).value();
-
-        return new TypedValue("int", list.size());
+        ListValue list = (ListValue) nome.evaluate(ctx).value();
+        return new TypedValue(PrimitiveTypes.INT, list.size());
     }
 
     public ASTNode getNome() {
@@ -40,27 +41,26 @@ public class ListSizeNode extends ASTNode {
 
     @Override
     public void bindChildren(StaticContext stx) {
-
         nome.setParent(this);
         nome.bind(stx);
 
-        String listType = nome.getType();
+        Type listType = nome.getType();
 
         if (listType == null) {
             throw new RuntimeException("ListSize: tipo da lista é null");
         }
 
-        if (!listType.startsWith("List<")) {
+        if (!(listType instanceof ListType)) {
             throw new RuntimeException(
-                    "ListSize em tipo não-lista: " + listType
+                    "ListSize aplicado em tipo não-lista: " + listType.name()
             );
         }
 
-        this.type = "int";
+        this.type = PrimitiveTypes.INT;
     }
 
     @Override
-    public String getType() {
+    public Type getType() {
         return type;
     }
 }

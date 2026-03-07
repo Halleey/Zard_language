@@ -3,6 +3,8 @@ package translate.identifiers;
 import ast.ASTNode;
 import ast.lists.*;
 import ast.expressions.ExpressionParser;
+import context.statics.symbols.ListType;
+import context.statics.symbols.Type;
 import tokens.Token;
 import translate.front.Parser;
 
@@ -15,15 +17,8 @@ public class ListMethodParser {
         this.parser = parser;
     }
 
-    private void dbg(String msg) {
-        System.out.println("[ListMethodParser] " + msg +
-                " | current=" + parser.current());
-    }
-
     private ASTNode consumeArg() {
-
-        parser.advance(); // método
-
+        System.out.println("debug do token  atual " + parser.current());
         parser.eat(Token.TokenType.DELIMITER, "(");
 
         ASTNode arg = null;
@@ -32,40 +27,31 @@ public class ListMethodParser {
         }
 
         parser.eat(Token.TokenType.DELIMITER, ")");
-
         return arg;
     }
 
     public ASTNode parseStatementListMethod(ASTNode receiver, String method) {
-
         return switch (method) {
-
             case "add" -> {
                 ASTNode arg = consumeArg();
-                if (arg == null) {
+                if (arg == null)
                     throw new RuntimeException("add requer exatamente 1 argumento");
-                }
 
-                String elementType = "unknown";
-                String listType = parser.getExpressionType(receiver);
-
-                if (listType != null && listType.startsWith("List<")) {
-                    elementType = listType.substring(5, listType.length() - 1);
+                Type listType = parser.getExpressionType(receiver);
+                Type elementType = null;
+                if (listType instanceof ListType lt) {
+                    elementType = lt.elementType();
                 }
 
                 ASTNode node = new ListAddNode(receiver, arg, elementType);
                 parser.eat(Token.TokenType.DELIMITER, ";");
-
                 yield node;
             }
 
             case "addAll" -> {
                 parser.advance();
-                dbg("addAll advance");
-
                 ExpressionParser exprParser = new ExpressionParser(parser);
                 List<ASTNode> argsList = exprParser.parseArguments();
-
 
                 ASTNode node = new ListAddAllNode(receiver, argsList);
                 parser.eat(Token.TokenType.DELIMITER, ";");
@@ -74,7 +60,6 @@ public class ListMethodParser {
 
             case "remove" -> {
                 ASTNode arg = consumeArg();
-
                 if (arg == null)
                     throw new RuntimeException("remove requer argumento");
 
@@ -85,10 +70,8 @@ public class ListMethodParser {
 
             case "clear" -> {
                 parser.advance();
-
                 parser.eat(Token.TokenType.DELIMITER, "(");
                 parser.eat(Token.TokenType.DELIMITER, ")");
-
                 ASTNode node = new ListClearNode(receiver);
                 parser.eat(Token.TokenType.DELIMITER, ";");
                 yield node;
@@ -100,10 +83,9 @@ public class ListMethodParser {
     }
 
     public ASTNode parseExpressionListMethod(ASTNode receiver, String method) {
-
         ASTNode arg = null;
 
-        // se houver parênteses, delega corretamente
+        // verifica se há parênteses e consome argumento
         if (parser.current().getValue().equals("(")) {
             parser.eat(Token.TokenType.DELIMITER, "(");
 
@@ -125,5 +107,4 @@ public class ListMethodParser {
                     "Método de lista não permitido em expressão: " + method);
         };
     }
-
 }

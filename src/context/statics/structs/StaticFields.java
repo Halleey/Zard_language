@@ -1,14 +1,17 @@
 package context.statics.structs;
 
+import context.statics.symbols.Type;
+
 
 public final class StaticFields {
 
     private final String name;
-    private final String type;
+    private final Type type;
     private final int index;
     private final int offset;
 
-    public StaticFields(String name, String type, int index, int offset) {
+
+    public StaticFields(String name, Type type, int index, int offset) {
         this.name = name;
         this.type = type;
         this.index = index;
@@ -19,7 +22,7 @@ public final class StaticFields {
         return name;
     }
 
-    public String getType() {
+    public Type getType() {
         return type;
     }
 
@@ -29,5 +32,12 @@ public final class StaticFields {
 
     public int getOffset() {
         return offset;
+    }
+
+    @Override
+    public String toString() {
+        return name + ": " + type +
+                " (index=" + index +
+                ", offset=" + offset + ")";
     }
 }

@@ -1,23 +1,32 @@
 package ast.structs;
 
 import ast.ASTNode;
+import context.statics.ScopeKind;
 import context.statics.StaticContext;
 import context.statics.structs.StaticFields;
 import context.statics.structs.StaticStructDefinition;
 import ast.expressions.TypedValue;
 import context.runtime.RuntimeContext;
 import ast.variables.VariableDeclarationNode;
+import context.statics.symbols.*;
 import low.module.LLVMEmitVisitor;
 
 import java.util.*;
 import java.util.List;
 
 public class StructNode extends ASTNode {
+
     private final String name;
     private final List<VariableDeclarationNode> fields;
-    private String llvmName; // nome LLVM único, ex: Set_int, Set_double
+
+    private String llvmName;
     private boolean shared = false;
 
+    public StructNode(String name, List<VariableDeclarationNode> fields) {
+        this.name = name;
+        this.fields = fields;
+        this.llvmName = name;
+    }
 
     public boolean isShared() {
         return shared;
@@ -26,22 +35,6 @@ public class StructNode extends ASTNode {
     public void setShared(boolean shared) {
         this.shared = shared;
     }
-
-    public StructNode(String name, List<VariableDeclarationNode> fields) {
-        this.name = name;
-        this.fields = fields;
-        this.llvmName = name;
-    }
-
-    public Map<String, String> getFieldMap() {
-        Map<String, String> map = new LinkedHashMap<>();
-        for (VariableDeclarationNode f : fields) {
-            map.put(f.getName(), f.getType());
-        }
-        return map;
-    }
-
-
 
     public String getName() {
         return name;
@@ -59,14 +52,16 @@ public class StructNode extends ASTNode {
         return fields;
     }
 
+
     @Override
     public String accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
 
-
     @Override
-    public void bindChildren(StaticContext stx) {
+    public void bindChildren(StaticContext parent) {
+
+        StaticContext structCtx = new StaticContext(ScopeKind.STRUCT, parent);
 
         Set<String> seen = new HashSet<>();
         for (VariableDeclarationNode f : fields) {
@@ -77,32 +72,64 @@ public class StructNode extends ASTNode {
             }
         }
 
-        StaticStructDefinition def = getStaticStructDefinition();
-        System.out.println("vamos ver: " + def.getName());
-        System.out.println("vamos ver: " + def.isShared());
-        stx.declareStruct(name, def);
-    }
-
-    private StaticStructDefinition getStaticStructDefinition() {
         List<StaticFields> staticFields = new ArrayList<>();
-
         int index = 0;
         int offset = 0;
 
         for (VariableDeclarationNode f : fields) {
+
+            Type resolvedType;
+
+            if (f.getDeclaredType() != null) {
+                resolvedType = structCtx.resolveType(f.getDeclaredType());
+            }
+            else if (f.getInitializer() != null) {
+                resolvedType = f.getInitializer().getType();
+            }
+            else {
+                throw new RuntimeException(
+                        "Cannot infer type for field: " + f.getName()
+                );
+            }
+
+            f.setResolvedType(resolvedType);
+
             staticFields.add(
                     new StaticFields(
                             f.getName(),
-                            f.getType(),
+                            resolvedType,
                             index++,
-                            offset++
+                            offset
                     )
             );
+
+            offset += estimateSize(resolvedType);
         }
-        return new StaticStructDefinition(name, staticFields, isShared());
+
+        StaticStructDefinition def = new StaticStructDefinition(name, staticFields, shared);
+
+        parent.declareStruct(name, def);
     }
 
+    private int estimateSize(Type type) {
 
+        if (type instanceof PrimitiveTypes p) {
+            return switch (p.name()) {
+                case "int" -> 4;
+                case "double" -> 8;
+                case "float" -> 4;
+                case "boolean", "bool" -> 1;
+                case "char" -> 1;
+                case "string" -> 8;
+                default -> 8;
+            };
+        }
+
+        if (type instanceof StructType) return 8; // ponteiro
+        if (type instanceof ListType) return 8;   // ponteiro
+
+        throw new IllegalStateException("Tipo desconhecido: " + type);
+    }
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
@@ -118,50 +145,66 @@ public class StructNode extends ASTNode {
         }
     }
 
+    public StructNode cloneWithType(Type elemType) {
 
-
-    public StructNode cloneWithType(String elemType) {
         List<VariableDeclarationNode> clonedFields = new ArrayList<>();
-        for (VariableDeclarationNode f : fields) {
-            String t = f.getType();
-            if (t.contains("List<?>")) {
-                t = "List<" + elemType + ">";
-            } else if (t.equals("?")) {
-                t = elemType;
-            }
-            clonedFields.add(new VariableDeclarationNode(f.getName(), t, f.getInitializer()));
-        }
 
-        StructNode clone = new StructNode(name + "_" + elemType, clonedFields);
+        for (VariableDeclarationNode f : fields) {
+
+            Type originalType = f.getType();
+            Type newType = originalType;
+
+            if (originalType instanceof ListType listType && listType.elementType() instanceof UnknownType) {
+
+                newType = new ListType(elemType, listType.isReference());
+            }
+
+            clonedFields.add(
+                    new VariableDeclarationNode(
+                            f.getName(),
+                            newType,
+                            f.getInitializer()
+                    )
+            );
+        }
+        StructNode clone = new StructNode(
+                name + "_" + elemType,
+                clonedFields
+        );
+
         clone.setLLVMName(name + "_" + elemType);
-        System.out.println(clone + " debug");
+
         return clone;
     }
 
     public int getLLVMSizeBytes() {
+
         int size = 0;
+
         for (VariableDeclarationNode field : fields) {
             size += llvmSizeOf(field.getType());
         }
+
         return size;
     }
 
-    private int llvmSizeOf(String t) {
-        switch (t) {
-            case "int": return 4;
-            case "double": return 8;
-            case "float": return 4;
-            case "boolean": return 1;
-            case "string": return 8;
+    private int llvmSizeOf(Type t) {
+
+        if (t instanceof PrimitiveTypes p) {
+            return switch (p.name()) {
+                case "int" -> 4;
+                case "double" -> 8;
+                case "float" -> 4;
+                case "boolean" -> 1;
+                case "string" -> 8;
+                default -> 8;
+            };
         }
 
-        if (t.startsWith("List<")) return 8;
+        if (t instanceof ListType) return 8;
 
-        if (t.startsWith("Struct")) return 8;
+        if (t instanceof StructType) return 8;
 
         return 8;
     }
-
-
-
 }

@@ -1,7 +1,9 @@
 package context.statics;
 
 import ast.functions.FunctionNode;
+import ast.variables.TypeResolver;
 import context.statics.structs.StaticStructDefinition;
+import context.statics.symbols.*;
 
 import java.util.*;
 
@@ -21,21 +23,7 @@ public final class StaticContext {
     private final Map<String, StaticStructDefinition> structs = new LinkedHashMap<>();
     private final Map<String, FunctionNode> functions = new HashMap<>();
 
-    public void declareFunction(FunctionNode fn) {
-        functions.put(fn.getName(), fn);
-    }
-
-    public FunctionNode resolveFunction(String name) {
-        FunctionNode fn = functions.get(name);
-        if (fn != null) return fn;
-        if (parent != null) return parent.resolveFunction(name);
-        throw new RuntimeException("Função não declarada: " + name);
-    }
-
-
-
     private int nextSlot = 0;
-
 
     public StaticContext(ScopeKind kind) {
         this.id = NEXT_ID++;
@@ -52,31 +40,16 @@ public final class StaticContext {
         parent.children.add(this);
     }
 
-
-    public int getId() {
-        return id;
+    public void declareFunction(FunctionNode fn) {
+        functions.put(fn.getName(), fn);
     }
 
-    public int getDepth() {
-        return depth;
+    public FunctionNode resolveFunction(String name) {
+        FunctionNode fn = functions.get(name);
+        if (fn != null) return fn;
+        if (parent != null) return parent.resolveFunction(name);
+        throw new RuntimeException("Função não declarada: " + name);
     }
-
-    public ScopeKind getKind() {
-        return kind;
-    }
-
-    public StaticContext getParent() {
-        return parent;
-    }
-
-    public List<StaticContext> getChildren() {
-        return List.copyOf(children);
-    }
-
-    public Collection<Symbol> getDeclaredVariables() {
-        return variables.values();
-    }
-
 
     public void declareStruct(String name, StaticStructDefinition def) {
         if (structs.containsKey(name)) {
@@ -89,12 +62,9 @@ public final class StaticContext {
 
     public StaticStructDefinition resolveStruct(String name) {
         String base = normalizeStructName(name);
-
         StaticStructDefinition def = structs.get(base);
         if (def != null) return def;
-
         if (parent != null) return parent.resolveStruct(base);
-
         throw new RuntimeException("Struct não declarado: " + name);
     }
 
@@ -102,25 +72,21 @@ public final class StaticContext {
         int idx = name.indexOf('<');
         return idx == -1 ? name : name.substring(0, idx);
     }
-    public Symbol declareVariable(String name, String type) {
-        boolean isPrimitive = switch(type) {
-            case "int", "double", "float", "bool", "char", "string" -> true;
-            default -> false;  // structs, listas e outros tipos compostos
-        };
 
-        // percorre todos os pais até ROOT
+    public Symbol declareVariable(String name, Type type) {
+
+        boolean isPrimitive = type instanceof PrimitiveTypes;
+
         StaticContext cur = this.parent;
         while (cur != null) {
-            // se algum pai já tem a variável, e o bloco atual é um loop, proíbe
             if (isPrimitive && cur.variables.containsKey(name) && this.kind.isLoop()) {
                 throw new RuntimeException(
-                        "Shadowing de variável primitiva não permitido dentro de loops ou blocos aninhados: '" + name + "'"
+                        "Shadowing de variável primitiva não permitido dentro de loops: '" + name + "'"
                 );
             }
             cur = cur.parent;
         }
 
-        // ok para shadowing em IF/ELSE ou para structs/listas
         if (variables.containsKey(name)) {
             throw new RuntimeException(
                     "Variável já declarada neste escopo (" + kind + "): " + name
@@ -132,32 +98,31 @@ public final class StaticContext {
         return sym;
     }
 
-
     public Symbol resolveVariable(String name) {
         Symbol sym = variables.get(name);
         if (sym != null) return sym;
-
         if (parent != null) return parent.resolveVariable(name);
-
         throw new RuntimeException("Variável não declarada: " + name);
     }
 
-
-    public boolean isRoot() {
-        return parent == null;
+    public Type resolveType(Type type) {
+        if (type instanceof StructType structType) {
+            resolveStruct(structType.name()); // valida existência
+        } else if (type instanceof ListType listType) {
+            resolveType(listType.elementType()); // valida tipo interno
+        }
+        return type;
     }
 
-    public boolean isLoopScope() {
-        return kind.isLoop();
-    }
+    public int getId() { return id; }
+    public int getDepth() { return depth; }
+    public ScopeKind getKind() { return kind; }
+    public StaticContext getParent() { return parent; }
+    public List<StaticContext> getChildren() { return List.copyOf(children); }
+    public Collection<Symbol> getDeclaredVariables() { return variables.values(); }
 
-    public boolean isConditionalScope() {
-        return kind.isConditional();
-    }
-
-    public boolean hasLifetimeBoundary() {
-        return kind.hasLifetimeBoundary();
-    }
+    public boolean isRoot() { return parent == null; }
+    public boolean hasLifetimeBoundary() { return kind.hasLifetimeBoundary(); }
 
     public boolean isAncestorOf(StaticContext other) {
         StaticContext cur = other;
@@ -166,6 +131,28 @@ public final class StaticContext {
             cur = cur.parent;
         }
         return false;
+    }
+
+    public FunctionNode getStructMethod(String structName, String methodName) {
+
+        StaticStructDefinition def = resolveStruct(structName);
+
+        FunctionNode fn = def.getMethod(methodName);
+
+        if (fn == null) {
+            throw new RuntimeException(
+                    "Método '" + methodName + "' não encontrado no struct '" + structName + "'"
+            );
+        }
+
+        return fn;
+    }
+
+    public void registerStructMethod(String structName, FunctionNode fn) {
+
+        StaticStructDefinition def = resolveStruct(structName);
+
+        def.addMethod(fn);
     }
 
 
@@ -190,5 +177,4 @@ public final class StaticContext {
 
         System.out.println(indent + "}");
     }
-
 }

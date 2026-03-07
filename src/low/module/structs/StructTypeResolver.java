@@ -6,51 +6,58 @@ import ast.structs.StructFieldAccessNode;
 import ast.structs.StructNode;
 import ast.variables.VariableDeclarationNode;
 import ast.variables.VariableNode;
+import context.statics.symbols.ListType;
+import context.statics.symbols.StructType;
+import context.statics.symbols.Type;
 import low.main.TypeInfos;
 import low.module.TypeTable;
 
 import java.util.HashMap;
 import java.util.Map;
 
+
 public class StructTypeResolver {
 
     private final TypeTable types;
     private final StructRegistry structRegistry;
-    private final Map<String, String> listElementTypes = new HashMap<>();
+    private final Map<String, Type> listElementTypes = new HashMap<>();
 
     public StructTypeResolver(TypeTable types, StructRegistry structRegistry) {
         this.types = types;
         this.structRegistry = structRegistry;
     }
 
-    public String inferListElementType(ASTNode node) {
+    public Type inferListElementType(ASTNode node) {
         if (node instanceof VariableNode v) {
             return getListElementType(v.getName());
         }
+
         if (node instanceof StructFieldAccessNode sfa) {
-            String fieldType = getStructFieldType(sfa);
-            if (fieldType != null && fieldType.startsWith("List<") && fieldType.endsWith(">")) {
-                return fieldType.substring(5, fieldType.length() - 1).trim();
+            Type fieldType = getStructFieldType(sfa);
+            if (fieldType instanceof ListType lt) {
+                return lt.elementType();
             }
             return null;
         }
+
         if (node instanceof ListGetNode lg) {
             return inferListElementType(lg.getListName());
         }
+
         return null;
     }
-
-    public void registerListElementType(String varName, String elementType) {
-        if (varName == null || elementType == null) return;
-        listElementTypes.put(varName, elementType);
+    public void registerListElementType(String varName, Type elementType) {
+        if (varName != null && elementType != null) {
+            listElementTypes.put(varName, elementType);
+        }
     }
 
-    public String getListElementType(String varName) {
+    public Type getListElementType(String varName) {
         if (varName == null) return null;
         return listElementTypes.get(varName);
     }
 
-    public String getStructFieldType(StructFieldAccessNode node) {
+    public Type getStructFieldType(StructFieldAccessNode node) {
         String structName;
 
         if (node.getStructInstance() instanceof VariableNode varNode) {
@@ -58,24 +65,19 @@ public class StructTypeResolver {
             if (receiverInfo == null) {
                 throw new RuntimeException("Unknown receiver type for struct field access: " + node);
             }
-            structName = receiverInfo.getSourceType()
-                    .replace("%", "")
-                    .replace("*", "");
+            structName = extractStructName(receiverInfo.getType());
         } else if (node.getStructInstance() instanceof StructFieldAccessNode nested) {
-            String receiverType = getStructFieldType(nested);
-            if (receiverType.startsWith("Struct<") && receiverType.endsWith(">")) {
-                structName = receiverType.substring("Struct<".length(), receiverType.length() - 1);
-            } else {
-                structName = receiverType.replace("%", "").replace("*", "");
-            }
+            Type receiverType = getStructFieldType(nested);
+            structName = receiverType instanceof StructType st
+                    ? st.name()
+                    : receiverType.toString();
         } else if (node.getStructInstance() instanceof ListGetNode lg) {
-            String elem = inferListElementType(lg.getListName());
-            if (elem == null) {
-                throw new RuntimeException("Cannot infer element type from ListGet receiver: " + lg);
+            Type elemType = inferListElementType(lg.getListName());
+            if (elemType instanceof StructType st) {
+                structName = st.name();
+            } else {
+                throw new RuntimeException("Cannot infer struct from ListGet: " + lg);
             }
-            structName = elem.startsWith("Struct<") && elem.endsWith(">")
-                    ? elem.substring("Struct<".length(), elem.length() - 1)
-                    : elem;
         } else {
             throw new RuntimeException("Unsupported receiver in struct field access");
         }
@@ -83,75 +85,71 @@ public class StructTypeResolver {
         String normalized = normalizeStructKey(structName);
         StructNode structNode = structRegistry.get(normalized);
         if (structNode == null) {
-            throw new RuntimeException("Struct not found: " + structName + " (normalized=" + normalized + ")");
+            throw new RuntimeException("Struct not found: " + structName);
         }
 
         for (VariableDeclarationNode field : structNode.getFields()) {
+            Type fieldType = field.getType(); // agora Type
             if (field.getName().equals(node.getFieldName())) {
-                return field.getType();
+                return fieldType;
             }
         }
 
         throw new RuntimeException("Field not found: " + node.getFieldName() + " in struct " + structName);
     }
 
-    public String resolveStructName(ASTNode node) {
-        // variável simples
-        if (node instanceof VariableNode varNode) {
-            TypeInfos type = types.getVarType(varNode.getName());
-            if (type != null) {
-                String t = type.getSourceType();
-                if (t.startsWith("Struct<") && t.endsWith(">")) {
-                    return t.substring(7, t.length() - 1).trim();
-                }
-                if (t.startsWith("Struct ")) {
-                    return t.substring(7).trim();
-                }
-                return t.replace("%", "").replace("*", "");
-            }
-            throw new RuntimeException("Unknown variable struct type: " + varNode.getName());
-        }
-
-        if (node instanceof StructFieldAccessNode sfa) {
-            String parentType = getStructFieldType(sfa);
-            if (parentType.startsWith("Struct<") && parentType.endsWith(">")) {
-                return parentType.substring(7, parentType.length() - 1).trim();
-            }
-            if (parentType.startsWith("Struct ")) {
-                return parentType.substring(7).trim();
-            }
-            return parentType.replace("%", "").replace("*", "");
-        }
-
-        if (node instanceof ListGetNode lg) {
-            String elem = inferListElementType(lg.getListName());
-            if (elem == null) {
-                throw new RuntimeException("Cannot resolve struct name from list element type");
-            }
-            if (elem.startsWith("Struct<") && elem.endsWith(">")) {
-                return elem.substring(7, elem.length() - 1).trim();
-            }
-            if (elem.startsWith("Struct ")) {
-                return elem.substring(7).trim();
-            }
-            return elem.replace("%", "").replace("*", "");
-        }
-
-        throw new RuntimeException("Cannot resolve struct name from node type: " + node.getClass().getSimpleName());
-    }
-
     private String normalizeStructKey(String name) {
         if (name == null) return null;
         name = name.trim();
-
         if (name.startsWith("Struct<") && name.endsWith(">")) {
             return name.substring(7, name.length() - 1).trim();
         }
-
         if (name.startsWith("Struct ")) {
             return name.substring(7).trim();
         }
-
         return name;
     }
+
+    private String extractStructName(Type type) {
+        if (type instanceof StructType st) {
+            return st.name();
+        }
+        return type.toString();
+    }
+
+    /**
+     * Resolve o nome da struct de um ASTNode (VariableNode, StructFieldAccessNode, ListGetNode).
+     */
+    public String resolveStructName(ASTNode node) {
+        if (node instanceof VariableNode varNode) {
+            TypeInfos info = types.getVarType(varNode.getName());
+            if (info == null) {
+                throw new RuntimeException("Unknown variable: " + varNode.getName());
+            }
+            return extractStructName(info.getType());
+        }
+
+        if (node instanceof StructFieldAccessNode sfa) {
+            Type fieldType = getStructFieldType(sfa);
+            if (fieldType instanceof StructType st) {
+                return st.name();
+            } else {
+                throw new RuntimeException("Field is not a struct: " + sfa);
+            }
+        }
+
+        if (node instanceof ListGetNode lg) {
+            Type elemType = inferListElementType(lg.getListName());
+            if (elemType instanceof StructType st) {
+                return st.name();
+            } else {
+                throw new RuntimeException("List element is not a struct: " + lg);
+            }
+        }
+
+        throw new RuntimeException("Cannot resolve struct name from node: " + node);
+    }
+
+
+
 }

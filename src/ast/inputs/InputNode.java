@@ -3,6 +3,9 @@ package ast.inputs;
 import ast.ASTNode;
 import context.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
+import context.statics.symbols.InputType;
+import context.statics.symbols.PrimitiveTypes;
+import context.statics.symbols.Type;
 import low.module.LLVMEmitVisitor;
 
 import java.util.Scanner;
@@ -31,27 +34,28 @@ public class InputNode extends ASTNode {
 
         try {
             int intValue = Integer.parseInt(input);
-            return new TypedValue("int", intValue);
+            return new TypedValue(PrimitiveTypes.INT, intValue);
         } catch (NumberFormatException ignored) {}
 
         try {
             double doubleValue = Double.parseDouble(input);
-            return new TypedValue("double", doubleValue);
+            return new TypedValue(PrimitiveTypes.DOUBLE, doubleValue);
         } catch (NumberFormatException ignored) {}
 
         if (input.equalsIgnoreCase("true")) {
-            return new TypedValue("boolean", true);
+            return new TypedValue(PrimitiveTypes.BOOL, true);
         }
         if (input.equalsIgnoreCase("false")) {
-            return new TypedValue("boolean", false);
+            return
+                    new TypedValue(PrimitiveTypes.BOOL, false);
         }
 
-        return new TypedValue("string", input);
+        return new TypedValue(PrimitiveTypes.STRING, input);
     }
 
     @Override
-    public String getType() {
-        return "input";
+    public Type getType() {
+        return new InputType();
     }
 
     @Override

@@ -1,9 +1,12 @@
 package low.structs.helpers;
 
 import ast.structs.StructNode;
+import context.statics.symbols.ListType;
+import context.statics.symbols.PrimitiveTypes;
+import context.statics.symbols.StructType;
+import context.statics.symbols.Type;
 import low.functions.TypeMapper;
 import low.module.LLVisitorMain;
-
 public class StructTypeResolver {
 
     private final LLVisitorMain visitorMain;
@@ -15,39 +18,57 @@ public class StructTypeResolver {
     }
 
     public String resolveLLVMName(String logicalName) {
-            StructNode n = visitorMain.getStructNode(logicalName);
+        StructNode n = visitorMain.getStructNode(logicalName);
+
         if (n != null && n.getLLVMName() != null && !n.getLLVMName().isBlank()) {
             return n.getLLVMName();
         }
+
         return logicalName;
     }
 
-    public String toLLVMFieldType(String type) {
+    public String toLLVMFieldType(Type type) {
 
-        if (type.startsWith("List<")) {
-            visitorMain.tiposDeListasUsados.add(type);
 
-            String inner = type.substring(5, type.length() - 1).trim();
+        if (type instanceof ListType listType) {
 
-            return switch (inner) {
-                case "int" -> "%struct.ArrayListInt*";
-                case "double" -> "%struct.ArrayListDouble*";
-                case "boolean", "bool" -> "%struct.ArrayListBool*";
-                case "string", "String", "?" -> "%ArrayList*";
-                default -> "%ArrayList*";
-            };
+            Type inner = listType.elementType();
+
+            visitorMain.tiposDeListasUsados.add(inner);
+
+            if (inner instanceof PrimitiveTypes prim) {
+
+                return switch (prim.name()) {
+                    case "int" -> "%struct.ArrayListInt*";
+                    case "double" -> "%struct.ArrayListDouble*";
+                    case "boolean", "bool" -> "%struct.ArrayListBool*";
+                    case "string", "String" -> "%ArrayList*";
+                    default -> "%ArrayList*";
+                };
+            }
+
+            if (inner instanceof StructType structType) {
+                return "%ArrayList*";
+            }
+
+            return "%ArrayList*";
         }
 
-        if (type.startsWith("Struct ")) {
-            String inner = type.substring(7).trim();
-            return "%" + resolveLLVMName(inner) + "*";
+
+        if (type instanceof StructType structType) {
+
+            String llvmName = resolveLLVMName(structType.name());
+
+            return "%" + llvmName + "*";
         }
 
-        if (type.startsWith("Struct<")) {
-            String inner = type.substring(7, type.length() - 1).trim();
-            return "%" + resolveLLVMName(inner) + "*";
+
+
+        if (type instanceof PrimitiveTypes prim) {
+            return typeMapper.toLLVM(prim);
         }
 
-        return typeMapper.toLLVM(type);
+
+        return "i8*";
     }
 }

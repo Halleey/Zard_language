@@ -29,14 +29,14 @@ public class ExpressionInitEmitter {
         String llvmType = info.getLLVMType();
         String varName  = node.getName();
 
-        if (node.initializer instanceof StructInstanceNode
+        if (node.getInitializer() instanceof StructInstanceNode
                 && visitor.escapesVar(varName)
                 && llvmType.endsWith("*")) {
 
             return emitEscapingStructInit(node, info);
         }
 
-        String exprLLVM = node.initializer.accept(visitor);
+        String exprLLVM = node.getInitializer().accept(visitor);
         String temp     = extractor.extractTemp(exprLLVM);
         String tempType = extractor.extractType(exprLLVM);
 

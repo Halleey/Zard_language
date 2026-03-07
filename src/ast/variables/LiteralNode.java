@@ -4,6 +4,7 @@ import ast.ASTNode;
 import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
+import context.statics.symbols.Type;
 import low.module.LLVMEmitVisitor;
 
 public class LiteralNode extends ASTNode {
@@ -12,7 +13,8 @@ public class LiteralNode extends ASTNode {
     public TypedValue getValue() {
         return value;
     }
-    public String getType() {
+    @Override
+    public Type getType() {
         return value.type();
     }
 

@@ -10,6 +10,8 @@ import low.structs.helpers.StructTypeResolver;
 
 import java.util.ArrayList;
 import java.util.List;
+
+
 public class StructEmitter {
 
     private final StructTypeResolver resolver;

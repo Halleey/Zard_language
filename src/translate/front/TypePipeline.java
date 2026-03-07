@@ -1,11 +1,9 @@
 package translate.front;
 
 import ast.ASTNode;
-import ast.TypeSpecializer;
 import ast.home.MainAST;
-import ast.structs.ImplNode;
-import ast.structs.StructNode;
 import low.module.LLVisitorMain;
+import memory_manager.ownership.escapes.EscapeInfo;
 
 import java.util.List;
 public class TypePipeline {
@@ -17,18 +15,13 @@ public class TypePipeline {
     }
 
     public LLVisitorMain process(List<ASTNode> ast) {
-        TypeSpecializer specializer = new TypeSpecializer();
-        LLVisitorMain visitor = new LLVisitorMain(specializer);
-        specializer.setVisitor(visitor);
-
-
+        LLVisitorMain visitor = new LLVisitorMain(new EscapeInfo());
         for (ASTNode node : ast) {
             if (node instanceof MainAST main) {
                 visitor.registrarStructs(main);
             }
         }
 
-        specializer.specialize(ast);
 
         return visitor;
     }

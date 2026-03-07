@@ -4,7 +4,7 @@ import ast.ASTNode;
 import ast.prints.PrintNode;
 import ast.structs.StructFieldAccessNode;
 import ast.variables.VariableNode;
-import context.statics.Symbol;
+import context.statics.symbols.Symbol;
 import memory_manager.ownership.OwnershipAnnotation;
 import memory_manager.ownership.VarOwnerShip;
 import memory_manager.ownership.enums.OwnerShipAction;

@@ -7,7 +7,6 @@ import context.statics.symbols.Type;
 import low.functions.TypeMapper;
 
 import static context.statics.symbols.PrimitiveTypes.*;
-import static tokens.Token.TokenType.BOOLEAN;
 
 public class StructFieldPrint {
 
@@ -32,7 +31,6 @@ public class StructFieldPrint {
                 .append(index)
                 .append("\n");
 
-        // ===== PRIMITIVE =====
         if (fieldType instanceof PrimitiveTypes prim) {
 
             String llvmType = typeMapper.toLLVM(prim);
@@ -73,14 +71,24 @@ public class StructFieldPrint {
 
         else if (fieldType instanceof ListType listType) {
 
+            Type elemType = listType.elementType();
+
+            String llvmListType = resolver.toLLVMFieldType(listType);
+
             sb.append("  ").append(val)
-                    .append(" = load %ArrayList*, %ArrayList** ")
+                    .append(" = load ")
+                    .append(llvmListType)
+                    .append(", ")
+                    .append(llvmListType)
+                    .append("* ")
                     .append(ptr)
                     .append("\n");
 
-            sb.append("  call void @print_list(%ArrayList* ")
-                    .append(val)
-                    .append(")\n");
+            emitListPrint(sb, elemType, val);
+        }
+
+        else {
+            throw new RuntimeException("Unsupported struct field type: " + fieldType);
         }
     }
 
@@ -90,17 +98,46 @@ public class StructFieldPrint {
             sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 ")
                     .append(value)
                     .append(")\n");
+
         } else if (prim.equals(DOUBLE)) {
             sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double ")
                     .append(value)
                     .append(")\n");
+
         } else if (prim.equals(BOOL)) {
             sb.append("  %vb = zext i1 ").append(value).append(" to i32\n");
             sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %vb)\n");
+
         } else if (prim.equals(STRING)) {
             sb.append("  call void @printString(%String* ").append(value).append(")\n");
+
         } else {
             throw new RuntimeException("Unsupported primitive print: " + prim);
+        }
+    }
+
+    private void emitListPrint(StringBuilder sb, Type elemType, String value) {
+
+        if (elemType.equals(INT)) {
+
+            sb.append("  call void @arraylist_print_int(%struct.ArrayListInt* ")
+                    .append(value)
+                    .append(")\n");
+
+        } else if (elemType.equals(DOUBLE)) {
+
+            sb.append("  call void @arraylist_print_double(%struct.ArrayListDouble* ")
+                    .append(value)
+                    .append(")\n");
+
+        } else {
+
+            // fallback genérico
+            sb.append("  %tmp_list_cast = bitcast ")
+                    .append(value)
+                    .append(" to %ArrayList*\n");
+
+            sb.append("  call void @print_list(%ArrayList* %tmp_list_cast)\n");
         }
     }
 }

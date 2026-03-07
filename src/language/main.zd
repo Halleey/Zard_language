@@ -1,40 +1,10 @@
-import "src/language/stdlib/Math.zd" as math;
-
 main {
-    double a = 10;
-    double b = 3;
-    int n = 5;
+
+Struct People {
+
+List<int> numeros;
+}
+People p;
 
 
-    println(math.sum(a, b));
-    println(math.sub(a, b));
-    println(math.mul(a, b));
-    println(math.div(a, b));
-
-
-    println(math.pow(a, 3));
-
-
-    println(math.factorial(n));
-
-    println(math.sqrt(a));
-
-
-    println(math.sin(a));
-    println(math.cos(a));
-
-
-
-
-
-    println("Tentando dividir por zero:");
-    println(math.div(a, 0));
-
-    println("Tentando fatorial de número negativo:");
-    println(math.factorial(-3));
-
-    println("Tentando raiz quadrada de número negativo:");
-    println(math.sqrt(-9));
-
-    println("Fim dos testes.");
 }

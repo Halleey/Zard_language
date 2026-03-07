@@ -80,8 +80,6 @@ public class FunctionCallNode extends ASTNode {
             throw new RuntimeException("Função não declarada: " + name);
         }
 
-        System.out.println("função em processamento atualmente " + fn.getName());
-
         this.type = fn.getReturnType();
     }
 

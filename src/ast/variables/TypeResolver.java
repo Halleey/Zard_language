@@ -11,10 +11,6 @@ public final class TypeResolver {
         }
 
         typeStr = typeStr.trim();
-        System.out.println("tipo que cchegou " + typeStr);
-
-
-
 
         switch (typeStr) {
             case "int": return PrimitiveTypes.INT;

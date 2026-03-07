@@ -12,7 +12,6 @@ import low.TempManager;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
 
-
 public class ListPrintHandler implements PrintHandler {
 
     private final TempManager temps;
@@ -30,8 +29,8 @@ public class ListPrintHandler implements PrintHandler {
         }
 
         if (node instanceof StructFieldAccessNode sfa) {
-            Type type = visitor.inferListElementType(sfa);
-            return type instanceof ListType;
+            Type elem = visitor.inferListElementType(sfa);
+            return elem != null;
         }
 
         if (node instanceof FunctionCallNode fn) {
@@ -47,10 +46,8 @@ public class ListPrintHandler implements PrintHandler {
 
         StringBuilder sb = new StringBuilder();
         String llvmType;
-        String tmp = temps.newTemp();
+        String val;
         Type elementType;
-
-        /* ================= VARIABLE ================= */
 
         if (node instanceof VariableNode varNode) {
 
@@ -60,53 +57,12 @@ public class ListPrintHandler implements PrintHandler {
             if (info == null)
                 throw new RuntimeException("Variável não registrada: " + varNode.getName());
 
-            Type type = info.getType();
-            if (!(type instanceof ListType listType))
-                throw new RuntimeException("Esperado ListType");
-
+            ListType listType = (ListType) info.getType();
             elementType = listType.elementType();
             llvmType = info.getLLVMType();
 
-            switch (llvmType) {
+            val = loadPointer(sb, llvmVar, llvmType);
 
-                case "%struct.ArrayListInt*" -> {
-                    sb.append("  ").append(tmp)
-                            .append(" = load %struct.ArrayListInt*, %struct.ArrayListInt** ")
-                            .append(llvmVar).append("\n");
-
-                    sb.append("  call void @arraylist_print_int(%struct.ArrayListInt* ")
-                            .append(tmp).append(", i1 ")
-                            .append(newline ? "1" : "0").append(")\n");
-                }
-
-                case "%struct.ArrayListDouble*" -> {
-                    sb.append("  ").append(tmp)
-                            .append(" = load %struct.ArrayListDouble*, %struct.ArrayListDouble** ")
-                            .append(llvmVar).append("\n");
-
-                    sb.append("  call void @arraylist_print_double(%struct.ArrayListDouble* ")
-                            .append(tmp).append(", i1 ")
-                            .append(newline ? "1" : "0").append(")\n");
-                }
-
-                case "%struct.ArrayListBool*" -> {
-                    sb.append("  ").append(tmp)
-                            .append(" = load %struct.ArrayListBool*, %struct.ArrayListBool** ")
-                            .append(llvmVar).append("\n");
-
-                    sb.append("  call void @arraylist_print_bool(%struct.ArrayListBool* ")
-                            .append(tmp).append(", i1 ")
-                            .append(newline ? "1" : "0").append(")\n");
-                }
-
-                default -> {
-                    sb.append("  ").append(tmp)
-                            .append(" = load %ArrayList*, %ArrayList** ")
-                            .append(llvmVar).append("\n");
-
-                    handleGeneric(elementType, sb, tmp, newline);
-                }
-            }
         }
 
         else if (node instanceof StructFieldAccessNode sfa) {
@@ -114,45 +70,16 @@ public class ListPrintHandler implements PrintHandler {
             String accessIR = visitor.visit(sfa);
             sb.append(accessIR);
 
-            String val = extractTemp(accessIR);
+            val = extractTemp(accessIR);
             llvmType = extractType(accessIR);
 
-            Type listType = visitor.inferListElementType(sfa);
-            if (!(listType instanceof ListType lt))
-                throw new RuntimeException("Esperado ListType em StructFieldAccess");
+            elementType = visitor.inferListElementType(sfa);
 
-            elementType = lt.elementType();
+            if (elementType == null)
+                throw new RuntimeException("Não foi possível inferir tipo da lista em StructFieldAccess");
 
-            if (llvmType.endsWith("**")) {
-                String loaded = temps.newTemp();
-                sb.append("  ").append(loaded)
-                        .append(" = load ")
-                        .append(llvmType, 0, llvmType.length() - 1)
-                        .append(", ").append(llvmType).append(" ")
-                        .append(val).append("\n");
-
-                val = loaded;
-                llvmType = llvmType.substring(0, llvmType.length() - 1);
-            }
-
-            switch (llvmType) {
-                case "%struct.ArrayListInt*" ->
-                        sb.append("  call void @arraylist_print_int(%struct.ArrayListInt* ")
-                                .append(val).append(", i1 ")
-                                .append(newline ? "1" : "0").append(")\n");
-
-                case "%struct.ArrayListDouble*" ->
-                        sb.append("  call void @arraylist_print_double(%struct.ArrayListDouble* ")
-                                .append(val).append(", i1 ")
-                                .append(newline ? "1" : "0").append(")\n");
-
-                case "%struct.ArrayListBool*" ->
-                        sb.append("  call void @arraylist_print_bool(%struct.ArrayListBool* ")
-                                .append(val).append(", i1 ")
-                                .append(newline ? "1" : "0").append(")\n");
-
-                default -> handleGeneric(elementType, sb, val, newline);
-            }
+            val = ensureLoaded(sb, val, llvmType);
+            llvmType = normalizePointer(llvmType);
         }
 
         else if (node instanceof FunctionCallNode callNode) {
@@ -160,111 +87,177 @@ public class ListPrintHandler implements PrintHandler {
             String callIR = visitor.visit(callNode);
             sb.append(callIR);
 
-            String val = extractTemp(callIR);
+            val = extractTemp(callIR);
             llvmType = extractType(callIR);
 
             if ("i8*".equals(llvmType)) {
                 String casted = temps.newTemp();
                 sb.append("  ").append(casted)
                         .append(" = bitcast i8* ")
-                        .append(val).append(" to %ArrayList*\n");
+                        .append(val)
+                        .append(" to %ArrayList*\n");
 
                 val = casted;
                 llvmType = "%ArrayList*";
             }
 
             TypeInfos fnType = visitor.getFunctionType(callNode.getName());
+
             if (fnType == null || !(fnType.getType() instanceof ListType lt))
                 throw new RuntimeException("Função não retorna lista: " + callNode.getName());
 
             elementType = lt.elementType();
 
-            if (llvmType.endsWith("**")) {
-                String loaded = temps.newTemp();
-                sb.append("  ").append(loaded)
-                        .append(" = load ")
-                        .append(llvmType, 0, llvmType.length() - 1)
-                        .append(", ").append(llvmType).append(" ")
-                        .append(val).append("\n");
-
-                val = loaded;
-                llvmType = llvmType.substring(0, llvmType.length() - 1);
-            }
-
-            switch (llvmType) {
-                case "%struct.ArrayListInt*" ->
-                        sb.append("  call void @arraylist_print_int(%struct.ArrayListInt* ")
-                                .append(val).append(", i1 ")
-                                .append(newline ? "1" : "0").append(")\n");
-
-                case "%struct.ArrayListDouble*" ->
-                        sb.append("  call void @arraylist_print_double(%struct.ArrayListDouble* ")
-                                .append(val).append(", i1 ")
-                                .append(newline ? "1" : "0").append(")\n");
-
-                case "%struct.ArrayListBool*" ->
-                        sb.append("  call void @arraylist_print_bool(%struct.ArrayListBool* ")
-                                .append(val).append(", i1 ")
-                                .append(newline ? "1" : "0").append(")\n");
-
-                default -> handleGeneric(elementType, sb, val, newline);
-            }
+            val = ensureLoaded(sb, val, llvmType);
+            llvmType = normalizePointer(llvmType);
         }
 
         else {
             throw new RuntimeException("ListPrintHandler não sabe lidar com: " + node.getClass());
         }
 
+        emitPrintCall(sb, llvmType, val, elementType, newline);
+
         return sb.toString();
+    }
+
+    private String loadPointer(StringBuilder sb, String llvmVar, String llvmType) {
+
+        String tmp = temps.newTemp();
+
+        sb.append("  ").append(tmp)
+                .append(" = load ")
+                .append(llvmType).append(", ")
+                .append(llvmType).append("* ")
+                .append(llvmVar).append("\n");
+
+        return tmp;
+    }
+
+    private String ensureLoaded(StringBuilder sb, String val, String llvmType) {
+
+        if (!llvmType.endsWith("**"))
+            return val;
+
+        String loaded = temps.newTemp();
+
+        sb.append("  ").append(loaded)
+                .append(" = load ")
+                .append(llvmType, 0, llvmType.length() - 1)
+                .append(", ")
+                .append(llvmType)
+                .append(" ")
+                .append(val)
+                .append("\n");
+
+        return loaded;
+    }
+
+    private String normalizePointer(String llvmType) {
+        if (llvmType.endsWith("**"))
+            return llvmType.substring(0, llvmType.length() - 1);
+        return llvmType;
+    }
+
+    private void emitPrintCall(StringBuilder sb,
+                               String llvmType,
+                               String val,
+                               Type elementType,
+                               boolean newline) {
+
+        switch (llvmType) {
+
+            case "%struct.ArrayListInt*" ->
+                    sb.append("  call void @arraylist_print_int(%struct.ArrayListInt* ")
+                            .append(val)
+                            .append(", i1 ")
+                            .append(newline ? "1" : "0")
+                            .append(")\n");
+
+            case "%struct.ArrayListDouble*" ->
+                    sb.append("  call void @arraylist_print_double(%struct.ArrayListDouble* ")
+                            .append(val)
+                            .append(", i1 ")
+                            .append(newline ? "1" : "0")
+                            .append(")\n");
+
+            case "%struct.ArrayListBool*" ->
+                    sb.append("  call void @arraylist_print_bool(%struct.ArrayListBool* ")
+                            .append(val)
+                            .append(", i1 ")
+                            .append(newline ? "1" : "0")
+                            .append(")\n");
+
+            default -> handleGeneric(elementType, sb, val, newline);
+        }
     }
 
     private void handleGeneric(Type elemType,
                                StringBuilder sb,
-                               String tmp,
+                               String val,
                                boolean newline) {
 
         if (elemType == null) {
+
             sb.append("  call void @arraylist_print_ptr(%ArrayList* ")
-                    .append(tmp)
+                    .append(val)
                     .append(", void (i8*)* null, i1 ")
                     .append(newline ? "1" : "0")
                     .append(")\n");
+
             return;
         }
 
         if (elemType == PrimitiveTypes.INT) {
+
             sb.append("  call void @arraylist_print_int(%struct.ArrayListInt* ")
-                    .append(tmp).append(", i1 ")
-                    .append(newline ? "1" : "0").append(")\n");
+                    .append(val)
+                    .append(", i1 ")
+                    .append(newline ? "1" : "0")
+                    .append(")\n");
+
             return;
         }
 
         if (elemType == PrimitiveTypes.DOUBLE) {
+
             sb.append("  call void @arraylist_print_double(%struct.ArrayListDouble* ")
-                    .append(tmp).append(", i1 ")
-                    .append(newline ? "1" : "0").append(")\n");
+                    .append(val)
+                    .append(", i1 ")
+                    .append(newline ? "1" : "0")
+                    .append(")\n");
+
             return;
         }
 
         if (elemType == PrimitiveTypes.BOOL) {
+
             sb.append("  call void @arraylist_print_bool(%struct.ArrayListBool* ")
-                    .append(tmp).append(", i1 ")
-                    .append(newline ? "1" : "0").append(")\n");
+                    .append(val)
+                    .append(", i1 ")
+                    .append(newline ? "1" : "0")
+                    .append(")\n");
+
             return;
         }
 
         if (elemType == PrimitiveTypes.STRING) {
+
             sb.append("  call void @arraylist_print_string(%ArrayList* ")
-                    .append(tmp).append(", i1 ")
-                    .append(newline ? "1" : "0").append(")\n");
+                    .append(val)
+                    .append(", i1 ")
+                    .append(newline ? "1" : "0")
+                    .append(")\n");
+
             return;
         }
 
         if (elemType instanceof StructType structType) {
+
             String structName = structType.name().replace('.', '_');
 
             sb.append("  call void @arraylist_print_ptr(%ArrayList* ")
-                    .append(tmp)
+                    .append(val)
                     .append(", void (i8*)* @print_")
                     .append(structName)
                     .append(", i1 ")
@@ -274,17 +267,24 @@ public class ListPrintHandler implements PrintHandler {
     }
 
     private String extractTemp(String code) {
+
         int v = code.lastIndexOf(";;VAL:");
         if (v == -1) return "";
+
         int t = code.indexOf(";;TYPE:", v);
-        return (t == -1) ? "" : code.substring(v + 6, t).trim();
+        if (t == -1) return "";
+
+        return code.substring(v + 6, t).trim();
     }
 
     private String extractType(String code) {
+
         int t = code.lastIndexOf(";;TYPE:");
         if (t == -1) return "";
+
         int end = code.indexOf("\n", t);
         if (end == -1) end = code.length();
+
         return code.substring(t + 7, end).trim();
     }
 }

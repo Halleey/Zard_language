@@ -1,10 +1,12 @@
 main {
 
 Struct People {
-
+string nome;
 List<int> numeros;
 }
 People p;
-
+p.nome = "zard";
+println(p.numeros);
+println(p);
 
 }

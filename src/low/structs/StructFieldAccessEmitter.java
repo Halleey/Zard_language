@@ -19,27 +19,44 @@ import low.module.LLVisitorMain;
 
 import java.util.List;
 
-
 public class StructFieldAccessEmitter {
 
     private final TempManager temps;
     private final TypeMapper typeMapper = new TypeMapper();
 
+    private static final boolean DEBUG = true;
+
+    private void debug(String msg) {
+        if (DEBUG) System.out.println("[StructFieldAccessEmitter] " + msg);
+    }
+
     public StructFieldAccessEmitter(TempManager temps) {
         this.temps = temps;
-
     }
+
     public String emit(StructFieldAccessNode node, LLVisitorMain visitor) {
 
         StringBuilder llvm = new StringBuilder();
 
+        debug("=================================================");
+        debug("STRUCT FIELD ACCESS START");
+        debug("Field name: " + node.getFieldName());
+        debug("Instance AST: " + node.getStructInstance().getClass().getSimpleName());
+
         String structCode = node.getStructInstance().accept(visitor);
         llvm.append(structCode);
 
-        String structVal  = extractTemp(structCode);
+        debug("Generated struct code:\n" + structCode);
+
+        String structVal = extractTemp(structCode);
         String structLLVMType = extractType(structCode).trim();
 
+        debug("structVal = " + structVal);
+        debug("structLLVMType = " + structLLVMType);
+
         if (structLLVMType.endsWith("**")) {
+
+            debug("Detected pointer-to-pointer struct -> performing load");
 
             String base = structLLVMType.substring(0, structLLVMType.length() - 1);
             String tmp = temps.newTemp();
@@ -54,18 +71,28 @@ public class StructFieldAccessEmitter {
                     .append(";;TYPE:").append(base)
                     .append("\n");
 
+            debug("Loaded struct pointer: " + tmp);
+            debug("New structLLVMType: " + base);
+
             structVal = tmp;
             structLLVMType = base;
         }
+
         Type structSemanticType = node.getStructInstance().getType();
+
+        debug("Semantic type: " + structSemanticType);
+
         if (structSemanticType == null)
             structSemanticType = node.getType();
 
         String ownerType = resolveOwnerType(node.getStructInstance(), structSemanticType, visitor);
 
+        debug("Resolved owner struct type: " + ownerType);
+
         if (ownerType == null)
             throw new RuntimeException(
-                    "Não foi possível resolver struct dona do campo: " + node.getFieldName()
+                    "Não foi possível resolver struct dona do campo: "
+                            + node.getFieldName()
                             + " (llvmType=" + structLLVMType + ")"
             );
 
@@ -97,7 +124,12 @@ public class StructFieldAccessEmitter {
                             + " em struct " + ownerType
             );
 
+        debug("Field index inside struct: " + fieldIndex);
+        debug("Field semantic type: " + fieldDecl.getType());
+
         if (structLLVMType.equals("i8*")) {
+
+            debug("Struct stored as i8* -> performing bitcast");
 
             String castType = "%" + ownerType + "*";
             String castTemp = temps.newTemp();
@@ -119,6 +151,8 @@ public class StructFieldAccessEmitter {
 
         String structTypeNoPtr = structLLVMType.replace("*", "");
 
+        debug("Struct LLVM type (no ptr): " + structTypeNoPtr);
+
         String fieldPtr = temps.newTemp();
 
         llvm.append("  ").append(fieldPtr)
@@ -130,35 +164,51 @@ public class StructFieldAccessEmitter {
                 .append(fieldIndex)
                 .append("\n");
 
+        debug("Generated GEP pointer for field: " + fieldPtr);
+
         Type fieldType = fieldDecl.getType();
         String fieldLLVMType = typeMapper.toLLVM(fieldType);
 
-        TypeInfos fieldInfo = new TypeInfos(
-                fieldType,
-                fieldLLVMType
-        );
+        debug("Field LLVM type from TypeMapper: " + fieldLLVMType);
+
+        TypeInfos fieldInfo = new TypeInfos(fieldType, fieldLLVMType);
 
         if (node.getValue() != null) {
+
+            debug("FIELD ASSIGNMENT detected");
 
             String rhsCode;
 
             if (node.getValue() instanceof InputNode input) {
+
+                debug("RHS is InputNode");
+
                 rhsCode = new InputEmitter(
                         temps,
                         visitor.getGlobalStrings()
                 ).emit(input, fieldLLVMType);
+
             } else {
+
                 rhsCode = node.getValue().accept(visitor);
+
             }
 
             llvm.append(rhsCode);
 
+            debug("Generated RHS code:\n" + rhsCode);
+
             String rhsVal = extractTemp(rhsCode);
             String rhsType = extractType(rhsCode).trim();
+
+            debug("rhsVal = " + rhsVal);
+            debug("rhsType = " + rhsType);
 
             String storeVal = rhsVal;
 
             if (!rhsType.equals(fieldLLVMType)) {
+
+                debug("Type mismatch -> performing bitcast");
 
                 String cast = temps.newTemp();
 
@@ -181,6 +231,8 @@ public class StructFieldAccessEmitter {
                     .append(fieldPtr)
                     .append("\n");
 
+            debug("Store emitted");
+
             String ret = temps.newTemp();
 
             llvm.append("  ").append(ret)
@@ -194,10 +246,14 @@ public class StructFieldAccessEmitter {
                     .append(";;TYPE:").append(fieldLLVMType)
                     .append("\n");
 
+            debug("Reloaded field value: " + ret);
+
             visitor.putVarType(node.getFieldName(), fieldInfo);
         }
 
         else {
+
+            debug("FIELD LOAD detected");
 
             String loaded = temps.newTemp();
 
@@ -212,11 +268,19 @@ public class StructFieldAccessEmitter {
                     .append(";;TYPE:").append(fieldLLVMType)
                     .append("\n");
 
+            debug("Loaded field value: " + loaded);
+            debug("Returned LLVM type: " + fieldLLVMType);
+
             visitor.putVarType(node.getFieldName(), fieldInfo);
         }
 
+        debug("STRUCT FIELD ACCESS END");
+        debug("=================================================");
+
         return llvm.toString();
     }
+
+    // resto da classe permanece igual
     private String resolveOwnerType(ASTNode instance, Type fallbackType, LLVisitorMain visitor) {
 
         if (instance instanceof VariableNode var) {

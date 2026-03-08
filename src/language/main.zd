@@ -1,12 +1,13 @@
 main {
+int z = -09;
+List x = (3, z);
+println(x);
 
 Struct People {
-string nome;
-List<int> numeros;
+List<int> numero;
 }
 People p;
-p.nome = "zard";
-println(p.numeros);
-println(p);
+p.numero.add(18998);
+println(p.numero);
 
 }

@@ -21,27 +21,25 @@ public class TypeMapper {
         }
 
         if (type instanceof ListType list) {
-            Type elemType = list.elementType();
-            boolean isRef = list.isReference();
 
-            // Ex: List<int> -> %struct.ArrayListInt*
-            String llvmInner;
+            Type elemType = list.elementType();
+
             if (elemType instanceof PrimitiveTypes prim) {
-                llvmInner = switch (prim.name()) {
+                return switch (prim.name()) {
                     case "int"     -> "%struct.ArrayListInt*";
                     case "double"  -> "%struct.ArrayListDouble*";
                     case "boolean" -> "%struct.ArrayListBool*";
                     case "string"  -> "%ArrayList*";
-                    default       -> "%ArrayList*";
+                    default        -> "%ArrayList*";
                 };
-            } else if (elemType instanceof StructType st) {
-                String llvmName = LLVMNameUtils.llvmSafe(st.name());
-                llvmInner = "%" + llvmName + "ArrayList*";
-            } else {
-                llvmInner = "%ArrayList*";
             }
 
-            return isRef ? llvmInner + "*" : llvmInner;
+            if (elemType instanceof StructType st) {
+                String llvmName = LLVMNameUtils.llvmSafe(st.name());
+                return "%" + llvmName + "ArrayList*";
+            }
+
+            return "%ArrayList*";
         }
 
         if (type instanceof StructType st) {

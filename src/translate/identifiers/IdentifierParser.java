@@ -85,8 +85,9 @@ public class IdentifierParser {
                 Type receiverType = parser.getExpressionType(receiver);
 
                 if (receiverType instanceof StructType st) {
-                    StructFieldParser structParser = new StructFieldParser(parser);
-                    ASTNode structAccess = structParser.parseAsStatement(receiver, memberName);
+
+                    ASTNode structAccess =
+                            new StructFieldAccessNode(receiver, memberName, null);
 
                     if (parser.current().getValue().equals("{")) {
                         return parseInlineStructUpdate(structAccess);
@@ -95,15 +96,54 @@ public class IdentifierParser {
                     if (parser.current().getValue().equals("(")) {
                         List<ASTNode> args = parser.parseArguments();
                         parser.eat(Token.TokenType.DELIMITER, ";");
-                        return new StructMethodCallNode(receiver, st.name(), memberName, args);
+
+                        return new StructMethodCallNode(
+                                receiver,
+                                st.name(),
+                                memberName,
+                                args
+                        );
                     }
+
+                    if (parser.current().getValue().equals(".")) {
+
+                        parser.advance(); // consome '.'
+
+                        String nextMember = parser.current().getValue();
+                        parser.eat(Token.TokenType.IDENTIFIER);
+
+                        Type nextType = parser.getExpressionType(structAccess);
+
+                        if (nextType instanceof ListType) {
+
+                            ListMethodParser listParser = new ListMethodParser(parser);
+                            return listParser.parseStatementListMethod(structAccess, nextMember);
+                        }
+
+                        if (nextType instanceof StructType ) {
+
+                            ASTNode nestedAccess =
+                                    new StructFieldAccessNode(structAccess, nextMember, null);
+
+                            parser.eat(Token.TokenType.DELIMITER, ";");
+
+                            return nestedAccess;
+                        }
+                    }
+
+                    parser.eat(Token.TokenType.DELIMITER, ";");
 
                     return structAccess;
                 }
 
                 if (receiverType instanceof ListType) {
+
+                    ASTNode listAccess =
+                            new StructFieldAccessNode(receiver, memberName, null);
+
                     ListMethodParser listParser = new ListMethodParser(parser);
-                    return listParser.parseStatementListMethod(receiver, memberName);
+
+                    return listParser.parseStatementListMethod(listAccess, memberName);
                 }
 
                 parser.advance();

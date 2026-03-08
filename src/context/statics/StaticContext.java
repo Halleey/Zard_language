@@ -4,6 +4,7 @@ import ast.functions.FunctionNode;
 import ast.variables.TypeResolver;
 import context.statics.structs.StaticStructDefinition;
 import context.statics.symbols.*;
+import helpers.debugs.Debug;
 
 import java.util.*;
 
@@ -74,6 +75,8 @@ public final class StaticContext {
     }
 
     public Symbol declareVariable(String name, Type type) {
+        Debug.ENABLE = true;
+        Debug.log("Tentando declarar variável '" + name + "' no escopo " + kind + " (id=" + id + ")");
 
         boolean isPrimitive = type instanceof PrimitiveTypes;
 
@@ -88,6 +91,7 @@ public final class StaticContext {
         }
 
         if (variables.containsKey(name)) {
+            Debug.log("Variável já existe neste escopo: " + name);
             throw new RuntimeException(
                     "Variável já declarada neste escopo (" + kind + "): " + name
             );
@@ -95,6 +99,8 @@ public final class StaticContext {
 
         Symbol sym = new Symbol(name, type, nextSlot++, this);
         variables.put(name, sym);
+
+        Debug.log("Declarada com sucesso: '" + name + "' no escopo " + kind + " (id=" + id + ")");
         return sym;
     }
 

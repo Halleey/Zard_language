@@ -46,8 +46,8 @@ public class IdentifierParser {
                 ASTNode initializer;
                 if (parser.current().getValue().equals("{")) {
                     StructInstanceParser structParser = new StructInstanceParser(parser);
-                    initializer = structParser.parseStructInstanceAfterKeyword(structName, varName);
-                } else {
+                    return structParser.parseStructInstanceAfterKeyword(structName, varName);
+                }else {
                     initializer = parser.parseExpression();
                 }
 
@@ -55,7 +55,6 @@ public class IdentifierParser {
                 return new VariableDeclarationNode(varName, new StructType(structName), initializer);
             }
 
-            // Instanciação direta com chaves
             if (parser.current().getValue().equals("{")) {
                 StructInstanceParser structParser = new StructInstanceParser(parser);
                 ASTNode initializer = structParser.parseStructInstanceAfterKeyword(structName, varName);

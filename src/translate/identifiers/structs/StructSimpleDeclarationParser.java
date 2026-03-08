@@ -6,6 +6,8 @@ import context.statics.symbols.StructType;
 import context.statics.symbols.Type;
 import tokens.Token;
 import translate.front.Parser;
+
+
 public class StructSimpleDeclarationParser {
 
     private final Parser parser;

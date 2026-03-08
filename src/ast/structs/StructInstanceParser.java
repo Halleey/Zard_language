@@ -24,8 +24,9 @@ public class StructInstanceParser {
     public StructInstanceParser(Parser parser) {
         this.parser = parser;
     }
-
     public VariableDeclarationNode parseStructInstanceAfterKeyword(String structName, String varName) {
+
+        System.out.println("[StructInstanceParser] Começando para " + varName + " do tipo " + structName);
 
         Type innerType = parseOptionalInnerType();
 
@@ -60,6 +61,8 @@ public class StructInstanceParser {
                 new StructInstanceNode(structName, positionalValues, namedValues);
 
         instanceNode.setResolvedType(variableType);
+
+        System.out.println("[StructInstanceParser] Declarando variável " + varName + " com tipo " + variableType);
 
         parser.declareVariable(varName, variableType);
 

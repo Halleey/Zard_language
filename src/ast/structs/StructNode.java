@@ -70,6 +70,7 @@ public class StructNode extends ASTNode {
                         "Campo duplicado no struct " + name + ": " + f.getName()
                 );
             }
+            f.bindChildren(structCtx);
         }
 
         List<StaticFields> staticFields = new ArrayList<>();

@@ -5,6 +5,7 @@ import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import context.statics.ScopeKind;
 import ast.expressions.TypedValue;
+import helpers.debugs.Debug;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;
@@ -47,13 +48,20 @@ public class MainAST extends ASTNode {
     public List<ASTNode> getChildren() {
         return body;
     }
-
     @Override
     public void bindChildren(StaticContext ctx) {
         for (ASTNode stmt : body) {
+            Debug.ENABLE = true;
+            if (Debug.ENABLE) {
+                System.out.println("[DEBUG] Bind do node: " + stmt.getClass().getSimpleName());
+                if (stmt instanceof ast.variables.VariableDeclarationNode varNode) {
+                    System.out.println("[DEBUG] Tentando bind variável '" + varNode.getName() + "' no escopo " + ctx.getKind() + " (id=" + ctx.getId() + ")");
+                }
+            }
             stmt.bind(ctx);
         }
+        if (Debug.ENABLE) {
+            System.out.println("[DEBUG] Bind do MainAST concluído no escopo " + ctx.getKind() + " (id=" + ctx.getId() + ")");
+        }
     }
-
-
 }

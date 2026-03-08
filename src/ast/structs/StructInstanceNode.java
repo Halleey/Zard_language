@@ -37,7 +37,7 @@ public class StructInstanceNode extends ASTNode {
 
     public Map<String, ASTNode> getNamedValues() { return namedValues; }
 
-    public Type getResolvedType() { return resolvedType; } // 🔥 NOVO
+    public Type getResolvedType() { return resolvedType; }
 
     @Override
     public Type getType() {

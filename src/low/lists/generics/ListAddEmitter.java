@@ -87,6 +87,7 @@ public class ListAddEmitter {
 
 
                 // Se listType não bater com o tipo especializado, faz bitcast
+
                 if (!listType.equals(listLLVMType)) {
                     String castList = temps.newTemp();
                     llvm.append("  ").append(castList)
@@ -204,8 +205,16 @@ public class ListAddEmitter {
 
     private String extractType(String code) {
         int lastTypeIdx = code.lastIndexOf(";;TYPE:");
+        if (lastTypeIdx == -1) {
+            throw new RuntimeException(
+                    "[LLVM] TYPE marker not found in emitted code:\n" + code
+            );
+        }
+
         int endIdx = code.indexOf("\n", lastTypeIdx);
-        return code.substring(lastTypeIdx + 7, endIdx == -1 ? code.length() : endIdx).trim();
+        if (endIdx == -1) endIdx = code.length();
+
+        return code.substring(lastTypeIdx + 7, endIdx).trim();
     }
 
     private String mapToLLVMType(String type) {

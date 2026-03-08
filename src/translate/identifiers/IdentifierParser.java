@@ -78,22 +78,42 @@ public class IdentifierParser {
         // Operações sobre '.' ou chamadas
         switch (currentToken.getValue()) {
             case "." -> {
-                parser.advance();
+
+                parser.advance(); // consome '.'
+
                 String memberName = parser.current().getValue();
                 parser.eat(Token.TokenType.IDENTIFIER);
 
                 Type receiverType = parser.getExpressionType(receiver);
 
+    /* =========================
+       STRUCT ACCESS
+    ========================= */
                 if (receiverType instanceof StructType st) {
 
                     ASTNode structAccess =
                             new StructFieldAccessNode(receiver, memberName, null);
 
+                    /* ---------- ATRIBUIÇÃO ---------- */
+                    if (parser.current().getValue().equals("=")) {
+
+                        parser.eat(Token.TokenType.OPERATOR, "=");
+
+                        ASTNode value = parser.parseExpression();
+
+                        parser.eat(Token.TokenType.DELIMITER, ";");
+
+                        return new StructFieldAccessNode(receiver, memberName, value);
+                    }
+
+                    /* ---------- UPDATE INLINE ---------- */
                     if (parser.current().getValue().equals("{")) {
                         return parseInlineStructUpdate(structAccess);
                     }
 
+                    /* ---------- METHOD CALL ---------- */
                     if (parser.current().getValue().equals("(")) {
+
                         List<ASTNode> args = parser.parseArguments();
                         parser.eat(Token.TokenType.DELIMITER, ";");
 
@@ -105,25 +125,40 @@ public class IdentifierParser {
                         );
                     }
 
+                    /* ---------- ENCADEAMENTO ---------- */
                     if (parser.current().getValue().equals(".")) {
 
-                        parser.advance(); // consome '.'
+                        parser.advance();
 
                         String nextMember = parser.current().getValue();
                         parser.eat(Token.TokenType.IDENTIFIER);
 
                         Type nextType = parser.getExpressionType(structAccess);
 
+                        /* ----- LIST METHOD ----- */
                         if (nextType instanceof ListType) {
 
                             ListMethodParser listParser = new ListMethodParser(parser);
+
                             return listParser.parseStatementListMethod(structAccess, nextMember);
                         }
 
-                        if (nextType instanceof StructType ) {
+                        /* ----- NESTED STRUCT FIELD ----- */
+                        if (nextType instanceof StructType) {
 
                             ASTNode nestedAccess =
                                     new StructFieldAccessNode(structAccess, nextMember, null);
+
+                            if (parser.current().getValue().equals("=")) {
+
+                                parser.eat(Token.TokenType.OPERATOR, "=");
+
+                                ASTNode value = parser.parseExpression();
+
+                                parser.eat(Token.TokenType.DELIMITER, ";");
+
+                                return new StructFieldAccessNode(nestedAccess, nextMember, value);
+                            }
 
                             parser.eat(Token.TokenType.DELIMITER, ";");
 
@@ -136,6 +171,9 @@ public class IdentifierParser {
                     return structAccess;
                 }
 
+    /* =========================
+       LIST ACCESS
+    ========================= */
                 if (receiverType instanceof ListType) {
 
                     ASTNode listAccess =
@@ -146,13 +184,28 @@ public class IdentifierParser {
                     return listParser.parseStatementListMethod(listAccess, memberName);
                 }
 
+    /* =========================
+       MODULE / NAMESPACE
+    ========================= */
+
                 parser.advance();
+
                 if (parser.current().getValue().equals("(")) {
+
                     List<ASTNode> args = parser.parseArguments();
-                    if (parser.current().getValue().equals(";")) parser.eat(Token.TokenType.DELIMITER, ";");
+
+                    if (parser.current().getValue().equals(";")) {
+                        parser.eat(Token.TokenType.DELIMITER, ";");
+                    }
+
                     return new FunctionCallNode(name + "." + memberName, args);
+
                 } else {
-                    if (parser.current().getValue().equals(";")) parser.eat(Token.TokenType.DELIMITER, ";");
+
+                    if (parser.current().getValue().equals(";")) {
+                        parser.eat(Token.TokenType.DELIMITER, ";");
+                    }
+
                     return new VariableNode(name + "." + memberName);
                 }
             }

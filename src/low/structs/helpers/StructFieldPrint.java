@@ -71,7 +71,6 @@ public class StructFieldPrint {
 
         else if (fieldType instanceof ListType listType) {
 
-            Type elemType = listType.elementType();
 
             String llvmListType = resolver.toLLVMFieldType(listType);
 
@@ -84,9 +83,8 @@ public class StructFieldPrint {
                     .append(ptr)
                     .append("\n");
 
-            emitListPrint(sb, elemType, val);
+            emitListPrint(sb, listType, val);
         }
-
         else {
             throw new RuntimeException("Unsupported struct field type: " + fieldType);
         }
@@ -115,29 +113,36 @@ public class StructFieldPrint {
             throw new RuntimeException("Unsupported primitive print: " + prim);
         }
     }
+    private void emitListPrint(StringBuilder sb, ListType listType, String value) {
 
-    private void emitListPrint(StringBuilder sb, Type elemType, String value) {
+        Type elemType = listType.elementType();
+        String llvmListType = resolver.toLLVMFieldType(listType);
 
         if (elemType.equals(INT)) {
 
-            sb.append("  call void @arraylist_print_int(%struct.ArrayListInt* ")
+            sb.append("  call void @arraylist_print_int(")
+                    .append(llvmListType)
+                    .append(" ")
                     .append(value)
                     .append(")\n");
 
         } else if (elemType.equals(DOUBLE)) {
 
-            sb.append("  call void @arraylist_print_double(%struct.ArrayListDouble* ")
+            sb.append("  call void @arraylist_print_double(")
+                    .append(llvmListType)
+                    .append(" ")
                     .append(value)
                     .append(")\n");
 
         } else {
 
-            // fallback genérico
             sb.append("  %tmp_list_cast = bitcast ")
+                    .append(llvmListType)
+                    .append(" ")
                     .append(value)
                     .append(" to %ArrayList*\n");
 
-            sb.append("  call void @print_list(%ArrayList* %tmp_list_cast)\n");
+            sb.append("  call void @arraylist_print_string(%ArrayList* %tmp_list_cast)\n");
         }
     }
 }

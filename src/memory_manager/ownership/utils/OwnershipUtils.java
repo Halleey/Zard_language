@@ -44,7 +44,7 @@ public class OwnershipUtils {
         System.out.println("[DEBUG] resolveStructDefFromSymbol");
         System.out.println("  symbol = " + symbol.getName());
 
-        Type type = symbol.getType(); // <--- CORRETO
+        Type type = symbol.getType();
         System.out.println("  type   = " + type);
 
         // se é primitivo, não é struct

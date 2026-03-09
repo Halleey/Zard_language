@@ -34,11 +34,9 @@ public class TypeMapper {
                 };
             }
 
-            if (elemType instanceof StructType st) {
-                String llvmName = LLVMNameUtils.llvmSafe(st.name());
-                return "%" + llvmName + "ArrayList*";
+            if (elemType instanceof StructType) {
+                return "%ArrayList*";
             }
-
             return "%ArrayList*";
         }
 

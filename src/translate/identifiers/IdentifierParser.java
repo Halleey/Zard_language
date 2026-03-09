@@ -170,22 +170,11 @@ public class IdentifierParser {
                     return structAccess;
                 }
 
-    /* =========================
-       LIST ACCESS
-    ========================= */
                 if (receiverType instanceof ListType) {
-
-                    ASTNode listAccess =
-                            new StructFieldAccessNode(receiver, memberName, null);
-
                     ListMethodParser listParser = new ListMethodParser(parser);
-
-                    return listParser.parseStatementListMethod(listAccess, memberName);
+                    return listParser.parseStatementListMethod(receiver, memberName);
                 }
 
-    /* =========================
-       MODULE / NAMESPACE
-    ========================= */
 
                 parser.advance();
 

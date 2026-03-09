@@ -24,7 +24,8 @@ public class StructFieldAccessEmitter {
     private final TempManager temps;
     private final TypeMapper typeMapper = new TypeMapper();
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false
+            ;
 
     private void debug(String msg) {
         if (DEBUG) System.out.println("[StructFieldAccessEmitter] " + msg);

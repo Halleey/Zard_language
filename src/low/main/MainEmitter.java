@@ -335,7 +335,6 @@ public class MainEmitter {
     private void registrarTipoDeLista(Type type) {
         if (type instanceof ListType listType) {
             tiposDeListasUsados.add(listType.elementType());
-            System.out.println("debug aqui severo " + tiposDeListasUsados);
         }
     }
 
@@ -401,7 +400,6 @@ public class MainEmitter {
         for (Type tipo : tiposDeListasUsados) {
 
             String tipoStr = tipo.name();
-            System.out.println("debugg do type " + tipoStr);
             if (tipoStr.contains("int")) {
                 sb.append("""
     %struct.ArrayListInt = type { i32*, i64, i64 }

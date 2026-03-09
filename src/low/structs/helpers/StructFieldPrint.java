@@ -134,7 +134,7 @@ public class StructFieldPrint {
                     .append(value)
                     .append(")\n");
 
-        } else {
+        } else {    
 
             sb.append("  %tmp_list_cast = bitcast ")
                     .append(llvmListType)

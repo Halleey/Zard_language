@@ -7,7 +7,6 @@ import context.runtime.RuntimeContext;
 import ast.expressions.TypedValue;
 import context.statics.symbols.*;
 import context.statics.list.ListValue;
-import helpers.debugs.Debug;
 import low.module.LLVMEmitVisitor;
 
 import java.util.LinkedHashMap;
@@ -43,10 +42,6 @@ public class VariableDeclarationNode extends ASTNode {
     }
     @Override
     public void bindChildren(StaticContext ctx) {
-        Debug.ENABLE = true;
-        Debug.log("Bind da variável '" + name + "' no escopo " + ctx.getKind() +
-                " (id=" + ctx.getId() + ")");
-
         if (declaredType != null) {
             resolvedType = ctx.resolveType(declaredType);
         } else if (initializer != null) {
@@ -66,8 +61,6 @@ public class VariableDeclarationNode extends ASTNode {
 
             checkTypeCompatibility(resolvedType, initType);
         }
-
-        Debug.log("Bind concluído para '" + name + "'");
     }
     private void checkTypeCompatibility(Type declared, Type current) {
 

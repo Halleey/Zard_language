@@ -18,7 +18,6 @@ public class ListMethodParser {
     }
 
     private ASTNode consumeArg() {
-        System.out.println("debug do token  atual " + parser.current());
         parser.eat(Token.TokenType.DELIMITER, "(");
 
         ASTNode arg = null;

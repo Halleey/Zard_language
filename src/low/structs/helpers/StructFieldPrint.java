@@ -126,7 +126,8 @@ public class StructFieldPrint {
                     .append(value)
                     .append(")\n");
 
-        } else if (elemType.equals(DOUBLE)) {
+        }
+        else if (elemType.equals(DOUBLE)) {
 
             sb.append("  call void @arraylist_print_double(")
                     .append(llvmListType)
@@ -134,7 +135,8 @@ public class StructFieldPrint {
                     .append(value)
                     .append(")\n");
 
-        } else {    
+        }
+        else if (elemType.equals(STRING)) {
 
             sb.append("  %tmp_list_cast = bitcast ")
                     .append(llvmListType)
@@ -143,6 +145,12 @@ public class StructFieldPrint {
                     .append(" to %ArrayList*\n");
 
             sb.append("  call void @arraylist_print_string(%ArrayList* %tmp_list_cast)\n");
+
+        }
+        else {
+            sb.append("  ; TODO print List<")
+                    .append(elemType)
+                    .append(">\n");
         }
     }
 }

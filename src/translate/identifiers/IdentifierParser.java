@@ -214,7 +214,7 @@ public class IdentifierParser {
         return receiver;
     }
     private StructUpdateNode parseInlineStructUpdate(ASTNode target) {
-
+        System.out.println("entrou aqui so pra ri");
         parser.eat(Token.TokenType.DELIMITER, "{");
 
         Map<String, ASTNode> fieldUpdates = new LinkedHashMap<>();

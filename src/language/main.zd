@@ -51,6 +51,13 @@ main {
     print(p1);
 
     # Atualização inline aninhada com lista e sub-struct
+    p2.endereco {
+        rua: "Nova Rua";
+        cidade: "Zurique";
+        pais {
+            nome: "Suíça";
+        }
+    }
 
     print("=== Clone p2 ===");
     print(p2);

@@ -50,8 +50,6 @@ public class FrontendPipeline {
         parser = new Parser(tokens);
         List<ASTNode> ast = parser.parse();
 
-
-
         new MethodDesugarer().desugar(ast);
         new StaticBinder().bind(ast);
       //  ASTPrinter.printAST(ast);
@@ -63,10 +61,7 @@ public class FrontendPipeline {
 
         OwnershipGraph ownershipGraph = ownershipAnalyzer.getGraph();
 
-        DeterministicLifetimeAnalyzer lifetimeAnalyzer =
-                new DeterministicLifetimeAnalyzer(
-                        StaticBinder.getRootContext()
-                );
+        DeterministicLifetimeAnalyzer lifetimeAnalyzer = new DeterministicLifetimeAnalyzer(StaticBinder.getRootContext());
 
         Map<Symbol, ASTNode> lastUses =
                 lifetimeAnalyzer.analyze(ast);

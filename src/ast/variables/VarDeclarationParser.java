@@ -41,9 +41,7 @@ public class VarDeclarationParser {
                 parser.advance();
                 initializer = parser.parseExpression();
             }
-
             parser.eat(Token.TokenType.DELIMITER, ";");
-
             if (typeKeyword.equals("var") && initializer != null) {
                 varType = initializer.getType();
             }

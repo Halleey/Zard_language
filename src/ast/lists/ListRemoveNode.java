@@ -5,6 +5,8 @@ import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
 import context.statics.list.ListValue;
+import context.statics.symbols.ListType;
+import context.statics.symbols.Type;
 import low.module.LLVMEmitVisitor;
 
 public class ListRemoveNode extends ASTNode {
@@ -47,8 +49,21 @@ public class ListRemoveNode extends ASTNode {
     @Override
     public void bindChildren(StaticContext stx) {
 
-    }
+        listNode.setParent(this);
+        listNode.bind(stx);
 
+        indexNode.setParent(this);
+        indexNode.bind(stx);
+
+        Type listType = listNode.getType();
+
+        if (listType == null)
+            throw new RuntimeException("ListRemove: list type is null");
+
+        if (!(listType instanceof ListType))
+            throw new RuntimeException(
+                    "ListRemove applied in non-list type:: " + listType.name());
+    }
     public ASTNode getListNode() {
         return listNode;
     }

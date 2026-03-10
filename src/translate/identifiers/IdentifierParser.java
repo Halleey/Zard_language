@@ -50,7 +50,7 @@ public class IdentifierParser {
                 }else {
                     initializer = parser.parseExpression();
                 }
-
+                parser.eat(Token.TokenType.DELIMITER, ";");
                 parser.declareVariable(varName, new StructType(structName));
                 return new VariableDeclarationNode(varName, new StructType(structName), initializer);
             }

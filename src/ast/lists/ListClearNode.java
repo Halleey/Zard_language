@@ -53,7 +53,7 @@ public class ListClearNode extends ASTNode {
         }
         if (!(listType instanceof ListType)) {
             throw new RuntimeException(
-                    "ListClear aplicado em tipo não-lista: " + listType.name()
+                    "ListClear applied in non-list type: " + listType.name()
             );
         }
 

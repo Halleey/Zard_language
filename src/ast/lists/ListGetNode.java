@@ -52,11 +52,21 @@ public class ListGetNode extends ASTNode {
 
         Type listType = listExpr.getType();
 
+
         if (!(listType instanceof ListType lt)) {
-            throw new RuntimeException("Expressão não é uma lista: " + listType);
+            throw new RuntimeException(
+                    "Expressão não é uma lista: " + listType +
+                            " em " + this
+            );
         }
 
         elementType = lt.elementType();
+
+        if (elementType == null) {
+            throw new RuntimeException(
+                    "Tipo do elemento da lista não resolvido: " + listType
+            );
+        }
     }
 
     @Override

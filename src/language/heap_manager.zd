@@ -9,33 +9,32 @@ Struct Item {
  }
 
  impl Set {
- function  addItem(int id, string name, int quantidade) {
+ function void addItem(int id, string name, int quantidade) {
    Item it;
    it.id = id;
    it.name = name;
    it.quantidade.add(quantidade);
    s.data.add(it);
-   return s;
+
   }
 
-  function removeFirst() {
+  function void removeFirst() {
    if (s.data.size() > 0) {
    s.data.remove(0);
    }
-    return s;
   }
-  function  removeItemById(int id) {
+  function void removeItemById(int id) {
   int i = 0; while (i < s.data.size()) {
   Item cur = s.data.get(i);
    if (cur.id == id) {
    s.data.remove(i);
-   return s;
+
    }
    i++;
   }
-  return s;
+
  }
-  function prints() {
+  function void prints() {
     int i = 0;
 
 
@@ -53,7 +52,7 @@ Struct Item {
 
       i++;
     }
-    return s;
+
   }
 
 }

@@ -94,10 +94,10 @@ public class StructFieldAccessNode extends ASTNode {
         if (!(structType instanceof StructType struct)) {
             throw new RuntimeException(
                     "Acesso de campo '" + fieldName +
-                            "' em tipo não-struct: " + structType
+                            "' em tipo não-struct: " + structType +
+                            " (node=" + structInstance.getClass().getSimpleName() + ")"
             );
         }
-
         StaticStructDefinition def =
                 ctx.resolveStruct(struct.name());
 

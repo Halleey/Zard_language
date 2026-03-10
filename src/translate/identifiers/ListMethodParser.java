@@ -69,6 +69,7 @@ public class ListMethodParser {
 
             case "clear" -> {
                 parser.advance();
+                System.out.println("debug " + parser.current());
                 parser.eat(Token.TokenType.DELIMITER, "(");
                 parser.eat(Token.TokenType.DELIMITER, ")");
                 ASTNode node = new ListClearNode(receiver);

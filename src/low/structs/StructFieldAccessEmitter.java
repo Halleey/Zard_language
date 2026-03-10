@@ -306,16 +306,9 @@ public class StructFieldAccessEmitter {
 
         if (instance instanceof ListGetNode get) {
 
-            ASTNode listExpr = get.getListName();
+            return normalizeOwnerName(get.getElementType());
 
-            if (listExpr instanceof VariableNode lv) {
-
-                Type elemType = visitor.getListElementType(lv.getName());
-
-                return normalizeOwnerName(elemType);
-            }
         }
-
         return normalizeOwnerName(fallbackType);
     }
 

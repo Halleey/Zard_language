@@ -1,69 +1,43 @@
+import "src/language/stdlib/Math.zd" as math;
+
 main {
+    double a = 10;
+    double b = 3;
+    int n = 5;
 
-Struct Entry {
-  int key;
-  string value;
-}
 
-Struct maps {
-  List<Entry> data;
-}
+    println(math.sum(a, b));
+    println(math.sub(a, b));
+    println(math.mul(a, b));
+    println(math.div(a, b));
 
-impl maps {
 
-  function void put(int key, string value) {
-    int i = 0;
-    while (i < s.data.size()) {
-      Entry e = s.data.get(i);
-      if (e.key == key) {
-        e.value = value;
-      }
-      i++;
+    println(math.pow(a, 3));
+
+
+    println(math.factorial(n));
+
+    println(math.sqrt(a));
+
+
+    println(math.sin(a));
+    println(math.cos(a));
+
+
+    println("Tentando dividir por zero:");
+    println(math.div(a, 0));
+
+    println("Tentando fatorial de número negativo:");
+    println(math.factorial(-3));
+
+    println("Tentando raiz quadrada de número negativo:");
+    println(math.sqrt(-9));
+
+    println("Fim dos testes.");
+
+    function int sum(int t, int z) {
+    return t + z;
     }
-
-    Entry n;
-    n.key = key;
-    n.value = value;
-    s.data.add(n);
-  }
-
-  function void get(int key) {
-    int i = 0;
-    while (i < s.data.size()) {
-      Entry e = s.data.get(i);
-      if (e.key == key) {
-        println(e.value);
-        return;
-      }
-      i++;
-    }
-    println("key not found");
-  }
-
-  function void remove(int key) {
-    int i = 0;
-    while (i < s.data.size()) {
-      Entry e = s.data.get(i);
-      if (e.key == key) {
-        s.data.remove(i);
-      }
-      i++;
-    }
-  }
-}
-
-maps m;
-
-m.put(1, "Sword");
-m.put(2, "Shield");
-m.put(3, "Potion");
-
-
-m.get(2);
-m.remove("1");
-m.get(2);
-m.get(1);
-m.get(3);
 
 
 }

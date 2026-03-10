@@ -4,6 +4,8 @@ import ast.ASTNode;
 import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
+import context.statics.symbols.InputType;
+import context.statics.symbols.PrimitiveTypes;
 import context.statics.symbols.Type;
 import low.module.LLVMEmitVisitor;
 
@@ -88,24 +90,38 @@ public class FunctionCallNode extends ASTNode {
                             ", recebido " + args.size()
             );
         }
-
         for (int i = 0; i < args.size(); i++) {
 
             Type expected = params.get(i).typeObj();
             Type actual = args.get(i).getType();
 
-            if (!expected.equals(actual)) {
-                throw new RuntimeException(
-                        "Tipo inválido no argumento " + (i + 1) +
-                                " de " + funcName +
-                                ": esperado " + expected +
-                                ", recebido " + actual
-                );
-            }
+          checkCompatibility(expected, actual);
         }
 
         this.type = fn.getReturnType();
     }
+
+    private void checkCompatibility(Type expected, Type current) {
+
+        if (expected instanceof PrimitiveTypes dp && current instanceof PrimitiveTypes cp) {
+
+            if (dp.name().equals(cp.name())) return;
+
+            if (dp.name().equals("double") && cp.name().equals("int")) return;
+            if (dp.name().equals("float")  && cp.name().equals("int")) return;
+            if (dp.name().equals("double") && cp.name().equals("float")) return;
+            if (dp.name().equals("float") && cp.name().equals("double")) return;
+        }
+
+        if (current instanceof InputType) return;
+
+        throw new RuntimeException(
+                "Semantic error: cannot assign value of type '" +
+                        current + "' to variable of type '" +
+                        expected + "'"
+        );
+    }
+
 
     @Override
     public Type getType() {

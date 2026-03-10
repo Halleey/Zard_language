@@ -88,8 +88,7 @@ public class AssignmentNode extends ASTNode {
             return;
         }
 
-        if (declared instanceof PrimitiveTypes dp &&
-                current instanceof PrimitiveTypes cp) {
+        if (declared instanceof PrimitiveTypes dp && current instanceof PrimitiveTypes cp) {
 
             if (dp.name().equals(cp.name())) return;
 

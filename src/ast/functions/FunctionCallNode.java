@@ -62,7 +62,6 @@ public class FunctionCallNode extends ASTNode {
             System.out.println(prefix + "  <no args>");
         }
     }
-
     @Override
     public void bindChildren(StaticContext stx) {
 
@@ -78,6 +77,31 @@ public class FunctionCallNode extends ASTNode {
 
         if (fn == null) {
             throw new RuntimeException("Função não declarada: " + name);
+        }
+
+        List<ParamInfo> params = fn.getParameters();
+
+        if (args.size() != params.size()) {
+            throw new RuntimeException(
+                    "Número de argumentos inválido em " + funcName +
+                            ": esperado " + params.size() +
+                            ", recebido " + args.size()
+            );
+        }
+
+        for (int i = 0; i < args.size(); i++) {
+
+            Type expected = params.get(i).typeObj();
+            Type actual = args.get(i).getType();
+
+            if (!expected.equals(actual)) {
+                throw new RuntimeException(
+                        "Tipo inválido no argumento " + (i + 1) +
+                                " de " + funcName +
+                                ": esperado " + expected +
+                                ", recebido " + actual
+                );
+            }
         }
 
         this.type = fn.getReturnType();

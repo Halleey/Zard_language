@@ -25,9 +25,7 @@ public class FunctionNode extends ASTNode {
     private String implicitReceiverName;
     private Type implStructType;
 
-    public String getImplicitReceiverName() {
-        return implicitReceiverName;
-    }
+
 
     public Type getImplStructType() {
         return implStructType;
@@ -37,9 +35,6 @@ public class FunctionNode extends ASTNode {
         this.implicitReceiverName = implicitReceiverName;
     }
 
-    public void setImplStructType(Type implStructType) {
-        this.implStructType = implStructType;
-    }
 
     public FunctionNode(String name,
                         List<ParamInfo> parameters,

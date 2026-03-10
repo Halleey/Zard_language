@@ -6,12 +6,11 @@ import ast.loops.WhileNode;
 import ast.variables.VariableDeclarationNode;
 import context.statics.ScopeKind;
 import context.statics.StaticContext;
-import context.statics.Symbol;
+import context.statics.symbols.Symbol;
 import memory_manager.ownership.OwnershipAnnotation;
 import memory_manager.ownership.graphs.OwnershipGraph;
 import memory_manager.ownership.graphs.OwnershipNode;
 
-import java.util.*;
 import java.util.*;
 
 

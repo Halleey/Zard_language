@@ -1,25 +1,27 @@
-package context.statics;
+package context.statics.symbols;
+
+import context.statics.ScopeKind;
+import context.statics.StaticContext;
 
 public final class Symbol {
 
     private final String name;
-    private final String type;
+    private final Type type;
     private final int slotIndex;
     private final StaticContext declaredIn;
 
-    public Symbol(String name, String type, int slotIndex, StaticContext declaredIn) {
+    public Symbol(String name, Type type, int slotIndex, StaticContext declaredIn) {
         this.name = name;
         this.type = type;
         this.slotIndex = slotIndex;
         this.declaredIn = declaredIn;
     }
 
-
     public String getName() {
         return name;
     }
 
-    public String getType() {
+    public Type getType() {
         return type;
     }
 

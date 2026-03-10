@@ -103,5 +103,19 @@ public class StructUpdateNode extends ASTNode {
     @Override
     public void bindChildren(StaticContext stx) {
 
+        if (targetStruct != null) {
+            targetStruct.setParent(this);
+            targetStruct.bind(stx);
+        }
+
+        for (ASTNode expr : fieldUpdates.values()) {
+            expr.setParent(this);
+            expr.bind(stx);
+        }
+
+        for (StructUpdateNode nested : nestedUpdates.values()) {
+            nested.setParent(this);
+            nested.bind(stx);
+        }
     }
 }

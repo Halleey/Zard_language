@@ -1,10 +1,11 @@
 package low.structs;
-
-
-
 import ast.ASTNode;
-import ast.functions.FunctionNode;
+
 import ast.structs.StructMethodCallNode;
+import context.statics.symbols.ListType;
+import context.statics.symbols.PrimitiveTypes;
+import context.statics.symbols.StructType;
+import context.statics.symbols.Type;
 import low.TempManager;
 
 import low.module.LLVisitorMain;
@@ -21,7 +22,6 @@ public class StructMethodCallEmitter {
 
         String methodName = node.getMethodName();
 
-        // === Receiver ===
         ASTNode receiver = node.getStructInstance();
         String recvIR = receiver.accept(visitor);
         String recvVal = extractLastVal(recvIR);
@@ -29,9 +29,6 @@ public class StructMethodCallEmitter {
 
         llvm.append(recvIR);
 
-        // ============================================================
-        // === MÉTODOS DE LISTA (ArrayList runtime) ===================
-        // ============================================================
         if (recvType.startsWith("%struct.ArrayList")) {
 
             String elementType = "";
@@ -136,9 +133,6 @@ public class StructMethodCallEmitter {
             }
         }
 
-        // ============================================================
-        // === MÉTODOS DE STRUCT (impl) ===============================
-        // ============================================================
 
         String cleanType = recvType.replace("%", "").replace("*", "");
         String llvmSafe = cleanType
@@ -163,18 +157,8 @@ public class StructMethodCallEmitter {
             callArgs.append(", ").append(argType).append(" ").append(argVal);
         }
 
-        // 🔥 AQUI ESTÁ A CORREÇÃO PRINCIPAL
-        String retSource = node.getReturnType();
-        String retLLVM;
-
-        if (retSource == null || "void".equals(retSource)) {
-            retLLVM = "void";
-        } else if (retSource.startsWith("Struct<")) {
-            String inner = retSource.substring("Struct<".length(), retSource.length() - 1);
-            retLLVM = "%" + inner + "*";
-        } else {
-            retLLVM = mapToLLVMType(retSource);
-        }
+        Type retType = node.getReturnType();
+        String retLLVM = mapToLLVMType(retType);
 
         if ("void".equals(retLLVM)) {
 
@@ -186,35 +170,49 @@ public class StructMethodCallEmitter {
         } else {
 
             String tmp = temps.newTemp();
-            llvm.append("  ").append(tmp)
-                    .append(" = call ").append(retLLVM)
-                    .append(" @").append(llvmFuncName)
-                    .append("(").append(callArgs).append(")\n")
-                    .append(";;VAL:").append(tmp)
-                    .append(";;TYPE:").append(retLLVM).append("\n");
+
+            llvm.append("  ")
+                    .append(tmp)
+                    .append(" = call ")
+                    .append(retLLVM)
+                    .append(" @")
+                    .append(llvmFuncName)
+                    .append("(")
+                    .append(callArgs)
+                    .append(")\n")
+                    .append(";;VAL:")
+                    .append(tmp)
+                    .append(";;TYPE:")
+                    .append(retLLVM)
+                    .append("\n");
         }
 
         return llvm.toString();
     }
 
-    // ============================================================
+    private String mapToLLVMType(Type type) {
+        if (type == null) return "void";
 
-    private String mapToLLVMType(String type) {
-        if (type == null) return "i8*";
-        type = type.trim();
-
-        if (type.startsWith("Struct<") && type.endsWith(">")) {
-            String inner = type.substring("Struct<".length(), type.length() - 1).trim();
-            return "%" + inner + "*";
+        if (type instanceof PrimitiveTypes prim) {
+            return switch (prim.name()) {
+                case "int" -> "i32";
+                case "double" -> "double";
+                case "bool", "boolean" -> "i1";
+                case "string", "String" -> "%String*";
+                default -> "i8*";
+            };
         }
 
-        return switch (type) {
-            case "int" -> "i32";
-            case "double" -> "double";
-            case "bool", "boolean" -> "i1";
-            case "string", "String" -> "%String*";
-            default -> "i8*";
-        };
+        if (type instanceof StructType structType) {
+            return "%" + structType.name() + "*";
+        }
+
+        if (type instanceof ListType listType) {
+            String elem = mapToLLVMType(listType.elementType());
+            return "%struct.ArrayList_" + elem + "*";
+        }
+
+        return "i8*";
     }
 
     private String extractLastVal(String code) {

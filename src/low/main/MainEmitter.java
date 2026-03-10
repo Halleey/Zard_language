@@ -18,6 +18,9 @@ import ast.prints.PrintNode;
 import ast.structs.*;
 import ast.variables.AssignmentNode;
 import ast.expressions.BinaryOpNode;
+import context.statics.symbols.ListType;
+import context.statics.symbols.PrimitiveTypes;
+import context.statics.symbols.Type;
 import low.TempManager;
 
 import low.functions.FunctionEmitter;
@@ -35,12 +38,12 @@ public class MainEmitter {
     private final GlobalStringManager globalStrings;
     private final TempManager tempManager;
     private final Set<String> listasAlocadas = new HashSet<>();
-    private final Set<String> tiposDeListasUsados;
+    private final Set<Type> tiposDeListasUsados;
     private final List<String> structDefinitions;
     private boolean usesInput = false;
 
     public MainEmitter(GlobalStringManager globalStrings, TempManager tempManager,
-                       Set<String> tiposDeListasUsados, List<String> structDefinitions) {
+                       Set<Type> tiposDeListasUsados, List<String> structDefinitions) {
         this.globalStrings = globalStrings;
         this.tempManager = tempManager;
         this.tiposDeListasUsados = tiposDeListasUsados;
@@ -120,9 +123,12 @@ public class MainEmitter {
                 llvm.append(stmtIR);
             }
 
-            if (stmt instanceof VariableDeclarationNode varDecl &&
-                    varDecl.getType().startsWith("List")) {
-                listasAlocadas.add(varDecl.getName());
+            if (stmt instanceof VariableDeclarationNode varDecl) {
+                Type resolved = varDecl.getResolvedType();
+
+                if (resolved instanceof ListType) {
+                    listasAlocadas.add(varDecl.getName());
+                }
             }
         }
         llvm.append("  call i32 @getchar()\n");
@@ -130,11 +136,10 @@ public class MainEmitter {
 
         return llvm.toString();
     }
-
     private void coletarStringsRecursivo(ASTNode node) {
         if (node == null) return;
 
-        if (node instanceof LiteralNode lit && lit.value.type().equals("string")) {
+        if (node instanceof LiteralNode lit && lit.value.type().equals(PrimitiveTypes.STRING)) {
             globalStrings.getOrCreateString((String) lit.value.value());
             return;
         }
@@ -150,17 +155,15 @@ public class MainEmitter {
         if (node instanceof ImplNode impl) {
             for (FunctionNode m : impl.getMethods()) {
 
-                String retType = m.getReturnType();
-                if (retType.startsWith("List<") && retType.endsWith(">")) {
-                    registrarTipoDeLista(retType);
+                Type retType = m.getReturnType();
+                if (retType instanceof ListType listType) {
+                    registrarTipoDeLista(listType);
                 }
 
                 for (ParamInfo p : m.getParameters()) {
-                    String paramType = p.type();
-                    if (paramType != null
-                            && paramType.startsWith("List<")
-                            && paramType.endsWith(">")) {
-                        registrarTipoDeLista(paramType);
+                    Type paramType = p.type();
+                    if (paramType instanceof ListType listType) {
+                        registrarTipoDeLista(listType);
                     }
                 }
 
@@ -173,17 +176,15 @@ public class MainEmitter {
 
         if (node instanceof FunctionNode func) {
 
-            String retType = func.getReturnType();
-            if (retType.startsWith("List<") && retType.endsWith(">")) {
-                registrarTipoDeLista(retType);
+            Type retType = func.getReturnType();
+            if (retType instanceof ListType listType) {
+                registrarTipoDeLista(listType);
             }
 
             for (ParamInfo p : func.getParameters()) {
-                String paramType = p.type();
-                if (paramType != null
-                        && paramType.startsWith("List<")
-                        && paramType.endsWith(">")) {
-                    registrarTipoDeLista(paramType);
+                Type paramType = p.type();
+                if (paramType instanceof ListType listType) {
+                    registrarTipoDeLista(listType);
                 }
             }
 
@@ -214,25 +215,27 @@ public class MainEmitter {
             return;
         }
 
-
         if (node instanceof VariableDeclarationNode varDecl) {
-            if (varDecl.getType().startsWith("List")) {
-                registrarTipoDeLista(varDecl.getType());
+            if (varDecl.getResolvedType() instanceof ListType listType) {
+                System.out.println("entrou aqui ");
+                registrarTipoDeLista(listType);
             }
-            if (varDecl.initializer != null) {
-                coletarStringsRecursivo(varDecl.initializer);
+
+            if (varDecl.getInitializer() != null) {
+                coletarStringsRecursivo(varDecl.getInitializer());
             }
             return;
         }
+
         if (node instanceof IfNode ifNode) {
             coletarStringsRecursivo(ifNode.condition);
             ifNode.thenBranch.forEach(this::coletarStringsRecursivo);
+
             if (ifNode.elseBranch != null) {
                 ifNode.elseBranch.forEach(this::coletarStringsRecursivo);
             }
             return;
         }
-
 
         if (node instanceof ForNode forNode) {
 
@@ -264,8 +267,6 @@ public class MainEmitter {
             return;
         }
 
-
-
         if (node instanceof WhileNode whileNode) {
             coletarStringsRecursivo(whileNode.condition);
             whileNode.body.forEach(this::coletarStringsRecursivo);
@@ -273,7 +274,11 @@ public class MainEmitter {
         }
 
         if (node instanceof ListNode listNode) {
-            registrarTipoDeLista("List<" + listNode.getList().getElementType() + ">");
+
+            if (listNode.getType() instanceof ListType listType) {
+                registrarTipoDeLista(listType);
+            }
+
             listNode.getList().getElements().forEach(this::coletarStringsRecursivo);
             return;
         }
@@ -313,6 +318,7 @@ public class MainEmitter {
             for (ASTNode val : structInstance.getPositionalValues()) {
                 coletarStringsRecursivo(val);
             }
+
             if (structInstance.getNamedValues() != null) {
                 for (ASTNode val : structInstance.getNamedValues().values()) {
                     coletarStringsRecursivo(val);
@@ -326,8 +332,10 @@ public class MainEmitter {
         nodes.forEach(this::coletarStringsRecursivo);
     }
 
-    private void registrarTipoDeLista(String tipoCompleto) {
-        tiposDeListasUsados.add(tipoCompleto.trim());
+    private void registrarTipoDeLista(Type type) {
+        if (type instanceof ListType listType) {
+            tiposDeListasUsados.add(listType.elementType());
+        }
     }
 
     private String emitHeader() {
@@ -389,69 +397,67 @@ public class MainEmitter {
     """);
         }
 
-        for (String tipo : tiposDeListasUsados) {
-            tipo = tipo.trim();
+        for (Type tipo : tiposDeListasUsados) {
 
-            if (tipo.contains("<int>")) {
+            String tipoStr = tipo.name();
+            if (tipoStr.contains("int")) {
                 sb.append("""
-        %struct.ArrayListInt = type { i32*, i64, i64 }
-        declare %struct.ArrayListInt* @arraylist_create_int(i64)
-        declare void @arraylist_add_int(%struct.ArrayListInt*, i32)
-        declare void @arraylist_addAll_int(%struct.ArrayListInt*, i32*, i64)
-        declare void @arraylist_print_int(%struct.ArrayListInt*)
-        declare void @arraylist_clear_int(%struct.ArrayListInt*)
-        declare void @arraylist_free_int(%struct.ArrayListInt*)
-        declare i32 @arraylist_get_int(%struct.ArrayListInt*, i64, i32*)
-        declare void @arraylist_remove_int(%struct.ArrayListInt*, i64)
-        declare i32 @arraylist_size_int(%struct.ArrayListInt*)
-    """);
+    %struct.ArrayListInt = type { i32*, i64, i64 }
+    declare %struct.ArrayListInt* @arraylist_create_int(i64)
+    declare void @arraylist_add_int(%struct.ArrayListInt*, i32)
+    declare void @arraylist_addAll_int(%struct.ArrayListInt*, i32*, i64)
+    declare void @arraylist_print_int(%struct.ArrayListInt*)
+    declare void @arraylist_clear_int(%struct.ArrayListInt*)
+    declare void @arraylist_free_int(%struct.ArrayListInt*)
+    declare i32 @arraylist_get_int(%struct.ArrayListInt*, i64, i32*)
+    declare void @arraylist_remove_int(%struct.ArrayListInt*, i64)
+    declare i32 @arraylist_size_int(%struct.ArrayListInt*)
+""");
                 continue;
             }
 
-            if (tipo.contains("<double>")) {
+            if (tipoStr.contains("double")) {
                 sb.append("""
-        %struct.ArrayListDouble = type { double*, i64, i64 }
-        declare %struct.ArrayListDouble* @arraylist_create_double(i64)
-        declare void @arraylist_add_double(%struct.ArrayListDouble*, double)
-        declare void @arraylist_addAll_double(%struct.ArrayListDouble*, double*, i64)
-        declare void @arraylist_print_double(%struct.ArrayListDouble*)
-        declare double @arraylist_get_double(%struct.ArrayListDouble*, i64, double*)
-        declare void @arraylist_clear_double(%struct.ArrayListDouble*)
-        declare void @arraylist_remove_double(%struct.ArrayListDouble*, i64)
-        declare void @arraylist_free_double(%struct.ArrayListDouble*)
-        declare i32 @arraylist_size_double(%struct.ArrayListDouble*)
-    """);
+    %struct.ArrayListDouble = type { double*, i64, i64 }
+    declare %struct.ArrayListDouble* @arraylist_create_double(i64)
+    declare void @arraylist_add_double(%struct.ArrayListDouble*, double)
+    declare void @arraylist_addAll_double(%struct.ArrayListDouble*, double*, i64)
+    declare void @arraylist_print_double(%struct.ArrayListDouble*)
+    declare double @arraylist_get_double(%struct.ArrayListDouble*, i64, double*)
+    declare void @arraylist_clear_double(%struct.ArrayListDouble*)
+    declare void @arraylist_remove_double(%struct.ArrayListDouble*, i64)
+    declare void @arraylist_free_double(%struct.ArrayListDouble*)
+    declare i32 @arraylist_size_double(%struct.ArrayListDouble*)
+""");
                 continue;
             }
 
-            if (tipo.contains("<string>")) {
+            if (tipoStr.contains("string")) {
                 sb.append("""
-        declare void @arraylist_add_string(%ArrayList*, i8*)
-        declare void @arraylist_addAll_string(%ArrayList*, i8**, i64)
-        declare void @arraylist_print_string(%ArrayList*)
-        declare void @arraylist_add_String(%ArrayList*, %String*)
-        declare void @arraylist_addAll_String(%ArrayList*, %String**, i64)
-        declare i8* @getItem(%ArrayList*, i64)
-    """);
-    }
-
-            if (tipo.contains("<?>")) {
+    declare void @arraylist_add_string(%ArrayList*, i8*)
+    declare void @arraylist_addAll_string(%ArrayList*, i8**, i64)
+    declare void @arraylist_print_string(%ArrayList*)
+    declare void @arraylist_add_String(%ArrayList*, %String*)
+    declare void @arraylist_addAll_String(%ArrayList*, %String**, i64)
+    
+    declare i8* @getItem(%ArrayList*, i64)
+""");
                 continue;
             }
 
-            if (tipo.contains("<boolean>")) {
+            if (tipoStr.contains("boolean")) {
                 sb.append("""
-        %struct.ArrayListBool = type { i1*, i64, i64 }
-        declare %struct.ArrayListBool* @arraylist_create_bool(i64)
-        declare void @arraylist_add_bool(%struct.ArrayListBool*, i1)
-        declare void @arraylist_addAll_bool(%struct.ArrayListBool*, i8*, i64)
-        declare void @arraylist_print_bool(%struct.ArrayListBool*)
-        declare void @arraylist_clear_bool(%struct.ArrayListBool*)
-        declare void @arraylist_remove_bool(%struct.ArrayListBool*, i64)
-        declare void @arraylist_free_bool(%struct.ArrayListBool*)
-        declare i1 @arraylist_get_bool(%struct.ArrayListBool*, i64, i1*)
-        declare i32 @arraylist_size_bool(%struct.ArrayListBool*)
-    """);
+    %struct.ArrayListBool = type { i1*, i64, i64 }
+    declare %struct.ArrayListBool* @arraylist_create_bool(i64)
+    declare void @arraylist_add_bool(%struct.ArrayListBool*, i1)
+    declare void @arraylist_addAll_bool(%struct.ArrayListBool*, i8*, i64)
+    declare void @arraylist_print_bool(%struct.ArrayListBool*)
+    declare void @arraylist_clear_bool(%struct.ArrayListBool*)
+    declare void @arraylist_remove_bool(%struct.ArrayListBool*, i64)
+    declare void @arraylist_free_bool(%struct.ArrayListBool*)
+    declare i1 @arraylist_get_bool(%struct.ArrayListBool*, i64, i1*)
+    declare i32 @arraylist_size_bool(%struct.ArrayListBool*)
+""");
             }
         }
 

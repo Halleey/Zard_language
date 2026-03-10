@@ -5,7 +5,10 @@ import ast.functions.FunctionNode;
 import ast.functions.ParamInfo;
 import ast.structs.ImplNode;
 import ast.structs.StructFieldAccessNode;
+import ast.variables.TypeResolver;
 import ast.variables.VariableNode;
+import context.statics.symbols.StructType;
+import context.statics.symbols.Type;
 
 import java.util.*;
 
@@ -38,16 +41,15 @@ public class MethodDesugarer {
     }
 
     private void normalizeMethod(String structName, FunctionNode fn) {
-
         List<ParamInfo> params = fn.getParameters();
 
-        //  Já tem receiver explícito?
+        // Já tem receiver explícito?
         if (hasExplicitReceiver(structName, params)) {
             ensureReturnType(structName, fn);
             return;
         }
 
-        //Descobrir nome do receiver implícito
+        // Descobrir nome do receiver implícito
         String receiverName = findImplicitReceiverCandidate(fn);
         if (receiverName == null || receiverName.isBlank()) {
             receiverName = "s";
@@ -75,8 +77,8 @@ public class MethodDesugarer {
         List<ParamInfo> newParams = new ArrayList<>();
         newParams.add(new ParamInfo(
                 receiverName,
-                "Struct<" + structName + ">",
-                false // receiver NÃO é & por padrão
+                TypeResolver.resolve("Struct<" + structName + ">"), // agora Type
+                false
         ));
         newParams.addAll(params);
 
@@ -91,26 +93,23 @@ public class MethodDesugarer {
         if (params == null || params.isEmpty()) return false;
 
         ParamInfo first = params.get(0);
-        String type = first.type();
+        Type type = first.typeObj(); // assume ParamInfo agora retorna Type
         if (type == null) return false;
 
-        type = type.trim();
-
-        if (type.equals(structName)) return true;
-        if (type.equals("Struct<" + structName + ">")) return true;
-        // ex: Struct<Set<int>>
-        if (type.startsWith("Struct<" + structName + "<")) return true;
-
+        if (type instanceof StructType st) {
+            String tname = st.name();
+            if (tname.equals(structName)) return true;
+            if (tname.startsWith(structName + "<")) return true; // ex: Set<int>
+        }
         return false;
     }
 
     private void ensureReturnType(String structName, FunctionNode fn) {
-        String ret = fn.getReturnType();
-        if (ret == null || ret.isBlank() || "?".equals(ret)) {
-            fn.setReturnType("Struct<" + structName + ">");
+        Type ret = fn.getReturnType();
+        if (ret == null || ret.name().equals("?")) {
+            fn.setReturnType(TypeResolver.resolve("Struct<" + structName + ">"));
         }
     }
-
 
     private String findImplicitReceiverCandidate(FunctionNode fn) {
         Set<String> candidates = new LinkedHashSet<>();
@@ -121,7 +120,6 @@ public class MethodDesugarer {
 
         if (candidates.isEmpty()) return null;
 
-
         List<String> preferred = Arrays.asList("s", "self", "this");
         for (String p : preferred) {
             if (candidates.contains(p)) {
@@ -131,7 +129,6 @@ public class MethodDesugarer {
 
         return candidates.iterator().next();
     }
-
 
     private void collectReceiverCandidates(ASTNode node, Set<String> candidates) {
         if (node == null) return;

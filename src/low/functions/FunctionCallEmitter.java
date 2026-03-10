@@ -5,6 +5,8 @@ import ast.functions.FunctionCallNode;
 import ast.functions.FunctionNode;
 import ast.functions.ParamInfo;
 import ast.variables.VariableNode;
+import context.statics.symbols.PrimitiveTypes;
+import context.statics.symbols.Type;
 import low.TempManager;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
@@ -13,8 +15,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 public class FunctionCallEmitter {
+
     private final TempManager temps;
     private final Set<String> beingDeduced = new HashSet<>();
 
@@ -31,46 +33,28 @@ public class FunctionCallEmitter {
     }
 
     public boolean isBeingDeduced(String functionName) {
-        boolean contains = beingDeduced.contains(functionName);
-        return contains;
+        return beingDeduced.contains(functionName);
     }
 
     private String resolveLLVMFuncName(String funcName, LLVisitorMain visitor) {
-
         String[] parts = funcName.split("\\.");
 
         if (parts.length == 2) {
             String alias = parts[0];
             String base = parts[1];
-
             String full = alias + "_" + base;
-
-            if (visitor.getFunctionType(full) != null) {
-                return full;
-            }
+            if (visitor.getFunctionType(full) != null) return full;
         }
 
         String replaced = funcName.replace('.', '_');
-        if (visitor.getFunctionType(replaced) != null) {
-            return replaced;
-        }
+        if (visitor.getFunctionType(replaced) != null) return replaced;
 
-        String fallback = parts[parts.length - 1];
-        return fallback;
+        return parts[parts.length - 1];
     }
 
     private void debugDumpFunctions(LLVisitorMain visitor) {
-        if (visitor.functions == null || visitor.functions.isEmpty()) {
-        } else {
-            for (String k : visitor.functions.keySet()) {
-            }
-        }
-
-        if (visitor.importedFunctions == null || visitor.importedFunctions.isEmpty()) {
-        } else {
-            for (String k : visitor.importedFunctions.keySet()) {
-            }
-        }
+        if (visitor.functions != null) visitor.functions.keySet().forEach(System.out::println);
+        if (visitor.importedFunctions != null) visitor.importedFunctions.keySet().forEach(System.out::println);
     }
 
     public String emit(FunctionCallNode node, LLVisitorMain visitor) {
@@ -79,100 +63,69 @@ public class FunctionCallEmitter {
         TypeMapper typeMapper = new TypeMapper();
 
         String originalName = node.getName();
-
         String llvmFuncName = resolveLLVMFuncName(originalName, visitor);
 
-        FunctionNode targetFn;
-
-        targetFn = visitor.functions.get(originalName);
-        if (targetFn != null) {
-        } else {
-            targetFn = visitor.functions.get(llvmFuncName);
-            if (targetFn != null) {
-            }
-        }
-
-        if (targetFn == null) {
-            targetFn = visitor.importedFunctions.get(originalName);
-            if (targetFn != null) {
-            } else {
-                targetFn = visitor.importedFunctions.get(llvmFuncName);
-                if (targetFn != null) {
-                }
-            }
-        }
+        // resolve target function
+        FunctionNode targetFn = visitor.functions.getOrDefault(originalName,
+                visitor.functions.getOrDefault(llvmFuncName,
+                        visitor.importedFunctions.getOrDefault(originalName,
+                                visitor.importedFunctions.get(llvmFuncName)
+                        )));
 
         if (targetFn == null) {
             debugDumpFunctions(visitor);
+            throw new RuntimeException("Função não registrada: " + originalName);
         }
-        List<ParamInfo> expectedParams =
-                targetFn != null ? targetFn.getParameters() : null;
+
+        List<ParamInfo> expectedParams = targetFn.getParameters();
 
         for (int i = 0; i < node.getArgs().size(); i++) {
-
             ASTNode arg = node.getArgs().get(i);
-            ParamInfo param =
-                    (expectedParams != null && i < expectedParams.size())
-                            ? expectedParams.get(i)
-                            : null;
+            ParamInfo param = (expectedParams != null && i < expectedParams.size()) ? expectedParams.get(i) : null;
 
             if (param != null && param.isRef()) {
-
                 if (!(arg instanceof VariableNode var)) {
                     throw new RuntimeException(
                             "Parâmetro '&" + param.name() + "' exige uma variável"
                     );
                 }
 
-                String varName = var.getName();
-
-                String varPtr = visitor
-                        .getVariableEmitter()
-                        .getVarPtr(varName);
-
-
-                TypeInfos info = visitor.getVarType(varName);
-                if (info == null) {
-                    throw new RuntimeException("Tipo não registrado para variável: " + varName);
-                }
-
-                String valueLLVMType = info.getLLVMType();
-                String paramLLVMType = valueLLVMType + "*";
-
-                llvmArgs.add(paramLLVMType + " " + varPtr);
+                String varPtr = visitor.getVariableEmitter().getVarPtr(var.getName());
+                Type varType = visitor.getVarType(var.getName()).getType(); // AST Type
+                String llvmParamType = typeMapper.toLLVM(varType) + "*";
+                llvmArgs.add(llvmParamType + " " + varPtr);
                 continue;
             }
 
+            // Avalia argumento
             String argLLVM = arg.accept(visitor);
             sb.append(argLLVM);
 
             String temp = extractTemp(argLLVM);
-            String argType = extractType(argLLVM); // já é LLVM type (ex: i32, double, %String*)
+            String argLLVMType = extractType(argLLVM); // LLVM type (i32, double, %Struct*, etc.)
 
-
-            String expectedLLVMType = null;
+            // conversão implícita usando Type
             if (param != null && param.type() != null) {
-                expectedLLVMType = typeMapper.toLLVM(param.type());
+                Type expectedType = param.type();
+                String expectedLLVMType = typeMapper.toLLVM(expectedType);
+
+                if (arg.getType() instanceof PrimitiveTypes argPrim &&
+                        expectedType instanceof PrimitiveTypes expPrim) {
+
+                    if (argPrim == PrimitiveTypes.INT && expPrim == PrimitiveTypes.DOUBLE) {
+                        String convTemp = temps.newTemp();
+                        sb.append("  ").append(convTemp)
+                                .append(" = sitofp i32 ").append(temp)
+                                .append(" to double\n")
+                                .append(";;VAL:").append(convTemp)
+                                .append(";;TYPE:double\n");
+                        temp = convTemp;
+                        argLLVMType = "double";
+                    }
+                }
             }
 
-            // conversão implícita i32 → double
-            if (expectedLLVMType != null &&
-                    "i32".equals(argType) &&
-                    "double".equals(expectedLLVMType)) {
-
-                String conv = visitor.getTemps().newTemp();
-                sb.append("  ").append(conv)
-                        .append(" = sitofp i32 ").append(temp)
-                        .append(" to double\n")
-                        .append(";;VAL:").append(conv)
-                        .append(";;TYPE:double\n");
-
-                temp = conv;
-                argType = "double";
-
-            }
-
-            llvmArgs.add(argType + " " + temp);
+            llvmArgs.add(argLLVMType + " " + temp);
         }
 
         TypeInfos retInfo = visitor.getFunctionType(llvmFuncName);
@@ -181,21 +134,19 @@ public class FunctionCallEmitter {
             throw new RuntimeException("Função não registrada: " + originalName);
         }
 
-        String retType = retInfo.getLLVMType();
-
-        if ("void".equals(retType)) {
-            sb.append("  call void @")
-                    .append(llvmFuncName)
+        String retLLVMType = retInfo.getLLVMType();
+        if ("void".equals(retLLVMType)) {
+            sb.append("  call void @").append(llvmFuncName)
                     .append("(").append(String.join(", ", llvmArgs)).append(")\n")
                     .append(";;VAL:void;;TYPE:void\n");
         } else {
-            String retTemp = visitor.getTemps().newTemp();
+            String retTemp = temps.newTemp();
             sb.append("  ").append(retTemp)
-                    .append(" = call ").append(retType).append(" @")
-                    .append(llvmFuncName)
+                    .append(" = call ").append(retLLVMType)
+                    .append(" @").append(llvmFuncName)
                     .append("(").append(String.join(", ", llvmArgs)).append(")\n")
                     .append(";;VAL:").append(retTemp)
-                    .append(";;TYPE:").append(retType).append("\n");
+                    .append(";;TYPE:").append(retLLVMType).append("\n");
         }
 
         return sb.toString();

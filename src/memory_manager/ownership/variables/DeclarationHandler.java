@@ -4,8 +4,10 @@ import ast.ASTNode;
 import ast.lists.ListNode;
 import ast.variables.VariableDeclarationNode;
 import ast.variables.VariableNode;
-import context.statics.StaticContext;
-import context.statics.Symbol;
+import context.statics.symbols.PrimitiveTypes;
+import context.statics.symbols.Symbol;
+import context.statics.symbols.Type;
+import context.statics.symbols.UnknownType;
 import memory_manager.ownership.OwnershipAnnotation;
 import memory_manager.ownership.VarOwnerShip;
 import memory_manager.ownership.enums.OwnerShipAction;
@@ -14,7 +16,6 @@ import memory_manager.ownership.graphs.OwnershipGraph;
 
 import java.util.List;
 import java.util.Map;
-
 public class DeclarationHandler implements NodeHandler<VariableDeclarationNode> {
 
     @Override
@@ -29,8 +30,10 @@ public class DeclarationHandler implements NodeHandler<VariableDeclarationNode> 
                        List<OwnershipAnnotation> annotations,
                        boolean debug) {
 
-        String type = decl.getType();
+        Type type = decl.getType();
+
         if (type == null || isPrimitive(type)) {
+
             if (debug) {
                 System.out.println("[OWNERSHIP] declare "
                         + decl.getName() + " => PRIMITIVE, ignorado");
@@ -59,7 +62,8 @@ public class DeclarationHandler implements NodeHandler<VariableDeclarationNode> 
         );
 
         if (debug) {
-            System.out.println("[OWNERSHIP] declare " + symbol.getName() + " => OWNED");
+            System.out.println("[OWNERSHIP] declare "
+                    + symbol.getName() + " => OWNED");
         }
 
         ASTNode init = decl.getInitializer();
@@ -70,9 +74,7 @@ public class DeclarationHandler implements NodeHandler<VariableDeclarationNode> 
 
                 if (element instanceof VariableNode varNode) {
 
-                    Symbol source = varNode.getStaticContext()
-                            .resolveVariable(varNode.getName());
-
+                    Symbol source = varNode.getSymbol();
                     if (source == null) continue;
 
                     VarOwnerShip sourceOwnership = vars.get(source);
@@ -84,10 +86,8 @@ public class DeclarationHandler implements NodeHandler<VariableDeclarationNode> 
                                         + source.getName());
                     }
 
-                    // 🔥 MOVE LINEAR
                     sourceOwnership.setState(OwnershipState.MOVED);
 
-                    // 🔥 MOVE NO GRAFO
                     graph.moveIntoList(source, symbol);
 
                     annotations.add(
@@ -110,12 +110,12 @@ public class DeclarationHandler implements NodeHandler<VariableDeclarationNode> 
         }
     }
 
-    private boolean isPrimitive(String type) {
-        type = type.trim().toLowerCase();
-        return type.equals("int")
-                || type.equals("float")
-                || type.equals("double")
-                || type.equals("bool")
-                || type.equals("char");
+    private boolean isPrimitive(Type type) {
+
+        if (type instanceof PrimitiveTypes) return true;
+
+        if (type instanceof UnknownType) return true;
+
+        return false;
     }
 }

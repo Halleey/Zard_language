@@ -4,7 +4,7 @@ import ast.ASTNode;
 import ast.home.MainAST;
 import ast.prints.ASTPrinter;
 import context.analyzers.FlowPass;
-import context.statics.Symbol;
+import context.statics.symbols.Symbol;
 import memory_manager.free.FreeAction;
 import memory_manager.free.FreeInsertionPass;
 import memory_manager.free.FreePlanner;
@@ -21,7 +21,6 @@ import translate.identifiers.MethodDesugarer;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,26 +50,18 @@ public class FrontendPipeline {
         parser = new Parser(tokens);
         List<ASTNode> ast = parser.parse();
 
-        ASTPrinter.printAST(ast);
-
         new MethodDesugarer().desugar(ast);
         new StaticBinder().bind(ast);
+      //  ASTPrinter.printAST(ast);
         new FlowPass().analyze(ast);
 
-        OwnershipAnalyzer ownershipAnalyzer =
-                new OwnershipAnalyzer(
-                        StaticBinder.getRootContext(),
-                        true
-                );
+        OwnershipAnalyzer ownershipAnalyzer = new OwnershipAnalyzer(StaticBinder.getRootContext(), true);
         ownershipAnalyzer.analyzeBlock(ast);
         ownershipAnalyzer.dumpFinalStates();
 
         OwnershipGraph ownershipGraph = ownershipAnalyzer.getGraph();
 
-        DeterministicLifetimeAnalyzer lifetimeAnalyzer =
-                new DeterministicLifetimeAnalyzer(
-                        StaticBinder.getRootContext()
-                );
+        DeterministicLifetimeAnalyzer lifetimeAnalyzer = new DeterministicLifetimeAnalyzer(StaticBinder.getRootContext());
 
         Map<Symbol, ASTNode> lastUses =
                 lifetimeAnalyzer.analyze(ast);

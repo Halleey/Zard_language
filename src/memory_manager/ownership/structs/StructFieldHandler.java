@@ -2,9 +2,8 @@ package memory_manager.ownership.structs;
 
 import ast.ASTNode;
 import ast.structs.StructFieldAccessNode;
-import ast.structs.StructNode;
 import ast.variables.VariableNode;
-import context.statics.Symbol;
+import context.statics.symbols.Symbol;
 import context.statics.structs.StaticStructDefinition;
 import memory_manager.ownership.OwnershipAnnotation;
 import memory_manager.ownership.VarOwnerShip;

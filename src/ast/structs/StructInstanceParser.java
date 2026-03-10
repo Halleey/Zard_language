@@ -4,7 +4,11 @@ import ast.ASTNode;
 import ast.lists.DynamicList;
 import ast.lists.ListNode;
 import ast.variables.LiteralNode;
+import ast.variables.TypeResolver;
 import ast.variables.VariableDeclarationNode;
+import context.statics.symbols.ListType;
+import context.statics.symbols.StructType;
+import context.statics.symbols.Type;
 import tokens.Token;
 import translate.front.Parser;
 
@@ -12,26 +16,30 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 public class StructInstanceParser {
+
     private final Parser parser;
 
     public StructInstanceParser(Parser parser) {
         this.parser = parser;
     }
-
     public VariableDeclarationNode parseStructInstanceAfterKeyword(String structName, String varName) {
 
-        String innerType = parseOptionalInnerType(); // <int> ou null
+        System.out.println("[StructInstanceParser] Começando para " + varName + " do tipo " + structName);
+
+        Type innerType = parseOptionalInnerType();
 
         List<ASTNode> positionalValues = null;
         Map<String, ASTNode> namedValues = null;
 
-        // Detecta inicialização com ou sem '='
         if (accept("=")) {
             parser.eat(Token.TokenType.DELIMITER, "{");
+
             namedValues = tryParseNamed(structName);
             if (namedValues == null)
                 positionalValues = parsePositionalInitializers();
+
             parser.eat(Token.TokenType.DELIMITER, "}");
             parser.eat(Token.TokenType.DELIMITER, ";");
         }
@@ -39,6 +47,7 @@ public class StructInstanceParser {
             namedValues = tryParseNamed(structName);
             if (namedValues == null)
                 positionalValues = parsePositionalInitializers();
+
             parser.eat(Token.TokenType.DELIMITER, "}");
             parser.eat(Token.TokenType.DELIMITER, ";");
         }
@@ -46,24 +55,32 @@ public class StructInstanceParser {
             parser.eat(Token.TokenType.DELIMITER, ";");
         }
 
-        // Monta tipo final "Struct<Set<int>>"
-        String variableType = buildStructType(structName, innerType);
+        Type variableType = buildStructType(structName, innerType);
 
         StructInstanceNode instanceNode =
                 new StructInstanceNode(structName, positionalValues, namedValues);
-        instanceNode.setConcreteType(variableType);
+
+        instanceNode.setResolvedType(variableType);
+
+        System.out.println("[StructInstanceParser] Declarando variável " + varName + " com tipo " + variableType);
 
         parser.declareVariable(varName, variableType);
+
         return new VariableDeclarationNode(varName, variableType, instanceNode);
     }
 
-    private String parseOptionalInnerType() {
+    private Type parseOptionalInnerType() {
+
         if (accept("<")) {
-            String type = parser.current().getValue();
+
+            String typeName = parser.current().getValue();
             parser.advance();
+
             parser.eat(Token.TokenType.OPERATOR, ">");
-            return type;
+
+            return TypeResolver.resolve(typeName);
         }
+
         return null;
     }
 
@@ -75,29 +92,42 @@ public class StructInstanceParser {
         return false;
     }
 
-    private String buildStructType(String structName, String innerType) {
-        if (innerType != null) structName += "<" + innerType + ">";
-        return "Struct<" + structName + ">";
+    private Type buildStructType(String structName, Type innerType) {
+
+        if (innerType != null) {
+            return new StructType(structName + "<" + innerType + ">");
+        }
+
+        return new StructType(structName);
     }
 
     private Map<String, ASTNode> tryParseNamed(String structName) {
+
         if (parser.current().getType() == Token.TokenType.IDENTIFIER &&
                 parser.peekValue(1).equals(":")) {
+
             return parseNamedInitializers(stripGeneric(structName));
         }
+
         return null;
     }
 
     private List<ASTNode> parsePositionalInitializers() {
+
         List<ASTNode> values = new ArrayList<>();
+
         while (!parser.current().getValue().equals("}")) {
+
             values.add(parser.parseExpression());
+
             if (!accept(",")) break;
         }
+
         return values;
     }
 
     private String stripGeneric(String name) {
+
         int idx = name.indexOf('<');
         return (idx != -1) ? name.substring(0, idx) : name;
     }
@@ -105,16 +135,21 @@ public class StructInstanceParser {
     private Map<String, ASTNode> parseNamedInitializers(String structName) {
 
         Map<String, ASTNode> result = new LinkedHashMap<>();
-        Map<String, String> fields = parser.lookupStruct(structName);
+
+        Map<String, Type> fields = parser.lookupStruct(structName);
 
         while (!parser.current().getValue().equals("}")) {
+
             String fieldName = parser.current().getValue();
+
             parser.eat(Token.TokenType.IDENTIFIER);
             parser.eat(Token.TokenType.DELIMITER, ":");
 
-            String expectedType = fields.get(fieldName);
+            Type expectedType = fields.get(fieldName);
+
             if (expectedType == null)
-                throw new RuntimeException("Campo desconhecido em " + structName + ": " + fieldName);
+                throw new RuntimeException(
+                        "Campo desconhecido em " + structName + ": " + fieldName);
 
             ASTNode expr = parseInitializerValue(expectedType);
 
@@ -122,51 +157,39 @@ public class StructInstanceParser {
                 throw new RuntimeException("Campo duplicado: " + fieldName);
 
             result.put(fieldName, expr);
+
             if (!accept(",")) break;
         }
 
         return result;
     }
 
-    private ASTNode parseInitializerValue(String expectedType) {
+    private ASTNode parseInitializerValue(Type expectedType) {
 
-        if (expectedType.startsWith("List<")) {
+        if (expectedType instanceof ListType listType) {
+
             List<ASTNode> listValues = new ArrayList<>();
+
             listValues.add(parser.parseExpression());
 
             while (accept(",")) {
+
                 if (parser.current().getType() == Token.TokenType.IDENTIFIER &&
-                        parser.peekValue(1).equals(":")) break;
+                        parser.peekValue(1).equals(":"))
+                    break;
+
                 listValues.add(parser.parseExpression());
             }
 
-            String innerType = expectedType.substring(5, expectedType.length() - 1);
-
             boolean isReference = false;
 
-            if (innerType.endsWith("*")) {
-                isReference = true;
-                innerType = innerType.substring(0, innerType.length() - 1);
-            }
-
-            if (innerType.equals("?"))
-                innerType = inferListTypeFromValues(listValues);
+            Type innerType = listType.elementType();
 
             DynamicList dyn = new DynamicList(innerType, listValues, isReference);
+
             return new ListNode(dyn);
         }
 
-        // Primitivos ou Struct
         return parser.parseExpression();
-    }
-
-    private String inferListTypeFromValues(List<ASTNode> values) {
-        if (values.isEmpty()) return "any";
-        ASTNode v = values.get(0);
-
-        if (v instanceof LiteralNode lit) return lit.getValue().type();
-        if (v instanceof StructInstanceNode s) return "Struct<" + s.getName() + ">";
-
-        return "any";
     }
 }

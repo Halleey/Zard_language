@@ -1,12 +1,13 @@
 package ast.functions;
 
 import ast.ASTNode;
+import ast.variables.TypeResolver;
+import context.statics.symbols.*;
 import tokens.Token;
 import translate.front.Parser;
 
 import java.util.ArrayList;
 import java.util.List;
-
 public class FunctionParser {
 
     private final Parser parser;
@@ -21,7 +22,7 @@ public class FunctionParser {
         this.implStructName = implStructName;
     }
 
-    private String parseType() {
+    private Type parseType() {
         StringBuilder sb = new StringBuilder();
         int depth = 0;
 
@@ -45,27 +46,27 @@ public class FunctionParser {
 
         } while (true);
 
-        return sb.toString().trim();
+        String typeName = sb.toString().trim();
+
+        return TypeResolver.resolve(typeName);
     }
 
-    private boolean isPrimitive(String t) {
-        return switch (t) {
-            case "int", "double", "bool", "string", "char", "void" -> true;
-            default -> false;
-        };
+    private boolean isPrimitive(Type t) {
+        return t instanceof PrimitiveTypes;
     }
 
-    private boolean isListType(String t) {
-        return t != null && t.startsWith("List");
+    private boolean isListType(Type t) {
+        return t instanceof ListType;
     }
 
     public FunctionNode parseFunction() {
 
-        parser.advance();
+        parser.advance(); // consome 'func' ou equivalente
 
-        String returnType = "?";
+        Type returnType = UnknownType.UNKNOWN_TYPE; // default
         Token cur = parser.current();
 
+        // detecta tipo de retorno
         if (cur.getType() == Token.TokenType.KEYWORD
                 || cur.getType() == Token.TokenType.IDENTIFIER
                 || "?".equals(cur.getValue())) {
@@ -86,53 +87,26 @@ public class FunctionParser {
         while (!parser.current().getValue().equals(")")) {
 
             boolean isRef = false;
-
             if (parser.current().getType() == Token.TokenType.OPERATOR
                     && parser.current().getValue().equals("&")) {
                 isRef = true;
                 parser.advance();
             }
 
-            StringBuilder typeBuilder = new StringBuilder();
-            int depth = 0;
-
-            do {
-                Token t = parser.current();
-                String val = t.getValue();
-
-                typeBuilder.append(val);
-
-                if (val.equals("<")) depth++;
-                if (val.equals(">")) depth--;
-
-                parser.advance();
-
-            } while (depth > 0 ||
-                    (parser.current().getType() != Token.TokenType.IDENTIFIER &&
-                            !parser.current().getValue().equals(",") &&
-                            !parser.current().getValue().equals(")")
-                    ));
-
-            String type = typeBuilder.toString().trim();
-
-            String name = parser.current().getValue();
+            Type paramType = parseType();
+            String paramName = parser.current().getValue();
             parser.eat(Token.TokenType.IDENTIFIER);
 
-            if (parser.lookupStruct(type) != null
-                    && !type.startsWith("Struct<")
-                    && !isPrimitive(type)
-                    && !isListType(type)) {
-                type = "Struct<" + type + ">";
+            // ajusta struct genérica se necessário
+            if (paramType instanceof UnknownType &&
+                    parser.lookupStruct(paramName) != null) {
+                paramType = new StructType(paramName);
             }
 
-            if ("?".equals(type)) {
-                type = "i8*"; // tipo genérico default
-            }
+            // registra no escopo para o corpo da função
+            parser.declareVariable(paramName, paramType);
 
-            // registra no escopo do parser para o corpo da função
-            parser.declareVariable(name, type);
-
-            params.add(new ParamInfo(name, type, isRef));
+            params.add(new ParamInfo(paramName, paramType, isRef));
 
             if (parser.current().getValue().equals(",")) {
                 parser.advance();
@@ -141,10 +115,9 @@ public class FunctionParser {
 
         parser.eat(Token.TokenType.DELIMITER, ")");
 
-        // registrar o "s" de métodos de impl (receiver), por valor
+        // receiver para métodos de struct
         if (implStructName != null) {
-            String receiverType = "Struct<" + implStructName + ">";
-
+            Type receiverType = new StructType(implStructName);
             boolean hasS = params.stream().anyMatch(p -> p.name().equals("s"));
             if (!hasS) {
                 parser.declareVariable("s", receiverType);
@@ -156,8 +129,9 @@ public class FunctionParser {
 
         parser.popContext();
 
-        if (returnType == null || returnType.isBlank()) {
-            returnType = "void";
+        // tipo de retorno padrão
+        if (returnType instanceof UnknownType) {
+            returnType = PrimitiveTypes.VOID;
         }
 
         return new FunctionNode(funcName, params, body, returnType);

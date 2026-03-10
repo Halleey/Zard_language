@@ -1,6 +1,6 @@
 package memory_manager.ownership.graphs;
 
-import context.statics.Symbol;
+import context.statics.symbols.Symbol;
 import memory_manager.ownership.enums.Kind;
 
 import java.util.ArrayList;

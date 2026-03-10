@@ -1,9 +1,69 @@
 main {
 
-string nome  = "zard";
-List<string*> t = (nome, "bsk", "jnk");
-string z = "ok";
-List<string> x = ("teste", z);
-println(t);
-print(x);
+Struct Entry {
+  int key;
+  string value;
+}
+
+Struct maps {
+  List<Entry> data;
+}
+
+impl maps {
+
+  function void put(int key, string value) {
+    int i = 0;
+    while (i < s.data.size()) {
+      Entry e = s.data.get(i);
+      if (e.key == key) {
+        e.value = value;
+      }
+      i++;
+    }
+
+    Entry n;
+    n.key = key;
+    n.value = value;
+    s.data.add(n);
+  }
+
+  function void get(int key) {
+    int i = 0;
+    while (i < s.data.size()) {
+      Entry e = s.data.get(i);
+      if (e.key == key) {
+        println(e.value);
+        return;
+      }
+      i++;
+    }
+    println("key not found");
+  }
+
+  function void remove(int key) {
+    int i = 0;
+    while (i < s.data.size()) {
+      Entry e = s.data.get(i);
+      if (e.key == key) {
+        s.data.remove(i);
+      }
+      i++;
+    }
+  }
+}
+
+maps m;
+
+m.put(1, "Sword");
+m.put(2, "Shield");
+m.put(3, "Potion");
+
+
+m.get(2);
+m.remove(1);
+m.get(2);
+m.get(1);
+m.get(3);
+
+
 }

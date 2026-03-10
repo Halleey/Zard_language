@@ -1,95 +1,156 @@
 package low.structs.helpers;
 
+import context.statics.symbols.ListType;
+import context.statics.symbols.PrimitiveTypes;
+import context.statics.symbols.StructType;
+import context.statics.symbols.Type;
+import low.functions.TypeMapper;
+
+import static context.statics.symbols.PrimitiveTypes.*;
+
 public class StructFieldPrint {
 
     private final StructTypeResolver resolver;
+    private final TypeMapper typeMapper = new TypeMapper();
 
     public StructFieldPrint(StructTypeResolver resolver) {
         this.resolver = resolver;
     }
 
-    public void emitPrint(StringBuilder sb, int idx, String fieldType, String llvmName) {
+    public void emitPrint(StringBuilder sb, int index, Type fieldType, String llvmName) {
 
-        // GEP do campo
-        sb.append("  %f").append(idx)
-                .append(" = getelementptr inbounds %").append(llvmName)
-                .append(", %").append(llvmName).append("* %p, i32 0, i32 ").append(idx).append("\n");
+        String ptr = "%field_ptr_" + index;
+        String val = "%field_val_" + index;
 
-        // PRIMITIVOS
-        switch (fieldType) {
-            case "int" -> {
-                sb.append("  %v").append(idx).append(" = load i32, i32* %f").append(idx).append("\n");
-                sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4x i8], [4x i8]* @.strInt, i32 0, i32 0), i32 %v").append(idx).append(")\n");
-                return;
-            }
-            case "double" -> {
-                sb.append("  %v").append(idx).append(" = load double, double* %f").append(idx).append("\n");
-                sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4x i8], [4x i8]* @.strDouble, i32 0, i32 0), double %v").append(idx).append(")\n");
-                return;
-            }
-            case "boolean", "bool" -> {
-                sb.append("  %v").append(idx).append(" = load i1, i1* %f").append(idx).append("\n");
-                sb.append("  %vb").append(idx).append(" = zext i1 %v").append(idx).append(" to i32\n");
-                sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4x i8], [4x i8]* @.strInt, i32 0, i32 0), i32 %vb").append(idx).append(")\n");
-                return;
-            }
+        sb.append("  ").append(ptr)
+                .append(" = getelementptr inbounds %")
+                .append(llvmName)
+                .append(", %")
+                .append(llvmName)
+                .append("* %p, i32 0, i32 ")
+                .append(index)
+                .append("\n");
 
-            case "string" -> {
-                    sb.append("  %v").append(idx).append(" = load %String*, %String** %f").append(idx).append("\n");
-                    sb.append("  call void @printString(%String* %v").append(idx).append(")\n");
-                    return;
-                }
+        if (fieldType instanceof PrimitiveTypes prim) {
+
+            String llvmType = typeMapper.toLLVM(prim);
+
+            sb.append("  ").append(val)
+                    .append(" = load ")
+                    .append(llvmType)
+                    .append(", ")
+                    .append(llvmType)
+                    .append("* ")
+                    .append(ptr)
+                    .append("\n");
+
+            emitPrimitivePrint(sb, prim, val);
         }
 
-        // STRUCT SIMPLES
-        if (fieldType.startsWith("Struct ")) {
-            String inner = fieldType.substring(7).trim();
-            String innerLLVM = resolver.resolveLLVMName(inner);
+        else if (fieldType instanceof StructType structType) {
 
-            sb.append("  %v").append(idx).append(" = load %").append(innerLLVM)
-                    .append("*, %").append(innerLLVM).append("** %f").append(idx).append("\n");
-            sb.append("  call void @print_").append(innerLLVM)
-                    .append("(%").append(innerLLVM).append("* %v").append(idx).append(")\n");
-            return;
+            String structName = structType.name();
+
+            sb.append("  ").append(val)
+                    .append(" = load %")
+                    .append(structName)
+                    .append("*, %")
+                    .append(structName)
+                    .append("** ")
+                    .append(ptr)
+                    .append("\n");
+
+            sb.append("  call void @print_")
+                    .append(structName)
+                    .append("(%")
+                    .append(structName)
+                    .append("* ")
+                    .append(val)
+                    .append(")\n");
         }
 
-        // STRUCT<T>
-        if (fieldType.startsWith("Struct<")) {
-            String inner = fieldType.substring(7, fieldType.length() - 1).trim();
-            String innerLLVM = resolver.resolveLLVMName(inner);
+        else if (fieldType instanceof ListType listType) {
 
-            sb.append("  %v").append(idx).append(" = load %").append(innerLLVM)
-                    .append("*, %").append(innerLLVM).append("** %f").append(idx).append("\n");
-            sb.append("  call void @print_").append(innerLLVM)
-                    .append("(%").append(innerLLVM).append("* %v").append(idx).append(")\n");
-            return;
+
+            String llvmListType = resolver.toLLVMFieldType(listType);
+
+            sb.append("  ").append(val)
+                    .append(" = load ")
+                    .append(llvmListType)
+                    .append(", ")
+                    .append(llvmListType)
+                    .append("* ")
+                    .append(ptr)
+                    .append("\n");
+
+            emitListPrint(sb, listType, val);
         }
-
-        // LIST<T>
-        if (fieldType.startsWith("List<")) {
-            String elementType = fieldType.substring(5, fieldType.length() - 1).trim();
-            String llvmListType = resolver.toLLVMFieldType(fieldType);
-
-            sb.append("  %v").append(idx).append(" = load ").append(llvmListType)
-                    .append(", ").append(llvmListType).append("* %f").append(idx).append("\n");
-
-            switch (elementType) {
-                case "int" ->
-                        sb.append("  call void @arraylist_print_int(%struct.ArrayListInt* %v").append(idx).append(")\n");
-                case "double" ->
-                        sb.append("  call void @arraylist_print_double(%struct.ArrayListDouble* %v").append(idx).append(")\n");
-                case "boolean", "bool" ->
-                        sb.append("  call void @arraylist_print_bool(%struct.ArrayListBool* %v").append(idx).append(")\n");
-                case "string", "String" ->
-                        sb.append("  call void @arraylist_print_string(%ArrayList* %v").append(idx).append(")\n");
-                case "?" ->
-                        sb.append("  ; List<?> genérica: ignorando print\n");
-                default ->
-                        sb.append("  ; TODO print List<").append(elementType).append(">\n");
-            }
-            return;
+        else {
+            throw new RuntimeException("Unsupported struct field type: " + fieldType);
         }
+    }
 
-        sb.append("  ; Tipo desconhecido: ").append(fieldType).append("\n");
+    private void emitPrimitivePrint(StringBuilder sb, PrimitiveTypes prim, String value) {
+
+        if (prim.equals(INT)) {
+            sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 ")
+                    .append(value)
+                    .append(")\n");
+
+        } else if (prim.equals(DOUBLE)) {
+            sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strDouble, i32 0, i32 0), double ")
+                    .append(value)
+                    .append(")\n");
+
+        } else if (prim.equals(BOOL)) {
+            sb.append("  %vb = zext i1 ").append(value).append(" to i32\n");
+            sb.append("  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @.strInt, i32 0, i32 0), i32 %vb)\n");
+
+        } else if (prim.equals(STRING)) {
+            sb.append("  call void @printString(%String* ").append(value).append(")\n");
+
+        } else {
+            throw new RuntimeException("Unsupported primitive print: " + prim);
+        }
+    }
+    private void emitListPrint(StringBuilder sb, ListType listType, String value) {
+
+        Type elemType = listType.elementType();
+        String llvmListType = resolver.toLLVMFieldType(listType);
+
+        if (elemType.equals(INT)) {
+
+            sb.append("  call void @arraylist_print_int(")
+                    .append(llvmListType)
+                    .append(" ")
+                    .append(value)
+                    .append(")\n");
+
+        }
+        else if (elemType.equals(DOUBLE)) {
+
+            sb.append("  call void @arraylist_print_double(")
+                    .append(llvmListType)
+                    .append(" ")
+                    .append(value)
+                    .append(")\n");
+
+        }
+        else if (elemType.equals(STRING)) {
+
+            sb.append("  %tmp_list_cast = bitcast ")
+                    .append(llvmListType)
+                    .append(" ")
+                    .append(value)
+                    .append(" to %ArrayList*\n");
+
+            sb.append("  call void @arraylist_print_string(%ArrayList* %tmp_list_cast)\n");
+
+        }
+        else {
+            sb.append("  ; TODO print List<")
+                    .append(elemType)
+                    .append(">\n");
+        }
     }
 }

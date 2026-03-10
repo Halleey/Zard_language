@@ -28,11 +28,6 @@ public class ListClearEmitter {
         String listTmp = extractTemp(listCode);
         String valType = extractType(listCode);
 
-        System.out.println("==== DEBUG ListClearEmitter ====");
-        System.out.println("LLVM recebido:\n" + listCode);
-        System.out.println("Temp extraído: " + listTmp);
-        System.out.println("Tipo extraído: " + valType);
-        System.out.println("===============================");
 
         if (valType.contains("ArrayListInt")) {
             return listIntClearEmitter.emit(node, visitor);

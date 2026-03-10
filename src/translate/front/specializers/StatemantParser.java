@@ -152,14 +152,13 @@ public class StatemantParser {
             }
         }
         if (tok.getType() == Token.TokenType.IDENTIFIER) {
-
             String name = tok.getValue();
             parser.advance(); // consome IDENTIFIER
             IdentifierParser idParser = new IdentifierParser(parser);
             return idParser.parseAsStatement(name);
         }
+        System.out.println(" proximo era " +parser.peek()  );
         throw new RuntimeException("Comando inesperado: " + tok.getValue());
-
     }
 
 

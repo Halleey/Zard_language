@@ -4,6 +4,7 @@ import ast.ASTNode;
 import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
+import context.statics.symbols.Type;
 import low.module.LLVMEmitVisitor;
 
 import java.util.List;
@@ -12,7 +13,7 @@ import java.util.List;
 public class FunctionCallNode extends ASTNode {
     private final String name;
     private final List<ASTNode> args;
-
+    private Type type;
     public FunctionCallNode(String name, List<ASTNode> args) {
         this.name = name;
         this.args = args;
@@ -65,6 +66,26 @@ public class FunctionCallNode extends ASTNode {
     @Override
     public void bindChildren(StaticContext stx) {
 
+        for (ASTNode arg : args) {
+            arg.setParent(this);
+            arg.bind(stx);
+        }
+
+        String[] parts = name.split("\\.");
+        String funcName = parts[parts.length - 1];
+
+        FunctionNode fn = stx.resolveFunction(funcName);
+
+        if (fn == null) {
+            throw new RuntimeException("Função não declarada: " + name);
+        }
+
+        this.type = fn.getReturnType();
+    }
+
+    @Override
+    public Type getType() {
+        return type;
     }
 
     public String getName() { return name; }

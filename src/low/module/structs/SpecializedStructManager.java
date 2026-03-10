@@ -1,12 +1,12 @@
 package low.module.structs;
 
 import ast.structs.StructNode;
+import context.statics.symbols.Type;
 import low.structs.StructEmitter;
 import low.utils.LLVMNameUtils;
 
 import java.util.List;
 import java.util.Map;
-
 public class SpecializedStructManager {
 
     private final Map<String, StructNode> specializedStructs;
@@ -24,39 +24,42 @@ public class SpecializedStructManager {
         this.structDefinitions = structDefinitions;
     }
 
-    public StructNode getOrCreateSpecializedStruct(StructNode base, String elemType) {
+    public StructNode getOrCreateSpecializedStruct(StructNode base, Type elemType) {
+
         if (base == null || elemType == null) return null;
 
-        // Proteção: já é especializado (Set_int, etc)
+        // Já é especializado
         if (base.getName().contains("_")) {
             return base;
         }
 
-        String key = base.getName() + "<" + elemType + ">";
+        String elemName = elemType.toString();
+
+        String key = base.getName() + "<" + elemName + ">";
 
         if (specializedStructs.containsKey(key)) {
             return specializedStructs.get(key);
         }
 
-        // Clone especializado real
+        // 🔥 agora passa Type corretamente
         StructNode clone = base.cloneWithType(elemType);
 
-        // Nome LLVM correto
-        String llvmName = LLVMNameUtils.llvmSafe(base.getName() + "_" + elemType);
+        String llvmName = LLVMNameUtils.llvmSafe(
+                base.getName() + "_" + elemName
+        );
+
         clone.setLLVMName(llvmName);
 
-        // Salva no mapa principal de especializações
         specializedStructs.put(key, clone);
 
-        // Registros de lookup compatíveis com o código antigo
         String baseName = base.getName();
+
         structRegistry.put(key, clone);
-        structRegistry.put(baseName + "_" + elemType, clone);
+        structRegistry.put(baseName + "_" + elemName, clone);
         structRegistry.put(llvmName, clone);
         structRegistry.put("%" + llvmName, clone);
-        structRegistry.put(baseName + "<" + elemType + ">", clone);
+        structRegistry.put(baseName + "<" + elemName + ">", clone);
 
-        // Emite definição apenas uma vez
         String llvmDef = structEmitter.emit(clone);
         structDefinitions.add(llvmDef);
 

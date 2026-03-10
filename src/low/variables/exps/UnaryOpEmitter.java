@@ -3,12 +3,16 @@ package low.variables.exps;
 import ast.ASTNode;
 import ast.expressions.TypedValue;
 import ast.variables.LiteralNode;
+import context.statics.symbols.PrimitiveTypes;
+import context.statics.symbols.Type;
 import low.TempManager;
 import ast.variables.VariableNode;
 import low.main.TypeInfos;
 import low.variables.VariableEmitter;
 
 import java.util.Map;
+
+
 public class UnaryOpEmitter {
     private final Map<String, TypeInfos> varTypes; // nome -> infos de tipo
     private final TempManager temps;
@@ -34,27 +38,45 @@ public class UnaryOpEmitter {
         StringBuilder llvm = new StringBuilder();
 
         if (expr instanceof LiteralNode literal) {
+
             TypedValue val = literal.getValue();
+
             String llvmType;
             String valueStr;
 
-            switch (val.type()) {
-                case "int" -> { llvmType = "i32"; valueStr = val.value().toString(); }
-                case "double" -> { llvmType = "double"; valueStr = val.value().toString(); }
-                default -> throw new RuntimeException("Unário " + operator + " não suportado para " + val.type());
+            Type t = val.type();
+
+            if (t == PrimitiveTypes.INT) {
+                llvmType = "i32";
+                valueStr = val.value().toString();
+            }
+            else if (t == PrimitiveTypes.DOUBLE) {
+                llvmType = "double";
+                valueStr = val.value().toString();
+            }
+            else {
+                throw new RuntimeException(
+                        "Unário " + operator + " não suportado para " + t);
             }
 
             String temp = temps.newTemp();
+
             switch (operator) {
                 case "-" -> llvm.append("  ").append(temp).append(" = ")
                         .append(llvmType.equals("i32") ? "sub i32 0, " : "fsub double 0.0, ")
                         .append(valueStr).append("\n");
+
                 case "+" -> llvm.append("  ").append(temp).append(" = ")
                         .append(llvmType.equals("i32") ? "add i32 0, " : "fadd double 0.0, ")
                         .append(valueStr).append("\n");
-                default -> throw new RuntimeException("Operador unário " + operator + " não suportado para literal");
+
+                default -> throw new RuntimeException(
+                        "Operador unário " + operator + " não suportado para literal");
             }
-            llvm.append(";;VAL:").append(temp).append(";;TYPE:").append(llvmType).append("\n");
+
+            llvm.append(";;VAL:").append(temp)
+                    .append(";;TYPE:").append(llvmType).append("\n");
+
             return llvm.toString();
         }
 

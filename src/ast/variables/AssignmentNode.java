@@ -1,12 +1,10 @@
 package ast.variables;
 
 import ast.ASTNode;
-import ast.functions.FunctionCallNode;
-import ast.functions.FunctionNode;
 import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
-import context.statics.Symbol;
+import context.statics.symbols.*;
 import low.module.LLVMEmitVisitor;
 
 public class AssignmentNode extends ASTNode {
@@ -33,23 +31,26 @@ public class AssignmentNode extends ASTNode {
 
     @Override
     public TypedValue evaluate(RuntimeContext ctx) {
+
         if (!ctx.hasVariable(name)) {
             throw new RuntimeException("Variável não declarada: " + name);
         }
 
         TypedValue value = valueNode.evaluate(ctx);
 
-        String expectedType = ctx.getVariable(name).type();
-        if (!expectedType.equals(value.type())) {
+        Type expectedType = ctx.getVariable(name).type();
+        Type actualType = value.type();
+
+        if (!expectedType.equals(actualType)) {
             throw new RuntimeException(
-                    "Erro de tipo: esperado " + expectedType + " mas encontrado " + value.type()
+                    "Erro de tipo: esperado " + expectedType +
+                            " mas encontrado " + actualType
             );
         }
 
         ctx.setVariable(name, value);
         return value;
     }
-
 
     @Override
     public void print(String prefix) {
@@ -65,16 +66,13 @@ public class AssignmentNode extends ASTNode {
     @Override
     public void bindChildren(StaticContext stx) {
 
-        // variável deve existir
         Symbol sym = stx.resolveVariable(name);
-        String expectedType = sym.getType();
+        Type expectedType = sym.getType();
 
-        // resolve tipos do RHS
         valueNode.bind(stx);
-        String actualType = valueNode.getType();
+        Type actualType = valueNode.getType();
 
-        // bloqueia void
-        if ("void".equals(actualType)) {
+        if (actualType instanceof UnknownType) {
             throw new RuntimeException(
                     "Semantic error: cannot assign void value to variable '" + name + "'"
             );
@@ -83,31 +81,30 @@ public class AssignmentNode extends ASTNode {
         checkTypeCompatibility(expectedType, actualType);
     }
 
-    protected void checkTypeCompatibility(String declared, String currently) {
+    protected void checkTypeCompatibility(Type declared, Type current) {
 
-        if (isStructType(declared) || isStructType(currently)) {
+        if (declared instanceof StructType ||
+                current instanceof StructType) {
             return;
         }
 
-        if (declared.equals(currently)) return;
+        if (declared instanceof PrimitiveTypes dp &&
+                current instanceof PrimitiveTypes cp) {
 
-        if (declared.equals("double") && currently.equals("int")) return;
-        if (declared.equals("float")  && currently.equals("int")) return;
-        if (declared.equals("double") && currently.equals("float")) return;
-        if(declared.equals("float") && currently.equals("double"))return;
-        if(currently.equals("input")) return;
+            if (dp.name().equals(cp.name())) return;
+
+            if (dp.name().equals("double") && cp.name().equals("int")) return;
+            if (dp.name().equals("float")  && cp.name().equals("int")) return;
+            if (dp.name().equals("double") && cp.name().equals("float")) return;
+            if (dp.name().equals("float") && cp.name().equals("double")) return;
+        }
+
+        if (current instanceof InputType) return;
+
         throw new RuntimeException(
                 "Semantic error: cannot assign value of type '" +
-                        currently + "' to variable of type '" +
-                        declared +" " +name +"'"
+                        current + "' to variable of type '" +
+                        declared + "'"
         );
     }
-
-    private boolean isStructType(String type) {
-        return type != null && type.startsWith("Struct<");
-    }
-
-
-
-
 }

@@ -2,8 +2,12 @@ package low.variables.exps;
 
 import ast.inputs.InputNode;
 import ast.lists.ListNode;
+
 import ast.variables.AssignmentNode;
 import ast.variables.LiteralNode;
+import context.statics.symbols.PrimitiveTypes;
+import context.statics.symbols.StructType;
+import context.statics.symbols.Type;
 import low.TempManager;
 import low.inputs.InputEmitter;
 import low.lists.generics.ListEmitter;
@@ -35,86 +39,65 @@ public class AssignmentEmitter {
             throw new RuntimeException("Tipo não encontrado para variável: " + assignNode.name);
         }
 
-        String llvmType = info.getLLVMType();
-        String sourceType = info.getSourceType();
+        Type type = info.getType(); // agora Type diretamente
         StringBuilder llvm = new StringBuilder();
 
         if (assignNode.valueNode instanceof LiteralNode lit) {
             Object val = lit.value.value();
-            if ("double".equals(llvmType) && val instanceof Integer i) val = i.doubleValue();
 
-            switch (llvmType) {
-                case "i32" -> llvm.append("  store i32 ").append(val)
-                        .append(", i32* ").append(varPtr).append("\n");
+            if (type.equals(PrimitiveTypes.DOUBLE) && val instanceof Integer i) {
+                val = i.doubleValue();
+            }
 
-                case "double" -> llvm.append("  store double ").append(val)
-                        .append(", double* ").append(varPtr).append("\n");
+            if (type.equals(PrimitiveTypes.INT)) {
+                llvm.append("  store i32 ").append(val).append(", i32* ").append(varPtr).append("\n");
+            } else if (type.equals(PrimitiveTypes.DOUBLE)) {
+                llvm.append("  store double ").append(val).append(", double* ").append(varPtr).append("\n");
+            } else if (type.equals(PrimitiveTypes.FLOAT)) {
+                String tmpDouble = temps.newTemp();
+                String tmpFloat  = temps.newTemp();
 
-                case "float" -> {
-                    String tmpDouble = temps.newTemp();
-                    String tmpFloat = temps.newTemp();
+                llvm.append("  ").append(tmpDouble)
+                        .append(" = fadd double 0.0, ").append(val).append("\n");
 
-                    llvm.append("  ").append(tmpDouble)
-                            .append(" = fadd double 0.0, ").append(val).append("\n");
+                llvm.append("  ").append(tmpFloat)
+                        .append(" = fptrunc double ").append(tmpDouble).append(" to float\n");
 
-                    llvm.append("  ").append(tmpFloat)
-                            .append(" = fptrunc double ")
-                            .append(tmpDouble)
-                            .append(" to float\n");
-
-                    llvm.append("  store float ")
-                            .append(tmpFloat)
-                            .append(", float* ")
-                            .append(varPtr)
-                            .append("\n");
-
-                    llvm.append(";;VAL:").append(tmpFloat).append(";;TYPE:float\n");
-                }
-
-                case "i1" -> llvm.append("  store i1 ").append((Boolean) val ? "1" : "0")
+                llvm.append("  store float ").append(tmpFloat).append(", float* ").append(varPtr).append("\n");
+                llvm.append(";;VAL:").append(tmpFloat).append(";;TYPE:float\n");
+            } else if (type.equals(PrimitiveTypes.BOOL)) {
+                llvm.append("  store i1 ").append((Boolean) val ? "1" : "0")
                         .append(", i1* ").append(varPtr).append("\n");
+            } else if ("%String*".equals(info.getLLVMType()) || type.name().equals("%String")) {
+                String s = (String) val;
+                String strName = globalStrings.getOrCreateString(s);
+                int len = globalStrings.getLength(s); // inclui '\0'
+                String tmpNew = temps.newTemp();
 
-                case "i8*" -> {
-                    String s = (String) val;
-                    String strName = globalStrings.getOrCreateString(s);
-                    int len = s.length() + 1;
-                    llvm.append("  store i8* getelementptr ([")
-                            .append(len).append(" x i8], [").append(len).append(" x i8]* ")
-                            .append(strName).append(", i32 0, i32 0), i8** ")
-                            .append(varPtr).append("\n");
-                }
+                llvm.append("  ").append(tmpNew)
+                        .append(" = call %String* @createString(i8* getelementptr ([")
+                        .append(len).append(" x i8], [").append(len).append(" x i8]* ").append(strName)
+                        .append(", i32 0, i32 0))\n");
 
-                case "%String*" -> {
-                    String s = (String) val;
-                    String strName = globalStrings.getOrCreateString(s);
-                    int len = globalStrings.getLength(s); // inclui '\0'
-                    String tmpNew = temps.newTemp();
-
-                    llvm.append("  ").append(tmpNew)
-                            .append(" = call %String* @createString(i8* getelementptr ([").append(len)
-                            .append(" x i8], [").append(len).append(" x i8]* ").append(strName)
-                            .append(", i32 0, i32 0))\n");
-
-                    llvm.append("  store %String* ").append(tmpNew)
-                            .append(", %String** ").append(varPtr).append("\n");
-
-                    llvm.append(";;VAL:").append(tmpNew).append(";;TYPE:%String*\n");
-                }
+                llvm.append("  store %String* ").append(tmpNew).append(", %String** ").append(varPtr).append("\n");
+                llvm.append(";;VAL:").append(tmpNew).append(";;TYPE:%String*\n");
+            } else {
+                throw new RuntimeException("Tipo literal não suportado: " + type);
             }
             return llvm.toString();
         }
 
         if (assignNode.valueNode instanceof InputNode inputNode) {
             InputEmitter inputEmitter = new InputEmitter(temps, globalStrings);
-            String llvmInput = inputEmitter.emit(inputNode, llvmType);
+            String llvmInput = inputEmitter.emit(inputNode, info.getLLVMType());
             String tmp = extractTemp(llvmInput);
 
             llvm.append(llvmInput);
-            if ("%String".equals(llvmType) || "%String*".equals(llvmType)) {
+            if ("%String*".equals(info.getLLVMType()) || type.name().equals("%String")) {
                 llvm.append("  store %String* ").append(tmp).append(", %String** ").append(varPtr).append("\n");
             } else {
-                llvm.append("  store ").append(llvmType).append(" ").append(tmp)
-                        .append(", ").append(llvmType).append("* ").append(varPtr).append("\n");
+                llvm.append("  store ").append(info.getLLVMType()).append(" ").append(tmp)
+                        .append(", ").append(info.getLLVMType()).append("* ").append(varPtr).append("\n");
             }
             return llvm.toString();
         }
@@ -125,32 +108,27 @@ public class AssignmentEmitter {
             String tmpList = extractTemp(listLLVM);
 
             llvm.append(listLLVM);
-            if (llvmType.equals("i8*")) {
-                llvm.append("  store i8* ").append(tmpList).append(", i8** ").append(varPtr).append("\n");
-            } else {
-                llvm.append("  store ").append(llvmType).append(" ").append(tmpList)
-                        .append(", ").append(llvmType).append("* ").append(varPtr).append("\n");
-            }
+            llvm.append("  store ").append(info.getLLVMType()).append(" ").append(tmpList)
+                    .append(", ").append(info.getLLVMType()).append("* ").append(varPtr).append("\n");
             return llvm.toString();
         }
 
         String exprLLVM = assignNode.valueNode.accept(visitor);
         String temp = extractTemp(exprLLVM);
-
         llvm.append(exprLLVM);
 
-        if (sourceType.startsWith("Struct")) {
+        if (type instanceof StructType) {
             StructCopyEmitter structCopyEmitter =
                     new StructCopyEmitter(varTypes, temps, globalStrings, visitor);
-            llvm.append(structCopyEmitter.emit(assignNode, temp, varPtr, sourceType));
+            llvm.append(structCopyEmitter.emit(assignNode, temp, varPtr, info));
             return llvm.toString();
         }
 
-        if ("%String".equals(llvmType) || "%String*".equals(llvmType)) {
+        if ("%String*".equals(info.getLLVMType()) || type.name().equals("%String")) {
             llvm.append("  store %String* ").append(temp).append(", %String** ").append(varPtr).append("\n");
         } else {
-            llvm.append("  store ").append(llvmType).append(" ").append(temp)
-                    .append(", ").append(llvmType).append("* ").append(varPtr).append("\n");
+            llvm.append("  store ").append(info.getLLVMType()).append(" ").append(temp)
+                    .append(", ").append(info.getLLVMType()).append("* ").append(varPtr).append("\n");
         }
 
         return llvm.toString();

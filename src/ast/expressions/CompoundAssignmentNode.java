@@ -4,6 +4,7 @@ import ast.ASTNode;
 import ast.variables.VariableNode;
 import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
+import context.statics.symbols.PrimitiveTypes;
 import low.module.LLVMEmitVisitor;
 
 
@@ -42,14 +43,14 @@ public class CompoundAssignmentNode extends ASTNode {
 
         if (l instanceof Integer li && r instanceof Integer ri) {
             int result = operator.equals("+=") ? li + ri : li - ri;
-            TypedValue tv = new TypedValue("int", result);
+            TypedValue tv = new TypedValue(PrimitiveTypes.INT, result);
             ctx.setVariable(target.getName(), tv);
             return tv;
         }
 
         if (l instanceof Double ld && r instanceof Double rd) {
             double result = operator.equals("+=") ? ld + rd : ld - rd;
-            TypedValue tv = new TypedValue("double", result);
+            TypedValue tv = new TypedValue(PrimitiveTypes.DOUBLE, result);
             ctx.setVariable(target.getName(), tv);
             return tv;
         }

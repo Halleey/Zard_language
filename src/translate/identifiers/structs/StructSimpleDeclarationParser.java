@@ -2,8 +2,11 @@ package translate.identifiers.structs;
 
 import ast.ASTNode;
 import ast.variables.VariableDeclarationNode;
+import context.statics.symbols.StructType;
+import context.statics.symbols.Type;
 import tokens.Token;
 import translate.front.Parser;
+
 
 public class StructSimpleDeclarationParser {
 
@@ -12,7 +15,6 @@ public class StructSimpleDeclarationParser {
     public StructSimpleDeclarationParser(Parser parser) {
         this.parser = parser;
     }
-
 
     public ASTNode tryParse(String structName) {
 
@@ -31,7 +33,7 @@ public class StructSimpleDeclarationParser {
             parser.eat(Token.TokenType.IDENTIFIER);
             parser.eat(Token.TokenType.DELIMITER, ";");
 
-            String finalType = "Struct<" + structName + ">";
+            Type finalType = new StructType(structName); // agora Type
             parser.declareVariable(varName, finalType);
 
             return new VariableDeclarationNode(varName, finalType, null);

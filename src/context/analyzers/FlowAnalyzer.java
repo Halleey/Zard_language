@@ -5,6 +5,7 @@ import ast.exceptions.ReturnNode;
 import ast.functions.FunctionNode;
 import ast.ifstatements.IfNode;
 import ast.loops.WhileNode;
+import context.statics.symbols.PrimitiveTypes;
 
 import java.util.List;
 
@@ -12,31 +13,27 @@ import java.util.List;
 public class FlowAnalyzer {
 
     public void analyzeFunction(FunctionNode fn) {
-
         FlowInfo flow = analyzeBlock(fn.getBody());
 
-        if (!fn.getReturnType().equals("void") && !flow.alwaysReturn) {
+        if (!fn.getReturnType().equals(PrimitiveTypes.VOID) && !flow.alwaysReturn) {
             throw new RuntimeException(
-                    "Função '" + fn.getName() +
-                            "' não pode terminar sem retornar um valor"
+                    "Função '" + fn.getName() + "' não pode terminar sem retornar um valor"
             );
         }
-    }private FlowInfo analyzeBlock(List<ASTNode> body) {
+    }
 
+    private FlowInfo analyzeBlock(List<ASTNode> body) {
         FlowInfo blockFlow = FlowInfo.continueFlow();
 
         for (ASTNode node : body) {
 
             if (!blockFlow.mayContinue) {
-                throw new RuntimeException(
-                        "Código morto detectado após return"
-                );
+                throw new RuntimeException("Código morto detectado após return");
             }
 
             FlowInfo stmtFlow = analyzeNode(node);
 
             blockFlow.mayReturn |= stmtFlow.mayReturn;
-
             blockFlow.mayContinue = stmtFlow.mayContinue;
 
             if (stmtFlow.alwaysReturn) {
@@ -47,7 +44,6 @@ public class FlowAnalyzer {
 
         return blockFlow;
     }
-
 
     private FlowInfo analyzeNode(ASTNode node) {
 
@@ -60,11 +56,12 @@ public class FlowAnalyzer {
         }
 
         if (node instanceof WhileNode whileNode) {
+            // Analisar o corpo, mas while pode não terminar, então não força alwaysReturn
             analyzeBlock(whileNode.getBody());
             return FlowInfo.continueFlow();
         }
 
-        // qualquer outra instrução
+        // Qualquer outra instrução não altera fluxo de retorno
         return FlowInfo.continueFlow();
     }
 
@@ -79,14 +76,14 @@ public class FlowAnalyzer {
 
         FlowInfo result = new FlowInfo();
 
-        result.mayReturn =
-                thenFlow.mayReturn || elseFlow.mayReturn;
+        // mayReturn: qualquer ramo pode retornar
+        result.mayReturn = thenFlow.mayReturn || elseFlow.mayReturn;
 
-        result.alwaysReturn =
-                thenFlow.alwaysReturn && elseFlow.alwaysReturn;
+        // alwaysReturn: apenas se ambos os ramos sempre retornam
+        result.alwaysReturn = thenFlow.alwaysReturn && elseFlow.alwaysReturn;
 
-        result.mayContinue =
-                !result.alwaysReturn;
+        // mayContinue: só continua se não é alwaysReturn
+        result.mayContinue = !result.alwaysReturn;
 
         return result;
     }

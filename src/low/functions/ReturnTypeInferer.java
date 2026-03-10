@@ -11,13 +11,14 @@ import ast.expressions.BinaryOpNode;
 import ast.variables.LiteralNode;
 import ast.variables.VariableDeclarationNode;
 import ast.variables.VariableNode;
+import context.statics.symbols.*;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
 
 import java.util.HashMap;
 import java.util.Map;
-
 public class ReturnTypeInferer {
+
     private final LLVisitorMain visitor;
     private final TypeMapper typeMapper;
 
@@ -25,25 +26,15 @@ public class ReturnTypeInferer {
         this.visitor = visitor;
         this.typeMapper = typeMapper;
     }
+
     public TypeInfos deduceReturnType(FunctionNode fn) {
-
-
         Map<String, TypeInfos> localVars = new HashMap<>();
 
+        // registra parâmetros com Type real
         for (ParamInfo p : fn.getParameters()) {
-
-            String sourceType = p.type();
-            String llvmType   = typeMapper.toLLVM(sourceType);
-
-            String elemType = null;
-            if (sourceType.startsWith("List<") && sourceType.endsWith(">")) {
-                elemType = sourceType.substring(5, sourceType.length() - 1);
-            }
-
-            localVars.put(
-                    p.name(),
-                    new TypeInfos(sourceType, llvmType, elemType)
-            );
+            Type type = p.type();
+            String llvmType = typeMapper.toLLVM(type);
+            localVars.put(p.name(), new TypeInfos(type, llvmType));
         }
 
         for (ASTNode stmt : fn.getBody()) {
@@ -54,17 +45,15 @@ public class ReturnTypeInferer {
             }
         }
 
-        return new TypeInfos("void", "void", null);
+        // função sem return explícito → void
+        return new TypeInfos(PrimitiveTypes.VOID, "void");
     }
+
     private void collectVarDecls(ASTNode node, Map<String, TypeInfos> localVars) {
         if (node instanceof VariableDeclarationNode decl) {
-            String srcType  = decl.getType();
-            String llvmType = typeMapper.toLLVM(srcType);
-            String elemType = (srcType.startsWith("List<") && srcType.endsWith(">"))
-                    ? srcType.substring(5, srcType.length() - 1)
-                    : null;
-
-            localVars.put(decl.getName(), new TypeInfos(srcType, llvmType, elemType));
+            Type type = decl.getType();
+            String llvmType = typeMapper.toLLVM(type);
+            localVars.put(decl.getName(), new TypeInfos(type, llvmType));
         }
         else if (node instanceof IfNode ifn) {
             ifn.getThenBranch().forEach(stmt -> collectVarDecls(stmt, localVars));
@@ -73,17 +62,15 @@ public class ReturnTypeInferer {
             }
         }
         else if (node instanceof WhileNode wn) {
-            for (ASTNode stmt : wn.getBody()) {
-                collectVarDecls(stmt, localVars);
-            }
+            wn.getBody().forEach(stmt -> collectVarDecls(stmt, localVars));
         }
     }
 
     public TypeInfos inferType(ASTNode node, Map<String, TypeInfos> localVars) {
         if (node instanceof LiteralNode lit) {
-            String srcType  = lit.value.type();
-            String llvmType = typeMapper.toLLVM(srcType);
-            return new TypeInfos(srcType, llvmType, null);
+            Type type = lit.value.type();
+            String llvmType = typeMapper.toLLVM(type);
+            return new TypeInfos(type, llvmType);
         }
         else if (node instanceof VariableNode var) {
             TypeInfos type = localVars.getOrDefault(var.getName(), visitor.getVarType(var.getName()));
@@ -94,12 +81,13 @@ public class ReturnTypeInferer {
             TypeInfos l = inferType(bin.left, localVars);
             TypeInfos r = inferType(bin.right, localVars);
 
-            if (!l.getSourceType().equals(r.getSourceType())) {
-                if ((l.getSourceType().equals("int") && r.getSourceType().equals("double"))
-                        || (l.getSourceType().equals("double") && r.getSourceType().equals("int"))) {
-                    return new TypeInfos("double", "double", null);
+            if (!l.getType().equals(r.getType())) {
+                // promoção int → double
+                if ((l.getType() == PrimitiveTypes.INT && r.getType() == PrimitiveTypes.DOUBLE) ||
+                        (l.getType() == PrimitiveTypes.DOUBLE && r.getType() == PrimitiveTypes.INT)) {
+                    return new TypeInfos(PrimitiveTypes.DOUBLE, "double");
                 }
-                throw new RuntimeException("Tipos incompatíveis: " + l.getSourceType() + " vs " + r.getSourceType());
+                throw new RuntimeException("Tipos incompatíveis: " + l.getType() + " vs " + r.getType());
             }
             return l;
         }
@@ -110,13 +98,16 @@ public class ReturnTypeInferer {
             TypeInfos type = visitor.getFunctionType(call.getName());
             if (type == null) throw new RuntimeException("Função não registrada: " + call.getName());
 
-            if ("any".equals(type.getSourceType())
-                    && visitor.getCallEmitter().isBeingDeduced(call.getName())) {
-                return new TypeInfos("int", "i32", null);
+            // fallback para chamadas recursivas de funções ainda em dedução
+            if (type.getType() == UnknownType.UNKNOWN_TYPE &&
+                    visitor.getCallEmitter().isBeingDeduced(call.getName())) {
+                return new TypeInfos(PrimitiveTypes.INT, "i32");
             }
+
             return type;
         }
 
         throw new RuntimeException("Não foi possível inferir tipo de " + node.getClass());
     }
+
 }

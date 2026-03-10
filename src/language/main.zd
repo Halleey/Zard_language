@@ -60,7 +60,7 @@ m.put(3, "Potion");
 
 
 m.get(2);
-m.remove(1);
+m.remove("1");
 m.get(2);
 m.get(1);
 m.get(3);

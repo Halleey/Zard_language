@@ -104,12 +104,6 @@ public class StructMethodCallNode extends ASTNode {
         return method.invoke(ctx, callArgs);
     }
 
-    public String getReceiverName() {
-        if (structInstance instanceof VariableNode v) {
-            return v.getName();
-        }
-        return null;
-    }
 
     @Override
     public void print(String prefix) {
@@ -126,24 +120,67 @@ public class StructMethodCallNode extends ASTNode {
                 a.print(prefix + "    ");
         }
     }
-
     @Override
     public void bindChildren(StaticContext stx) {
 
         structInstance.bind(stx);
 
         if (args != null) {
-            for (ASTNode arg : args)
+            for (ASTNode arg : args) {
                 arg.bind(stx);
-        }
-
-        if (returnType == null) {
-            FunctionNode fn = stx.getStructMethod(structName, methodName);
-            if (fn != null) {
-                returnType = fn.getReturnType();
             }
         }
+
+        FunctionNode fn = stx.getStructMethod(structName, methodName);
+
+        if (fn == null) {
+            throw new RuntimeException(
+                    "Método " + methodName + " não encontrado em " + structName
+            );
+        }
+
+        List<ParamInfo> params = fn.getParameters();
+
+        // ignora primeiro parametro se for o receiver (s: maps)
+        int paramOffset = 0;
+
+        if (!params.isEmpty()) {
+            Type first = params.get(0).type();
+
+            if (first instanceof StructType st && st.name().equals(structName)) {
+                paramOffset = 1;
+            }
+        }
+
+        int expectedArgs = params.size() - paramOffset;
+        int providedArgs = args == null ? 0 : args.size();
+
+        if (expectedArgs != providedArgs) {
+            throw new RuntimeException(
+                    "Número de argumentos inválido em " + methodName +
+                            ": esperado " + expectedArgs +
+                            ", recebido " + providedArgs
+            );
+        }
+
+        for (int i = 0; i < providedArgs; i++) {
+
+            Type expected = params.get(i + paramOffset).type();
+            Type actual = args.get(i).getType();
+
+            if (!expected.equals(actual)) {
+                throw new RuntimeException(
+                        "Tipo inválido no argumento " + (i + 1) +
+                                " de " + methodName +
+                                ": esperado " + expected +
+                                ", recebido " + actual
+                );
+            }
+        }
+
+        returnType = fn.getReturnType();
     }
+
 
     @Override
     public Type getType() {

@@ -52,9 +52,7 @@ public class ImplNode extends ASTNode {
 
     @Override
     public void bindChildren(StaticContext stx) {
-
         StaticStructDefinition def = stx.resolveStruct(structName);
-
         for (FunctionNode fn : methods) {
             def.addMethod(fn);
             fn.bind(stx);

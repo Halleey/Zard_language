@@ -5,6 +5,7 @@ import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
 import context.statics.symbols.InputType;
+import context.statics.symbols.ListType;
 import context.statics.symbols.PrimitiveTypes;
 import context.statics.symbols.Type;
 import low.module.LLVMEmitVisitor;
@@ -95,7 +96,7 @@ public class FunctionCallNode extends ASTNode {
             Type expected = params.get(i).typeObj();
             Type actual = args.get(i).getType();
 
-          checkCompatibility(expected, actual);
+            checkCompatibility(expected, actual);
         }
 
         this.type = fn.getReturnType();
@@ -114,6 +115,16 @@ public class FunctionCallNode extends ASTNode {
         }
 
         if (current instanceof InputType) return;
+
+
+        if (expected instanceof ListType le && current instanceof ListType lc) {
+
+            Type expectedElem = le.elementType();
+            Type currentElem = lc.elementType();
+
+            checkCompatibility(expectedElem, currentElem);
+            return;
+        }
 
         throw new RuntimeException(
                 "Semantic error: cannot assign value of type '" +

@@ -7,6 +7,8 @@ import ast.functions.FunctionNode;
 import ast.functions.ParamInfo;
 import context.runtime.RuntimeContext;
 import ast.variables.VariableNode;
+import context.statics.symbols.InputType;
+import context.statics.symbols.PrimitiveTypes;
 import context.statics.symbols.StructType;
 import context.statics.symbols.Type;
 import low.module.LLVMEmitVisitor;
@@ -167,20 +169,46 @@ public class StructMethodCallNode extends ASTNode {
 
             Type expected = params.get(i + paramOffset).type();
             Type actual = args.get(i).getType();
-
-            if (!expected.equals(actual)) {
-                throw new RuntimeException(
-                        "Tipo inválido no argumento " + (i + 1) +
-                                " de " + methodName +
-                                ": esperado " + expected +
-                                ", recebido " + actual
-                );
-            }
+            System.out.println("currently token for debug " + expected );
+            System.out.println("currently token for debug " + actual );
+            checkTypeCompatibility(expected, actual);
         }
 
         returnType = fn.getReturnType();
     }
 
+    protected void checkTypeCompatibility(Type declared, Type current) {
+
+        if (declared instanceof StructType d && current instanceof StructType c) {
+            if (!d.name().equals(c.name())) {
+                throw new RuntimeException(
+                        "Type mismatch: expected " + d.name() + " but got " + c.name()
+                );
+            }
+            return;
+        }
+
+        if (declared instanceof PrimitiveTypes dp && current instanceof PrimitiveTypes cp) {
+
+            String d = dp.name();
+            String c = cp.name();
+
+            if (d.equals(c)) return;
+
+            if (d.equals("double") && c.equals("int")) return;
+            if (d.equals("float") && c.equals("int")) return;
+            if (d.equals("double") && c.equals("float")) return;
+            if (d.equals("float") && c.equals("double")) return;
+        }
+
+        if (current instanceof InputType) return;
+
+        throw new RuntimeException(
+                "Semantic error: cannot assign value of type '" +
+                        current + "' to variable of type '" +
+                        declared + "'"
+        );
+    }
 
     @Override
     public Type getType() {

@@ -107,12 +107,12 @@ public class FunctionCallEmitter {
             // conversão implícita usando Type
             if (param != null && param.type() != null) {
                 Type expectedType = param.type();
-                String expectedLLVMType = typeMapper.toLLVM(expectedType);
 
                 if (arg.getType() instanceof PrimitiveTypes argPrim &&
                         expectedType instanceof PrimitiveTypes expPrim) {
 
                     if (argPrim == PrimitiveTypes.INT && expPrim == PrimitiveTypes.DOUBLE) {
+                        System.out.println("entrou aqui ?");
                         String convTemp = temps.newTemp();
                         sb.append("  ").append(convTemp)
                                 .append(" = sitofp i32 ").append(temp)

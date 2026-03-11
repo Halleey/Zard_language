@@ -73,8 +73,9 @@ public class DeclarationHandler implements NodeHandler<VariableDeclarationNode> 
             for (ASTNode element : listNode.getChildren()) {
 
                 if (element instanceof VariableNode varNode) {
-
                     Symbol source = varNode.getSymbol();
+                    System.out.println("element é " + element);
+                    System.out.println("source é " + source);
                     if (source == null) continue;
 
                     VarOwnerShip sourceOwnership = vars.get(source);
@@ -90,14 +91,7 @@ public class DeclarationHandler implements NodeHandler<VariableDeclarationNode> 
 
                     graph.moveIntoList(source, symbol);
 
-                    annotations.add(
-                            new OwnershipAnnotation(
-                                    decl,
-                                    OwnerShipAction.MOVED,
-                                    source,
-                                    symbol
-                            )
-                    );
+                    annotations.add(new OwnershipAnnotation(decl, OwnerShipAction.MOVED, source, symbol));
 
                     if (debug) {
                         System.out.println("[OWNERSHIP] MOVE "
@@ -112,7 +106,9 @@ public class DeclarationHandler implements NodeHandler<VariableDeclarationNode> 
 
     private boolean isPrimitive(Type type) {
 
-        if (type instanceof PrimitiveTypes) return true;
+        if (type instanceof PrimitiveTypes prim) {
+            return prim != PrimitiveTypes.STRING;
+        }
 
         if (type instanceof UnknownType) return true;
 

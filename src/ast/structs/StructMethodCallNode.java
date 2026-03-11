@@ -7,10 +7,7 @@ import ast.functions.FunctionNode;
 import ast.functions.ParamInfo;
 import context.runtime.RuntimeContext;
 import ast.variables.VariableNode;
-import context.statics.symbols.InputType;
-import context.statics.symbols.PrimitiveTypes;
-import context.statics.symbols.StructType;
-import context.statics.symbols.Type;
+import context.statics.symbols.*;
 import low.module.LLVMEmitVisitor;
 
 import java.util.ArrayList;
@@ -202,6 +199,13 @@ public class StructMethodCallNode extends ASTNode {
         }
 
         if (current instanceof InputType) return;
+
+        if(declared instanceof ListType dl && current instanceof ListType cl) {
+            Type expectedElement  = dl.elementType();
+            Type currentlyElement  = cl.elementType();
+            checkTypeCompatibility(expectedElement, currentlyElement);
+            return;
+        }
 
         throw new RuntimeException(
                 "Semantic error: cannot assign value of type '" +

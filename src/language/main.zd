@@ -1,8 +1,8 @@
 main {
 
-string x = "zard";
-List nome = (x);
-List t = ("te");
+function int somar (int x, int b) {
+return x + b;
+}
 
-
+print(somar(2,3));
 }

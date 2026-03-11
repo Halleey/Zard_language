@@ -322,9 +322,21 @@ public class ImplEmitter {
 
         if (type instanceof ListType lt) {
 
-            String elem = mapToLLVMType(lt.elementType());
+            Type elemType = lt.elementType();
 
-            return "%struct.ArrayList_" + elem + "*";
+            if (elemType instanceof PrimitiveTypes prim) {
+
+                return switch (prim.name()) {
+
+                    case "int" -> "%struct.ArrayListInt*";
+                    case "double" -> "%struct.ArrayListDouble*";
+                    case "bool" -> "%struct.ArrayListBool*";
+
+                    default -> "%ArrayList*";
+                };
+            }
+
+            return "%ArrayList*";
         }
 
         return "i8*";

@@ -260,35 +260,6 @@ public class VariableEmitter {
                 "\n;;VAL:" + tmp + ";;TYPE:" + llvmType + "\n";
     }
 
-
-    public final class LLVMTypeMapper {
-
-        public static String toLLVM(Type type) {
-
-            if (type == PrimitiveTypes.INT) return "i32";
-            if (type == PrimitiveTypes.DOUBLE) return "double";
-            if (type == PrimitiveTypes.FLOAT) return "float";
-            if (type == PrimitiveTypes.BOOL) return "i1";
-            if (type == PrimitiveTypes.STRING) return "i8*";
-
-            if (type instanceof ListType list) {
-                Type element = list.elementType();
-
-                if (element == PrimitiveTypes.INT)
-                    return "%struct.ArrayListInt*";
-
-                if (element == PrimitiveTypes.DOUBLE)
-                    return "%struct.ArrayListDouble*";
-
-                if (element == PrimitiveTypes.BOOL)
-                    return "%struct.ArrayListBool*";
-            }
-
-            throw new RuntimeException("Tipo LLVM não suportado: " + type);
-        }
-    }
-
-
     private String extractTemp(String code) {
         int lastValIdx = code.lastIndexOf(";;VAL:");
         int typeIdx = code.indexOf(";;TYPE:", lastValIdx);

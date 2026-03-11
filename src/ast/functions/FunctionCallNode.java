@@ -106,12 +106,12 @@ public class FunctionCallNode extends ASTNode {
 
         if (expected instanceof PrimitiveTypes dp && current instanceof PrimitiveTypes cp) {
 
-            if (dp.name().equals(cp.name())) return;
+            if (dp == cp) return;
 
-            if (dp.name().equals("double") && cp.name().equals("int")) return;
-            if (dp.name().equals("float")  && cp.name().equals("int")) return;
-            if (dp.name().equals("double") && cp.name().equals("float")) return;
-            if (dp.name().equals("float") && cp.name().equals("double")) return;
+            if (dp == PrimitiveTypes.DOUBLE && cp == PrimitiveTypes.INT) return;
+            if (dp == PrimitiveTypes.FLOAT  && cp == PrimitiveTypes.INT) return;
+            if (dp == PrimitiveTypes.DOUBLE && cp == PrimitiveTypes.FLOAT) return;
+            if (dp == PrimitiveTypes.FLOAT  && cp == PrimitiveTypes.DOUBLE) return;
         }
 
         if (current instanceof InputType) return;

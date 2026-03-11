@@ -117,6 +117,13 @@ class UsageCollector {
             return;
         }
 
+        if(node instanceof  ListClearNode clearNode) {
+            if (clearNode.getListNode() instanceof VariableNode vn){
+                registerUse(resolveSymbol(vn, useCtx), useCtx, anchor);
+            }
+            return;
+        }
+
         // === list.size ===
         if (node instanceof ListSizeNode size) {
             if (size.getNome() instanceof VariableNode vn) {

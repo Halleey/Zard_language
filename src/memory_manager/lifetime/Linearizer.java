@@ -5,10 +5,7 @@ import ast.functions.FunctionCallNode;
 import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
-import ast.lists.ListAddNode;
-import ast.lists.ListGetNode;
-import ast.lists.ListRemoveNode;
-import ast.lists.ListSizeNode;
+import ast.lists.*;
 import ast.loops.WhileNode;
 import ast.prints.PrintNode;
 import ast.structs.StructFieldAccessNode;
@@ -36,7 +33,7 @@ public class Linearizer {
             return;
         }
 
-        if (node instanceof FunctionNode fn) return;
+        if (node instanceof FunctionNode) return;
 
         if (node instanceof FunctionCallNode call) {
             call.getArgs().forEach(arg -> analyzeNode(arg, out));
@@ -102,6 +99,12 @@ public class Linearizer {
             analyzeNode(get.getListName(), out);
             analyzeNode(get.getIndexNode(), out);
             out.add(get);
+            return;
+        }
+
+        if(node instanceof ListClearNode clearNode) {
+            analyzeNode(clearNode.getListNode(), out);
+            out.add(clearNode);
             return;
         }
 

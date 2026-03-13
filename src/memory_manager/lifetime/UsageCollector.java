@@ -108,6 +108,15 @@ class UsageCollector {
             return;
         }
 
+        if(node instanceof ListAddAllNode allNode) {
+            if (allNode.getTargetListNode() instanceof VariableNode vn) {
+                registerUse(resolveSymbol(vn, useCtx), useCtx, anchor);
+            }
+            for (ASTNode args : allNode.getArgs())
+                collectUses(args, useCtx, anchor);
+            return;
+        }
+
         // === list.remove ===
         if (node instanceof ListRemoveNode rem) {
             if (rem.getListNode() instanceof VariableNode vn) {

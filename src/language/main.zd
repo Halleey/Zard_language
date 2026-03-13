@@ -1,8 +1,5 @@
 main {
-
-function int somar (int x, int b) {
-return x + b;
-}
-
-print(somar(2,3));
+List<int> numeros;
+numeros.addAll(3,2);
+println(numeros);
 }

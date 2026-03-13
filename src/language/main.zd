@@ -1,5 +1,7 @@
 main {
 List<int> numeros;
 numeros.addAll(3,2);
-println(numeros);
+
+
+
 }

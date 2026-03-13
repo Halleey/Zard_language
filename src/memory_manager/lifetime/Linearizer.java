@@ -101,6 +101,13 @@ public class Linearizer {
             out.add(get);
             return;
         }
+        if(node instanceof ListAddAllNode allNode) {
+            analyzeNode(allNode.getTargetListNode(), out);
+            for (ASTNode args : allNode.getArgs())
+                analyzeNode(args, out);
+            out.add(allNode);
+            return;
+        }
 
         if(node instanceof ListClearNode clearNode) {
             analyzeNode(clearNode.getListNode(), out);

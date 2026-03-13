@@ -48,7 +48,6 @@ public class ListMethodParser {
             }
 
             case "addAll" -> {
-                parser.advance();
                 ExpressionParser exprParser = new ExpressionParser(parser);
                 List<ASTNode> argsList = exprParser.parseArguments();
 

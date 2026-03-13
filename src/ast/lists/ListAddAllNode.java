@@ -80,6 +80,10 @@ public class ListAddAllNode extends ASTNode {
 
     @Override
     public void bindChildren(StaticContext stx) {
+        if (targetListNode != null) {
+            targetListNode.setParent(this);
+            targetListNode.bind(stx);
+        }
     }
 
     @Override

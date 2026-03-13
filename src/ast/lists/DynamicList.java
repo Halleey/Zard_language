@@ -9,6 +9,7 @@ import context.statics.symbols.UnknownType;
 
 import java.util.ArrayList;
 import java.util.List;
+
 public final class DynamicList {
 
     private final List<ASTNode> elements;

@@ -9,6 +9,7 @@ import ast.home.MainParser;
 import ast.ifstatements.IfParser;
 import ast.imports.ImportNode;
 import ast.inputs.InputParser;
+import ast.lists.ListDeclarationParser;
 import ast.loops.ForParser;
 import ast.loops.WhileParser;
 import ast.prints.PrintParser;
@@ -32,9 +33,13 @@ public class StatemantParser {
         if (tok.getType() == Token.TokenType.KEYWORD) {
             String val = tok.getValue();
             switch (val) {
-                case "int", "char", "double","float", "string", "boolean", "Map", "List", "var"-> {
+                case "int", "char", "double","float", "string", "boolean", "Map", "var"-> {
                     VarDeclarationParser varParser = new VarDeclarationParser(parser);
                     return varParser.parseVarDeclaration();
+                }
+                case "List" -> {
+                    ListDeclarationParser listDeclarationParser = new ListDeclarationParser(parser);
+                    return listDeclarationParser.parse(null);
                 }
                 case "print" -> {
                     PrintParser printParser = new PrintParser(parser, false);

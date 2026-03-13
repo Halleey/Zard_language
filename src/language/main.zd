@@ -1,7 +1,7 @@
 main {
-List<int> numeros;
-numeros.addAll(3,2);
 
-
-
+string nome = "zard";
+List<string*> teste = ("zard");
+teste.add(nome);
+println(teste);
 }

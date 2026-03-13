@@ -7,6 +7,7 @@ import ast.structs.StructInstanceParser;
 import context.statics.symbols.Type;
 import tokens.Token;
 import translate.front.Parser;
+
 public class VarDeclarationParser {
     private final Parser parser;
 
@@ -23,12 +24,6 @@ public class VarDeclarationParser {
         ASTNode initializer = null;
         Type varType = null;
 
-        if (typeKeyword.equals("List")) {
-            ListDeclarationParser listParser = new ListDeclarationParser(parser);
-            return listParser.parse(null);
-        }
-
-        else {
             String varName = parser.current().getValue();
             parser.advance();
 
@@ -49,6 +44,6 @@ public class VarDeclarationParser {
             parser.declareVariableType(varName, varType);
 
             return new VariableDeclarationNode(varName, varType, initializer);
-        }
+
     }
 }

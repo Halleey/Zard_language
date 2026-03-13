@@ -24,8 +24,6 @@ public class ListDeclarationParser {
 
     public ASTNode parse(String varNameFromCaller) {
 
-        System.out.println("=== [ListDeclarationParser] START ===");
-        System.out.println("Current token: " + parser.current());
         parser.advance();
         Type elementType = null;
         boolean isReference = false;
@@ -33,25 +31,21 @@ public class ListDeclarationParser {
         // <type*> ou <type>
         if (parser.current().getValue().equals("<")) {
 
-            System.out.println("[ListParser] Found '<' -> parsing element type");
 
             parser.advance();
 
             String elemTypeStr = parser.current().getValue();
-            System.out.println("[ListParser] Element type token: " + elemTypeStr);
 
             parser.advance();
 
             if (parser.current().getValue().equals("*")) {
                 isReference = true;
-                System.out.println("[ListParser] Reference mode detected (*).");
                 parser.advance();
             }
 
             parser.eat(Token.TokenType.OPERATOR, ">");
 
             elementType = TypeResolver.resolve(elemTypeStr);
-            System.out.println("[ListParser] Resolved element type: " + elementType);
         }
 
         // nome da variável
@@ -59,7 +53,6 @@ public class ListDeclarationParser {
 
         if (varName == null) {
             varName = parser.current().getValue();
-            System.out.println("[ListParser] Variable name: " + varName);
             parser.advance();
         }
 
@@ -70,14 +63,12 @@ public class ListDeclarationParser {
         // lista com inicialização
         if (parser.current().getValue().equals("=")) {
 
-            System.out.println("[ListParser] '=' detected -> parsing initializer");
 
             parser.advance();
             parser.eat(Token.TokenType.DELIMITER, "(");
 
             List<ASTNode> elements = new ArrayList<>();
 
-            int index = 0;
 
             if (!parser.current().getValue().equals(")")) {
 
@@ -97,12 +88,10 @@ public class ListDeclarationParser {
 
             parser.eat(Token.TokenType.DELIMITER, ")");
 
-            System.out.println("[ListParser] Elements parsed: " + elements.size());
 
             // inferência de tipo
             if (elementType == null) {
 
-                System.out.println("[ListParser] No explicit type -> inferring from first element");
 
                 if (elements.isEmpty()) {
                     throw new RuntimeException("Cannot infer type from empty list: " + varName);
@@ -110,14 +99,12 @@ public class ListDeclarationParser {
 
                 elementType = inferTypeFromNode(elements.get(0));
 
-                System.out.println("[ListParser] Inferred element type: " + elementType);
             }
 
             dynamicList = new DynamicList(elementType, elements, isReference);
 
         } else {
 
-            System.out.println("[ListParser] No initializer -> creating empty list");
 
             if (elementType == null) {
                 throw new RuntimeException("Cannot declare empty List without explicit type: " + varName);
@@ -130,19 +117,12 @@ public class ListDeclarationParser {
 
         ListType listType = new ListType(elementType, isReference);
 
-        System.out.println("[ListParser] Final list type: " + listType);
 
         parser.declareVariableType(varName, listType);
 
-        System.out.println("[ListParser] Variable registered in parser scope: " + varName);
 
-        System.out.println("=== [ListDeclarationParser] END ===");
 
-        return new VariableDeclarationNode(
-                varName,
-                listType,
-                new ListNode(dynamicList)
-        );
+        return new VariableDeclarationNode(varName, listType, new ListNode(dynamicList));
     }
 
     private Type inferTypeFromNode(ASTNode node) {

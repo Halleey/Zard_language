@@ -146,9 +146,13 @@ public class VariableDeclarationNode extends ASTNode {
 
     @Override
     public void print(String prefix) {
-        System.out.println(prefix + "VarDecl: " + resolvedType + " " + name);
-    }
 
+        System.out.println(prefix + "VarDecl: " + resolvedType + " " + name);
+
+        if (initializer != null) {
+            initializer.print(prefix + "  ");
+        }
+    }
     @Override
     public List<ASTNode> getChildren() {
         return initializer == null ? List.of() : List.of(initializer);

@@ -5,9 +5,12 @@ println("testaando aaqui ");
 
 if(nome == "zard") {
 println("true");
-println(nome);
+string name = "t";
+println(name);
 }
 else {
 println("false");
 }
+
+
 }

@@ -43,6 +43,7 @@ public class Linearizer {
         }
 
         if (node instanceof IfNode ifn) {
+            out.add(ifn);
             analyzeNode(ifn.getCondition(), out);
             ifn.getThenBranch().forEach(stmt -> analyzeNode(stmt, out));
             if (ifn.getElseBranch() != null)

@@ -205,20 +205,36 @@ public class BinaryOpEmitter {
             }
 
             switch (op) {
+
                 case "==" -> {
-                    String tmp = temps.newTemp();
-                    llvm.append("  ").append(tmp)
-                            .append(" = call i1 @strcmp_eq(%String* ").append(leftTemp)
-                            .append(", %String* ").append(rightTemp).append(")\n")
-                            .append(";;VAL:").append(tmp).append(";;TYPE:i1\n");
+                    String cmp = temps.newTemp();
+                    String res = temps.newTemp();
+
+                    llvm.append("  ").append(cmp)
+                            .append(" = call i32 @compareString(%String* ")
+                            .append(leftTemp).append(", %String* ")
+                            .append(rightTemp).append(")\n");
+
+                    llvm.append("  ").append(res)
+                            .append(" = icmp eq i32 ").append(cmp).append(", 1\n")
+                            .append(";;VAL:").append(res).append(";;TYPE:i1\n");
+
                     return llvm.toString();
                 }
+
                 case "!=" -> {
-                    String tmp = temps.newTemp();
-                    llvm.append("  ").append(tmp)
-                            .append(" = call i1 @strcmp_neq(%String* ").append(leftTemp)
-                            .append(", %String* ").append(rightTemp).append(")\n")
-                            .append(";;VAL:").append(tmp).append(";;TYPE:i1\n");
+                    String cmp = temps.newTemp();
+                    String res = temps.newTemp();
+
+                    llvm.append("  ").append(cmp)
+                            .append(" = call i32 @compareString(%String* ")
+                            .append(leftTemp).append(", %String* ")
+                            .append(rightTemp).append(")\n");
+
+                    llvm.append("  ").append(res)
+                            .append(" = icmp eq i32 ").append(cmp).append(", 0\n")
+                            .append(";;VAL:").append(res).append(";;TYPE:i1\n");
+
                     return llvm.toString();
                 }
                 case "+" -> {

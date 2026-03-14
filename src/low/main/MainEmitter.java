@@ -364,7 +364,7 @@ public class MainEmitter {
         @.strChar_noNL = private constant [3 x i8] c"%c\\00"             
         declare %String* @createString(i8*)
         declare i1 @strcmp_eq(%String*, %String*)
-        declare i1 @strcmp_neq(%String*, %String*)
+        declare i32 @compareString(%String*, %String*)
         declare void @freeString(%String*)
                 
         %String = type { i8*, i64 }

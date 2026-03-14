@@ -1,4 +1,13 @@
 main {
 string nome = "zard";
-List<string*> nomes = (nome);
+println("testaando aaqui ");
+
+
+if(nome == "zard") {
+println("true");
+println(nome);
+}
+else {
+println("false");
+}
 }

@@ -39,13 +39,16 @@ void arraylist_print_string(ArrayList* list) {
 
     printf("[");
     for (size_t i = 0; i < list->length; i++) {
-        char* val = (char*) list->data[i];
-        printf("%s", val);
+
+        String* str = (String*) list->data[i];
+        printf("%s", str->data);
+
         if (i < list->length - 1)
             printf(", ");
     }
     printf("]\n");
 }
+
 void arraylist_print_bool(ArrayListBool* list) {
     if (!list) {
         printf("[]\n");

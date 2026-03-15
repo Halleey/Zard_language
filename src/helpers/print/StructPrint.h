@@ -1,7 +1,9 @@
 #ifndef STRUCTPRINT_H
 #define STRUCTPRINT_H
+
 #include <stdbool.h>
 #include <stddef.h>
+#include "Stringz.h"
 
 typedef struct ArrayList {
     void** data;
@@ -26,6 +28,5 @@ typedef struct ArrayListBool {
     size_t length;
     size_t capacity;
 } ArrayListBool;
-
 
 #endif

@@ -1,15 +1,16 @@
 main {
 
-string name;
-name = "zard";
-List nomes = ("teste");
-nomes.add(name);
-string x = input();
-if(nomes.get(0) == x) {
-print("era igual");
+Struct People {
+string nome;
+int idade;
+List<string> endereco;
+
 }
-else {
-print("ñ era igual");
-}
+List nomes = ("zard");
+println(nomes);
+
+People p = {"zard", 19};
+p.endereco.add("testando");
+println(p.endereco);
 
 }

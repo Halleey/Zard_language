@@ -120,16 +120,15 @@ void clearList(ArrayList* list) {
 
 void arraylist_add_String(ArrayList* list, String* str) {
     if (!str) return;
-    if (!str->data) return;
 
     ensureCapacity(list);
 
-    size_t len = str->length + 1;
-    char* copy = malloc(len);
+    String* copy = malloc(sizeof(String));
 
+    copy->length = str->length;
+    copy->data = malloc(copy->length + 1);
 
-    memcpy(copy, str->data, len);
-
+    memcpy(copy->data, str->data, copy->length + 1);
 
     list->data[list->length++] = copy;
 }

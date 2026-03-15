@@ -1,16 +1,15 @@
 main {
-string nome = "zard";
-println("testaando aaqui ");
 
-
-if(nome == "zard") {
-println("true");
-string name = "t";
-println(name);
+string name;
+name = "zard";
+List nomes = ("teste");
+nomes.add(name);
+string x = input();
+if(nomes.get(0) == x) {
+print("era igual");
 }
 else {
-println("false");
+print("ñ era igual");
 }
-
 
 }

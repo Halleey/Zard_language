@@ -112,7 +112,6 @@ public class FunctionCallEmitter {
                         expectedType instanceof PrimitiveTypes expPrim) {
 
                     if (argPrim == PrimitiveTypes.INT && expPrim == PrimitiveTypes.DOUBLE) {
-                        System.out.println("entrou aqui ?");
                         String convTemp = temps.newTemp();
                         sb.append("  ").append(convTemp)
                                 .append(" = sitofp i32 ").append(temp)

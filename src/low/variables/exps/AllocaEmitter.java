@@ -93,13 +93,13 @@ public class AllocaEmitter {
         if (type instanceof ListType listType) {
 
             Type elem = listType.elementType();
-
+            System.out.println("receiver : " + elem);
             if (elem instanceof PrimitiveTypes prim) {
-
+                System.out.println("entrou aaqui ? " + elem);
                 switch (prim.name()) {
                     case "int" -> llvmType = "%struct.ArrayListInt*";
                     case "double" -> llvmType = "%struct.ArrayListDouble*";
-                    case "boolean" -> llvmType = "%struct.ArrayListBool*";
+                    case "bool" -> llvmType = "%struct.ArrayListBool*";
                     default -> llvmType = "%ArrayList*";
                 }
 

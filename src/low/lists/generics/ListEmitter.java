@@ -13,6 +13,8 @@ import low.lists.doubles.ListDoubleEmitter;
 import low.lists.ints.IntListEmitter;
 import low.module.LLVisitorMain;
 import java.util.List;
+
+
 public class ListEmitter {
 
     private final TempManager temps;
@@ -28,9 +30,11 @@ public class ListEmitter {
     }
 
     public String emit(ListNode node, LLVisitorMain visitor) {
-
+        System.out.println("não entrou aqui");
         Type elementType = node.getList().getElementType();
 
+
+        System.out.println("basic debug " + elementType);
 
         if (elementType instanceof PrimitiveTypes prim) {
 
@@ -43,11 +47,12 @@ public class ListEmitter {
             }
 
             if (prim == PrimitiveTypes.BOOL) {
+                System.out.println("entrou aqui na lista de boolean ");
                 return boolEmitter.emit(node, visitor);
             }
         }
 
-        if (elementType instanceof StructType structType) {
+        if (elementType instanceof StructType) {
 
             StringBuilder llvm = new StringBuilder();
             var elements = node.getList().getElements();
@@ -166,6 +171,21 @@ public class ListEmitter {
 
         return llvm.toString();
     }
+
+    public String emitEmpty(Type elementType) {
+
+        StringBuilder llvm = new StringBuilder();
+
+        String listPtr = temps.newTemp();
+
+        llvm.append("  ").append(listPtr)
+                .append(" = call i8* @arraylist_create(i64 4)\n");
+
+        llvm.append(";;VAL:").append(listPtr).append(";;TYPE:i8*\n");
+
+        return llvm.toString();
+    }
+
 
     private String extractTemp(String code) {
         int idx = code.lastIndexOf(";;VAL:");

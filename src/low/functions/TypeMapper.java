@@ -55,10 +55,11 @@ public class TypeMapper {
 
     public String freeFunctionForElement(Type elementType) {
         if (elementType instanceof PrimitiveTypes prim) {
+            System.out.println("debugando aqui "+ elementType);
             return switch (prim.name()) {
                 case "int"     -> "@arraylist_free_int";
                 case "double"  -> "@arraylist_free_double";
-                case "boolean" -> "@arraylist_free_bool";
+                case "bool" -> "@arraylist_free_bool";
                 case "string"  -> "@freeList";
                 default       -> "@freeList";
             };

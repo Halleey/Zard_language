@@ -37,7 +37,6 @@ public class Linearizer {
 
         if (node instanceof FunctionCallNode call) {
             call.getArgs().forEach(arg -> analyzeNode(arg, out));
-            System.out.println("entrou aqui no analyzer");
             out.add(call);
             return;
         }

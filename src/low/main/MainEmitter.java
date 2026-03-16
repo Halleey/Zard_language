@@ -217,7 +217,7 @@ public class MainEmitter {
 
         if (node instanceof VariableDeclarationNode varDecl) {
             if (varDecl.getResolvedType() instanceof ListType listType) {
-                System.out.println("entrou aqui ");
+
                 registrarTipoDeLista(listType);
             }
 
@@ -446,7 +446,7 @@ public class MainEmitter {
                 continue;
             }
 
-            if (tipoStr.contains("boolean")) {
+            if (tipoStr.contains("bool")) {
                 sb.append("""
     %struct.ArrayListBool = type { i1*, i64, i64 }
     declare %struct.ArrayListBool* @arraylist_create_bool(i64)

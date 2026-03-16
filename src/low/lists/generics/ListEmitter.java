@@ -30,11 +30,9 @@ public class ListEmitter {
     }
 
     public String emit(ListNode node, LLVisitorMain visitor) {
-        System.out.println("não entrou aqui");
         Type elementType = node.getList().getElementType();
 
 
-        System.out.println("basic debug " + elementType);
 
         if (elementType instanceof PrimitiveTypes prim) {
 

@@ -448,7 +448,8 @@ public class MainEmitter {
 
             if (tipoStr.contains("bool")) {
                 sb.append("""
-    %struct.ArrayListBool = type { i1*, i64, i64 }
+    %struct.ArrayListBool = type { i8*, i64, i64 }
+    
     declare %struct.ArrayListBool* @arraylist_create_bool(i64)
     declare void @arraylist_add_bool(%struct.ArrayListBool*, i1)
     declare void @arraylist_addAll_bool(%struct.ArrayListBool*, i8*, i64)
@@ -456,9 +457,9 @@ public class MainEmitter {
     declare void @arraylist_clear_bool(%struct.ArrayListBool*)
     declare void @arraylist_remove_bool(%struct.ArrayListBool*, i64)
     declare void @arraylist_free_bool(%struct.ArrayListBool*)
-    declare i1 @arraylist_get_bool(%struct.ArrayListBool*, i64, i1*)
+    declare i32 @arraylist_get_bool(%struct.ArrayListBool*, i64, i1*)
     declare i32 @arraylist_size_bool(%struct.ArrayListBool*)
-""");
+    """);
             }
         }
 

@@ -13,8 +13,9 @@ print("não era igual");
 }
 List isReal= (true, false, false);
 List numbers = (3);
-print("eita");
+println("eita");
 numbers.add(15);
-println(isReal);
+println(numbers.get(1));
+println(isReal.get(0));
 print("fim do programa");
 }

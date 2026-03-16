@@ -36,7 +36,11 @@ int arraylist_update_int(ArrayListInt* list, size_t index, int value) {
 }
 
 int arraylist_get_int(ArrayListInt* list, size_t index, int* out) {
-    if (index >= list->length) return 0;
+    if (index >= list->length || index < 0) {
+      fprintf(stderr, "[ArrayListInt] Error: invalid access to index:  %zu (size = %zu)\n",
+      index, list->length);
+      abort();
+    }
     *out = list->data[index];
     return 1;
 }

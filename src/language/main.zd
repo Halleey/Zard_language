@@ -1,9 +1,13 @@
 main {
-List x=  (true, false);
-x.add(true);
-println(x.get(1));
-println(x.get(0));
-println(x.get(2));
+
+List numbers = (32,2,3);
+if(numbers.get(4) == 3) {
+print("true");
+}
+
+else {
+print("false");
+}
 
 
 }

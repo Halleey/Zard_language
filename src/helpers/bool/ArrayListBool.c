@@ -61,7 +61,12 @@ int arraylist_update_bool(ArrayListBool* list, size_t index, bool value) {
 }
 
 int arraylist_get_bool(ArrayListBool* list, size_t index, bool* out) {
-    if (index >= list->length) return 0;
+    if (index >= list->length || index < 0) {
+     fprintf(stderr, "[ArrayListBool] Error: invalid access to index:  %zu (size = %zu)\n",
+          index, list->length);
+          abort();
+
+    }
     *out = list->data[index] != 0;
     return 1;
 }

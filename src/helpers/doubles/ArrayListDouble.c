@@ -46,7 +46,11 @@ int arraylist_update_double(ArrayListDouble* list, size_t index, double value) {
 }
 
 int arraylist_get_double(ArrayListDouble* list, size_t index, double* out) {
-    if (index >= list->length) return 0;
+    if (index >= list->length || index < 0) {
+     fprintf(stderr, "[ArrayListDouble] Error: invalid access to index:  %zu (size = %zu)\n",
+          index, list->length);
+          abort();
+    }
     *out = list->data[index];
     return 1;
 }

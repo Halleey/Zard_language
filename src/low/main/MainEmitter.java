@@ -347,6 +347,7 @@ public class MainEmitter {
         declare void @printString(%String*)
         declare i8* @malloc(i64)
         declare void @setString(i8*)
+        declare void @free(i8*)
         @.strChar        = private constant [4 x i8] c"%c\\0A\\00"
         @.strTrue        = private constant [6 x i8] c"true\\0A\\00"
         @.strFalse       = private constant [7 x i8] c"false\\0A\\00"

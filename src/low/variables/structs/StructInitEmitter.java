@@ -13,7 +13,6 @@ import low.module.LLVisitorMain;
 import low.variables.VariableEmitter;
 
 
-
 public class StructInitEmitter {
 
     private final TempManager temps;
@@ -93,13 +92,13 @@ public class StructInitEmitter {
             String listCreateFn;
 
             Type elemType = listType.elementType();
-            if (elemType.equals(PrimitiveTypes.INT)) {
+            if (elemType == PrimitiveTypes.INT) {
                 listLLVMType = "%struct.ArrayListInt*";
                 listCreateFn = "@arraylist_create_int";
-            } else if (elemType.equals(PrimitiveTypes.DOUBLE)) {
+            } else if (elemType == PrimitiveTypes.DOUBLE) {
                 listLLVMType = "%struct.ArrayListDouble*";
                 listCreateFn = "@arraylist_create_double";
-            } else if (elemType.equals(PrimitiveTypes.BOOL)) {
+            } else if (elemType == PrimitiveTypes.BOOL) {
                 listLLVMType = "%struct.ArrayListBool*";
                 listCreateFn = "@arraylist_create_bool";
             } else {

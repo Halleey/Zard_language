@@ -7,6 +7,7 @@ import low.module.LLVisitorMain;
 import low.structs.helpers.StructDefinitionEmitter;
 import low.structs.helpers.StructFieldPrint;
 import low.structs.helpers.StructTypeResolver;
+import memory_manager.free.StructFreeEmitter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,10 +19,11 @@ public class StructEmitter {
     private final StructFieldPrint fieldEmitter;
     private final StructDefinitionEmitter defEmitter;
     private final LLVisitorMain visitorMain;
-
+    private final StructFreeEmitter freeEmitter;
     public StructEmitter(LLVisitorMain visitorMain) {
         this.visitorMain = visitorMain;
         this.resolver = new StructTypeResolver(visitorMain);
+        this.freeEmitter = new StructFreeEmitter(visitorMain, visitorMain.getTemps());
         this.fieldEmitter = new StructFieldPrint(resolver);
         this.defEmitter = new StructDefinitionEmitter(resolver);
     }
@@ -49,6 +51,8 @@ public class StructEmitter {
         }
 
         sb.append("  ret void\n}\n\n");
+
+        sb.append(freeEmitter.emit(node));
 
         return sb.toString();
     }

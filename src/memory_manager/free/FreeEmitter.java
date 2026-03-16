@@ -50,14 +50,10 @@ public class FreeEmitter {
             String freeFunc;
 
             if (elementType == null || elementType instanceof UnknownType) {
-
                 freeFunc = "@freeList";
-
             } else {
-
                 freeFunc = typeMapper.freeFunctionForElement(elementType);
             }
-
             sb.append("  call void ")
                     .append(freeFunc)
                     .append("(").append(llvmType).append(" ").append(tmpFree).append(")\n");
@@ -66,17 +62,16 @@ public class FreeEmitter {
 
         else if (type instanceof PrimitiveTypes prim &&
                 prim.name().equals("string")) {
-
             sb.append("  call void @freeString(")
                     .append(llvmType).append(" ").append(tmpFree).append(")\n");
         }
 
 
 //        else if (type instanceof StructType structType) {
-//
+//            System.out.println("entrou aqui");
 //            String structName = structType.name();
 //
-//            sb.append("  call void @freeStruct_")
+//            sb.append("  call void @free_")
 //                    .append(structName)
 //                    .append("(")
 //                    .append(llvmType)

@@ -53,6 +53,7 @@ public class PrintNode extends ASTNode {
 
     private void runtimePrintln(TypedValue val, RuntimeContext ctx) {
         if (val.type().equals("List")) {
+            System.out.println("entrou aqui");
             DynamicList list = (DynamicList) val.value();
             List<Object> values = list.getElements().stream()
                     .map(node -> node.evaluate(ctx).value())

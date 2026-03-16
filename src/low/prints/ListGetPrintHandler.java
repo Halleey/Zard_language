@@ -43,7 +43,6 @@ public class ListGetPrintHandler implements PrintHandler {
         if (elementType instanceof PrimitiveTypes p) {
 
             if (p == PrimitiveTypes.INT) {
-
                 sb.append("  call i32 (i8*, ...) @printf(")
                         .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strInt")
                         .append(labelSuffix)
@@ -71,22 +70,37 @@ public class ListGetPrintHandler implements PrintHandler {
                         .append(valTemp)
                         .append(")\n");
             }
-
             else if (p == PrimitiveTypes.BOOL) {
 
-                String boolTmp = temps.newTemp();
+                String id = temps.newTemp().replace("%", "");
 
-                sb.append("  ").append(boolTmp)
-                        .append(" = zext i1 ")
-                        .append(valTemp)
-                        .append(" to i32\n");
+                String labelTrue = "bool_true_" + id;
+                String labelFalse = "bool_false_" + id;
+                String labelEnd = "bool_end_" + id;
+
+                sb.append("  br i1 ").append(valTemp)
+                        .append(", label %").append(labelTrue)
+                        .append(", label %").append(labelFalse).append("\n");
+
+                sb.append(labelTrue).append(":\n");
 
                 sb.append("  call i32 (i8*, ...) @printf(")
-                        .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strInt")
+                        .append("i8* getelementptr ([6 x i8], [6 x i8]* @.strTrue")
                         .append(labelSuffix)
-                        .append(", i32 0, i32 0), i32 ")
-                        .append(boolTmp)
-                        .append(")\n");
+                        .append(", i32 0, i32 0))\n");
+
+                sb.append("  br label %").append(labelEnd).append("\n");
+
+                sb.append(labelFalse).append(":\n");
+
+                sb.append("  call i32 (i8*, ...) @printf(")
+                        .append("i8* getelementptr ([7 x i8], [7 x i8]* @.strFalse")
+                        .append(labelSuffix)
+                        .append(", i32 0, i32 0))\n");
+
+                sb.append("  br label %").append(labelEnd).append("\n");
+
+                sb.append(labelEnd).append(":\n");
             }
 
             else {

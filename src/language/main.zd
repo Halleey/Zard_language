@@ -1,21 +1,9 @@
 main {
+List x=  (true, false);
+x.add(true);
+println(x.get(1));
+println(x.get(0));
+println(x.get(2));
 
 
-string teste = "zard";
-List nome  = ("testando");
-
-if(teste == "zard") {
-println("era igual");
-}
-
-else {
-print("não era igual");
-}
-List isReal= (true, false, false);
-List numbers = (3);
-println("eita");
-numbers.add(15);
-println(numbers.get(1));
-println(isReal.get(0));
-print("fim do programa");
 }

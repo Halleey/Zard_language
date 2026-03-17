@@ -243,7 +243,7 @@ public class ListPrintHandler implements PrintHandler {
 
         if (elemType == PrimitiveTypes.STRING) {
 
-            sb.append("  call void @arraylist_print_string(%ArrayList* ")
+            sb.append("  call void @arraylist_print_string(%ArrayListString* ")
                     .append(val)
                     .append(", i1 ")
                     .append(newline ? "1" : "0")

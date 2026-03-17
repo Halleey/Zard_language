@@ -140,6 +140,8 @@ public class VariableEmitter {
             if (element == PrimitiveTypes.DOUBLE)
                 return callArrayListCreateDoubleAndStore(varPtr);
 
+            if(element == PrimitiveTypes.STRING)
+                return callArrayListCreateStringAndStore(varPtr);
             return callArrayListCreateAndStore(varPtr);
         }
 
@@ -196,7 +198,7 @@ public class VariableEmitter {
             return code + "  store %struct.ArrayListBool* " + extractTemp(code)
                     + ", %struct.ArrayListBool** " + varPtr + "\n";
         }
-
+        System.out.println("testando aqui " + element);
         if (element == PrimitiveTypes.DOUBLE) {
             ListDoubleEmitter e = new ListDoubleEmitter(temps);
             String code = e.emit(listNode, visitor);
@@ -204,16 +206,15 @@ public class VariableEmitter {
                     + ", %struct.ArrayListDouble** " + varPtr + "\n";
         }
 
-        // fallback genérico
         ListEmitter e = new ListEmitter(temps);
         String code = e.emit(listNode, visitor);
         String tmp = extractTemp(code);
-        String casted = temps.newTemp();
+
+        String llvmType = info.getLLVMType();
 
         return code
-                + "  " + casted + " = bitcast i8* " + tmp + " to %ArrayList*\n"
-                + ";;VAL:" + casted + ";;TYPE:%ArrayList*\n"
-                + "  store %ArrayList* " + casted + ", %ArrayList** " + varPtr + "\n";
+                + "  store " + llvmType + " " + tmp
+                + ", " + llvmType + "* " + varPtr + "\n";
     }
 
     // ================= UTILIDADES =================
@@ -224,6 +225,16 @@ public class VariableEmitter {
                 "  " + casted + " = bitcast i8* " + tmp + " to %ArrayList*\n" +
                 ";;VAL:" + casted + ";;TYPE:%ArrayList*\n" +
                 "  store %ArrayList* " + casted + ", %ArrayList** " + varPtr + "\n";
+    }
+
+
+    private String callArrayListCreateStringAndStore(String varPtr) {
+
+        String tmp = temps.newTemp();
+
+        return "  " + tmp + " = call %ArrayListString* @arraylist_string_create(i64 4)\n" +
+                ";;VAL:" + tmp + ";;TYPE:%ArrayListString*\n" +
+                "  store %ArrayListString* " + tmp + ", %ArrayListString** " + varPtr + "\n";
     }
 
     private String callArrayListCreateIntAndStore(String varPtr) {

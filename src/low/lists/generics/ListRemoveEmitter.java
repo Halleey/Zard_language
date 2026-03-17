@@ -7,8 +7,8 @@ import low.lists.doubles.ListDoubleRemoveEmitter;
 import low.lists.ints.ListRemoveIntEmitter;
 import low.module.LLVMEmitVisitor;
 
-
 public class ListRemoveEmitter {
+
     private final TempManager temps;
     private final ListRemoveIntEmitter intEmitter;
     private final ListDoubleRemoveEmitter doubleRemoveEmitter;
@@ -22,26 +22,53 @@ public class ListRemoveEmitter {
     }
 
     public String emit(ListRemoveNode node, LLVMEmitVisitor visitor) {
+
         StringBuilder llvm = new StringBuilder();
 
         String listCode = node.getListNode().accept(visitor);
         String type = extractLastType(listCode);
         String listVal = extractLastVal(listCode);
 
+
         if (type.contains("ArrayListInt")) {
             return intEmitter.emit(node, visitor);
         }
+
         if (type.contains("ArrayListDouble")) {
             return doubleRemoveEmitter.emit(node, visitor);
         }
+
         if (type.contains("ArrayListBool")) {
             return boolRemoveEmitter.emit(node, visitor);
         }
 
-        // genérico (listas de ponteiros)
+        System.out.println("debugando " + type);
+        if (type.contains("ArrayListString")) {
+            System.out.println("entrou aqui no remove ");
+            String posCode = node.getIndexNode().accept(visitor);
+            llvm.append(listCode);
+            llvm.append(posCode);
+
+            String posVal = extractLastVal(posCode);
+
+            String posCast = temps.newTemp();
+            llvm.append("  ").append(posCast)
+                    .append(" = zext i32 ").append(posVal).append(" to i64\n");
+
+            llvm.append("  call void @arraylist_string_remove(%ArrayListString* ")
+                    .append(listVal)
+                    .append(", i64 ")
+                    .append(posCast)
+                    .append(")\n");
+
+            return llvm.toString();
+        }
+
+
         String posCode = node.getIndexNode().accept(visitor);
         llvm.append(listCode);
         llvm.append(posCode);
+
         String posVal = extractLastVal(posCode);
 
         String posCast = temps.newTemp();
@@ -49,15 +76,27 @@ public class ListRemoveEmitter {
                 .append(" = zext i32 ").append(posVal).append(" to i64\n");
 
         if (type.contains("ArrayList")) {
+
             llvm.append("  call void @removeItem(%ArrayList* ")
-                    .append(listVal).append(", i64 ").append(posCast).append(")\n");
+                    .append(listVal)
+                    .append(", i64 ")
+                    .append(posCast)
+                    .append(")\n");
+
         } else {
-            // listVal é i8* -> bitcast para %ArrayList*
+
             String listCast = temps.newTemp();
+
             llvm.append("  ").append(listCast)
-                    .append(" = bitcast i8* ").append(listVal).append(" to %ArrayList*\n");
+                    .append(" = bitcast i8* ")
+                    .append(listVal)
+                    .append(" to %ArrayList*\n");
+
             llvm.append("  call void @removeItem(%ArrayList* ")
-                    .append(listCast).append(", i64 ").append(posCast).append(")\n");
+                    .append(listCast)
+                    .append(", i64 ")
+                    .append(posCast)
+                    .append(")\n");
         }
 
         return llvm.toString();

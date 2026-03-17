@@ -44,25 +44,6 @@ void* arraylist_get_ptr(ArrayList* list, size_t index) {
 }
 
 
-void arraylist_add_string(ArrayList* list, char* str) {
-    ensureCapacity(list);
-    size_t len = strlen(str) + 1;
-    char* copy = malloc(len);
-    memcpy(copy, str, len);
-    list->data[list->length++] = copy;
-}
-
-void arraylist_addAll_string(ArrayList* list, char** strings, size_t n) {
-    for (size_t i = 0; i < n; i++) {
-        arraylist_add_string(list, strings[i]);
-    }
-}
-void arraylist_addAll_String(ArrayList* list, String** strings, size_t n) {
-    for (size_t i = 0; i < n; i++) {
-        arraylist_add_String(list, strings[i]);
-    }
-}
-
 
 void removeItem(ArrayList* list, size_t index) {
     if (index >= list->length) return;
@@ -72,11 +53,6 @@ void removeItem(ArrayList* list, size_t index) {
     list->data[list->length] = NULL;
 }
 
-int update_string(ArrayList* list, size_t index, char* str) {
-    if (index >= list->length) return 0;
-    list->data[index] = str;
-    return 1;
-}
 
 int length(ArrayList* list) {
     return list ? list->length : 0;
@@ -115,20 +91,4 @@ void clearList(ArrayList* list) {
         list->data[i] = NULL;
     }
     list->length = 0;
-}
-
-
-void arraylist_add_String(ArrayList* list, String* str) {
-    if (!str) return;
-
-    ensureCapacity(list);
-
-    String* copy = malloc(sizeof(String));
-
-    copy->length = str->length;
-    copy->data = malloc(copy->length + 1);
-
-    memcpy(copy->data, str->data, copy->length + 1);
-
-    list->data[list->length++] = copy;
 }

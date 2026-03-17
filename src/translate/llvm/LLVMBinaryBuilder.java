@@ -36,7 +36,9 @@ public class LLVMBinaryBuilder {
                 "src/helpers/bool/ArrayListBool.c",
                 "src/helpers/doubles/ArrayListDouble.c",
                 "src/helpers/print/PrintList.c",
-                "src/helpers/string/StringComparators.c"
+                "src/helpers/string/StringComparators.c",
+                "src/helpers/string/list/ArrayListString.c"
+
         );
 
         List<String> includeDirs = List.of(
@@ -46,7 +48,8 @@ public class LLVMBinaryBuilder {
                 "-Isrc/helpers/ints",
                 "-Isrc/helpers/bool",
                 "-Isrc/helpers/doubles",
-                "-Isrc/helpers/print"
+                "-Isrc/helpers/print",
+                "-Isrc/helpers/string/list"
         );
 
         String exe = isWindows ? "programa.exe" : "programa";

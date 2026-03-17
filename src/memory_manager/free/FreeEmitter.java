@@ -47,16 +47,23 @@ public class FreeEmitter {
 
             Type elementType = listType.elementType();
 
-            String freeFunc;
-
-            if (elementType == null || elementType instanceof UnknownType) {
-                freeFunc = "@freeList";
+            // Detecta lista de string
+            if (elementType instanceof PrimitiveTypes prim && prim.name().equals("string")) {
+                // lista de String* → usa função de free específica
+                sb.append("  call void @arraylist_string_free(")
+                        .append(llvmType).append(" ").append(tmpFree).append(")\n");
             } else {
-                freeFunc = typeMapper.freeFunctionForElement(elementType);
+                // lista genérica
+                String freeFunc;
+                if (elementType == null || elementType instanceof UnknownType) {
+                    freeFunc = "@freeList";
+                } else {
+                    freeFunc = typeMapper.freeFunctionForElement(elementType);
+                }
+                sb.append("  call void ")
+                        .append(freeFunc)
+                        .append("(").append(llvmType).append(" ").append(tmpFree).append(")\n");
             }
-            sb.append("  call void ")
-                    .append(freeFunc)
-                    .append("(").append(llvmType).append(" ").append(tmpFree).append(")\n");
         }
 
 

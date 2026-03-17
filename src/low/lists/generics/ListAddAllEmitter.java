@@ -10,27 +10,32 @@ import low.lists.ints.ListIntAddAllEmitter;
 import low.main.GlobalStringManager;
 import low.module.LLVMEmitVisitor;
 
-
 public class ListAddAllEmitter {
+
     private final TempManager temps;
     private final GlobalStringManager globalStringManager;
+
     private final ListIntAddAllEmitter intAddAllEmitter;
     private final ListAddAllDoubleEmitter doubleEmitter;
     private final ListBoolAddAllEmitter boolAddAllEmitter;
+
     public ListAddAllEmitter(TempManager temps, GlobalStringManager globalStringManager) {
         this.temps = temps;
         this.globalStringManager = globalStringManager;
+
         this.intAddAllEmitter = new ListIntAddAllEmitter(temps);
         this.doubleEmitter = new ListAddAllDoubleEmitter(temps);
         this.boolAddAllEmitter = new ListBoolAddAllEmitter(temps);
     }
 
     public String emit(ListAddAllNode node, LLVMEmitVisitor visitor) {
+
         StringBuilder llvm = new StringBuilder();
 
         ASTNode targetListNode = node.getTargetListNode();
         String listCode = targetListNode.accept(visitor);
         llvm.append(listCode);
+
         String listTmp = extractTemp(listCode);
 
         int n = node.getArgs().size();
@@ -39,7 +44,10 @@ public class ListAddAllEmitter {
         ASTNode first = node.getArgs().get(0);
         String firstCode = first.accept(visitor);
         llvm.append(firstCode);
+
         String firstType = extractType(firstCode);
+
+        // ===== Tipos primitivos especializados =====
 
         if (firstType.equals("i32")) {
             return intAddAllEmitter.emit(node, visitor);
@@ -52,81 +60,133 @@ public class ListAddAllEmitter {
         if (firstType.equals("i1")) {
             return boolAddAllEmitter.emit(node, visitor);
         }
-        String listCastTmp = temps.newTemp();
-        llvm.append("  ").append(listCastTmp)
-                .append(" = bitcast i8* ").append(listTmp)
-                .append(" to %ArrayList*\n");
 
-        switch (firstType) {
-            case "%String*" -> {
-                String tmpArray = temps.newTemp();
-                llvm.append("  ").append(tmpArray)
-                        .append(" = alloca %String*, i64 ").append(n).append("\n");
+        // ===== LISTA DE STRING =====
 
-                for (int i = 0; i < n; i++) {
-                    ASTNode valueNode = node.getArgs().get(i);
-                    String valCode = valueNode.accept(visitor);
-                    llvm.append(valCode);
-                    String valTmp = extractTemp(valCode);
+        if (firstType.equals("%String*")) {
 
-                    String gepTmp = temps.newTemp();
-                    llvm.append("  ").append(gepTmp)
-                            .append(" = getelementptr inbounds %String*, %String** ")
-                            .append(tmpArray).append(", i64 ").append(i).append("\n");
-                    llvm.append("  store %String* ").append(valTmp)
-                            .append(", %String** ").append(gepTmp).append("\n");
-                }
+            String listCast = temps.newTemp();
 
-                llvm.append("  call void @arraylist_addAll_String(%ArrayList* ")
-                        .append(listCastTmp)
-                        .append(", %String** ").append(tmpArray)
-                        .append(", i64 ").append(n).append(")\n");
-            }
-            case "i8*" -> {
-                String tmpArray = temps.newTemp();
-                llvm.append("  ").append(tmpArray)
-                        .append(" = alloca i8*, i64 ").append(n).append("\n");
+            llvm.append("  ").append(listCast)
+                    .append(" = bitcast %ArrayList* ")
+                    .append(listTmp)
+                    .append(" to %ArrayListString*\n");
 
-                for (int i = 0; i < n; i++) {
-                    ASTNode valueNode = node.getArgs().get(i);
-                    String valTmp;
+            String tmpArray = temps.newTemp();
 
-                    if (valueNode instanceof LiteralNode lit && lit.value.type().equals("string")) {
-                        String literal = (String) lit.value.value();
-                        String strName = globalStringManager.getOrCreateString(literal);
-                        valTmp = temps.newTemp();
-                        llvm.append("  ").append(valTmp)
-                                .append(" = bitcast [")
-                                .append(literal.length() + 1)
-                                .append(" x i8]* ").append(strName)
-                                .append(" to i8*\n");
-                    } else {
-                        String valCode = valueNode.accept(visitor);
-                        llvm.append(valCode);
-                        valTmp = extractTemp(valCode);
-                    }
+            llvm.append("  ").append(tmpArray)
+                    .append(" = alloca %String*, i64 ").append(n).append("\n");
 
-                    String gepTmp = temps.newTemp();
-                    llvm.append("  ").append(gepTmp)
-                            .append(" = getelementptr inbounds i8*, i8** ")
-                            .append(tmpArray)
-                            .append(", i64 ").append(i).append("\n");
+            for (int i = 0; i < n; i++) {
 
-                    llvm.append("  store i8* ").append(valTmp)
-                            .append(", i8** ").append(gepTmp).append("\n");
-                }
+                ASTNode valueNode = node.getArgs().get(i);
+                String valCode = valueNode.accept(visitor);
 
-                llvm.append("  call void @arraylist_addAll_string(%ArrayList* ")
-                        .append(listCastTmp)
-                        .append(", i8** ").append(tmpArray)
-                        .append(", i64 ").append(n).append(")\n");
+                llvm.append(valCode);
+
+                String valTmp = extractTemp(valCode);
+
+                String gepTmp = temps.newTemp();
+
+                llvm.append("  ").append(gepTmp)
+                        .append(" = getelementptr inbounds %String*, %String** ")
+                        .append(tmpArray)
+                        .append(", i64 ").append(i).append("\n");
+
+                llvm.append("  store %String* ")
+                        .append(valTmp)
+                        .append(", %String** ")
+                        .append(gepTmp)
+                        .append("\n");
             }
 
-            default -> throw new RuntimeException("Unsupported element type in ListAddAll: " + firstType);
+            llvm.append("  call void @arraylist_string_addAll(%ArrayListString* ")
+                    .append(listCast)
+                    .append(", %String** ")
+                    .append(tmpArray)
+                    .append(", i64 ")
+                    .append(n)
+                    .append(")\n");
+
+            llvm.append(";;VAL:").append(listCast).append(";;TYPE:%ArrayListString*\n");
+
+            return llvm.toString();
         }
 
-        llvm.append(";;VAL:").append(listCastTmp).append(";;TYPE:%ArrayList*\n");
-        return llvm.toString();
+
+        if (firstType.equals("i8*")) {
+
+            String listCastTmp = temps.newTemp();
+
+            llvm.append("  ").append(listCastTmp)
+                    .append(" = bitcast i8* ")
+                    .append(listTmp)
+                    .append(" to %ArrayList*\n");
+
+            String tmpArray = temps.newTemp();
+
+            llvm.append("  ").append(tmpArray)
+                    .append(" = alloca i8*, i64 ").append(n).append("\n");
+
+            for (int i = 0; i < n; i++) {
+
+                ASTNode valueNode = node.getArgs().get(i);
+                String valTmp;
+
+                if (valueNode instanceof LiteralNode lit &&
+                        lit.value.type().equals("string")) {
+
+                    String literal = (String) lit.value.value();
+                    String strName = globalStringManager.getOrCreateString(literal);
+
+                    valTmp = temps.newTemp();
+
+                    llvm.append("  ").append(valTmp)
+                            .append(" = bitcast [")
+                            .append(literal.length() + 1)
+                            .append(" x i8]* ")
+                            .append(strName)
+                            .append(" to i8*\n");
+
+                } else {
+
+                    String valCode = valueNode.accept(visitor);
+
+                    llvm.append(valCode);
+
+                    valTmp = extractTemp(valCode);
+                }
+
+                String gepTmp = temps.newTemp();
+
+                llvm.append("  ").append(gepTmp)
+                        .append(" = getelementptr inbounds i8*, i8** ")
+                        .append(tmpArray)
+                        .append(", i64 ")
+                        .append(i)
+                        .append("\n");
+
+                llvm.append("  store i8* ")
+                        .append(valTmp)
+                        .append(", i8** ")
+                        .append(gepTmp)
+                        .append("\n");
+            }
+
+            llvm.append("  call void @arraylist_addAll_string(%ArrayList* ")
+                    .append(listCastTmp)
+                    .append(", i8** ")
+                    .append(tmpArray)
+                    .append(", i64 ")
+                    .append(n)
+                    .append(")\n");
+
+            llvm.append(";;VAL:").append(listCastTmp).append(";;TYPE:%ArrayList*\n");
+
+            return llvm.toString();
+        }
+
+        throw new RuntimeException("Unsupported element type in ListAddAll: " + firstType);
     }
 
     private String extractTemp(String code) {

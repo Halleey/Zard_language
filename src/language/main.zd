@@ -1,13 +1,13 @@
 main {
-
-List numbers = (32,2,3);
-if(numbers.get(4) == 3) {
-print("true");
+Struct People  {
+string nome;
 }
-
-else {
-print("false");
-}
-
-
+People p ={"zrd"};
+List<People> t;
+t.add(p);
+List nomes = ("zard");
+string x = "ok";
+nomes.add(x);
+println(t);
+println(nomes);
 }

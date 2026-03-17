@@ -435,13 +435,17 @@ public class MainEmitter {
 
             if (tipoStr.contains("string")) {
                 sb.append("""
-    declare void @arraylist_add_string(%ArrayList*, i8*)
-    declare void @arraylist_addAll_string(%ArrayList*, i8**, i64)
-    declare void @arraylist_print_string(%ArrayList*)
-    declare void @arraylist_add_String(%ArrayList*, %String*)
-    declare void @arraylist_addAll_String(%ArrayList*, %String**, i64)
+
+    ; ==== Funções para ArrayListString de String* ====
+    %ArrayListString = type opaque
+    declare void @arraylist_string_add(%ArrayListString*, %String*)
+    declare void @arraylist_string_addAll(%ArrayListString*, %String**, i64)
+    declare %String* @arraylist_string_get(%ArrayListString*, i64)
+    declare void @arraylist_string_remove(%ArrayListString*, i64)
+    declare void @arraylist_string_free(%ArrayListString*)
+    declare void @arraylist_string_freeRef(%ArrayListString*)
+    declare void @arraylist_print_string(%ArrayListString*)
     
-    declare i8* @getItem(%ArrayList*, i64)
 """);
                 continue;
             }

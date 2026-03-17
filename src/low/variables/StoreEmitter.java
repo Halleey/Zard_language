@@ -17,7 +17,9 @@ public class StoreEmitter {
 
 
     public String emit(String name, String type, String value) {
+        System.out.println("tipo que entrou aqui " + type);
         return switch (type) {
+
             case "%String*", "%String" -> stringEmitter.emitStore(name, value);
             case "%struct.ArrayListInt*" ->
                     "  store %struct.ArrayListInt* " + value + ", %struct.ArrayListInt** " + getPtr(name) + "\n";
@@ -25,6 +27,8 @@ public class StoreEmitter {
                     "  store %struct.ArrayListDouble* " + value + ", %struct.ArrayListDouble** " + getPtr(name) + "\n";
             case "%struct.ArrayListBool*" ->
                     "  store %struct.ArrayListBool* " + value + ", %struct.ArrayListBool** " + getPtr(name) + "\n";
+           case "%ArrayListString*" ->
+                   "  store %ArrayListString* " + value + ", %ArrayListString** " + getPtr(name) + "\n";
             case "%ArrayList*" ->
                     "  store %ArrayList* " + value + ", %ArrayList** " + getPtr(name) + "\n";
             default ->

@@ -98,6 +98,7 @@ public class AllocaEmitter {
                     case "int" -> llvmType = "%struct.ArrayListInt*";
                     case "double" -> llvmType = "%struct.ArrayListDouble*";
                     case "bool" -> llvmType = "%struct.ArrayListBool*";
+                    case "string" -> llvmType = "%ArrayListString*";
                     default -> llvmType = "%ArrayList*";
                 }
 

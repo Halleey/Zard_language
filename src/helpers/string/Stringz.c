@@ -35,8 +35,6 @@
         }
     }
 
-
-
     void concatString(String *str, const char *nConcat) {
         if (!str) return;
         if (nConcat == NULL) nConcat = "";

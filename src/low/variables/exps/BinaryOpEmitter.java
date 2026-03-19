@@ -4,10 +4,14 @@ import ast.variables.VariableNode;
 import low.module.LLVisitorMain;
 import low.TempManager;
 import ast.expressions.BinaryOpNode;
-
+import low.module.builders.LLVMPointer;
+import low.module.builders.LLVMTYPES;
+import low.module.builders.LLVMValue;
+import low.module.builders.primitives.*;
 
 
 public class BinaryOpEmitter {
+
     private final TempManager temps;
     private final LLVisitorMain visitor;
 
@@ -16,45 +20,45 @@ public class BinaryOpEmitter {
         this.visitor = visitor;
     }
 
-    public String emit(BinaryOpNode node) {
+    public LLVMValue emit(BinaryOpNode node) {
         String op = node.operator;
-
-        if ("&&".equals(op) || "||".equals(op)) {
-            return emitLogicalShortCircuit(node, op);
-        }
-
         StringBuilder llvm = new StringBuilder();
 
-        String leftLLVM = evaluateNode(node.left);
-        String rightLLVM = evaluateNode(node.right);
+        // Avalia os nós filhos e obtém LLVMValues (name + tipo)
+        LLVMValue leftVal = evaluateNode(node.left);
+        LLVMValue rightVal = evaluateNode(node.right);
 
-        llvm.append(leftLLVM).append("\n").append(rightLLVM).append("\n");
+        llvm.append(leftVal.getCode())
+                .append("\n")
+                .append(rightVal.getCode())
+                .append("\n");
 
-        String leftTemp = extractTemp(leftLLVM);
-        String rightTemp = extractTemp(rightLLVM);
+        LLVMTYPES leftTypeLLVM = leftVal.getType();
+        LLVMTYPES rightTypeLLVM = rightVal.getType();
+        String leftTemp = leftVal.getName();
+        String rightTemp = rightVal.getName();
 
-        String leftTypeAST = extractType(leftLLVM);
-        String rightTypeAST = extractType(rightLLVM);
-
-        String leftType = toLLVMType(leftTypeAST);
-        String rightType = toLLVMType(rightTypeAST);
+        // Short-circuit && e ||
+        if ("&&".equals(op) || "||".equals(op)) {
+            return emitLogicalShortCircuit(leftVal, rightVal, op);
+        }
 
         String resultTemp = temps.newTemp();
 
-        if (leftType.equals("i1") && rightType.equals("i1")) {
-
+        // Booleanos
+        if (leftTypeLLVM instanceof LLVMBool && rightTypeLLVM instanceof LLVMBool) {
             String bop = switch (op) {
                 case "==" -> "icmp eq";
                 case "!=" -> "icmp ne";
                 default -> throw new RuntimeException("Operador inválido para boolean: " + op);
             };
             llvm.append("  ").append(resultTemp).append(" = ").append(bop)
-                    .append(" i1 ").append(leftTemp).append(", ").append(rightTemp).append("\n")
-                    .append(";;VAL:").append(resultTemp).append(";;TYPE:i1\n");
-            return llvm.toString();
+                    .append(" i1 ").append(leftTemp).append(", ").append(rightTemp).append("\n");
+            return new LLVMValue(new LLVMBool(), resultTemp, llvm.toString());
         }
 
-        if (leftType.equals("i8") && rightType.equals("i8")) {
+        // Char
+        if (leftTypeLLVM instanceof LLVMChar && rightTypeLLVM instanceof LLVMChar) {
             String bop = switch (op) {
                 case "==" -> "icmp eq";
                 case "!=" -> "icmp ne";
@@ -62,14 +66,15 @@ public class BinaryOpEmitter {
                 case "<" -> "icmp slt";
                 case ">=" -> "icmp sge";
                 case "<=" -> "icmp sle";
-                default -> throw new RuntimeException("Operador inválido para char (i8): " + op);
+                default -> throw new RuntimeException("Operador inválido para char: " + op);
             };
             llvm.append("  ").append(resultTemp).append(" = ").append(bop)
-                    .append(" i8 ").append(leftTemp).append(", ").append(rightTemp).append("\n")
-                    .append(";;VAL:").append(resultTemp).append(";;TYPE:i1\n");
-            return llvm.toString();
+                    .append(" i8 ").append(leftTemp).append(", ").append(rightTemp).append("\n");
+            return new LLVMValue(new LLVMBool(), resultTemp, llvm.toString());
         }
-        if (leftType.equals("i32") && rightType.equals("i32")) {
+
+        // Inteiros
+        if (leftTypeLLVM instanceof LLVMInt && rightTypeLLVM instanceof LLVMInt) {
             String bop = switch (op) {
                 case "+" -> "add";
                 case "-" -> "sub";
@@ -84,14 +89,13 @@ public class BinaryOpEmitter {
                 default -> throw new RuntimeException("Operador inválido para int: " + op);
             };
             llvm.append("  ").append(resultTemp).append(" = ").append(bop)
-                    .append(" i32 ").append(leftTemp).append(", ").append(rightTemp).append("\n")
-                    .append(";;VAL:").append(resultTemp).append(";;TYPE:")
-                    .append(bop.startsWith("icmp") ? "i1" : "i32").append("\n");
-            return llvm.toString();
+                    .append(" i32 ").append(leftTemp).append(", ").append(rightTemp).append("\n");
+            LLVMTYPES resultType = bop.startsWith("icmp") ? new LLVMBool() : new LLVMInt();
+            return new LLVMValue(resultType, resultTemp, llvm.toString());
         }
 
-        if (leftType.equals("float") && rightType.equals("float")) {
-
+        // Float
+        if (leftTypeLLVM instanceof LLVMFloat && rightTypeLLVM instanceof LLVMFloat) {
             String bop = switch (op) {
                 case "+" -> "fadd";
                 case "-" -> "fsub";
@@ -105,59 +109,42 @@ public class BinaryOpEmitter {
                 case "!=" -> "fcmp one";
                 default -> throw new RuntimeException("Operador inválido para float: " + op);
             };
-
-            llvm.append("  ").append(resultTemp)
-                    .append(" = ").append(bop)
-                    .append(" float ")
-                    .append(leftTemp).append(", ")
-                    .append(rightTemp).append("\n")
-                    .append(";;VAL:").append(resultTemp)
-                    .append(";;TYPE:")
-                    .append(bop.startsWith("fcmp") ? "i1" : "float")
-                    .append("\n");
-
-            return llvm.toString();
+            llvm.append("  ").append(resultTemp).append(" = ").append(bop)
+                    .append(" float ").append(leftTemp).append(", ").append(rightTemp).append("\n");
+            LLVMTYPES resultType = bop.startsWith("fcmp") ? new LLVMBool() : new LLVMFloat();
+            return new LLVMValue(resultType, resultTemp, llvm.toString());
         }
 
-        if (leftType.equals("double") || rightType.equals("double")) {
-
-            // int -> double
-            if (leftType.equals("i32")) {
+        // Double (incluindo conversões automáticas)
+        if (leftTypeLLVM instanceof LLVMDouble || rightTypeLLVM instanceof LLVMDouble) {
+            // Int para double
+            if (leftTypeLLVM instanceof LLVMInt) {
                 String tmp = temps.newTemp();
                 llvm.append("  ").append(tmp)
-                        .append(" = sitofp i32 ")
-                        .append(leftTemp)
-                        .append(" to double\n");
+                        .append(" = sitofp i32 ").append(leftTemp).append(" to double\n");
                 leftTemp = tmp;
             }
-
-            if (rightType.equals("i32")) {
+            if (rightTypeLLVM instanceof LLVMInt) {
                 String tmp = temps.newTemp();
                 llvm.append("  ").append(tmp)
-                        .append(" = sitofp i32 ")
-                        .append(rightTemp)
-                        .append(" to double\n");
+                        .append(" = sitofp i32 ").append(rightTemp).append(" to double\n");
                 rightTemp = tmp;
             }
 
-            // float -> double
-            if (leftType.equals("float")) {
+            // Float para double
+            if (leftTypeLLVM instanceof LLVMFloat) {
                 String tmp = temps.newTemp();
                 llvm.append("  ").append(tmp)
-                        .append(" = fpext float ")
-                        .append(leftTemp)
-                        .append(" to double\n");
+                        .append(" = fpext float ").append(leftTemp).append(" to double\n");
                 leftTemp = tmp;
             }
-
-            if (rightType.equals("float")) {
+            if (rightTypeLLVM instanceof LLVMFloat) {
                 String tmp = temps.newTemp();
                 llvm.append("  ").append(tmp)
-                        .append(" = fpext float ")
-                        .append(rightTemp)
-                        .append(" to double\n");
+                        .append(" = fpext float ").append(rightTemp).append(" to double\n");
                 rightTemp = tmp;
             }
+
             String bop = switch (op) {
                 case "+" -> "fadd";
                 case "-" -> "fsub";
@@ -171,104 +158,56 @@ public class BinaryOpEmitter {
                 case "!=" -> "fcmp one";
                 default -> throw new RuntimeException("Operador inválido para double: " + op);
             };
-
-            llvm.append("  ").append(resultTemp)
-                    .append(" = ").append(bop)
-                    .append(" double ")
-                    .append(leftTemp).append(", ")
-                    .append(rightTemp).append("\n")
-                    .append(";;VAL:").append(resultTemp)
-                    .append(";;TYPE:")
-                    .append(bop.startsWith("fcmp") ? "i1" : "double")
-                    .append("\n");
-
-            return llvm.toString();
+            llvm.append("  ").append(resultTemp).append(" = ").append(bop)
+                    .append(" double ").append(leftTemp).append(", ").append(rightTemp).append("\n");
+            LLVMTYPES resultType = bop.startsWith("fcmp") ? new LLVMBool() : new LLVMDouble();
+            return new LLVMValue(resultType, resultTemp, llvm.toString());
         }
 
-        if ((leftType.equals("%String*") || leftType.equals("i8*")) &&
-                (rightType.equals("%String*") || rightType.equals("i8*"))) {
-
-            // Normaliza para %String*
-            if (leftType.equals("i8*")) {
-                String tmp = temps.newTemp();
-                llvm.append("  ").append(tmp)
-                        .append(" = call %String* @createString(i8* ").append(leftTemp).append(")\n")
-                        .append(";;VAL:").append(tmp).append(";;TYPE:%String*\n");
-                leftTemp = tmp;
-            }
-            if (rightType.equals("i8*")) {
-                String tmp = temps.newTemp();
-                llvm.append("  ").append(tmp)
-                        .append(" = call %String* @createString(i8* ").append(rightTemp).append(")\n")
-                        .append(";;VAL:").append(tmp).append(";;TYPE:%String*\n");
-                rightTemp = tmp;
-            }
-
+        // Strings
+        if ((leftTypeLLVM instanceof LLVMString) && (rightTypeLLVM instanceof LLVMString)) {
             switch (op) {
-
                 case "==" -> {
                     String cmp = temps.newTemp();
                     String res = temps.newTemp();
-
-                    llvm.append("  ").append(cmp)
-                            .append(" = call i32 @compareString(%String* ")
-                            .append(leftTemp).append(", %String* ")
-                            .append(rightTemp).append(")\n");
-
-                    llvm.append("  ").append(res)
-                            .append(" = icmp eq i32 ").append(cmp).append(", 1\n")
-                            .append(";;VAL:").append(res).append(";;TYPE:i1\n");
-
-                    return llvm.toString();
+                    llvm.append("  ").append(cmp).append(" = call i32 @compareString(%String* ")
+                            .append(leftTemp).append(", %String* ").append(rightTemp).append(")\n");
+                    llvm.append("  ").append(res).append(" = icmp eq i32 ").append(cmp).append(", 1\n");
+                    return new LLVMValue(new LLVMBool(), res, llvm.toString());
                 }
-
                 case "!=" -> {
                     String cmp = temps.newTemp();
                     String res = temps.newTemp();
-
-                    llvm.append("  ").append(cmp)
-                            .append(" = call i32 @compareString(%String* ")
-                            .append(leftTemp).append(", %String* ")
-                            .append(rightTemp).append(")\n");
-
-                    llvm.append("  ").append(res)
-                            .append(" = icmp eq i32 ").append(cmp).append(", 0\n")
-                            .append(";;VAL:").append(res).append(";;TYPE:i1\n");
-
-                    return llvm.toString();
+                    llvm.append("  ").append(cmp).append(" = call i32 @compareString(%String* ")
+                            .append(leftTemp).append(", %String* ").append(rightTemp).append(")\n");
+                    llvm.append("  ").append(res).append(" = icmp eq i32 ").append(cmp).append(", 0\n");
+                    return new LLVMValue(new LLVMBool(), res, llvm.toString());
                 }
                 case "+" -> {
                     String tmp = temps.newTemp();
-                    llvm.append("  ").append(tmp)
-                            .append(" = call %String* @concatStrings(%String* ").append(leftTemp)
-                            .append(", %String* ").append(rightTemp).append(")\n")
-                            .append(";;VAL:").append(tmp).append(";;TYPE:%String*\n");
-                    return llvm.toString();
+                    llvm.append("  ").append(tmp).append(" = call %String* @concatStrings(%String* ")
+                            .append(leftTemp).append(", %String* ").append(rightTemp).append(")\n");
+                    return new LLVMValue(new LLVMString(), tmp, llvm.toString());
                 }
-                default -> throw new RuntimeException("Operador inválido para %String*: " + op);
+                default -> throw new RuntimeException("Operador inválido para String: " + op);
             }
         }
-        System.out.println("left type in AST "+ leftTypeAST);
-        throw new RuntimeException("Tipos incompatíveis para operação: " + leftType + " " + op + " " + rightType);
+
+        throw new RuntimeException(
+                "Tipos incompatíveis para operação: " + leftTypeLLVM + " " + op + " " + rightTypeLLVM
+        );
     }
 
-    private String emitLogicalShortCircuit(BinaryOpNode node, String op) {
+    private LLVMValue emitLogicalShortCircuit(LLVMValue left, LLVMValue right, String op) {
         StringBuilder llvm = new StringBuilder();
 
-        String leftLLVM = evaluateNode(node.left);
-        llvm.append(leftLLVM).append("\n");
-
-        String leftTemp = extractTemp(leftLLVM);
-        String leftTypeAST = extractType(leftLLVM);
-        String leftType = toLLVMType(leftTypeAST);
-
-        CoercedBool lb = coerceToBool(leftTemp, leftType, llvm);
-
+        // Coerce i32, double, %String* para i1
+        CoercedBool lb = coerceToBool(left, llvm);
         String rhsLbl  = temps.newLabel(op.equals("&&") ? "and.rhs" : "or.rhs");
         String endLbl  = temps.newLabel(op.equals("&&") ? "and.end" : "or.end");
         String shortLbl = temps.newLabel(op.equals("&&") ? "and.short" : "or.short");
-        String res = temps.newTemp();
 
+        String resTemp = temps.newTemp(); // SSA do resultado
 
         if (op.equals("&&")) {
             llvm.append("  br i1 ").append(lb.boolTemp)
@@ -281,93 +220,50 @@ public class BinaryOpEmitter {
         }
 
         llvm.append(rhsLbl).append(":\n");
-        String rightLLVM = evaluateNode(node.right);
-        llvm.append(rightLLVM).append("\n");
-        String rightTemp = extractTemp(rightLLVM);
-        String rightTypeAST = extractType(rightLLVM);
-        String rightType = toLLVMType(rightTypeAST);
-
-        CoercedBool rb = coerceToBool(rightTemp, rightType, llvm);
-
+        CoercedBool rb = coerceToBool(right, llvm);
         llvm.append("  br label %").append(endLbl).append("\n");
 
         llvm.append(shortLbl).append(":\n");
-
         String shortVal = temps.newTemp();
-        if (op.equals("&&")) {
-            llvm.append("  ").append(shortVal).append(" = add i1 0, 0\n");
-        } else {
-            llvm.append("  ").append(shortVal).append(" = add i1 1, 0\n");
-        }
+        llvm.append("  ").append(shortVal).append(" = add i1 0, ").append(op.equals("&&") ? 0 : 1).append("\n");
         llvm.append("  br label %").append(endLbl).append("\n");
 
         llvm.append(endLbl).append(":\n");
-        llvm.append("  ").append(res).append(" = phi i1 ")
+        llvm.append("  ").append(resTemp).append(" = phi i1 ")
                 .append("[ ").append(rb.boolTemp).append(", %").append(rhsLbl).append(" ], ")
-                .append("[ ").append(shortVal).append(", %").append(shortLbl).append(" ]\n")
-                .append(";;VAL:").append(res).append(";;TYPE:i1\n");
+                .append("[ ").append(shortVal).append(", %").append(shortLbl).append(" ]\n");
 
-        return llvm.toString();
+        return new LLVMValue(new LLVMBool(), resTemp, llvm.toString());
     }
 
-    private CoercedBool coerceToBool(String valTemp, String llType, StringBuilder out) {
-        // Já é i1
-        if ("i1".equals(llType)) {
-            return new CoercedBool(valTemp);
-        }
-
+    private CoercedBool coerceToBool(LLVMValue val, StringBuilder out) {
         String tmp = temps.newTemp();
-        switch (llType) {
-            case "i32" -> {
-                out.append("  ").append(tmp).append(" = icmp ne i32 ").append(valTemp).append(", 0\n");
-            }
-            case "double" -> {
-                out.append("  ").append(tmp).append(" = fcmp one double ").append(valTemp).append(", 0.000000e+00\n");
-            }
-            case "%String*" -> {
+        LLVMTYPES llType = val.getType();
+        String temp = val.getName();
 
-                out.append("  ").append(tmp).append(" = icmp ne %String* ").append(valTemp).append(", null\n");
-            }
-            case "i8*" -> {
-                out.append("  ").append(tmp).append(" = icmp ne i8* ").append(valTemp).append(", null\n");
-            }
-            default -> throw new RuntimeException("Não sei converter para boolean: " + llType);
+        if (llType instanceof LLVMInt) {
+            out.append("  ").append(tmp).append(" = icmp ne i32 ").append(temp).append(", 0\n");
+        } else if (llType instanceof LLVMDouble) {
+            out.append("  ").append(tmp).append(" = fcmp one double ").append(temp).append(", 0.0\n");
+        } else if (llType instanceof LLVMString) {
+            out.append("  ").append(tmp).append(" = icmp ne %String* ").append(temp).append(", null\n");
+            //melhorar isso
+        } else if (llType instanceof LLVMPointer) { // por ex: i8*, mas isso aqui preciso de testes no futuro
+            out.append("  ").append(tmp).append(" = icmp ne i8* ").append(temp).append(", null\n");
+        } else if (llType instanceof LLVMBool) {
+            return new CoercedBool(temp); // já é i1
+        } else {
+            throw new RuntimeException("Não sei converter para boolean: " + llType);
         }
-        out.append(";;VAL:").append(tmp).append(";;TYPE:i1\n");
+
         return new CoercedBool(tmp);
     }
 
-    private String evaluateNode(ASTNode node) {
+    private LLVMValue evaluateNode(ASTNode node) {
         if (node instanceof VariableNode varNode) {
             return visitor.getVariableEmitter().emitLoad(varNode.getName());
         }
         return node.accept(visitor);
-    }
-
-    private String extractTemp(String code) {
-        int lastValIdx = code.lastIndexOf(";;VAL:");
-        if (lastValIdx == -1) throw new RuntimeException("Não encontrou ;;VAL: em: " + code);
-        int typeIdx = code.indexOf(";;TYPE:", lastValIdx);
-        return code.substring(lastValIdx + 6, typeIdx).trim();
-    }
-
-    private String extractType(String code) {
-        int typeIdx = code.lastIndexOf(";;TYPE:");
-        if (typeIdx == -1) throw new RuntimeException("Não encontrou ;;TYPE: em: " + code);
-        int newlineIdx = code.indexOf("\n", typeIdx);
-        return code.substring(typeIdx + 7, newlineIdx == -1 ? code.length() : newlineIdx).trim();
-    }
-
-    private String toLLVMType(String type) {
-        return switch (type) {
-            case "int" -> "i32";
-            case "float" -> "float";
-            case "double" -> "double";
-            case "boolean" -> "i1";
-            case "string" -> "%String*";
-            case "List" -> "i8*";
-            default -> type;
-        };
     }
 
     private static class CoercedBool {

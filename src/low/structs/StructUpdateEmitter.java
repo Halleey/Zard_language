@@ -1,5 +1,6 @@
 package low.structs;
 
+import ast.ASTNode;
 import ast.structs.StructNode;
 import ast.structs.StructUpdateNode;
 import ast.variables.VariableDeclarationNode;
@@ -7,10 +8,14 @@ import context.statics.symbols.*;
 import low.TempManager;
 import low.functions.TypeMapper;
 import low.module.LLVisitorMain;
+import low.module.builders.LLVMPointer;
+import low.module.builders.LLVMTYPES;
+import low.module.builders.LLVMValue;
+import low.module.builders.structs.LLVMStruct;
 
 import java.util.List;
-
 public class StructUpdateEmitter {
+
     private final TempManager temps;
     private final LLVisitorMain visitor;
     private final TypeMapper typeMapper = new TypeMapper();
@@ -20,99 +25,109 @@ public class StructUpdateEmitter {
         this.visitor = visitor;
     }
 
-    public String emit(StructUpdateNode node) {
+    public LLVMValue emit(StructUpdateNode node) {
         StringBuilder llvm = new StringBuilder();
 
-        // gera o codigo do struct alvo
-        String targetCode = node.getTargetStruct().accept(visitor);
-        llvm.append(targetCode);
+        // LLVMValue do struct alvo
+        LLVMValue targetVal = node.getTargetStruct().accept(visitor);
+        llvm.append(targetVal.getCode());
 
-        String structVal = extractTemp(targetCode);
-        String structType = extractType(targetCode).trim();
+        LLVMValue structVal = targetVal;
+        LLVMTYPES structType = targetVal.getType();
 
-        // pode ser i8* (struct genérica) faz bitcast
-        if (structType.equals("i8*")) {
-            String ownerType = visitor.resolveStructName(node.getTargetStruct());
-            String realTy = "%" + ownerType + "*";
-            String casted = temps.newTemp();
-            llvm.append("  ").append(casted)
-                    .append(" = bitcast i8* ").append(structVal)
-                    .append(" to ").append(realTy).append("\n");
-            llvm.append(";;VAL:").append(casted).append(";;TYPE:").append(realTy).append("\n");
+        // se i8*, bitcast para struct real
+        if (structType instanceof LLVMPointer && structType.toString().equals("i8*")) {
+            String ownerName = visitor.resolveStructName(node.getTargetStruct());
+            String realLLVMTypeStr = "%" + ownerName + "*";
+            LLVMValue casted = new LLVMValue(
+                    new LLVMStruct(ownerName),
+                    temps.newTemp(),
+                    llvm.toString() + "  " + temps.newTemp() + " = bitcast i8* " + structVal.getName()
+                            + " to " + realLLVMTypeStr + "\n"
+            );
+            llvm.append(casted.getCode());
             structVal = casted;
-            structType = realTy;
+            structType = casted.getType();
         }
 
-        // resolve o tipo logico (nome da struct, campos, etc.)
-        String ownerType = visitor.resolveStructName(node.getTargetStruct());
-        StructNode def = visitor.getStructNode(ownerType);
-        if (def == null)
-            throw new RuntimeException("Inline update em tipo não-struct: " + structType);
+        String ownerName = visitor.resolveStructName(node.getTargetStruct());
+        StructNode def = visitor.getStructNode(ownerName);
+        if (def == null) throw new RuntimeException("Struct não encontrada: " + ownerName);
 
-        // atualiza campos simples
+        // atualizar campos simples
         for (var entry : node.getFieldUpdates().entrySet()) {
-            String field = entry.getKey();
-            String exprCode = entry.getValue().accept(visitor);
-            llvm.append(exprCode);
+            String fieldName = entry.getKey();
+            ASTNode expr = entry.getValue();
+            LLVMValue rhsVal = expr.accept(visitor);
+            llvm.append(rhsVal.getCode());
 
-            String rhsVal = extractTemp(exprCode);
-            String rhsTy = extractType(exprCode).trim();
-
-            VariableDeclarationNode fieldDecl = findField(def, field);
+            VariableDeclarationNode fieldDecl = findField(def, fieldName);
             int fieldIndex = findFieldIndex(def, fieldDecl);
-            String fieldLLType = mapFieldType(fieldDecl.getType());
+            LLVMTYPES fieldLLVMType = TypeMapper.from(fieldDecl.getType());
 
-            // gera ponteiro do campo
-            String fieldPtr = temps.newTemp();
-            llvm.append("  ").append(fieldPtr)
-                    .append(" = getelementptr inbounds %").append(ownerType)
-                    .append(", %").append(ownerType).append("* ").append(structVal)
+            // ponteiro para o campo
+            String fieldPtrName = temps.newTemp();
+            llvm.append("  ").append(fieldPtrName)
+                    .append(" = getelementptr inbounds %").append(ownerName)
+                    .append(", %").append(ownerName).append("* ").append(structVal.getName())
                     .append(", i32 0, i32 ").append(fieldIndex).append("\n");
 
-            // converte se necessário
-            if (!rhsTy.equals(fieldLLType)) {
-                String casted = temps.newTemp();
-                llvm.append("  ").append(casted)
-                        .append(" = bitcast ").append(rhsTy).append(" ").append(rhsVal)
-                        .append(" to ").append(fieldLLType).append("\n");
-                rhsVal = casted;
+            LLVMValue fieldPtr = new LLVMValue(new LLVMPointer(fieldLLVMType), fieldPtrName, "");
+
+            // bitcast se tipos diferentes
+            LLVMValue storeVal = rhsVal;
+            if (!rhsVal.getType().toString().equals(fieldLLVMType.toString())) {
+                String castName = temps.newTemp();
+                llvm.append("  ").append(castName)
+                        .append(" = bitcast ")
+                        .append(rhsVal.getType()).append(" ").append(rhsVal.getName())
+                        .append(" to ").append(fieldLLVMType).append("\n");
+                storeVal = new LLVMValue(fieldLLVMType, castName, "");
             }
 
-            llvm.append("  store ").append(fieldLLType).append(" ").append(rhsVal)
-                    .append(", ").append(fieldLLType).append("* ").append(fieldPtr).append("\n");
+            // store
+            llvm.append("  store ")
+                    .append(fieldLLVMType).append(" ")
+                    .append(storeVal.getName())
+                    .append(", ").append(fieldLLVMType).append("* ")
+                    .append(fieldPtr.getName())
+                    .append("\n");
         }
 
-        // atualiza campos aninhados (recursivo)
+        // atualizar campos aninhados recursivamente
         for (var nested : node.getNestedUpdates().entrySet()) {
-            String field = nested.getKey();
+            String fieldName = nested.getKey();
             StructUpdateNode inner = nested.getValue();
 
-            VariableDeclarationNode fieldDecl = findField(def, field);
+            VariableDeclarationNode fieldDecl = findField(def, fieldName);
             int fieldIndex = findFieldIndex(def, fieldDecl);
+            LLVMTYPES fieldLLVMType = TypeMapper.from(fieldDecl.getType());
 
-            String fieldPtr = temps.newTemp();
-            llvm.append("  ").append(fieldPtr)
-                    .append(" = getelementptr inbounds %").append(ownerType)
-                    .append(", %").append(ownerType).append("* ").append(structVal)
+            // ponteiro para campo
+            String fieldPtrName = temps.newTemp();
+            llvm.append("  ").append(fieldPtrName)
+                    .append(" = getelementptr inbounds %").append(ownerName)
+                    .append(", %").append(ownerName).append("* ").append(structVal.getName())
                     .append(", i32 0, i32 ").append(fieldIndex).append("\n");
 
-            String fieldLLType = mapFieldType(fieldDecl.getType());
-            String fieldVal = temps.newTemp();
+            // load campo
+            String fieldLoadName = temps.newTemp();
+            llvm.append("  ").append(fieldLoadName)
+                    .append(" = load ").append(fieldLLVMType)
+                    .append(", ").append(fieldLLVMType).append("* ").append(fieldPtrName).append("\n");
 
-            llvm.append("  ").append(fieldVal)
-                    .append(" = load ").append(fieldLLType)
-                    .append(", ").append(fieldLLType).append("* ").append(fieldPtr).append("\n");
+            LLVMValue fieldVal = new LLVMValue(fieldLLVMType, fieldLoadName, "");
 
-            // recursivamente chama o emitter para o campo aninhado
+            // chama recursivamente
             StructUpdateEmitter subEmitter = new StructUpdateEmitter(temps, visitor);
-            llvm.append(subEmitter.emitNested(inner, fieldVal, fieldDecl.getType()));
+            LLVMValue nestedVal = subEmitter.emitNested(inner, fieldVal, fieldDecl.getType());
+            llvm.append(nestedVal.getCode());
         }
 
-        llvm.append(";;VAL:").append(structVal).append(";;TYPE:").append(structType).append("\n");
-        return llvm.toString();
+        return new LLVMValue(structType, structVal.getName(), llvm.toString());
     }
 
-    private String emitNested(StructUpdateNode node, String structVal, Type structType) {
+    private LLVMValue emitNested(StructUpdateNode node, LLVMValue structVal, Type structType) {
 
         StringBuilder llvm = new StringBuilder();
 
@@ -120,79 +135,73 @@ public class StructUpdateEmitter {
             throw new RuntimeException("Nested update em tipo não-struct: " + structType);
         }
 
-        String structName = struct.name(); // ou getName()
+        String structName = struct.name();
         StructNode def = visitor.getStructNode(structName);
 
         for (var entry : node.getFieldUpdates().entrySet()) {
+            String fieldName = entry.getKey();
+            ASTNode expr = entry.getValue();
+            LLVMValue rhsVal = expr.accept(visitor);
+            llvm.append(rhsVal.getCode());
 
-            String field = entry.getKey();
-            String exprCode = entry.getValue().accept(visitor);
-            llvm.append(exprCode);
-
-            String rhsVal = extractTemp(exprCode);
-            String rhsTy = extractType(exprCode).trim();
-
-            VariableDeclarationNode fieldDecl = findField(def, field);
+            VariableDeclarationNode fieldDecl = findField(def, fieldName);
             int fieldIndex = findFieldIndex(def, fieldDecl);
+            LLVMTYPES fieldLLVMType = TypeMapper.from(fieldDecl.getType());
 
-            String fieldLLType = mapFieldType(fieldDecl.getType());
-
-            String fieldPtr = temps.newTemp();
-            llvm.append("  ").append(fieldPtr)
+            String fieldPtrName = temps.newTemp();
+            llvm.append("  ").append(fieldPtrName)
                     .append(" = getelementptr inbounds %").append(structName)
-                    .append(", %").append(structName).append("* ").append(structVal)
+                    .append(", %").append(structName).append("* ").append(structVal.getName())
                     .append(", i32 0, i32 ").append(fieldIndex).append("\n");
 
-            if (!rhsTy.equals(fieldLLType)) {
-                String casted = temps.newTemp();
-                llvm.append("  ").append(casted)
-                        .append(" = bitcast ")
-                        .append(rhsTy).append(" ")
-                        .append(rhsVal)
-                        .append(" to ").append(fieldLLType).append("\n");
-                rhsVal = casted;
+            LLVMValue fieldPtr = new LLVMValue(new LLVMPointer(fieldLLVMType), fieldPtrName, "");
+
+            LLVMValue storeVal = rhsVal;
+            if (!rhsVal.getType().toString().equals(fieldLLVMType.toString())) {
+                String castName = temps.newTemp();
+                llvm.append("  ").append(castName)
+                        .append(" = bitcast ").append(rhsVal.getType()).append(" ")
+                        .append(rhsVal.getName())
+                        .append(" to ").append(fieldLLVMType).append("\n");
+                storeVal = new LLVMValue(fieldLLVMType, castName, "");
             }
 
             llvm.append("  store ")
-                    .append(fieldLLType).append(" ")
-                    .append(rhsVal)
-                    .append(", ")
-                    .append(fieldLLType).append("* ")
-                    .append(fieldPtr).append("\n");
+                    .append(fieldLLVMType).append(" ").append(storeVal.getName())
+                    .append(", ").append(fieldLLVMType).append("* ").append(fieldPtr.getName())
+                    .append("\n");
         }
 
         // nested dentro de nested
         for (var nested : node.getNestedUpdates().entrySet()) {
-
-            String field = nested.getKey();
+            String fieldName = nested.getKey();
             StructUpdateNode inner = nested.getValue();
 
-            VariableDeclarationNode fieldDecl = findField(def, field);
+            VariableDeclarationNode fieldDecl = findField(def, fieldName);
             int fieldIndex = findFieldIndex(def, fieldDecl);
+            LLVMTYPES fieldLLVMType = TypeMapper.from(fieldDecl.getType());
 
-            String fieldPtr = temps.newTemp();
-            llvm.append("  ").append(fieldPtr)
+            String fieldPtrName = temps.newTemp();
+            llvm.append("  ").append(fieldPtrName)
                     .append(" = getelementptr inbounds %").append(structName)
-                    .append(", %").append(structName).append("* ").append(structVal)
+                    .append(", %").append(structName).append("* ").append(structVal.getName())
                     .append(", i32 0, i32 ").append(fieldIndex).append("\n");
 
-            String fieldLLType = mapFieldType(fieldDecl.getType());
-            String fieldVal = temps.newTemp();
+            String fieldLoadName = temps.newTemp();
+            llvm.append("  ").append(fieldLoadName)
+                    .append(" = load ").append(fieldLLVMType)
+                    .append(", ").append(fieldLLVMType).append("* ").append(fieldPtrName).append("\n");
 
-            llvm.append("  ").append(fieldVal)
-                    .append(" = load ")
-                    .append(fieldLLType)
-                    .append(", ")
-                    .append(fieldLLType).append("* ")
-                    .append(fieldPtr).append("\n");
+            LLVMValue fieldVal = new LLVMValue(fieldLLVMType, fieldLoadName, "");
 
-            llvm.append(emitNested(inner, fieldVal, fieldDecl.getType()));
+            LLVMValue nestedVal = emitNested(inner, fieldVal, fieldDecl.getType());
+            llvm.append(nestedVal.getCode());
         }
 
-        return llvm.toString();
+        return new LLVMValue(new LLVMStruct(structType.toString()), structVal.getName(), llvm.toString());
     }
 
-    // utilitarios para auxiliar
+    // utilitários
     private VariableDeclarationNode findField(StructNode def, String name) {
         for (VariableDeclarationNode f : def.getFields())
             if (f.getName().equals(name)) return f;
@@ -204,37 +213,5 @@ public class StructUpdateEmitter {
         for (int i = 0; i < fields.size(); i++)
             if (fields.get(i) == target) return i;
         return -1;
-    }
-
-    private String mapFieldType(Type type) {
-
-        if (type instanceof StructType structType) {
-            return "%" + structType.name() + "*";
-        }
-
-        if (type instanceof ListType) {
-            return "%ArrayList*";
-        }
-
-        if (type instanceof PrimitiveTypes primitive) {
-            return typeMapper.toLLVM(primitive);
-        }
-
-        if (type instanceof UnknownType) {
-            throw new RuntimeException("Tipo desconhecido em StructUpdateEmitter");
-        }
-
-        throw new RuntimeException("Tipo não suportado no emitter: " + type);
-    }
-    private String extractTemp(String code) {
-        int idx = code.lastIndexOf(";;VAL:");
-        if (idx == -1) return "";
-        return code.substring(idx + 6, code.indexOf(";;TYPE:", idx)).trim();
-    }
-
-    private String extractType(String code) {
-        int idx = code.lastIndexOf(";;TYPE:");
-        if (idx == -1) return "";
-        return code.substring(idx + 7).trim();
     }
 }

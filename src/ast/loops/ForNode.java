@@ -7,6 +7,7 @@ import ast.exceptions.BreakLoop;
 import ast.expressions.TypedValue;
 import context.runtime.RuntimeContext;
 import low.module.LLVMEmitVisitor;
+import low.module.builders.LLVMValue;
 
 import java.util.List;
 
@@ -40,7 +41,7 @@ public class ForNode extends ASTNode {
     }
 
     @Override
-    public String accept(LLVMEmitVisitor visitor) {
+    public LLVMValue accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
 

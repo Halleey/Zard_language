@@ -5,6 +5,7 @@ import context.statics.StaticContext;
 import ast.expressions.TypedValue;
 import context.runtime.RuntimeContext;
 import low.module.LLVMEmitVisitor;
+import low.module.builders.LLVMValue;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -27,7 +28,7 @@ public class StructUpdateNode extends ASTNode {
     public Map<String, StructUpdateNode> getNestedUpdates() { return nestedUpdates; }
 
     @Override
-    public String accept(LLVMEmitVisitor visitor) {
+    public LLVMValue accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
 

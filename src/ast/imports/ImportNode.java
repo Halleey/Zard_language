@@ -14,6 +14,7 @@ import context.statics.symbols.PrimitiveTypes;
 import context.statics.symbols.StructType;
 import context.statics.symbols.Type;
 import low.module.LLVMEmitVisitor;
+import low.module.builders.LLVMValue;
 import tokens.Lexer;
 import tokens.Token;
 import translate.front.Parser;
@@ -36,7 +37,7 @@ public class ImportNode extends ASTNode {
 
 
     @Override
-    public String accept(LLVMEmitVisitor visitor) {
+    public LLVMValue accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
 

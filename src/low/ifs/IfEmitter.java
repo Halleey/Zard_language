@@ -5,62 +5,70 @@ import ast.exceptions.BreakNode;
 import ast.ifstatements.IfNode;
 import low.TempManager;
 import low.module.LLVisitorMain;
+import low.module.builders.LLVMValue;
+import low.module.builders.primitives.LLVMVoid;
 
 
 public class IfEmitter {
     private final TempManager temps;
     private final LLVisitorMain visitor;
-    private int labelCounter = 0;
 
     public IfEmitter(TempManager temps, LLVisitorMain visitor) {
         this.temps = temps;
         this.visitor = visitor;
     }
 
-    public String emit(IfNode node) {
+    public LLVMValue emit(IfNode node) {
+
         StringBuilder llvm = new StringBuilder();
 
-        String condCode = node.condition.accept(visitor);
-        String condTemp = extractVal(condCode);
-        llvm.append(condCode).append("\n");
+        LLVMValue cond = node.getCondition().accept(visitor);
 
-        String thenLabel = "then_" + labelCounter;
-        String elseLabel = "else_" + labelCounter;
-        String endLabel = "endif_" + labelCounter;
-        labelCounter++;
+        llvm.append(cond.getCode());
 
-        llvm.append("  br i1 ").append(condTemp)
+        String thenLabel = temps.newLabel("then");
+        String elseLabel = temps.newLabel("else");
+        String endLabel  = temps.newLabel("endif");
+
+        llvm.append("  br i1 ")
+                .append(cond.getName())
                 .append(", label %").append(thenLabel)
-                .append(", label %").append(node.elseBranch != null ? elseLabel : endLabel).append("\n");
+                .append(", label %").append(node.getElseBranch() != null ? elseLabel : endLabel)
+                .append("\n");
 
+        // THEN
         llvm.append(thenLabel).append(":\n");
         visitor.getVariableEmitter().enterScope();
-        for (ASTNode stmt : node.thenBranch) {
-            llvm.append(stmt.accept(visitor));
+
+        for (ASTNode stmt : node.getThenBranch()) {
+            LLVMValue v = stmt.accept(visitor);
+            llvm.append(v.getCode());
         }
+
         visitor.getVariableEmitter().exitScope();
         llvm.append("  br label %").append(endLabel).append("\n");
 
-        if (node.elseBranch != null) {
+        // ELSE
+        if (node.getElseBranch() != null) {
             llvm.append(elseLabel).append(":\n");
+
             visitor.getVariableEmitter().enterScope();
-            for (ASTNode stmt : node.elseBranch) {
-                llvm.append(stmt.accept(visitor));
+
+            for (ASTNode stmt : node.getElseBranch()) {
+                LLVMValue v = stmt.accept(visitor);
+                llvm.append(v.getCode());
             }
+
             visitor.getVariableEmitter().exitScope();
             llvm.append("  br label %").append(endLabel).append("\n");
         }
 
         llvm.append(endLabel).append(":\n");
 
-        return llvm.toString();
-    }
-
-
-    private String extractVal(String code) {
-        int idxVal = code.lastIndexOf(";;VAL:");
-        if (idxVal == -1) throw new RuntimeException("Não encontrou ;;VAL: em:\n" + code);
-        int idxType = code.indexOf(";;TYPE:", idxVal);
-        return code.substring(idxVal + 6, idxType).trim();
+        return new LLVMValue(
+                new LLVMVoid(),
+                "",
+                llvm.toString()
+        );
     }
 }

@@ -1,56 +1,45 @@
 package low.functions;
 import context.statics.symbols.*;
+import low.module.builders.LLVMPointer;
+import low.module.builders.LLVMTYPES;
+import low.module.builders.lists.LLVMArrayList;
+import low.module.builders.primitives.*;
+import low.module.builders.structs.LLVMStruct;
 import low.utils.LLVMNameUtils;
 
 public class TypeMapper {
 
-    public String toLLVM(Type type) {
-        if (type == null) throw new RuntimeException("Tipo inválido (null)");
 
-        if (type instanceof PrimitiveTypes prim) {
-            return switch (prim.name()) {
-                case "int"     -> "i32";
-                case "double"  -> "double";
-                case "float"   -> "float";
-                case "boolean" -> "i1";
-                case "string"  -> "%String*";
-                case "void"    -> "void";
-                case "char"    -> "i8";
-                default -> throw new RuntimeException("Tipo primitivo não suportado: " + prim.name());
-            };
-        }
+        public static LLVMTYPES from(Type type) {
 
-        if (type instanceof ListType list) {
-
-            Type elemType = list.elementType();
-
-            if (elemType instanceof PrimitiveTypes prim) {
+            if (type instanceof PrimitiveTypes prim) {
                 return switch (prim.name()) {
-                    case "int"     -> "%struct.ArrayListInt*";
-                    case "double"  -> "%struct.ArrayListDouble*";
-                    case "boolean" -> "%struct.ArrayListBool*";
-                    case "string"  -> "%ArrayList*";
-                    default        -> "%ArrayList*";
+                    case "int"     -> new LLVMInt();
+                    case "double"  -> new LLVMDouble();
+                    case "float"   -> new LLVMFloat();
+                    case "boolean" -> new LLVMBool();
+                    case "string"  -> new LLVMString();
+                    case "char"    -> new LLVMChar();
+                    case "void"    -> new LLVMVoid();
+                    default -> throw new RuntimeException("Tipo primitivo não suportado: " + prim.name());
                 };
             }
 
-            if (elemType instanceof StructType) {
-                return "%ArrayList*";
+            if (type instanceof ListType list) {
+                LLVMTYPES elem = from(list.elementType());
+                return new LLVMArrayList(elem);
             }
-            return "%ArrayList*";
-        }
 
-        if (type instanceof StructType st) {
-            String llvmName = LLVMNameUtils.llvmSafe(st.name());
-            return "%" + llvmName + "*";
-        }
+            if (type instanceof StructType st) {
+                return new LLVMStruct(st.name());
+            }
 
-        if (type instanceof UnknownType) {
-            return "i8*";
-        }
+            if (type instanceof UnknownType) {
+                return new LLVMGeneric(); // fallback genérico (i8*)
+            }
 
-        throw new RuntimeException("Tipo não suportado para LLVM: " + type);
-    }
+            throw new RuntimeException("Tipo não suportado: " + type);
+        }
 
 
     public String freeFunctionForElement(Type elementType) {

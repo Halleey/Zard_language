@@ -9,6 +9,8 @@ import context.statics.symbols.ListType;
 import context.statics.symbols.PrimitiveTypes;
 import context.statics.symbols.Type;
 import low.module.LLVMEmitVisitor;
+import low.module.builders.LLVMValue;
+
 public class ListSizeNode extends ASTNode {
 
     private final ASTNode nome; // pode ser variável ou expressão que retorna lista
@@ -19,7 +21,7 @@ public class ListSizeNode extends ASTNode {
     }
 
     @Override
-    public String accept(LLVMEmitVisitor visitor) {
+    public LLVMValue accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
 

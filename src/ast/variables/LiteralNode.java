@@ -6,6 +6,7 @@ import context.statics.StaticContext;
 import ast.expressions.TypedValue;
 import context.statics.symbols.Type;
 import low.module.LLVMEmitVisitor;
+import low.module.builders.LLVMValue;
 
 public class LiteralNode extends ASTNode {
     public final TypedValue value;
@@ -28,7 +29,7 @@ public class LiteralNode extends ASTNode {
     }
 
     @Override
-    public String accept(LLVMEmitVisitor visitor) {
+    public LLVMValue accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
 

@@ -3,29 +3,43 @@ package low.lists.bool;
 import ast.lists.ListGetNode;
 import low.TempManager;
 import low.module.LLVMEmitVisitor;
+import low.module.LLVisitorMain;
+import low.module.builders.LLVMValue;
+import low.module.builders.primitives.LLVMBool;
+import low.module.builders.primitives.LLVMDouble;
+import low.module.builders.primitives.LLVMInt;
 
 public class ListBoolGetEmitter {
+
     private final TempManager temps;
 
     public ListBoolGetEmitter(TempManager temps) {
         this.temps = temps;
     }
 
-    public String emit(ListGetNode node, LLVMEmitVisitor visitor) {
+    public LLVMValue emit(ListGetNode node, LLVisitorMain visitor) {
+
         StringBuilder llvm = new StringBuilder();
 
-        String listCode = node.getListName().accept(visitor);
-        String listTemp = extractTemp(listCode);
-        appendCodePrefix(llvm, listCode);
+        LLVMValue listVal = node.getListName().accept(visitor);
+        llvm.append(listVal.getCode());
 
-        String idxCode = node.getIndexNode().accept(visitor);
-        String idxTemp = extractTemp(idxCode);
-        appendCodePrefix(llvm, idxCode);
+        LLVMValue idxVal = node.getIndexNode().accept(visitor);
+        llvm.append(idxVal.getCode());
 
         String idx64 = temps.newTemp();
-        llvm.append("  ").append(idx64)
-                .append(" = zext i32 ").append(idxTemp)
-                .append(" to i64\n");
+
+        // conversão segura baseada no tipo real
+        if (idxVal.getType() instanceof LLVMInt) {
+            llvm.append("  ").append(idx64)
+                    .append(" = zext i32 ")
+                    .append(idxVal.getName())
+                    .append(" to i64\n");
+
+        }
+        else {
+            throw new RuntimeException("Unsupported index type for ListGetBool: " + idxVal.getType());
+        }
 
         String outPtr = temps.newTemp();
         llvm.append("  ").append(outPtr)
@@ -34,33 +48,15 @@ public class ListBoolGetEmitter {
         String success = temps.newTemp();
         llvm.append("  ").append(success)
                 .append(" = call i1 @arraylist_get_bool(%struct.ArrayListBool* ")
-                .append(listTemp).append(", i64 ").append(idx64)
-                .append(", i1* ").append(outPtr).append(")\n");
+                .append(listVal.getName())
+                .append(", i64 ").append(idx64)
+                .append(", i1* ").append(outPtr)
+                .append(")\n");
 
         String value = temps.newTemp();
         llvm.append("  ").append(value)
                 .append(" = load i1, i1* ").append(outPtr).append("\n");
 
-        llvm.append(";;VAL:").append(value).append("\n");
-        llvm.append(";;TYPE:i1\n");
-
-        return llvm.toString();
+        return new LLVMValue(new LLVMBool(), value, llvm.toString());
     }
-
-    private void appendCodePrefix(StringBuilder llvm, String code) {
-        int marker = code.lastIndexOf(";;VAL:");
-        String prefix = (marker == -1) ? code : code.substring(0, marker);
-        if (!prefix.isEmpty()) {
-            if (!prefix.endsWith("\n")) prefix += "\n";
-            llvm.append(prefix);
-        }
-    }
-
-    private String extractTemp(String code) {
-        int v = code.lastIndexOf(";;VAL:");
-        if (v == -1) return "";
-        int t = code.indexOf(";;TYPE:", v);
-        return (t == -1) ? "" : code.substring(v + 6, t).trim();
-    }
-
 }

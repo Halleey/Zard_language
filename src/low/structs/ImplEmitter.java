@@ -10,24 +10,28 @@ import context.statics.symbols.PrimitiveTypes;
 import context.statics.symbols.StructType;
 import context.statics.symbols.Type;
 import low.TempManager;
+import low.functions.TypeMapper;
 import low.module.LLVisitorMain;
 import low.main.TypeInfos;
+import low.module.builders.LLVMPointer;
+import low.module.builders.LLVMTYPES;
+import low.module.builders.LLVMValue;
+import low.module.builders.primitives.LLVMVoid;
+import low.module.builders.structs.LLVMStruct;
 
 import java.util.ArrayList;
 import java.util.List;
-
-
-
 public class ImplEmitter {
 
     private final LLVisitorMain visitor;
+    private final TempManager temps;
 
     public ImplEmitter(LLVisitorMain visitor, TempManager temps) {
         this.visitor = visitor;
+        this.temps = temps;
     }
 
     private boolean hasSpecializations(String baseStruct) {
-
         for (String key : visitor.specializedStructs.keySet()) {
             if (key.startsWith(baseStruct + "<") && key.endsWith(">")) {
                 return true;
@@ -37,7 +41,6 @@ public class ImplEmitter {
     }
 
     public String emit(ImplNode node) {
-
         StringBuilder llvm = new StringBuilder();
         String baseStruct = node.getStructName();
 
@@ -46,299 +49,148 @@ public class ImplEmitter {
         boolean hasSpecs = hasSpecializations(baseStruct);
 
         for (FunctionNode fn : node.getMethods()) {
-
             if (hasSpecs) {
-
                 for (StructNode spec : visitor.specializedStructs.values()) {
-
                     String specName = spec.getName();
                     if (!specName.startsWith(baseStruct + "_")) continue;
 
                     String inner = specName.substring(baseStruct.length() + 1);
-
                     llvm.append("; === Impl especializada para Struct<")
                             .append(baseStruct).append("<").append(inner).append(">> ===\n");
 
                     llvm.append(generateFunctionImpl(baseStruct, fn, inner));
                 }
-
             } else {
-
                 llvm.append(emitSimpleMethod(baseStruct, fn));
             }
         }
 
-        llvm.append("\n");
         return llvm.toString();
     }
 
     private String emitSimpleMethod(String baseStruct, FunctionNode fn) {
-
         StringBuilder sb = new StringBuilder();
 
         String fnName = baseStruct + "_" + fn.getName();
-
-        String structLLVM = "%" + baseStruct;
-        String paramTypeLLVM = structLLVM + "*";
+        LLVMStruct structType = new LLVMStruct(baseStruct);
+        LLVMPointer receiverLLVMType = new LLVMPointer(structType);
 
         Type retTypeSrc = fn.getReturnType();
-        String retTypeLLVM = mapToLLVMType(retTypeSrc);
+        LLVMTYPES retLLVMType = TypeMapper.from(retTypeSrc);
 
-        boolean returnsSelf =
-                retTypeSrc instanceof StructType st &&
-                        st.name().equals(baseStruct);
+        boolean returnsSelf = retTypeSrc instanceof StructType st && st.name().equals(baseStruct);
 
         List<ParamInfo> params = fn.getParameters();
-
         String receiverName = !params.isEmpty() ? params.get(0).name() : "s";
 
+        // === Lista de parâmetros LLVM ===
         StringBuilder paramList = new StringBuilder();
-        paramList.append(paramTypeLLVM).append(" %").append(receiverName);
+        paramList.append(receiverLLVMType).append(" %").append(receiverName);
 
         for (int i = 1; i < params.size(); i++) {
-
             ParamInfo p = params.get(i);
-
-            String llvmType = mapToLLVMType(p.type());
-
-            paramList.append(", ")
-                    .append(llvmType)
-                    .append(" %")
-                    .append(p.name());
+            LLVMTYPES llvmType = TypeMapper.from(p.type());
+            paramList.append(", ").append(llvmType).append(" %").append(p.name());
         }
 
         sb.append("; === Método: ").append(fnName).append(" ===\n");
-        sb.append("define ").append(retTypeLLVM).append(" @").append(fnName)
+        sb.append("define ").append(retLLVMType).append(" @").append(fnName)
                 .append("(").append(paramList).append(") {\n");
-
         sb.append("entry:\n");
 
-        String receiverPtr = "%" + receiverName + "_addr";
-
-        sb.append("  ").append(receiverPtr)
-                .append(" = alloca ").append(paramTypeLLVM).append("\n");
-
-        sb.append("  store ")
-                .append(paramTypeLLVM)
-                .append(" %").append(receiverName)
-                .append(", ")
-                .append(paramTypeLLVM)
-                .append("* ")
-                .append(receiverPtr)
-                .append("\n");
+        // === Aloca receiver ===
+        String receiverPtr = temps.newTemp();
+        sb.append("  ").append(receiverPtr).append(" = alloca ").append(receiverLLVMType).append("\n");
+        sb.append("  store ").append(receiverLLVMType).append(" %").append(receiverName)
+                .append(", ").append(receiverLLVMType).append("* ").append(receiverPtr).append("\n");
 
         visitor.getVariableEmitter().registerVarPtr(receiverName, receiverPtr);
+        visitor.putVarType(receiverName, new TypeInfos(new StructType(baseStruct), receiverLLVMType));
 
-        visitor.putVarType(
-                receiverName,
-                new TypeInfos(new StructType(baseStruct), paramTypeLLVM));
-
+        // === Aloca outros parâmetros ===
         for (int i = 1; i < params.size(); i++) {
-
             ParamInfo p = params.get(i);
-
-            String llvmType = mapToLLVMType(p.type());
-            String ptr = "%" + p.name() + "_addr";
-
-            sb.append("  ")
-                    .append(ptr)
-                    .append(" = alloca ")
-                    .append(llvmType)
-                    .append("\n");
-
-            sb.append("  store ")
-                    .append(llvmType)
-                    .append(" %")
-                    .append(p.name())
-                    .append(", ")
-                    .append(llvmType)
-                    .append("* ")
-                    .append(ptr)
-                    .append("\n");
-
+            LLVMTYPES llvmType = TypeMapper.from(p.type());
+            String ptr = temps.newTemp();
+            sb.append("  ").append(ptr).append(" = alloca ").append(llvmType).append("\n");
+            sb.append("  store ").append(llvmType).append(" %").append(p.name())
+                    .append(", ").append(llvmType).append("* ").append(ptr).append("\n");
             visitor.getVariableEmitter().registerVarPtr(p.name(), ptr);
-
             visitor.putVarType(p.name(), new TypeInfos(p.type(), llvmType));
         }
 
+        // === Corpo da função ===
         if (fn.getBody() != null) {
-
             for (ASTNode stmt : fn.getBody()) {
-                sb.append(stmt.accept(visitor));
+                LLVMValue stmtVal = stmt.accept(visitor);
+                sb.append(stmtVal.getCode());
             }
         }
 
-        if ("void".equals(retTypeLLVM)) {
-
+        // === Retorno ===
+        if (retLLVMType instanceof LLVMVoid) {
             sb.append("  ret void\n");
-
         } else if (returnsSelf) {
-
-            sb.append("  ret ")
-                    .append(paramTypeLLVM)
-                    .append(" %")
-                    .append(receiverName)
-                    .append("\n");
-
+            sb.append("  ret ").append(receiverLLVMType).append(" %").append(receiverName).append("\n");
         } else {
-
-            sb.append("  ret ")
-                    .append(retTypeLLVM)
-                    .append(" undef\n");
+            sb.append("  ret ").append(retLLVMType).append(" undef\n");
         }
 
         sb.append("}\n\n");
-
         return sb.toString();
     }
 
     private String generateFunctionImpl(String baseStruct, FunctionNode fn, String specialized) {
-
         StringBuilder sb = new StringBuilder();
-
         List<ParamInfo> params = fn.getParameters();
-        if (params.isEmpty()) {
-            return "";
-        }
+        if (params.isEmpty()) return "";
 
         String receiverName = params.get(0).name();
-
         String fnName = baseStruct + "_" + specialized + "_" + fn.getName();
 
-        String structLLVM = "%" + baseStruct + "_" + specialized;
-        String paramTypeLLVM = structLLVM + "*";
-
-        Type retTypeSrc = fn.getReturnType();
-        String retTypeLLVM = mapToLLVMType(retTypeSrc);
-
-        boolean returnsSelf =
-                retTypeSrc instanceof StructType;
+        LLVMStruct structType = new LLVMStruct(baseStruct + "_" + specialized);
+        LLVMPointer receiverLLVMType = new LLVMPointer(structType);
 
         StringBuilder paramList = new StringBuilder();
-        paramList.append(paramTypeLLVM).append(" %").append(receiverName);
-
-        List<String> llvmParamTypes = new ArrayList<>();
-        llvmParamTypes.add(paramTypeLLVM);
+        paramList.append(receiverLLVMType).append(" %").append(receiverName);
 
         for (int i = 1; i < params.size(); i++) {
-
-            ParamInfo p = params.get(i);
-
-            String llvmType = mapToLLVMType(p.type());
-
-            llvmParamTypes.add(llvmType);
-
-            paramList.append(", ")
-                    .append(llvmType)
-                    .append(" %")
-                    .append(p.name());
+            LLVMTYPES llvmType = TypeMapper.from(params.get(i).type());
+            paramList.append(", ").append(llvmType).append(" %").append(params.get(i).name());
         }
 
+        LLVMTYPES retLLVMType = TypeMapper.from(fn.getReturnType());
+        boolean returnsSelf = fn.getReturnType() instanceof StructType;
+
         sb.append("; === Função: ").append(fnName).append(" ===\n");
+        sb.append("define ").append(retLLVMType).append(" @").append(fnName)
+                .append("(").append(paramList).append(") {\nentry:\n");
 
-        sb.append("define ")
-                .append(retTypeLLVM)
-                .append(" @")
-                .append(fnName)
-                .append("(")
-                .append(paramList)
-                .append(") {\n");
+        // === Aloca receiver ===
+        String receiverPtr = temps.newTemp();
+        sb.append("  ").append(receiverPtr).append(" = alloca ").append(receiverLLVMType).append("\n");
+        sb.append("  store ").append(receiverLLVMType).append(" %").append(receiverName)
+                .append(", ").append(receiverLLVMType).append("* ").append(receiverPtr).append("\n");
 
-        sb.append("entry:\n");
-
-        String receiverPtr = "%" + receiverName + "_addr";
-
-        sb.append("  ")
-                .append(receiverPtr)
-                .append(" = alloca ")
-                .append(paramTypeLLVM)
-                .append("\n");
-
-        sb.append("  store ")
-                .append(paramTypeLLVM)
-                .append(" %")
-                .append(receiverName)
-                .append(", ")
-                .append(paramTypeLLVM)
-                .append("* ")
-                .append(receiverPtr)
-                .append("\n");
-
+        // === Corpo isolado ===
         if (fn.getBody() != null) {
-
-            LLVisitorMain isolated = visitor.fork();
-
+            LLVisitorMain forked = visitor.fork();
             for (ASTNode stmt : fn.getBody()) {
-                sb.append(stmt.accept(isolated));
+                LLVMValue stmtVal = stmt.accept(forked);
+                sb.append(stmtVal.getCode());
             }
         }
 
-        if ("void".equals(retTypeLLVM)) {
-
+        // === Retorno ===
+        if (retLLVMType instanceof LLVMVoid) {
             sb.append("  ret void\n");
-
         } else if (returnsSelf) {
-
-            sb.append("  ret ")
-                    .append(paramTypeLLVM)
-                    .append(" %")
-                    .append(receiverName)
-                    .append("\n");
-
+            sb.append("  ret ").append(receiverLLVMType).append(" %").append(receiverName).append("\n");
         } else {
-
-            sb.append("  ret ")
-                    .append(retTypeLLVM)
-                    .append(" undef\n");
+            sb.append("  ret ").append(retLLVMType).append(" undef\n");
         }
 
         sb.append("}\n\n");
-
         return sb.toString();
-    }
-
-    private String mapToLLVMType(Type type) {
-
-        if (type == null) return "void";
-
-        if (type instanceof PrimitiveTypes prim) {
-
-            return switch (prim.name()) {
-
-                case "int" -> "i32";
-                case "double" -> "double";
-                case "bool" -> "i1";
-                case "string" -> "%String*";
-                case "void" -> "void";
-
-                default -> "i8*";
-            };
-        }
-
-        if (type instanceof StructType st) {
-
-            return "%" + st.name() + "*";
-        }
-
-        if (type instanceof ListType lt) {
-
-            Type elemType = lt.elementType();
-
-            if (elemType instanceof PrimitiveTypes prim) {
-
-                return switch (prim.name()) {
-
-                    case "int" -> "%struct.ArrayListInt*";
-                    case "double" -> "%struct.ArrayListDouble*";
-                    case "bool" -> "%struct.ArrayListBool*";
-
-                    default -> "%ArrayList*";
-                };
-            }
-
-            return "%ArrayList*";
-        }
-
-        return "i8*";
     }
 }

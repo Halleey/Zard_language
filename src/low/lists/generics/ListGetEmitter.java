@@ -9,6 +9,14 @@ import low.lists.bool.ListBoolGetEmitter;
 import low.lists.doubles.ListGetDoubleEmitter;
 import low.lists.ints.ListGetIntEmitter;
 import low.module.LLVisitorMain;
+import low.module.builders.LLVMTYPES;
+import low.module.builders.LLVMValue;
+import low.module.builders.lists.LLVMArrayList;
+import low.module.builders.primitives.LLVMBool;
+import low.module.builders.primitives.LLVMDouble;
+import low.module.builders.primitives.LLVMInt;
+import low.module.builders.primitives.LLVMString;
+import low.module.builders.structs.LLVMStruct;
 
 public class ListGetEmitter {
 
@@ -24,118 +32,95 @@ public class ListGetEmitter {
         this.boolGetEmitter = new ListBoolGetEmitter(temps);
     }
 
-    public String emit(ListGetNode node, LLVisitorMain visitor) {
+    public LLVMValue emit(ListGetNode node, LLVisitorMain visitor) {
 
         StringBuilder llvm = new StringBuilder();
 
-        String listCode = node.getListName().accept(visitor);
-        appendCodePrefix(llvm, listCode);
+        LLVMValue listVal = node.getListName().accept(visitor);
+        llvm.append(listVal.getCode());
 
-        String listType = extractType(listCode);
-        String listTemp = extractTemp(listCode);
+        LLVMTYPES listType = listVal.getType();
 
-        if (listTemp.isEmpty()) {
-            throw new RuntimeException("ListGetEmitter: could not extract list temp:\n" + listCode);
+        if (!(listType instanceof LLVMArrayList arrayListType)) {
+            throw new RuntimeException("ListGetEmitter: expected LLVMArrayList, got " + listType);
         }
 
-        // Delegação para listas primitivas especializadas
-        if (listType.contains("ArrayListInt")) {
-            return intGetEmitter.emit(node, visitor);
+        LLVMTYPES elementType = arrayListType.elementType();
+        Type elemType = node.getElementType();
+
+        if (elemType instanceof PrimitiveTypes prim) {
+            if (prim == PrimitiveTypes.INT) return intGetEmitter.emit(node, visitor);
+            if (prim == PrimitiveTypes.DOUBLE) return doubleEmitter.emit(node, visitor);
+            if (prim == PrimitiveTypes.BOOL) return boolGetEmitter.emit(node, visitor);
         }
 
-        if (listType.contains("ArrayListDouble")) {
-            return doubleEmitter.emit(node, visitor);
-        }
-
-        if (listType.contains("ArrayListBool")) {
-            return boolGetEmitter.emit(node, visitor);
-        }
-
-        String idxCode = node.getIndexNode().accept(visitor);
-        appendCodePrefix(llvm, idxCode);
-
-        String idxTemp = extractTemp(idxCode);
-
-        if (idxTemp.isEmpty()) {
-            throw new RuntimeException("ListGetEmitter: could not extract index temp:\n" + idxCode);
-        }
+        // ===== INDEX =====
+        LLVMValue idxVal = node.getIndexNode().accept(visitor);
+        llvm.append(idxVal.getCode());
 
         String idx64 = temps.newTemp();
         llvm.append("  ")
                 .append(idx64)
                 .append(" = zext i32 ")
-                .append(idxTemp)
+                .append(idxVal.getName())
                 .append(" to i64\n");
 
+        // ===== RAW GET =====
         String rawTemp = temps.newTemp();
         llvm.append("  ")
                 .append(rawTemp)
                 .append(" = call i8* @arraylist_get_ptr(%ArrayList* ")
-                .append(listTemp)
+                .append(listVal.getName())
                 .append(", i64 ")
                 .append(idx64)
                 .append(")\n");
 
-        Type elemType = node.getElementType();
-
-        if (elemType == null) {
-            throw new RuntimeException(
-                    "ListGetEmitter: element type missing in node"
-            );
+        // ===== PRIMITIVOS =====
+        if (elementType instanceof LLVMString) {
+            return new LLVMValue(elementType, rawTemp, llvm.toString());
         }
 
-        if (elemType instanceof PrimitiveTypes prim) {
+        if (elementType instanceof LLVMInt) {
 
-            if (prim == PrimitiveTypes.STRING) {
+            String ptr = temps.newTemp();
+            llvm.append("  ").append(ptr)
+                    .append(" = bitcast i8* ").append(rawTemp).append(" to i32*\n");
 
-                llvm.append(";;VAL:").append(rawTemp).append("\n");
-                llvm.append(";;TYPE:%String*\n");
+            String val = temps.newTemp();
+            llvm.append("  ").append(val)
+                    .append(" = load i32, i32* ").append(ptr).append("\n");
 
-            } else if (prim == PrimitiveTypes.INT) {
-
-                String intPtr = temps.newTemp();
-                llvm.append("  ").append(intPtr)
-                        .append(" = bitcast i8* ").append(rawTemp).append(" to i32*\n");
-
-                String intVal = temps.newTemp();
-                llvm.append("  ").append(intVal)
-                        .append(" = load i32, i32* ").append(intPtr).append("\n");
-
-                llvm.append(";;VAL:").append(intVal).append("\n");
-                llvm.append(";;TYPE:i32\n");
-
-            } else if (prim == PrimitiveTypes.DOUBLE) {
-
-                String dblPtr = temps.newTemp();
-                llvm.append("  ").append(dblPtr)
-                        .append(" = bitcast i8* ").append(rawTemp).append(" to double*\n");
-
-                String dblVal = temps.newTemp();
-                llvm.append("  ").append(dblVal)
-                        .append(" = load double, double* ").append(dblPtr).append("\n");
-
-                llvm.append(";;VAL:").append(dblVal).append("\n");
-                llvm.append(";;TYPE:double\n");
-
-            } else if (prim == PrimitiveTypes.BOOL) {
-
-                String boolPtr = temps.newTemp();
-                llvm.append("  ").append(boolPtr)
-                        .append(" = bitcast i8* ").append(rawTemp).append(" to i1*\n");
-
-                String boolVal = temps.newTemp();
-                llvm.append("  ").append(boolVal)
-                        .append(" = load i1, i1* ").append(boolPtr).append("\n");
-
-                llvm.append(";;VAL:").append(boolVal).append("\n");
-                llvm.append(";;TYPE:i1\n");
-
-            } else {
-                throw new RuntimeException("Unsupported primitive list type: " + prim);
-            }
+            return new LLVMValue(elementType, val, llvm.toString());
         }
 
-        else if (elemType instanceof StructType struct) {
+        if (elementType instanceof LLVMDouble) {
+
+            String ptr = temps.newTemp();
+            llvm.append("  ").append(ptr)
+                    .append(" = bitcast i8* ").append(rawTemp).append(" to double*\n");
+
+            String val = temps.newTemp();
+            llvm.append("  ").append(val)
+                    .append(" = load double, double* ").append(ptr).append("\n");
+
+            return new LLVMValue(elementType, val, llvm.toString());
+        }
+
+        if (elementType instanceof LLVMBool) {
+
+            String ptr = temps.newTemp();
+            llvm.append("  ").append(ptr)
+                    .append(" = bitcast i8* ").append(rawTemp).append(" to i1*\n");
+
+            String val = temps.newTemp();
+            llvm.append("  ").append(val)
+                    .append(" = load i1, i1* ").append(ptr).append("\n");
+
+            return new LLVMValue(elementType, val, llvm.toString());
+        }
+
+        // ===== STRUCT =====
+        if (elementType instanceof LLVMStruct struct) {
 
             String castTemp = temps.newTemp();
 
@@ -144,53 +129,12 @@ public class ListGetEmitter {
                     .append(" = bitcast i8* ")
                     .append(rawTemp)
                     .append(" to %")
-                    .append(struct.name())
+                    .append(struct.getName())
                     .append("*\n");
 
-            llvm.append(";;VAL:").append(castTemp).append("\n");
-            llvm.append(";;TYPE:%").append(struct.name()).append("*\n");
+            return new LLVMValue(struct, castTemp, llvm.toString());
         }
 
-        else {
-            throw new RuntimeException("Unsupported list element type: " + elemType);
-        }
-
-        return llvm.toString();
-    }
-
-    private void appendCodePrefix(StringBuilder llvm, String code) {
-
-        int marker = code.lastIndexOf(";;VAL:");
-        String prefix = (marker == -1) ? code : code.substring(0, marker);
-
-        if (!prefix.isEmpty()) {
-            llvm.append(prefix);
-            if (!prefix.endsWith("\n")) {
-                llvm.append("\n");
-            }
-        }
-    }
-
-    private String extractTemp(String code) {
-
-        int v = code.lastIndexOf(";;VAL:");
-        int t = code.indexOf(";;TYPE:", v);
-
-        if (v == -1 || t == -1) {
-            throw new RuntimeException("Failed to extract temp from:\n" + code);
-        }
-
-        return code.substring(v + 6, t).trim();
-    }
-
-    private String extractType(String code) {
-
-        int t = code.lastIndexOf(";;TYPE:");
-        if (t == -1) return "";
-
-        int end = code.indexOf("\n", t);
-        if (end == -1) end = code.length();
-
-        return code.substring(t + 7, end).trim();
+        throw new RuntimeException("Unsupported list element type: " + elementType);
     }
 }

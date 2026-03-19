@@ -5,7 +5,11 @@ import ast.lists.ListSizeNode;
 import low.TempManager;
 import low.lists.generics.ListSizeEmitter;
 import low.module.LLVisitorMain;
+import low.module.builders.LLVMValue;
+import low.module.builders.primitives.LLVMInt;
+
 public class ListSizePrintHandler implements PrintHandler {
+
     private final TempManager temps;
     private final ListSizeEmitter listSizeEmitter;
 
@@ -19,37 +23,25 @@ public class ListSizePrintHandler implements PrintHandler {
         return node instanceof ListSizeNode;
     }
 
-    public String emit(ASTNode node, LLVisitorMain visitor, boolean newline) {
+    @Override
+    public LLVMValue emit(ASTNode node, LLVisitorMain visitor, boolean newline) {
+
         ListSizeNode sizeNode = (ListSizeNode) node;
 
-        String sizeCode = listSizeEmitter.emit(sizeNode, visitor);
-        String valTemp = extractTemp(sizeCode);
+        LLVMValue val = listSizeEmitter.emit(sizeNode, visitor);
 
-        StringBuilder sb = new StringBuilder();
-        appendCodePrefix(sb, sizeCode);
+        StringBuilder llvm = new StringBuilder();
+        llvm.append(val.getCode());
 
         String labelSuffix = newline ? "" : "_noNL";
 
-        sb.append("  call i32 (i8*, ...) @printf(")
-                .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strInt").append(labelSuffix)
-                .append(", i32 0, i32 0), i32 ").append(valTemp).append(")\n");
+        llvm.append("  call i32 (i8*, ...) @printf(")
+                .append("i8* getelementptr ([4 x i8], [4 x i8]* @.strInt")
+                .append(labelSuffix)
+                .append(", i32 0, i32 0), i32 ")
+                .append(val.getName())
+                .append(")\n");
 
-        return sb.toString();
-    }
-
-    private void appendCodePrefix(StringBuilder llvm, String code) {
-        int marker = code.lastIndexOf(";;VAL:");
-        String prefix = (marker == -1) ? code : code.substring(0, marker);
-        if (!prefix.isEmpty()) {
-            if (!prefix.endsWith("\n")) prefix += "\n";
-            llvm.append(prefix);
-        }
-    }
-
-    private String extractTemp(String code) {
-        int v = code.lastIndexOf(";;VAL:"); // pega o último
-        if (v == -1) return "";
-        int t = code.indexOf(";;TYPE:", v);
-        return (t == -1) ? "" : code.substring(v + 6, t).trim();
+        return new LLVMValue(new LLVMInt(), val.getName(), llvm.toString());
     }
 }

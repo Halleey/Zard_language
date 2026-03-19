@@ -3,33 +3,30 @@ package low.lists.ints;
 import ast.lists.ListClearNode;
 import low.TempManager;
 import low.module.LLVMEmitVisitor;
+import low.module.LLVisitorMain;
+import low.module.builders.LLVMValue;
+import low.module.builders.lists.LLVMArrayList;
+import low.module.builders.primitives.LLVMInt;
+
 public class ListIntClearEmitter {
+
     private final TempManager temps;
 
     public ListIntClearEmitter(TempManager temps) {
         this.temps = temps;
     }
 
-    public String emit(ListClearNode node, LLVMEmitVisitor visitor) {
+    public LLVMValue emit(ListClearNode node, LLVisitorMain visitor) {
+
         StringBuilder llvm = new StringBuilder();
 
-        String listCode = node.getListNode().accept(visitor);
-        llvm.append(listCode);
+        LLVMValue listVal = node.getListNode().accept(visitor);
+        llvm.append(listVal.getCode());
 
-        String listTmp = extractTemp(listCode);
+        llvm.append("  call void @arraylist_clear_int(%struct.ArrayListInt* ")
+                .append(listVal.getName())
+                .append(")\n");
 
-        llvm.append("  call void @arraylist_clear_int(%struct.ArrayListInt* ").append(listTmp).append(")\n");
-        llvm.append(";;VAL:").append(listTmp).append(";;TYPE:%struct.ArrayListInt*\n");
-
-        return llvm.toString();
-    }
-
-    private String extractTemp(String code) {
-        int lastValIdx = code.lastIndexOf(";;VAL:");
-        int typeIdx = code.indexOf(";;TYPE:", lastValIdx);
-        if (lastValIdx == -1 || typeIdx == -1) {
-            throw new RuntimeException("Não foi possível extrair temp da lista no código LLVM:\n" + code);
-        }
-        return code.substring(lastValIdx + 6, typeIdx).trim();
+        return new LLVMValue(new LLVMArrayList(new LLVMInt()), listVal.getName(), llvm.toString());
     }
 }

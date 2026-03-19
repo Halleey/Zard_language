@@ -10,6 +10,7 @@ import ast.functions.FunctionNode;
 import ast.home.MainAST;
 import ast.ifstatements.IfNode;
 import ast.imports.ImportNode;
+import ast.inputs.InputNode;
 import ast.loops.ForNode;
 import ast.structs.*;
 import ast.lists.*;
@@ -19,17 +20,15 @@ import ast.prints.PrintNode;
 import ast.variables.*;
 import context.statics.symbols.Type;
 import low.TempManager;
-import low.exceptions.ReturnEmitter;
 import low.functions.FunctionCallEmitter;
-import low.functions.FunctionEmitter;
 import low.imports.ImportEmitter;
 import low.main.GlobalStringManager;
-import low.main.MainEmitter;
+
 import low.main.TypeInfos;
+import low.module.builders.LLVMValue;
 import low.module.flow.FlowControllVisitor;
 import low.module.imports.ImportRegistry;
 import low.module.lists.ListVisitor;
-import low.module.structs.SpecializedStructManager;
 import low.module.structs.StructRegistry;
 import low.module.structs.StructTypeResolver;
 import low.prints.PrintEmitter;
@@ -48,18 +47,16 @@ import java.util.*;
 
 public class LLVisitorMain implements LLVMEmitVisitor {
 
-    private final List<String> implDefinitions = new ArrayList<>();
+    private final List<LLVMValue> implDefinitions = new ArrayList<>();
 
-    public void addImplDefinition(String ir) {
-        if (ir != null && !ir.isBlank()) {
-            implDefinitions.add(ir);
-        }
+    public void addImplDefinition(LLVMValue val) {
+        implDefinitions.add(val);
     }
 
     public String emitImplDefinitions() {
         StringBuilder sb = new StringBuilder();
-        for (String s : implDefinitions) {
-            sb.append(s).append("\n");
+        for (LLVMValue val : implDefinitions) {
+            sb.append(val.getCode()).append("\n");
         }
         return sb.toString();
     }
@@ -67,7 +64,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     // ==== TABELAS / REGISTROS ====
     private final TypeTable types;
     private final StructRegistry structRegistry;
-    private final SpecializedStructManager specializedManager;
     private final ImportRegistry importRegistry;
     private final StructTypeResolver structTypeResolver;
 
@@ -75,12 +71,11 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public final Map<String, StructNode> specializedStructs;
 
     private final TempManager temps;
-    private final List<String> structDefinitions;
+    private List<LLVMValue> structDefinitions = new ArrayList<>();
     private final GlobalStringManager globalStrings;
     private final FlowControllVisitor controlFlow;
 
 
-    private final Map<String, String> listElementTypesLegacyView = new HashMap<>(); // NÃO usado diretamente, só compat
 
     // ==== EMITTERS GENÉRICOS ====
     public final VariableEmitter varEmitter;
@@ -151,7 +146,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
             Map<String, StructNode> structNodes,
             Map<String, StructNode> specializedStructs,
             Set<Type> tiposDeListasUsados,
-            List<String> structDefinitions,
+            List<LLVMValue> structDefinitions,
             GlobalStringManager globalStrings
     ) {
         this.types = types;
@@ -168,8 +163,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         // Registries
         this.structRegistry = new StructRegistry(structNodes, new HashSet<>(), new HashSet<>());
         this.structEmitter = new StructEmitter(this);
-        this.specializedManager =
-                new SpecializedStructManager(specializedStructs, structEmitter, structRegistry, structDefinitions);
         this.importRegistry = new ImportRegistry(importedFunctions, structRegistry);
         this.structTypeResolver = new StructTypeResolver(types, structRegistry);
 
@@ -179,7 +172,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         this.varEmitter = new VariableEmitter(varTypesView, temps, this);
         this.printEmitter = new PrintEmitter(globalStrings, temps);
         this.assignmentEmitter = new AssignmentEmitter(varTypesView, temps, globalStrings, this);
-        this.unaryOpEmitter = new UnaryOpEmitter(varTypesView, temps, varEmitter);
+        this.unaryOpEmitter = new UnaryOpEmitter(varTypesView, temps, varEmitter, this);
         this.literalEmitter = new LiteralEmitter(temps, globalStrings);
         this.binaryEmitter = new BinaryOpEmitter(temps, this);
         this.callEmiter = new FunctionCallEmitter(temps);
@@ -221,9 +214,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     }
 
 
-    public boolean hasSpecializationFor(String baseName) {
-        return specializedManager.hasSpecializationFor(baseName);
-    }
 
     // ==== LIST TYPES INFERENCE (wrappers) ====
     public Type inferListElementType(ASTNode node) {
@@ -251,9 +241,19 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return structRegistry.get(name);
     }
 
-    public void addStructDefinition(String llvmDef) {
+    public void addStructDefinition(LLVMValue llvmDef) {
         structDefinitions.add(llvmDef);
     }
+    public String emitStructDefinitions() {
+        StringBuilder sb = new StringBuilder();
+        for (LLVMValue structVal : structDefinitions) {
+            if (structVal != null && structVal.getCode() != null && !structVal.getCode().isBlank()) {
+                sb.append(structVal.getCode()).append("\n");
+            }
+        }
+        return sb.toString();
+    }
+
 
     // ==== IMPORTS ====
     public void registerImportedFunction(String qualifiedName, FunctionNode func) {
@@ -278,182 +278,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return types.getVarType(name);
     }
 
-    @Override
-    public String visit(StructNode node) {
-        // Evita redefinir structs que já foram emitidas
-        String llvmName = (node.getLLVMName() != null && !node.getLLVMName().isBlank())
-                ? node.getLLVMName()
-                : node.getName();
-
-        boolean alreadyDefined = structDefinitions.stream()
-                .anyMatch(def -> def.startsWith("%" + llvmName + " "));
-
-        if (alreadyDefined) {
-            return "";
-        }
-
-        String llvm = structEmitter.emit(node);
-        addStructDefinition(llvm);
-        registerStructNode(node);
-        return "";
-    }
-
-    @Override
-    public String visit(StructInstanceNode node) {
-        return instanceEmitter.emit(node, this);
-    }
-
-    @Override
-    public String visit(StructFieldAccessNode node) {
-        return structFieldAccessEmitter.emit(node, this);
-    }
-
-    @Override
-    public String visit(StructUpdateNode node) {
-        return updateEmitter.emit(node);
-    }
-
-    @Override
-    public String visit(StructMethodCallNode node) {
-        return methodCallEmitter.emit(node, this);
-    }
-
-    @Override
-    public String visit(ImportNode node) {
-        System.out.println("RODANDO IMPORT ----------");
-        return importEmitter.emit(node);
-    }
-
-    @Override
-    public String visit(ImplNode node) {
-        System.out.println("rodou aqui primeiro");
-        return implEmitter.emit(node);
-    }
-
-    @Override
-    public String visit(ForNode node) {
-        return controlFlow.visit(node);
-    }
-
-
-    //teste
-    @Override
-    public String visitFreeNode(FreeNode freeNode) {
-        return freeEmitter.emit(freeNode);
-    }
-
-    @Override
-    public String visit(CompoundAssignmentNode compoundAssignmentNode) {
-        return compoundAssignmentEmitter.emit(compoundAssignmentNode);
-    }
-
-    @Override
-    public String visit(MainAST node) {
-        MainEmitter mainEmitter = new MainEmitter(globalStrings, temps, tiposDeListasUsados, structDefinitions);
-        return mainEmitter.emit(node, this);
-    }
-
-    @Override
-    public String visit(ReturnNode node) {
-        return new ReturnEmitter(this, temps).emit(node);
-    }
-
-
-    @Override
-    public String visit(VariableDeclarationNode node) {
-        return varEmitter.emitAlloca(node) + varEmitter.emitInit(node);
-    }
-
-    @Override
-    public String visit(LiteralNode node) {
-        return literalEmitter.emit(node);
-    }
-
-    @Override
-    public String visit(VariableNode node) {
-        return varEmitter.emitLoad(node.getName());
-    }
-
-    @Override
-    public String visit(BinaryOpNode node) {
-        return binaryEmitter.emit(node);
-    }
-
-    @Override
-    public String visit(WhileNode node) {
-        return controlFlow.visit(node);
-    }
-
-    @Override
-    public String visit(IfNode node) {
-        return controlFlow.visit(node);
-    }
-
-    @Override
-    public String visit(BreakNode node) {
-        return "  br label %" + controlFlow.currentLoopEnd() + "\n";
-    }
-
-    @Override
-    public String visit(ListNode node) {
-        return listVisitor.visit(node);
-    }
-
-    @Override
-    public String visit(ListAddNode node) {
-        return listVisitor.visit(node);
-    }
-
-    @Override
-    public String visit(ListRemoveNode node) {
-        return listVisitor.visit(node);
-    }
-
-    @Override
-    public String visit(ListClearNode node) {
-        return listVisitor.visit(node);
-    }
-
-    @Override
-    public String visit(ListSizeNode node) {
-        return listVisitor.visit(node);
-    }
-
-    @Override
-    public String visit(ListGetNode node) {
-        return listVisitor.visit(node);
-    }
-
-    @Override
-    public String visit(ListAddAllNode node) {
-        return listVisitor.visit(node);
-    }
-
-    @Override
-    public String visit(PrintNode node) {
-        return printEmitter.emit(node, this);
-    }
-
-    @Override
-    public String visit(UnaryOpNode node) {
-        return unaryOpEmitter.emit(node.getOperator(), node.getExpr());
-    }
-
-    @Override
-    public String visit(AssignmentNode node) {
-        return assignmentEmitter.emit(node);
-    }
-
-    @Override
-    public String visit(FunctionNode node) {
-        functions.put(node.getName(), node);
-        return new FunctionEmitter(this).emit(node);
-    }
-
-    @Override
-    public String visit(FunctionCallNode node) {
-        return callEmiter.emit(node, this);
-    }
 
 
     public FunctionCallEmitter getCallEmitter() {
@@ -487,4 +311,163 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return structTypeResolver.resolveStructName(node);
     }
 
+    @Override
+    public LLVMValue visit(MainAST node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(VariableNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(VariableDeclarationNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(LiteralNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(PrintNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(UnaryOpNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(AssignmentNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(BinaryOpNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(IfNode node) {
+        return controlFlow.visit(node);
+    }
+
+    @Override
+    public LLVMValue visit(WhileNode node) {
+        return controlFlow.visit(node);
+    }
+
+    @Override
+    public LLVMValue visit(BreakNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(ListNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(ListAddNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(ListRemoveNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(ListClearNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(ListSizeNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(ListGetNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(ListAddAllNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(FunctionNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(FunctionCallNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(ReturnNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(ImportNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(StructNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(StructInstanceNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(StructFieldAccessNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(StructUpdateNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(StructMethodCallNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(ImplNode node) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(ForNode node) {
+        return controlFlow.visit(node);
+    }
+
+    @Override
+    public LLVMValue visitFreeNode(FreeNode freeNode) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(CompoundAssignmentNode compoundAssignmentNode) {
+        return null;
+    }
+
+    @Override
+    public LLVMValue visit(InputNode inputNode) {
+        return null;
+    }
 }

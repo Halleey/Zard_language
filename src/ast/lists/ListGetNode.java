@@ -8,6 +8,7 @@ import context.statics.list.ListValue;
 import context.statics.symbols.ListType;
 import context.statics.symbols.Type;
 import low.module.LLVMEmitVisitor;
+import low.module.builders.LLVMValue;
 
 import java.util.List;
 
@@ -30,7 +31,7 @@ public class ListGetNode extends ASTNode {
     }
 
     @Override
-    public String accept(LLVMEmitVisitor visitor) {
+    public LLVMValue accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
 

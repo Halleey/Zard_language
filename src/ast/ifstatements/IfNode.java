@@ -6,6 +6,7 @@ import context.statics.ScopeKind;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
+import low.module.builders.LLVMValue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,16 +19,7 @@ public class IfNode extends ASTNode {
     public ASTNode getCondition() {
         return condition;
     }
-    public void setThenBranch(List<ASTNode> thenBranch) {
-        this.thenBranch = new ArrayList<>(thenBranch);
-    }
 
-    public void setElseBranch(List<ASTNode> elseBranch) {
-        if (elseBranch != null)
-            this.elseBranch = new ArrayList<>(elseBranch);
-        else
-            this.elseBranch = null;
-    }
 
     public List<ASTNode> getThenBranch() {
         return thenBranch;
@@ -45,7 +37,7 @@ public class IfNode extends ASTNode {
 
 
     @Override
-    public String accept(LLVMEmitVisitor visitor) {
+    public LLVMValue accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
 

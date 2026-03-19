@@ -5,6 +5,8 @@ import low.TempManager;
 import low.lists.generics.*;
 import low.main.GlobalStringManager;
 import low.module.LLVisitorMain;
+import low.module.builders.LLVMValue;
+
 public class ListVisitor {
 
     private final ListEmitter listEmitter;
@@ -29,31 +31,31 @@ public class ListVisitor {
         this.allEmitter = new ListAddAllEmitter(temps, strings);
     }
 
-    public String visit(ListNode node) {
+    public LLVMValue visit(ListNode node) {
         return listEmitter.emit(node, root);
     }
 
-    public String visit(ListAddNode node) {
+    public LLVMValue visit(ListAddNode node) {
         return addEmitter.emit(node, root);
     }
 
-    public String visit(ListRemoveNode node) {
+    public LLVMValue visit(ListRemoveNode node) {
         return removeEmitter.emit(node, root);
     }
 
-    public String visit(ListGetNode node) {
+    public LLVMValue visit(ListGetNode node) {
         return getEmitter.emit(node, root);
     }
 
-    public String visit(ListSizeNode node) {
+    public LLVMValue visit(ListSizeNode node) {
         return sizeEmitter.emit(node, root);
     }
 
-    public String visit(ListClearNode node) {
+    public LLVMValue visit(ListClearNode node) {
         return clearEmitter.emit(node, root);
     }
 
-    public String visit(ListAddAllNode node) {
+    public LLVMValue visit(ListAddAllNode node) {
         return allEmitter.emit(node, root);
     }
 }

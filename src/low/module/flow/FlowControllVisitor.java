@@ -8,6 +8,7 @@ import low.ifs.IfEmitter;
 import low.loops.ForEmitter;
 import low.module.LLVisitorMain;
 import low.loops.WhileEmitter;
+import low.module.builders.LLVMValue;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -25,15 +26,15 @@ public class FlowControllVisitor {
         this.forEmitter = new ForEmitter(temps, root);
     }
 
-    public String visit(ForNode node) {
+    public LLVMValue visit(ForNode node) {
         return forEmitter.emit(node);
     }
 
-    public String visit(WhileNode node) {
+    public LLVMValue visit(WhileNode node) {
         return whileEmitter.emit(node);
     }
 
-    public String visit(IfNode node) {
+    public LLVMValue visit(IfNode node) {
         return ifEmitter.emit(node);
     }
 
@@ -45,11 +46,5 @@ public class FlowControllVisitor {
         loopEndStack.pop();
     }
 
-    public String currentLoopEnd() {
-        if (loopEndStack.isEmpty()) {
-            throw new RuntimeException("Break fora de loop!");
-        }
-        return loopEndStack.peek();
-    }
 }
 

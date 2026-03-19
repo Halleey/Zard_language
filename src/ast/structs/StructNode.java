@@ -10,6 +10,7 @@ import context.runtime.RuntimeContext;
 import ast.variables.VariableDeclarationNode;
 import context.statics.symbols.*;
 import low.module.LLVMEmitVisitor;
+import low.module.builders.LLVMValue;
 
 import java.util.*;
 import java.util.List;
@@ -54,7 +55,7 @@ public class StructNode extends ASTNode {
 
 
     @Override
-    public String accept(LLVMEmitVisitor visitor) {
+    public LLVMValue accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
 

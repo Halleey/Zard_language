@@ -3,38 +3,34 @@ package low.lists.doubles;
 import ast.lists.ListAddNode;
 import low.TempManager;
 import low.module.LLVMEmitVisitor;
+import low.module.LLVisitorMain;
+import low.module.builders.LLVMValue;
+import low.module.builders.lists.LLVMArrayList;
+import low.module.builders.primitives.LLVMDouble;
 
 public class ListAddDoubleEmitter {
-    private final TempManager tempManager;
 
-    public ListAddDoubleEmitter(TempManager tempManager) {
-        this.tempManager = tempManager;
+    private final TempManager temps;
+
+    public ListAddDoubleEmitter(TempManager temps) {
+        this.temps = temps;
     }
 
-    public String emit(ListAddNode node, LLVMEmitVisitor visitor) {
+    public LLVMValue emit(ListAddNode node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
 
-        String listCode = node.getListNode().accept(visitor);
-        llvm.append(listCode);
-        String listTmp = extractTemp(listCode);
+        LLVMValue listVal = node.getListNode().accept(visitor);
+        llvm.append(listVal.getCode());
 
-        String valCode = node.getValuesNode().accept(visitor);
+        LLVMValue val = node.getValuesNode().accept(visitor);
+        llvm.append(val.getCode());
 
-        llvm.append(valCode);
-        String valTemp = extractTemp(valCode);
+        llvm.append("  call void @arraylist_add_double(%struct.ArrayListDouble* ")
+                .append(listVal.getName())
+                .append(", double ")
+                .append(val.getName())
+                .append(")\n");
 
-        llvm.append("  call void @arraylist_add_double(%struct.ArrayListDouble* ").append(listTmp)
-                .append(", double ").append(valTemp).append(")\n");
-
-        llvm.append(";;VAL:").append(listTmp).append(";;TYPE:%struct.ArrayListDouble*\n");
-        return llvm.toString();
-    }
-
-
-    private String extractTemp(String code) {
-        int idx = code.lastIndexOf(";;VAL:");
-        if (idx == -1) throw new RuntimeException("Não encontrou ;;VAL:");
-        int end = code.indexOf(";;TYPE:", idx);
-        return code.substring(idx + 6, end);
+        return new LLVMValue(new LLVMArrayList(new LLVMDouble()), listVal.getName(), llvm.toString());
     }
 }

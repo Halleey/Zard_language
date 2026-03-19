@@ -2,6 +2,9 @@ package low.variables;
 
 import low.TempManager;
 import low.main.GlobalStringManager;
+import low.module.builders.LLVMValue;
+import low.module.builders.primitives.LLVMString;
+
 public class StringEmitter {
 
     private final TempManager temps;
@@ -16,13 +19,13 @@ public class StringEmitter {
         this.varEmitter = varEmitter;
     }
 
-    public String emitStore(String name, String valueTemp) {
-        String ptr = varEmitter.getVarPtr(name); // 🔥 usa lookup correto
-        return "  store %String* " + valueTemp +
+    public String emitStore(String name, LLVMValue value) {
+        String ptr = varEmitter.getVarPtr(name);
+        return "  store %String* " + value.getName() +
                 ", %String** " + ptr + "\n";
     }
 
-    public String createEmptyString(String varName) {
+    public LLVMValue createEmptyString(String varName) {
         String emptyStrName = globals.getOrCreateString("");
         int len = globals.getLength("");
 
@@ -38,14 +41,13 @@ public class StringEmitter {
                 .append(emptyStrName)
                 .append(", i32 0, i32 0))\n");
 
-        sb.append(";;VAL:").append(tmp).append(";;TYPE:%String*\n");
-
+        // faz store direto
         sb.append("  store %String* ")
                 .append(tmp)
                 .append(", %String** ")
                 .append(ptr)
                 .append("\n");
 
-        return sb.toString();
+        return new LLVMValue(new LLVMString(), tmp, sb.toString());
     }
 }

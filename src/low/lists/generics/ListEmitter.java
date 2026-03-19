@@ -11,6 +11,9 @@ import low.lists.doubles.ListDoubleEmitter;
 import low.lists.ints.IntListEmitter;
 import low.lists.string.ListStringEmitter;
 import low.module.LLVisitorMain;
+import low.module.builders.LLVMValue;
+import low.module.builders.lists.LLVMArrayList;
+import low.module.builders.structs.LLVMStruct;
 
 import java.util.List;
 
@@ -30,25 +33,17 @@ public class ListEmitter {
         this.stringEmitter = new ListStringEmitter(temps);
     }
 
-    public String emit(ListNode node, LLVisitorMain visitor) {
+    public LLVMValue emit(ListNode node, LLVisitorMain visitor) {
 
         Type elementType = node.getList().getElementType();
 
+        // primitivas
         if (elementType instanceof PrimitiveTypes prim) {
-
-            if (prim == PrimitiveTypes.INT)
-                return intEmitter.emit(node, visitor);
-
-            if (prim == PrimitiveTypes.DOUBLE)
-                return doubleEmitter.emit(node, visitor);
-
-            if (prim == PrimitiveTypes.BOOL)
-                return boolEmitter.emit(node, visitor);
-
-            if (prim == PrimitiveTypes.STRING)
-                return stringEmitter.emit(node, visitor);
+            if (prim == PrimitiveTypes.INT) return intEmitter.emit(node, visitor);
+            if (prim == PrimitiveTypes.DOUBLE) return doubleEmitter.emit(node, visitor);
+            if (prim == PrimitiveTypes.BOOL) return boolEmitter.emit(node, visitor);
+            if (prim == PrimitiveTypes.STRING) return stringEmitter.emit(node, visitor);
         }
-
 
         List<ASTNode> elements = node.getList().getElements();
         int n = elements.size();
@@ -56,72 +51,38 @@ public class ListEmitter {
         StringBuilder llvm = new StringBuilder();
 
         String listPtr = temps.newTemp();
-
         llvm.append("  ").append(listPtr)
                 .append(" = call i8* @arraylist_create(i64 ")
                 .append(Math.max(4, n))
                 .append(")\n");
 
         String listCast = temps.newTemp();
-
         llvm.append("  ").append(listCast)
-                .append(" = bitcast i8* ")
-                .append(listPtr)
+                .append(" = bitcast i8* ").append(listPtr)
                 .append(" to %ArrayList*\n");
 
-        if (elementType instanceof StructType) {
+        // structs ou tipos complexos
+        if (elementType instanceof StructType st) {
+            LLVMStruct structType = new LLVMStruct(st.name());
+            LLVMArrayList listType = new LLVMArrayList(structType); // elementType conhecido, mas não usado no LLVM IR
 
             for (ASTNode element : elements) {
-
-                String elemLLVM = element.accept(visitor);
-                llvm.append(elemLLVM);
-
-                String temp = extractTemp(elemLLVM);
-                String type = extractType(elemLLVM);
+                LLVMValue elemVal = element.accept(visitor);
+                llvm.append(elemVal.getCode());
 
                 llvm.append("  call void @arraylist_add_ptr(%ArrayList* ")
                         .append(listCast)
                         .append(", ")
-                        .append(type)
+                        .append(elemVal.getType())
                         .append(" ")
-                        .append(temp)
+                        .append(elemVal.getName())
                         .append(")\n");
             }
-
-            llvm.append(";;VAL:")
-                    .append(listCast)
-                    .append(";;TYPE:%ArrayList*\n");
-
-            return llvm.toString();
+            return new LLVMValue(listType, listCast, llvm.toString());
         }
 
         throw new RuntimeException(
                 "Unsupported list element type: " + elementType
         );
-    }
-
-    private String extractTemp(String code) {
-
-        int idx = code.lastIndexOf(";;VAL:");
-        int endIdx = code.indexOf(";;TYPE:", idx);
-
-        if (idx == -1 || endIdx == -1)
-            throw new RuntimeException("Invalid LLVM marker format");
-
-        return code.substring(idx + 6, endIdx).trim();
-    }
-
-    private String extractType(String code) {
-
-        int idx = code.lastIndexOf(";;TYPE:");
-        int endIdx = code.indexOf("\n", idx);
-
-        if (idx == -1)
-            throw new RuntimeException("Invalid LLVM marker format");
-
-        if (endIdx == -1)
-            endIdx = code.length();
-
-        return code.substring(idx + 7, endIdx).trim();
     }
 }

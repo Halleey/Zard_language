@@ -7,6 +7,7 @@ import context.statics.symbols.InputType;
 import context.statics.symbols.PrimitiveTypes;
 import context.statics.symbols.Type;
 import low.module.LLVMEmitVisitor;
+import low.module.builders.LLVMValue;
 
 import java.util.Scanner;
 
@@ -18,8 +19,8 @@ public class InputNode extends ASTNode {
     }
 
     @Override
-    public String accept(LLVMEmitVisitor visitor) {
-        return "";
+    public LLVMValue accept(LLVMEmitVisitor visitor) {
+        return visitor.visit(this);
     }
 
     @Override

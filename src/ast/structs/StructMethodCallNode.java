@@ -6,9 +6,9 @@ import ast.expressions.TypedValue;
 import ast.functions.FunctionNode;
 import ast.functions.ParamInfo;
 import context.runtime.RuntimeContext;
-import ast.variables.VariableNode;
 import context.statics.symbols.*;
 import low.module.LLVMEmitVisitor;
+import low.module.builders.LLVMValue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +58,7 @@ public class StructMethodCallNode extends ASTNode {
     }
 
     @Override
-    public String accept(LLVMEmitVisitor visitor) {
+    public LLVMValue accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
 

@@ -3,49 +3,48 @@ package low.lists.bool;
 import ast.lists.ListRemoveNode;
 import low.TempManager;
 import low.module.LLVMEmitVisitor;
-
+import low.module.LLVisitorMain;
+import low.module.builders.LLVMValue;
+import low.module.builders.primitives.LLVMInt;
+import low.module.builders.primitives.LLVMVoid;
 
 public class ListBoolRemoveEmitter {
-    private final TempManager tempManager;
 
-    public ListBoolRemoveEmitter(TempManager tempManager) {
-        this.tempManager = tempManager;
+    private final TempManager temps;
+
+    public ListBoolRemoveEmitter(TempManager temps) {
+        this.temps = temps;
     }
 
-    public String emit(ListRemoveNode node, LLVMEmitVisitor visitor) {
+    public LLVMValue emit(ListRemoveNode node, LLVisitorMain visitor) {
+
         StringBuilder llvm = new StringBuilder();
 
-        String listCode = node.getListNode().accept(visitor);
-        appendCodePrefix(llvm, listCode);
-        String listVal = extractLastVal(listCode); // ÚLTIMO ;;VAL:
+        LLVMValue listVal = node.getListNode().accept(visitor);
+        llvm.append(listVal.getCode());
 
-        String idxCode = node.getIndexNode().accept(visitor);
-        appendCodePrefix(llvm, idxCode);
-        String idxVal = extractLastVal(idxCode);
 
-        String idx64 = tempManager.newTemp();
+        LLVMValue idxVal = node.getIndexNode().accept(visitor);
+        llvm.append(idxVal.getCode());
+
+        if (!(idxVal.getType() instanceof LLVMInt)) {
+            throw new RuntimeException(
+                    "ListRemoveBool: index must be int, got: " + idxVal.getType()
+            );
+        }
+
+        String idx64 = temps.newTemp();
         llvm.append("  ").append(idx64)
-                .append(" = zext i32 ").append(idxVal).append(" to i64\n");
+                .append(" = zext i32 ")
+                .append(idxVal.getName())
+                .append(" to i64\n");
+
 
         llvm.append("  call void @arraylist_remove_bool(%struct.ArrayListBool* ")
-                .append(listVal).append(", i64 ").append(idx64).append(")\n");
-
-        return llvm.toString();
-    }
-
-    private void appendCodePrefix(StringBuilder llvm, String code) {
-        int marker = code.lastIndexOf(";;VAL:");
-        String prefix = (marker == -1) ? code : code.substring(0, marker);
-        if (!prefix.isEmpty()) {
-            if (!prefix.endsWith("\n")) prefix += "\n";
-            llvm.append(prefix);
-        }
-    }
-
-    private String extractLastVal(String code) {
-        int v = code.lastIndexOf(";;VAL:");
-        if (v == -1) return "";
-        int t = code.indexOf(";;TYPE:", v);
-        return (t == -1) ? "" : code.substring(v + 6, t).trim();
+                .append(listVal.getName())
+                .append(", i64 ")
+                .append(idx64)
+                .append(")\n");
+        return new LLVMValue(new LLVMVoid(), "", llvm.toString());
     }
 }

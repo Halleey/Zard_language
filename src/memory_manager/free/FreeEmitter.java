@@ -5,7 +5,9 @@ import low.TempManager;
 import low.functions.TypeMapper;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
-
+import low.module.builders.LLVMTYPES;
+import low.module.builders.LLVMValue;
+import low.module.builders.primitives.LLVMVoid;
 
 public class FreeEmitter {
 
@@ -19,19 +21,19 @@ public class FreeEmitter {
         this.typeMapper = new TypeMapper();
     }
 
-    public String emit(FreeNode freeNode) {
+    public LLVMValue emit(FreeNode freeNode) {
 
         String varName = freeNode.getRoot().getSymbol().getName();
-
         String varPtr = visitor.getVariableEmitter().getVarPtr(varName);
 
         TypeInfos info = visitor.getVarType(varName);
         if (info == null) {
-            return "";
+            // retorna LLVMValue vazio, nada para liberar
+            return new LLVMValue(new LLVMVoid(), "", "");
         }
 
         Type type = info.getType();
-        String llvmType = info.getLLVMType();
+        LLVMTYPES llvmType = info.getLLVMType();
 
         String tmpFree = temps.newTemp();
 
@@ -42,14 +44,12 @@ public class FreeEmitter {
                 .append(" = load ").append(llvmType)
                 .append(", ").append(llvmType).append("* ").append(varPtr).append("\n");
 
-
         if (type instanceof ListType listType) {
 
             Type elementType = listType.elementType();
 
-            // Detecta lista de string
+            // lista de string
             if (elementType instanceof PrimitiveTypes prim && prim.name().equals("string")) {
-                // lista de String* → usa função de free específica
                 sb.append("  call void @arraylist_string_free(")
                         .append(llvmType).append(" ").append(tmpFree).append(")\n");
             } else {
@@ -64,29 +64,20 @@ public class FreeEmitter {
                         .append(freeFunc)
                         .append("(").append(llvmType).append(" ").append(tmpFree).append(")\n");
             }
-        }
 
-
-        else if (type instanceof PrimitiveTypes prim &&
-                prim.name().equals("string")) {
+        } else if (type instanceof PrimitiveTypes prim && prim.name().equals("string")) {
             sb.append("  call void @freeString(")
                     .append(llvmType).append(" ").append(tmpFree).append(")\n");
         }
 
-
 //        else if (type instanceof StructType structType) {
-//            System.out.println("entrou aqui");
 //            String structName = structType.name();
-//
 //            sb.append("  call void @free_")
-//                    .append(structName)
-//                    .append("(")
-//                    .append(llvmType)
-//                    .append(" ")
-//                    .append(tmpFree)
-//                    .append(")\n");
+//              .append(structName)
+//              .append("(").append(llvmType).append(" ").append(tmpFree).append(")\n");
 //        }
 
-        return sb.toString();
+        // retorna LLVMValue tipado (LLVMVoid, pois free não retorna nada)
+        return new LLVMValue(new LLVMVoid(), tmpFree, sb.toString());
     }
 }

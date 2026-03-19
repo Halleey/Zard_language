@@ -8,6 +8,7 @@ import ast.expressions.TypedValue;
 import context.statics.symbols.*;
 import context.statics.list.ListValue;
 import low.module.LLVMEmitVisitor;
+import low.module.builders.LLVMValue;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,6 +36,10 @@ public class VariableDeclarationNode extends ASTNode {
         this.name = name;
         this.declaredType = declaredType;
         this.initializer = initializer;
+    }
+    @Override
+    public LLVMValue accept(LLVMEmitVisitor visitor) {
+        return visitor.visit(this);
     }
 
     public Type getResolvedType() {
@@ -134,10 +139,7 @@ public class VariableDeclarationNode extends ASTNode {
                 "Cannot create default value for type: " + resolvedType);
     }
 
-    @Override
-    public String accept(LLVMEmitVisitor visitor) {
-        return visitor.visit(this);
-    }
+
 
     @Override
     public boolean isStatement() {

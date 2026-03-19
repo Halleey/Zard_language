@@ -6,14 +6,17 @@ import low.lists.generics.ListGetEmitter;
 import low.main.GlobalStringManager;
 import low.module.LLVisitorMain;
 import ast.prints.PrintNode;
+import low.module.builders.LLVMValue;
 
 
 import java.util.List;
 public class PrintEmitter {
+
     private final List<PrintHandler> handlers;
     private final ExprPrintHandler exprHandler;
 
     public PrintEmitter(GlobalStringManager globalStrings, TempManager temps) {
+
         ListGetEmitter listGetEmitter = new ListGetEmitter(temps);
 
         handlers = List.of(
@@ -29,15 +32,17 @@ public class PrintEmitter {
     }
 
     public String emit(PrintNode node, LLVisitorMain visitor) {
+
         boolean newline = node.newline;
 
         for (PrintHandler handler : handlers) {
             if (handler.canHandle(node.expr, visitor)) {
-                return handler.emit(node.expr, visitor, newline);
+                return handler.emit(node.expr, visitor, newline).getCode();
             }
         }
-        // fallback para expressões complexas
-        String exprLLVM = node.expr.accept(visitor);
-        return exprHandler.emitExprOrElement(exprLLVM, visitor, node.expr, newline);
+
+        LLVMValue val = node.expr.accept(visitor);
+
+        return exprHandler.emitExprOrElement(val, visitor, node.expr, newline).getCode();
     }
 }

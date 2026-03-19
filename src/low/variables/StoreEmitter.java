@@ -1,39 +1,68 @@
 package low.variables;
 
+import low.module.builders.LLVMTYPES;
+import low.module.builders.LLVMValue;
+import low.module.builders.lists.LLVMArrayList;
+import low.module.builders.primitives.LLVMBool;
+import low.module.builders.primitives.LLVMDouble;
+import low.module.builders.primitives.LLVMInt;
+import low.module.builders.primitives.LLVMString;
 
 public class StoreEmitter {
+
     private final StringEmitter stringEmitter;
-    private final VariableEmitter varEmitter; // link para pegar ptrs
+    private final VariableEmitter varEmitter;
 
     public StoreEmitter(StringEmitter stringEmitter, VariableEmitter varEmitter) {
         this.stringEmitter = stringEmitter;
         this.varEmitter = varEmitter;
     }
 
-
     private String getPtr(String name) {
-        return varEmitter.getVarPtr(name); // busca na pilha de escopos
+        return varEmitter.getVarPtr(name);
     }
 
+    public String emit(String name, LLVMValue value) {
 
-    public String emit(String name, String type, String value) {
-        System.out.println("tipo que entrou aqui " + type);
-        return switch (type) {
+        LLVMTYPES typeObj = value.getType();
+        String type = typeObj.toString();
+        String ptr = getPtr(name);
 
-            case "%String*", "%String" -> stringEmitter.emitStore(name, value);
-            case "%struct.ArrayListInt*" ->
-                    "  store %struct.ArrayListInt* " + value + ", %struct.ArrayListInt** " + getPtr(name) + "\n";
-            case "%struct.ArrayListDouble*" ->
-                    "  store %struct.ArrayListDouble* " + value + ", %struct.ArrayListDouble** " + getPtr(name) + "\n";
-            case "%struct.ArrayListBool*" ->
-                    "  store %struct.ArrayListBool* " + value + ", %struct.ArrayListBool** " + getPtr(name) + "\n";
-           case "%ArrayListString*" ->
-                   "  store %ArrayListString* " + value + ", %ArrayListString** " + getPtr(name) + "\n";
-            case "%ArrayList*" ->
-                    "  store %ArrayList* " + value + ", %ArrayList** " + getPtr(name) + "\n";
-            default ->
-                    "  store " + type + " " + value + ", " + type + "* " + getPtr(name) + "\n";
-        };
+        if (typeObj instanceof LLVMString) {
+            return stringEmitter.emitStore(name, value);
+        }
+
+        if (typeObj instanceof LLVMArrayList listType) {
+
+            LLVMTYPES elem = listType.elementType();
+
+            if (elem instanceof LLVMInt) {
+                return "  store %struct.ArrayListInt* " + value.getName()
+                        + ", %struct.ArrayListInt** " + ptr + "\n";
+            }
+
+            if (elem instanceof LLVMDouble) {
+                return "  store %struct.ArrayListDouble* " + value.getName()
+                        + ", %struct.ArrayListDouble** " + ptr + "\n";
+            }
+
+            if (elem instanceof LLVMBool) {
+                return "  store %struct.ArrayListBool* " + value.getName()
+                        + ", %struct.ArrayListBool** " + ptr + "\n";
+            }
+
+            if (elem instanceof LLVMString) {
+                return "  store %ArrayListString* " + value.getName()
+                        + ", %ArrayListString** " + ptr + "\n";
+            }
+
+            // ===== GENERIC / STRUCT LIST =====
+            return "  store %ArrayList* " + value.getName()
+                    + ", %ArrayList** " + ptr + "\n";
+        }
+
+        // ===== DEFAULT =====
+        return "  store " + type + " " + value.getName()
+                + ", " + type + "* " + ptr + "\n";
     }
-
 }

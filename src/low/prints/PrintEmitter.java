@@ -10,6 +10,7 @@ import low.module.builders.LLVMValue;
 
 
 import java.util.List;
+
 public class PrintEmitter {
 
     private final List<PrintHandler> handlers;
@@ -31,18 +32,20 @@ public class PrintEmitter {
         exprHandler = new ExprPrintHandler(temps);
     }
 
-    public String emit(PrintNode node, LLVisitorMain visitor) {
+    // Agora retorna LLVMValue
+    public LLVMValue emit(PrintNode node, LLVisitorMain visitor) {
 
         boolean newline = node.newline;
 
+        // percorre handlers
         for (PrintHandler handler : handlers) {
             if (handler.canHandle(node.expr, visitor)) {
-                return handler.emit(node.expr, visitor, newline).getCode();
+                return handler.emit(node.expr, visitor, newline);
             }
         }
 
+        // se nenhum handler lidou com o valor, usa o handler genérico de expressões
         LLVMValue val = node.expr.accept(visitor);
-
-        return exprHandler.emitExprOrElement(val, visitor, node.expr, newline).getCode();
+        return exprHandler.emitExprOrElement(val, visitor, node.expr, newline);
     }
 }

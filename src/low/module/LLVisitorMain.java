@@ -331,12 +331,12 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public LLVMValue visit(LiteralNode node) {
-        return null;
+        return literalEmitter.emit(node);
     }
 
     @Override
     public LLVMValue visit(PrintNode node) {
-        return null;
+        return printEmitter.emit(node, this);
     }
 
     @Override

@@ -24,6 +24,7 @@ import low.functions.FunctionCallEmitter;
 import low.imports.ImportEmitter;
 import low.main.GlobalStringManager;
 
+import low.main.MainEmitter;
 import low.main.TypeInfos;
 import low.module.builders.LLVMValue;
 import low.module.flow.FlowControllVisitor;
@@ -296,6 +297,11 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return varEmitter;
     }
 
+    @Override
+    public LLVMValue visit(MainAST node) {
+        MainEmitter mainEmitter = new MainEmitter(globalStrings, temps, tiposDeListasUsados, structDefinitions);
+        return mainEmitter.emit(node, this);
+    }
 
 
     public void registrarStructs(MainAST node) {
@@ -311,20 +317,17 @@ public class LLVisitorMain implements LLVMEmitVisitor {
         return structTypeResolver.resolveStructName(node);
     }
 
-    @Override
-    public LLVMValue visit(MainAST node) {
-        return null;
-    }
 
     @Override
     public LLVMValue visit(VariableNode node) {
-        return null;
+        return varEmitter.emitLoad(node.getName());
     }
 
     @Override
     public LLVMValue visit(VariableDeclarationNode node) {
-        return null;
+        return varEmitter.emitDeclaration(node);
     }
+
 
     @Override
     public LLVMValue visit(LiteralNode node) {
@@ -470,4 +473,10 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public LLVMValue visit(InputNode inputNode) {
         return null;
     }
+
+
+    public List<LLVMValue> getImplDefinitions() {
+        return Collections.unmodifiableList(implDefinitions);
+    }
+
 }

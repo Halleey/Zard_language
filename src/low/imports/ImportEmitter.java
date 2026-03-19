@@ -43,8 +43,7 @@ public class ImportEmitter {
         this.visitor = visitor;
         this.tiposDeListasUsados = tiposDeListasUsados;
     }
-
-    public String emit(ImportNode node) {
+    public LLVMValue emit(ImportNode node) {
         try {
             String code = Files.readString(Path.of(node.path()));
             Lexer lexer = new Lexer(code);
@@ -52,7 +51,7 @@ public class ImportEmitter {
             Parser parser = new Parser(tokens);
             List<ASTNode> imported = parser.parse();
 
-            StringBuilder ir = new StringBuilder();
+            StringBuilder llvm = new StringBuilder();
 
             // coletar tipos de listas
             for (ASTNode n : imported) coletarListas(n);
@@ -63,18 +62,21 @@ public class ImportEmitter {
                     visitor.registerStructNode(struct.getName(), struct);
                     LLVMValue structVal = new StructEmitter(visitor).emit(struct);
                     visitor.addStructDefinition(structVal);
+                    llvm.append(structVal.getCode()).append("\n");
                 }
             }
 
             // impls
             for (ASTNode n : imported) {
                 if (n instanceof ImplNode impl) {
-                    LLVMValue codeImpl = impl.accept(visitor);  // agora LLVMValue
+                    LLVMValue codeImpl = impl.accept(visitor);  // já LLVMValue
                     visitor.addImplDefinition(codeImpl);
+                    llvm.append(codeImpl.getCode()).append("\n");
                 }
             }
 
             // funções
+            FunctionEmitter fnEmitter = new FunctionEmitter(visitor);
             for (ASTNode n : imported) {
                 if (n instanceof FunctionNode fn) {
                     String name = fn.getName();
@@ -83,14 +85,14 @@ public class ImportEmitter {
                     Type returnType = fn.getReturnType();
                     LLVMTYPES llvmRetType;
 
-                    // se for lista, mapeia para ArrayList tipado
+                    // mapear retorno de lista
                     if (returnType instanceof ListType listType) {
                         Type elem = listType.elementType();
                         if (elem == PrimitiveTypes.INT) llvmRetType = new LLVMArrayList(new LLVMInt());
                         else if (elem == PrimitiveTypes.DOUBLE) llvmRetType = new LLVMArrayList(new LLVMDouble());
                         else if (elem == PrimitiveTypes.BOOL) llvmRetType = new LLVMArrayList(new LLVMBool());
                         else if (elem == PrimitiveTypes.STRING) llvmRetType = new LLVMArrayList(new LLVMString());
-                        else llvmRetType = new LLVMArrayList(new LLVMStruct(elem.name())); // genérico/struct
+                        else llvmRetType = new LLVMArrayList(new LLVMStruct(elem.name()));
                     } else if (returnType == PrimitiveTypes.INT) llvmRetType = new LLVMInt();
                     else if (returnType == PrimitiveTypes.DOUBLE) llvmRetType = new LLVMDouble();
                     else if (returnType == PrimitiveTypes.FLOAT) llvmRetType = new LLVMFloat();
@@ -101,12 +103,13 @@ public class ImportEmitter {
 
                     visitor.registerFunctionType(name, new TypeInfos(returnType, llvmRetType));
 
-                    LLVMValue fnVal = new FunctionEmitter(visitor).emit(fn);
-                    ir.append(fnVal.getCode()).append("\n");
+                    LLVMValue fnVal = fnEmitter.emit(fn);
+                    llvm.append(fnVal.getCode()).append("\n");
                 }
             }
 
-            return ir.toString();
+            // retornar LLVMValue tipado void (imports não produzem valor)
+            return new LLVMValue(new LLVMVoid(), "%import_" + node.alias(), llvm.toString());
 
         } catch (IOException e) {
             throw new RuntimeException("Failed to import module: " + node.path(), e);

@@ -7,7 +7,6 @@ import low.module.builders.primitives.LLVMBool;
 import low.module.builders.primitives.LLVMDouble;
 import low.module.builders.primitives.LLVMInt;
 import low.module.builders.primitives.LLVMString;
-
 public class StoreEmitter {
 
     private final StringEmitter stringEmitter;
@@ -22,47 +21,42 @@ public class StoreEmitter {
         return varEmitter.getVarPtr(name);
     }
 
-    public String emit(String name, LLVMValue value) {
+    public LLVMValue emit(String name, LLVMValue value) {
 
         LLVMTYPES typeObj = value.getType();
-        String type = typeObj.toString();
         String ptr = getPtr(name);
+        String storeCode;
 
         if (typeObj instanceof LLVMString) {
-            return stringEmitter.emitStore(name, value);
-        }
-
-        if (typeObj instanceof LLVMArrayList listType) {
+            storeCode = stringEmitter.emitStore(name, value);
+        } else if (typeObj instanceof LLVMArrayList listType) {
 
             LLVMTYPES elem = listType.elementType();
 
             if (elem instanceof LLVMInt) {
-                return "  store %struct.ArrayListInt* " + value.getName()
+                storeCode = "  store %struct.ArrayListInt* " + value.getName()
                         + ", %struct.ArrayListInt** " + ptr + "\n";
-            }
-
-            if (elem instanceof LLVMDouble) {
-                return "  store %struct.ArrayListDouble* " + value.getName()
+            } else if (elem instanceof LLVMDouble) {
+                storeCode = "  store %struct.ArrayListDouble* " + value.getName()
                         + ", %struct.ArrayListDouble** " + ptr + "\n";
-            }
-
-            if (elem instanceof LLVMBool) {
-                return "  store %struct.ArrayListBool* " + value.getName()
+            } else if (elem instanceof LLVMBool) {
+                storeCode = "  store %struct.ArrayListBool* " + value.getName()
                         + ", %struct.ArrayListBool** " + ptr + "\n";
-            }
-
-            if (elem instanceof LLVMString) {
-                return "  store %ArrayListString* " + value.getName()
+            } else if (elem instanceof LLVMString) {
+                storeCode = "  store %ArrayListString* " + value.getName()
                         + ", %ArrayListString** " + ptr + "\n";
+            } else {
+                // ===== GENERIC / STRUCT LIST =====
+                storeCode = "  store %ArrayList* " + value.getName()
+                        + ", %ArrayList** " + ptr + "\n";
             }
 
-            // ===== GENERIC / STRUCT LIST =====
-            return "  store %ArrayList* " + value.getName()
-                    + ", %ArrayList** " + ptr + "\n";
+        } else {
+            storeCode = "  store " + typeObj + " " + value.getName()
+                    + ", " + typeObj + "* " + ptr + "\n";
         }
 
-        // ===== DEFAULT =====
-        return "  store " + type + " " + value.getName()
-                + ", " + type + "* " + ptr + "\n";
+        String fullCode = value.getCode() + storeCode;
+        return new LLVMValue(typeObj, value.getName(), fullCode);
     }
 }

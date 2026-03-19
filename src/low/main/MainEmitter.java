@@ -28,32 +28,32 @@ import low.imports.ImportEmitter;
 import low.module.LLVisitorMain;
 import ast.variables.LiteralNode;
 import ast.variables.VariableDeclarationNode;
+import low.module.builders.LLVMTYPES;
 import low.module.builders.LLVMValue;
+import low.module.builders.primitives.LLVMInt;
 
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-public class MainEmitter {
+import java.util.Set;public class MainEmitter {
 
     private final GlobalStringManager globalStrings;
     private final TempManager tempManager;
     private final Set<ListType> listasAlocadas = new HashSet<>();
     private final Set<Type> tiposDeListasUsados;
-    private final List<String> structDefinitions;
+    private final List<LLVMValue> structDefinitions;
     private boolean usesInput = false;
 
-    public MainEmitter(GlobalStringManager globalStrings,
-                       TempManager tempManager,
-                       Set<Type> tiposDeListasUsados,
-                       List<String> structDefinitions) {
+    public MainEmitter(GlobalStringManager globalStrings, TempManager tempManager, Set<Type> tiposDeListasUsados,
+                       List<LLVMValue> structDefinitions) {
+
         this.globalStrings = globalStrings;
         this.tempManager = tempManager;
         this.tiposDeListasUsados = tiposDeListasUsados;
         this.structDefinitions = structDefinitions;
     }
 
-    public String emit(MainAST node, LLVisitorMain visitor) {
+    public LLVMValue emit(MainAST node, LLVisitorMain visitor) {
         // Registrar structs e literais globais
         visitor.registrarStructs(node);
         globalStrings.getOrCreateString("");
@@ -61,44 +61,56 @@ public class MainEmitter {
         StringBuilder llvm = new StringBuilder();
         ImportEmitter importEmitter = new ImportEmitter(visitor, this.tiposDeListasUsados);
 
+        // Coletar strings em nós não-import
         for (ASTNode stmt : node.body) {
             if (!(stmt instanceof ImportNode)) {
                 coletarStringsRecursivo(stmt);
             }
         }
 
-        StringBuilder importsIR = new StringBuilder();
+        // Emit imports
         for (ASTNode stmt : node.body) {
             if (stmt instanceof ImportNode importNode) {
-                importsIR.append(";; ==== Import module: ")
+                llvm.append(";; ==== Import module: ")
                         .append(importNode.path())
                         .append(" as ")
                         .append(importNode.alias())
                         .append(" ====\n");
-                importsIR.append(importEmitter.emit(importNode)).append("\n");
+
+                LLVMValue importVal = importEmitter.emit(importNode); // retorna LLVMValue
+                if (importVal != null && importVal.getCode() != null && !importVal.getCode().isBlank()) {
+                    llvm.append(importVal.getCode()).append("\n");
+                }
             }
         }
 
+        // Header e global strings
         llvm.append(emitHeader()).append("\n");
         llvm.append(globalStrings.getGlobalStrings()).append("\n");
 
+        // Structs
         if (!structDefinitions.isEmpty()) {
             llvm.append(";; ==== Struct Definitions ====\n");
-            for (String structDef : structDefinitions) {
-                llvm.append(structDef).append("\n");
+            for (LLVMValue structDef : structDefinitions) {
+                if (structDef != null && structDef.getCode() != null) {
+                    llvm.append(structDef.getCode()).append("\n");
+                }
             }
             llvm.append("\n");
         }
 
-        llvm.append(importsIR);
-
+        // Funções
         FunctionEmitter fnEmitter = new FunctionEmitter(visitor);
         for (ASTNode stmt : node.body) {
             if (stmt instanceof FunctionNode fn) {
-                llvm.append(fnEmitter.emit(fn)).append("\n");
+                LLVMValue fnVal = fnEmitter.emit(fn);
+                if (fnVal != null && fnVal.getCode() != null && !fnVal.getCode().isBlank()) {
+                    llvm.append(fnVal.getCode()).append("\n");
+                }
             }
         }
 
+        // Impl nodes
         for (ASTNode stmt : node.body) {
             if (stmt instanceof ImplNode implNode) {
                 LLVMValue implVal = implNode.accept(visitor);
@@ -108,17 +120,19 @@ public class MainEmitter {
             }
         }
 
-        String impls = visitor.emitImplDefinitions();
-        if (impls != null && !impls.isBlank()) {
-            llvm.append(";; ==== Impl Definitions ====\n");
-            llvm.append(impls).append("\n");
+        // Append Impl Definitions
+        for (LLVMValue implDef : visitor.getImplDefinitions()) {
+            if (implDef != null && implDef.getCode() != null && !implDef.getCode().isBlank()) {
+                llvm.append(";; ==== Impl Definitions ====\n");
+                llvm.append(implDef.getCode()).append("\n");
+            }
         }
 
+        // Main function body
         llvm.append("define i32 @main() {\nentry:\n");
 
         for (ASTNode stmt : node.body) {
 
-            // Ignora structs, funções, imports e impls (já emitidos)
             if (stmt instanceof FunctionNode
                     || stmt instanceof ImportNode
                     || stmt instanceof StructNode
@@ -126,13 +140,13 @@ public class MainEmitter {
 
             llvm.append("  ; ").append(stmt.getClass().getSimpleName()).append("\n");
 
-            // ===== Emit LLVMValue tipado
+            // Emit LLVMValue tipado
             LLVMValue val = stmt.accept(visitor);
             if (val != null && val.getCode() != null && !val.getCode().isBlank()) {
                 llvm.append(val.getCode());
             }
 
-            // ===== Registrar listas alocadas
+            // Registrar listas alocadas
             if (stmt instanceof VariableDeclarationNode varDecl) {
                 Type resolved = varDecl.getResolvedType();
                 if (resolved instanceof ListType listType) {
@@ -145,10 +159,14 @@ public class MainEmitter {
         if (usesInput) {
             llvm.append("  call i32 @getchar()\n");
         }
+
         llvm.append("  ret i32 0\n}\n");
 
-        return llvm.toString();
+        // Retorna LLVMValue tipado: tipo da main = i32
+        LLVMTYPES mainType = new LLVMInt();
+        return new LLVMValue(mainType, "%main", llvm.toString());
     }
+
 
     private void coletarStringsRecursivo(ASTNode node) {
         if (node == null) return;

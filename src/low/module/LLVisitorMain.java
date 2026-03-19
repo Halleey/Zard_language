@@ -341,17 +341,16 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public LLVMValue visit(UnaryOpNode node) {
-        return null;
+        return unaryOpEmitter.emit(node.getOperator(), node.getExpr());
     }
-
     @Override
     public LLVMValue visit(AssignmentNode node) {
-        return null;
+        return assignmentEmitter.emit(node);
     }
 
     @Override
     public LLVMValue visit(BinaryOpNode node) {
-        return null;
+        return binaryEmitter.emit(node);
     }
 
     @Override

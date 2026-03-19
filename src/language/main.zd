@@ -1,5 +1,6 @@
 main {
 int x;
+x++;
 println(x);
 print(x);
 

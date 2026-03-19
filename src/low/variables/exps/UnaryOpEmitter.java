@@ -23,8 +23,7 @@ public class UnaryOpEmitter {
     private final VariableEmitter varEmitter;
     private final LLVMEmitVisitor visitor;
 
-    public UnaryOpEmitter(Map<String, TypeInfos> varTypes, TempManager temps,
-                          VariableEmitter varEmitter, LLVMEmitVisitor visitor) {
+    public UnaryOpEmitter(Map<String, TypeInfos> varTypes, TempManager temps, VariableEmitter varEmitter, LLVMEmitVisitor visitor) {
         this.varTypes = varTypes;
         this.temps = temps;
         this.varEmitter = varEmitter;

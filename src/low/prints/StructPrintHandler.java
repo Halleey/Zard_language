@@ -12,8 +12,6 @@ import low.module.builders.LLVMTYPES;
 import low.module.builders.LLVMValue;
 import low.module.builders.structs.LLVMStruct;
 import low.utils.LLVMNameUtils;
-
-
 public class StructPrintHandler implements PrintHandler {
 
     private final TempManager temps;
@@ -27,13 +25,8 @@ public class StructPrintHandler implements PrintHandler {
 
         if (node instanceof VariableNode var) {
             TypeInfos info = visitor.getVarType(var.getName());
-            return info != null && info.getLLVMType() instanceof LLVMStruct;
+            return info != null && info.getLLVMType() instanceof LLVMPointer;
         }
-
-        if (node instanceof StructInstanceNode inst) {
-            return true;
-        }
-
         return false;
     }
 
@@ -48,6 +41,9 @@ public class StructPrintHandler implements PrintHandler {
         LLVMTYPES type = val.getType();
         String temp = val.getName();
 
+        //  NORMALIZAÇÃO DE PONTEIROS
+
+        // caso: %Struct** → vira %Struct*
         if (type instanceof LLVMPointer ptr && ptr.pointee() instanceof LLVMPointer inner) {
 
             String loaded = temps.newTemp();
@@ -62,7 +58,11 @@ public class StructPrintHandler implements PrintHandler {
             type = inner;
         }
 
-        if (!(type instanceof LLVMStruct structType)) {
+        if (!(type instanceof LLVMPointer ptr)) {
+            throw new RuntimeException("Esperado ponteiro para struct, encontrado: " + type);
+        }
+
+        if (!(ptr.pointee() instanceof LLVMStruct structType)) {
             throw new RuntimeException("Esperado struct para print, encontrado: " + type);
         }
 

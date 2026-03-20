@@ -6,6 +6,8 @@ List<int> numbers;
 }
 
 People p;
+p.numbers.add(5);
 p.name ="zard";
+print(p);
 
 }

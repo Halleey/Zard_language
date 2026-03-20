@@ -11,6 +11,7 @@ import low.lists.generics.ListGetEmitter;
 import low.lists.generics.ListSizeEmitter;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
+import low.module.builders.LLVMPointer;
 import low.module.builders.LLVMTYPES;
 import low.module.builders.LLVMValue;
 import low.module.builders.lists.LLVMArrayList;
@@ -24,16 +25,45 @@ public class ExprPrintHandler {
         this.temps = temps;
     }
 
-    public LLVMValue emitExprOrElement(LLVMValue val,
-                                       LLVisitorMain visitor,
-                                       ASTNode node,
-                                       boolean newline) {
+    public LLVMValue emitExprOrElement(LLVMValue val, LLVisitorMain visitor, ASTNode node, boolean newline) {
 
         StringBuilder llvm = new StringBuilder();
         llvm.append(val.getCode());
 
         LLVMTYPES type = val.getType();
         String temp = val.getName();
+
+        System.out.println("debug de tipos  " + type);
+
+        if (type instanceof LLVMPointer ptr) {
+
+            LLVMTYPES pointee = ptr.pointee();
+
+            if (pointee instanceof LLVMPointer) {
+
+                String loaded = temps.newTemp();
+
+                llvm.append("  ").append(loaded)
+                        .append(" = load ")
+                        .append(pointee)
+                        .append(", ")
+                        .append(type).append(" ")
+                        .append(temp).append("\n");
+
+                temp = loaded;
+                type = pointee;
+            }
+
+            if (pointee instanceof LLVMStruct) {
+                return new StructPrintHandler(temps)
+                        .emit(node, visitor, newline);
+            }
+
+            if (pointee instanceof LLVMArrayList) {
+                return new ListPrintHandler(temps)
+                        .emit(node, visitor, newline);
+            }
+        }
 
         if (type instanceof LLVMInt) {
             appendPrintf(llvm, temp, newline, ".strInt", "i32");
@@ -72,7 +102,6 @@ public class ExprPrintHandler {
             llvm.append("  call void ").append(fn)
                     .append("(%String* ").append(temp).append(")\n");
         }
-
         else if (type instanceof LLVMArrayList) {
             return new ListPrintHandler(temps)
                     .emit(node, visitor, newline);

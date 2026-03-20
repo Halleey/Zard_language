@@ -1,13 +1,16 @@
 main {
-Struct People{
-string name;
-int idade;
-List<int> numbers;
-}
 
-People p;
-p.numbers.add(5);
-p.name ="zard";
-print(p);
+
+List<int> numbers;
+List<double> x;
+List<string> c;
+numbers.add(4);
+x.add(3.2);
+c.add("teste");
+
+
+print(numbers);
+print(x);
+print(c);
 
 }

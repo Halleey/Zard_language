@@ -11,12 +11,12 @@ import low.main.GlobalStringManager;
 import low.module.LLVMEmitVisitor;
 import low.module.LLVisitorMain;
 import low.module.builders.LLVMPointer;
+import low.module.builders.LLVMTYPES;
 import low.module.builders.LLVMValue;
 import low.module.builders.lists.LLVMArrayList;
-import low.module.builders.primitives.LLVMString;
+import low.module.builders.primitives.*;
 
 import static context.statics.symbols.PrimitiveTypes.*;
-
 public class ListAddEmitter {
 
     private final TempManager temps;
@@ -42,25 +42,41 @@ public class ListAddEmitter {
         llvm.append(listVal.getCode());
         llvm.append(val.getCode());
 
-        Type elemType = node.getType();
+        // Use elementType do node diretamente
+        Type elemType = node.getElementType();
+        // fallback seguro: tentar inferir do LLVMValue da lista
+        if (elemType == null) {
+            if (listVal.getType() instanceof LLVMArrayList arr) {
+                LLVMTYPES el = arr.elementType();
+                if (el instanceof LLVMInt) elemType = PrimitiveTypes.INT;
+                else if (el instanceof LLVMDouble) elemType = PrimitiveTypes.DOUBLE;
+                else if (el instanceof LLVMFloat) elemType = PrimitiveTypes.FLOAT;
+                else if (el instanceof LLVMBool) elemType = PrimitiveTypes.BOOL;
+                else if (el instanceof LLVMString) elemType = PrimitiveTypes.STRING;
+                else return null;
+            }
+            if (elemType == null) {
+                throw new RuntimeException(
+                        "ListAddEmitter: tipo não suportado para add: null"
+                );
+            }
+        }
 
-        // ==== Specialization via primitive type ====
         if (elemType instanceof PrimitiveTypes prim) {
-            if (prim.equals(INT)) {
+            if (prim.equals(PrimitiveTypes.INT)) {
                 LLVMValue added = intAddEmitter.emit(node, visitor);
                 llvm.append(added.getCode());
                 return added;
-            } else if (prim.equals(DOUBLE)) {
+            } else if (prim.equals(PrimitiveTypes.DOUBLE)) {
                 LLVMValue added = doubleEmitter.emit(node, visitor);
                 llvm.append(added.getCode());
                 return added;
-            } else if (prim.equals(BOOL)) {
+            } else if (prim.equals(PrimitiveTypes.BOOL)) {
                 LLVMValue added = boolAddEmitter.emit(node, visitor);
                 llvm.append(added.getCode());
                 return added;
             }
         }
-
         if (elemType == PrimitiveTypes.STRING) {
             String listName = listVal.getName();
             String valName = val.getName();
@@ -83,7 +99,6 @@ public class ListAddEmitter {
             return new LLVMValue(new LLVMArrayList(new LLVMString()), listName, llvm.toString());
         }
 
-        // ==== Generic fallback for pointers ====
         String listName = listVal.getName();
         if (!(listVal.getType() instanceof LLVMArrayList)) {
             String castList = temps.newTemp();

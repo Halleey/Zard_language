@@ -5,7 +5,7 @@
     import low.module.builders.lists.LLVMArrayList;
     import low.module.builders.primitives.*;
     import low.module.builders.structs.LLVMStruct;
-    import low.utils.LLVMNameUtils;
+
 
     public class TypeMapper {
 

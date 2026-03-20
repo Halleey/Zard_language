@@ -166,9 +166,7 @@ public class VariableEmitter {
         return new LLVMValue(val.getType(), val.getName(), val.getCode() + stored.getCode());
     }
 
-    private LLVMValue handleListLiteralInit(VariableDeclarationNode node,
-                                            ListNode listNode,
-                                            TypeInfos info) {
+    private LLVMValue handleListLiteralInit(VariableDeclarationNode node, ListNode listNode, TypeInfos info) {
 
         System.out.println("[VariableEmitter] List literal init -> " + node.getName());
 

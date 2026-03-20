@@ -379,7 +379,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public LLVMValue visit(ListAddNode node) {
-        return null;
+        return listVisitor.visit(node);
     }
 
     @Override

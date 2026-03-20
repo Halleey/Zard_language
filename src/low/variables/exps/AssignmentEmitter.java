@@ -21,6 +21,7 @@
     import low.variables.structs.StructCopyEmitter;
 
     import java.util.Map;
+
     public class AssignmentEmitter {
 
         private final Map<String, TypeInfos> varTypes;

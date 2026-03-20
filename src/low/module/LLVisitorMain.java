@@ -439,7 +439,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public LLVMValue visit(StructFieldAccessNode node) {
-        return null;
+        return structFieldAccessEmitter.emit(node, this);
     }
 
     @Override

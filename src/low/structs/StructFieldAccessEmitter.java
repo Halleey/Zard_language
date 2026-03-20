@@ -16,10 +16,13 @@ import low.functions.TypeMapper;
 import low.inputs.InputEmitter;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
+import low.module.builders.LLVMPointer;
 import low.module.builders.LLVMTYPES;
 import low.module.builders.LLVMValue;
 
 import java.util.List;
+
+
 public class StructFieldAccessEmitter {
 
     private final TempManager temps;
@@ -43,10 +46,16 @@ public class StructFieldAccessEmitter {
         LLVMValue structVal = node.getStructInstance().accept(visitor);
         llvm.append(structVal.getCode());
 
-        LLVMTYPES structLLVMType = structVal.getType();
+        LLVMTYPES structPtrType = structVal.getType();
+
+        if (!(structPtrType instanceof LLVMPointer ptr)) {
+            throw new RuntimeException("Esperado ponteiro para struct, mas veio: " + structPtrType);
+        }
+
+        LLVMTYPES structLLVMType = ptr.pointee();
         String structNameTmp = structVal.getName();
 
-        // ===== Resolver owner e struct definition =====
+
         Type structSemanticType = node.getStructInstance().getType();
         if (structSemanticType == null)
             structSemanticType = node.getType();
@@ -59,7 +68,7 @@ public class StructFieldAccessEmitter {
         if (structDef == null)
             throw new RuntimeException("Tipo não é struct: " + ownerType);
 
-        // ===== Localizar campo =====
+        //  Localizar campo
         int fieldIndex = -1;
         VariableDeclarationNode fieldDecl = null;
         List<VariableDeclarationNode> fields = structDef.getFields();
@@ -77,7 +86,7 @@ public class StructFieldAccessEmitter {
 
         LLVMTYPES fieldLLVMType = TypeMapper.from(fieldDecl.getType());
 
-        // ===== GEP para o campo =====
+        //  GEP para o campo
         String fieldPtr = temps.newTemp();
         llvm.append("  ").append(fieldPtr)
                 .append(" = getelementptr inbounds ")
@@ -86,7 +95,7 @@ public class StructFieldAccessEmitter {
                 .append(", i32 0, i32 ").append(fieldIndex)
                 .append("\n");
 
-        // ===== Assignment ou Load =====
+        //  Assignment ou Load
         if (node.getValue() != null) {
             debug("FIELD ASSIGNMENT detected");
             LLVMValue rhsVal = node.getValue().accept(visitor);

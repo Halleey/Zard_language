@@ -8,6 +8,7 @@ import context.statics.symbols.Type;
 import low.TempManager;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
+import low.module.builders.LLVMPointer;
 import low.module.builders.LLVMTYPES;
 import low.module.builders.LLVMValue;
 import low.module.builders.lists.LLVMArrayList;
@@ -96,8 +97,16 @@ public class AllocaEmitter {
 
         //  Structs
         if (type instanceof StructType structType) {
-            llvmType = new LLVMStruct(structType.name());
-            llvm.append("  ").append(ptr).append(" = alloca ").append(llvmType).append("\n");
+            LLVMStruct struct = new LLVMStruct(structType.name());
+
+            llvmType = new LLVMPointer(struct); //precisa virar ponteiro, ex People*
+
+            llvm.append("  ")
+                    .append(ptr)
+                    .append(" = alloca ")
+                    .append(llvmType)
+                    .append("\n"); // vai virar %People*
+
             varTypes.put(varName, new TypeInfos(type, llvmType));
             return new LLVMValue(llvmType, ptr, llvm.toString());
         }

@@ -13,6 +13,8 @@ import memory_manager.free.StructFreeEmitter;
 
 import java.util.ArrayList;
 import java.util.List;
+
+
 public class StructEmitter {
 
     private final StructTypeResolver resolver;

@@ -311,7 +311,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
     public void registrarStructs(MainAST node) {
         for (ASTNode stmt : node.body) {
             if (stmt instanceof StructNode structNode) {
-                structNode.accept(this);
+                registerStructNode(structNode);
             }
         }
     }

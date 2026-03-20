@@ -19,7 +19,10 @@ import low.module.builders.primitives.LLVMString;
 import low.module.builders.structs.LLVMStruct;
 
 import java.util.List;
-import java.util.Map;public class StructInstanceEmitter {
+import java.util.Map;
+
+
+public class StructInstanceEmitter {
 
     private final TempManager tempManager;
     private final GlobalStringManager stringManager;
@@ -45,6 +48,7 @@ import java.util.Map;public class StructInstanceEmitter {
 
         // ===== RESOLVER DEFINIÇÃO =====
         StructNode def = visitor.getStructNode(structName);
+        System.out.println("debug for struct instance " + def);
         if (def == null) {
             throw new RuntimeException("Struct não encontrada: " + structName);
         }

@@ -35,7 +35,9 @@ import low.module.builders.primitives.LLVMInt;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;public class MainEmitter {
+import java.util.Set;
+
+public class MainEmitter {
 
     private final GlobalStringManager globalStrings;
     private final TempManager tempManager;
@@ -53,16 +55,12 @@ import java.util.Set;public class MainEmitter {
         this.structDefinitions = structDefinitions;
     }
     public LLVMValue emit(MainAST node, LLVisitorMain visitor) {
-        // Registrar structs e literais globais
         visitor.registrarStructs(node);
         globalStrings.getOrCreateString("");
 
         StringBuilder llvm = new StringBuilder();
         ImportEmitter importEmitter = new ImportEmitter(visitor, this.tiposDeListasUsados);
 
-        // =========================
-        // 🔥 PRE-SCAN DE LISTAS (FIX PRINCIPAL)
-        // =========================
         for (ASTNode stmt : node.body) {
             if (stmt instanceof VariableDeclarationNode varDecl) {
                 Type resolved = varDecl.getResolvedType();
@@ -72,18 +70,21 @@ import java.util.Set;public class MainEmitter {
             }
         }
 
-        // =========================
-        // Coletar strings
-        // =========================
+        for (ASTNode stmt : node.body) {
+            if (stmt instanceof StructNode structNode) {
+                LLVMValue structVal = structNode.accept(visitor);
+                if (structVal != null) {
+                    structDefinitions.add(structVal);
+                }
+            }
+        }
+
         for (ASTNode stmt : node.body) {
             if (!(stmt instanceof ImportNode)) {
                 coletarStringsRecursivo(stmt);
             }
         }
 
-        // =========================
-        // Imports
-        // =========================
         for (ASTNode stmt : node.body) {
             if (stmt instanceof ImportNode importNode) {
                 llvm.append(";; ==== Import module: ")
@@ -99,15 +100,10 @@ import java.util.Set;public class MainEmitter {
             }
         }
 
-        // =========================
-        // ✅ HEADER AGORA VEM DEPOIS DO PRE-SCAN
-        // =========================
         llvm.append(emitHeader()).append("\n");
         llvm.append(globalStrings.getGlobalStrings()).append("\n");
 
-        // =========================
-        // Structs
-        // =========================
+
         if (!structDefinitions.isEmpty()) {
             llvm.append(";; ==== Struct Definitions ====\n");
             for (LLVMValue structDef : structDefinitions) {
@@ -118,9 +114,6 @@ import java.util.Set;public class MainEmitter {
             llvm.append("\n");
         }
 
-        // =========================
-        // Funções
-        // =========================
         FunctionEmitter fnEmitter = new FunctionEmitter(visitor);
         for (ASTNode stmt : node.body) {
             if (stmt instanceof FunctionNode fn) {
@@ -131,9 +124,6 @@ import java.util.Set;public class MainEmitter {
             }
         }
 
-        // =========================
-        // Impl nodes
-        // =========================
         for (ASTNode stmt : node.body) {
             if (stmt instanceof ImplNode implNode) {
                 LLVMValue implVal = implNode.accept(visitor);
@@ -143,7 +133,7 @@ import java.util.Set;public class MainEmitter {
             }
         }
 
-        // Append Impl Definitions
+
         for (LLVMValue implDef : visitor.getImplDefinitions()) {
             if (implDef != null && implDef.getCode() != null && !implDef.getCode().isBlank()) {
                 llvm.append(";; ==== Impl Definitions ====\n");
@@ -151,9 +141,6 @@ import java.util.Set;public class MainEmitter {
             }
         }
 
-        // =========================
-        // MAIN
-        // =========================
         llvm.append("define i32 @main() {\nentry:\n");
 
         for (ASTNode stmt : node.body) {

@@ -27,7 +27,7 @@ public class TypeMapper {
 
             if (type instanceof ListType list) {
                 LLVMTYPES elem = from(list.elementType());
-                return new LLVMArrayList(elem);
+                return new LLVMPointer(new LLVMArrayList(elem));
             }
 
             if (type instanceof StructType st) {

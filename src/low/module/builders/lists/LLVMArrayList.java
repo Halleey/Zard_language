@@ -19,23 +19,23 @@ public final class LLVMArrayList implements LLVMTYPES {
     public String toString() {
 
         if (elementType instanceof LLVMInt)
-            return "%struct.ArrayListInt";
+            return "%struct.ArrayListInt*";
 
         if (elementType instanceof LLVMDouble)
-            return "%struct.ArrayListDouble";
+            return "%struct.ArrayListDouble*";
 
         if (elementType instanceof LLVMFloat)
-            return "%struct.ArrayListFloat";
+            return "%struct.ArrayListFloat*";
 
         if (elementType instanceof LLVMBool)
-            return "%struct.ArrayListBool";
+            return "%struct.ArrayListBool*";
 
         if (elementType instanceof LLVMChar)
-            return "%struct.ArrayListChar";
+            return "%struct.ArrayListChar*";
 
         if (elementType instanceof LLVMString)
             return "%ArrayListString*";
 
-        return "%ArrayList";
+        return "%ArrayList*";
     }
 }

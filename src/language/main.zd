@@ -11,6 +11,7 @@ println(x);
 println(x);
 List<int> n = (3,2,3,4);
 List nomes = ("zard", "angel");
-
+println(n);
+print(nomes);
 
 }

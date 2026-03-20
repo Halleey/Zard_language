@@ -14,6 +14,8 @@ import low.lists.string.ListStringEmitter;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
 
+import low.module.builders.LLVMPointer;
+import low.module.builders.LLVMTYPES;
 import low.module.builders.LLVMValue;
 import low.variables.exps.AllocaEmitter;
 import low.variables.structs.StructInitEmitter;
@@ -204,7 +206,11 @@ public class VariableEmitter {
         String ptr = getVarPtr(name);
         String tmp = temps.newTemp();
         System.out.println("[VariableEmitter] emitLoad -> " + name + ", tmp: " + tmp);
-        String code = "  " + tmp + " = load " + info.getLLVMType() + ", " + info.getLLVMType() + "* " + ptr + "\n";
+        LLVMTYPES llvmType = info.getLLVMType();
+        LLVMTYPES ptrType = new LLVMPointer(llvmType);
+        String code = "  " + tmp + " = load "
+                + llvmType + ", "
+                + ptrType + " " + ptr + "\n";
         return new LLVMValue(info.getLLVMType(), tmp, code);
     }
 }

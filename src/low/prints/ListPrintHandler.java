@@ -58,21 +58,28 @@ public class ListPrintHandler implements PrintHandler {
         LLVMTYPES type = val.getType();
         String temp = val.getName();
 
-        Type elementType = resolveElementType(node, visitor);
 
-        if (type instanceof LLVMPointer ptr && ptr.pointee() instanceof LLVMPointer inner) {
 
-            String loaded = temps.newTemp();
+        if (type instanceof LLVMPointer ptr) {
 
-            llvm.append("  ").append(loaded)
-                    .append(" = load ")
-                    .append(inner).append(", ")
-                    .append(type).append(" ")
-                    .append(temp).append("\n");
+            LLVMTYPES pointee = ptr.pointee();
 
-            temp = loaded;
-            type = inner;
+            if (pointee instanceof LLVMPointer) {
+
+                String loaded = temps.newTemp();
+
+                llvm.append("  ").append(loaded)
+                        .append(" = load ")
+                        .append(pointee)
+                        .append(", ")
+                        .append(type).append(" ")
+                        .append(temp).append("\n");
+
+                temp = loaded;
+                type = pointee;
+            }
         }
+
 
         emitPrintCall(llvm, type, temp, newline);
 
@@ -129,7 +136,6 @@ public class ListPrintHandler implements PrintHandler {
                 return;
             }
         }
-
         // fallback genérico
         sb.append("  call void @arraylist_print_ptr(%ArrayList* ")
                 .append(val)

@@ -52,7 +52,6 @@ import java.util.Set;public class MainEmitter {
         this.tiposDeListasUsados = tiposDeListasUsados;
         this.structDefinitions = structDefinitions;
     }
-
     public LLVMValue emit(MainAST node, LLVisitorMain visitor) {
         // Registrar structs e literais globais
         visitor.registrarStructs(node);
@@ -61,14 +60,30 @@ import java.util.Set;public class MainEmitter {
         StringBuilder llvm = new StringBuilder();
         ImportEmitter importEmitter = new ImportEmitter(visitor, this.tiposDeListasUsados);
 
-        // Coletar strings em nós não-import
+        // =========================
+        // 🔥 PRE-SCAN DE LISTAS (FIX PRINCIPAL)
+        // =========================
+        for (ASTNode stmt : node.body) {
+            if (stmt instanceof VariableDeclarationNode varDecl) {
+                Type resolved = varDecl.getResolvedType();
+                if (resolved instanceof ListType listType) {
+                    registrarTipoDeLista(listType);
+                }
+            }
+        }
+
+        // =========================
+        // Coletar strings
+        // =========================
         for (ASTNode stmt : node.body) {
             if (!(stmt instanceof ImportNode)) {
                 coletarStringsRecursivo(stmt);
             }
         }
 
-        // Emit imports
+        // =========================
+        // Imports
+        // =========================
         for (ASTNode stmt : node.body) {
             if (stmt instanceof ImportNode importNode) {
                 llvm.append(";; ==== Import module: ")
@@ -77,18 +92,22 @@ import java.util.Set;public class MainEmitter {
                         .append(importNode.alias())
                         .append(" ====\n");
 
-                LLVMValue importVal = importEmitter.emit(importNode); // retorna LLVMValue
+                LLVMValue importVal = importEmitter.emit(importNode);
                 if (importVal != null && importVal.getCode() != null && !importVal.getCode().isBlank()) {
                     llvm.append(importVal.getCode()).append("\n");
                 }
             }
         }
 
-        // Header e global strings
+        // =========================
+        // ✅ HEADER AGORA VEM DEPOIS DO PRE-SCAN
+        // =========================
         llvm.append(emitHeader()).append("\n");
         llvm.append(globalStrings.getGlobalStrings()).append("\n");
 
+        // =========================
         // Structs
+        // =========================
         if (!structDefinitions.isEmpty()) {
             llvm.append(";; ==== Struct Definitions ====\n");
             for (LLVMValue structDef : structDefinitions) {
@@ -99,7 +118,9 @@ import java.util.Set;public class MainEmitter {
             llvm.append("\n");
         }
 
+        // =========================
         // Funções
+        // =========================
         FunctionEmitter fnEmitter = new FunctionEmitter(visitor);
         for (ASTNode stmt : node.body) {
             if (stmt instanceof FunctionNode fn) {
@@ -110,7 +131,9 @@ import java.util.Set;public class MainEmitter {
             }
         }
 
+        // =========================
         // Impl nodes
+        // =========================
         for (ASTNode stmt : node.body) {
             if (stmt instanceof ImplNode implNode) {
                 LLVMValue implVal = implNode.accept(visitor);
@@ -128,7 +151,9 @@ import java.util.Set;public class MainEmitter {
             }
         }
 
-        // Main function body
+        // =========================
+        // MAIN
+        // =========================
         llvm.append("define i32 @main() {\nentry:\n");
 
         for (ASTNode stmt : node.body) {
@@ -140,14 +165,13 @@ import java.util.Set;public class MainEmitter {
 
             llvm.append("  ; ").append(stmt.getClass().getSimpleName()).append("\n");
 
-            // Emit LLVMValue tipado
             LLVMValue val = stmt.accept(visitor);
             if (val != null && val.getCode() != null && !val.getCode().isBlank()) {
                 llvm.append(val.getCode());
             }
 
-            // Registrar listas alocadas
             if (stmt instanceof VariableDeclarationNode varDecl) {
+                System.out.println("por acaso entrou aqui ?");
                 Type resolved = varDecl.getResolvedType();
                 if (resolved instanceof ListType listType) {
                     listasAlocadas.add(listType);
@@ -162,7 +186,6 @@ import java.util.Set;public class MainEmitter {
 
         llvm.append("  ret i32 0\n}\n");
 
-        // Retorna LLVMValue tipado: tipo da main = i32
         LLVMTYPES mainType = new LLVMInt();
         return new LLVMValue(mainType, "%main", llvm.toString());
     }

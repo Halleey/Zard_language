@@ -1,7 +1,16 @@
 main {
+Struct People{
+string name;
+int idade;
+List<int> numbers;
+}
+
 int x;
 x++;
 println(x);
-print(x);
+println(x);
+List<int> n = (3,2,3,4);
+List nomes = ("zard", "angel");
+
 
 }

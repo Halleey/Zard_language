@@ -72,7 +72,7 @@ public class ExpressionInitEmitter {
                 }
             }
 
-            // ===== STRING (deep copy) =====
+            //  STRING (deep copy)
             if (targetType instanceof LLVMString) {
 
                 String tmpDataPtr = temps.newTemp();
@@ -100,7 +100,7 @@ public class ExpressionInitEmitter {
                 return new LLVMValue(targetType, tmpClone, sb.toString());
             }
 
-            // ===== STORE NORMAL =====
+            //  STORE NORMAL
             sb.append(store.emit(varName, finalVal));
 
             return new LLVMValue(targetType, finalVal.getName(), sb.toString());

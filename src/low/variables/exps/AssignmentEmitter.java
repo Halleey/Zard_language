@@ -55,7 +55,7 @@
 
             StringBuilder llvm = new StringBuilder();
 
-            // ===== LITERAL =====
+            //  LITERAL
             if (assignNode.valueNode instanceof LiteralNode lit) {
 
                 Object val = lit.value.value();

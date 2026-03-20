@@ -197,7 +197,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
                 this.types.getFunctionTypesMap()
         );
 
-        return new LLVisitorMain(
+        LLVisitorMain forked = new LLVisitorMain(
                 forkTypes,
                 this.functions,
                 this.importedFunctions,
@@ -207,6 +207,10 @@ public class LLVisitorMain implements LLVMEmitVisitor {
                 this.structDefinitions,
                 this.globalStrings
         );
+
+        System.out.println("[FORK] original temps: " + System.identityHashCode(this.temps));
+        System.out.println("[FORK] forked temps:   " + System.identityHashCode(forked.temps));
+        return forked;
     }
 
 
@@ -370,7 +374,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public LLVMValue visit(ListNode node) {
-        return null;
+        return listVisitor.visit(node);
     }
 
     @Override
@@ -380,7 +384,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public LLVMValue visit(ListRemoveNode node) {
-        return null;
+        return listVisitor.visit(node);
     }
 
     @Override
@@ -425,12 +429,12 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public LLVMValue visit(StructNode node) {
-        return null;
+        return structEmitter.emit(node);
     }
 
     @Override
     public LLVMValue visit(StructInstanceNode node) {
-        return null;
+        return instanceEmitter.emit(node, this);
     }
 
     @Override
@@ -460,7 +464,8 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public LLVMValue visitFreeNode(FreeNode freeNode) {
-        return null;
+
+        return freeEmitter.emit(freeNode);
     }
 
     @Override

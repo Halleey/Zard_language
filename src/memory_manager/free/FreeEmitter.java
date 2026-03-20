@@ -45,13 +45,12 @@ public class FreeEmitter {
                 .append(", ").append(llvmType).append("* ").append(varPtr).append("\n");
 
         if (type instanceof ListType listType) {
-
             Type elementType = listType.elementType();
-
             // lista de string
-            if (elementType instanceof PrimitiveTypes prim && prim.name().equals("string")) {
-                sb.append("  call void @arraylist_string_free(")
-                        .append(llvmType).append(" ").append(tmpFree).append(")\n");
+            if (elementType == PrimitiveTypes.STRING) {
+                sb.append("  call void @arraylist_string_free(%ArrayListString* ")
+                        .append(tmpFree)
+                        .append(")\n");
             } else {
                 // lista genérica
                 String freeFunc;

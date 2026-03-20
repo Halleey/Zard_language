@@ -86,7 +86,7 @@ public class UnaryOpEmitter {
             return new LLVMValue(llvmType, temp, llvm.toString());
         }
 
-        // ===== EXPRESSÃO (inclui variável) =====
+        // EXPRESSÃO (inclui variável)
         LLVMValue val = expr.accept(visitor);
         llvm.append(val.getCode());
 

@@ -34,7 +34,7 @@ public final class LLVMArrayList implements LLVMTYPES {
             return "%struct.ArrayListChar";
 
         if (elementType instanceof LLVMString)
-            return "%struct.ArrayListString";
+            return "%ArrayListString*";
 
         return "%ArrayList";
     }

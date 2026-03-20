@@ -15,12 +15,6 @@ public class TempManager {
         return lastTemp;
     }
 
-    public String newTempWithPrefix(String prefix) {
-        lastTemp = "%" + prefix + (tempCount++);
-        return lastTemp;
-    }
-
-
     public String newNamedVar(String base) {
         if (base == null || base.isEmpty()) {
             lastTemp = newTemp();
@@ -43,14 +37,20 @@ public class TempManager {
         return lastTemp;
     }
 
-    public String getLastTemp() {
-        if (lastTemp == null) {
-            throw new IllegalStateException("Nenhum temp gerado ainda");
-        }
+    public String getLastTemp(){
         return lastTemp;
+    }
+
+
+    public int getTempCount() {
+        return tempCount;
     }
 
     public String newLabel(String prefix) {
         return prefix + "_" + (labelCount++);
+    }
+
+    public void setCounter(int tempCount) {
+        this.tempCount = tempCount;
     }
 }

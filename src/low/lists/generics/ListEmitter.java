@@ -37,6 +37,7 @@ public class ListEmitter {
 
         Type elementType = node.getList().getElementType();
 
+        System.out.println("[LISTEMITTER] type : " + elementType);
         // primitivas
         if (elementType instanceof PrimitiveTypes prim) {
             if (prim == PrimitiveTypes.INT) return intEmitter.emit(node, visitor);

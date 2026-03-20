@@ -29,6 +29,7 @@ public class StoreEmitter {
 
         if (typeObj instanceof LLVMString) {
             storeCode = stringEmitter.emitStore(name, value);
+
         } else if (typeObj instanceof LLVMArrayList listType) {
 
             LLVMTYPES elem = listType.elementType();
@@ -36,17 +37,21 @@ public class StoreEmitter {
             if (elem instanceof LLVMInt) {
                 storeCode = "  store %struct.ArrayListInt* " + value.getName()
                         + ", %struct.ArrayListInt** " + ptr + "\n";
+
             } else if (elem instanceof LLVMDouble) {
                 storeCode = "  store %struct.ArrayListDouble* " + value.getName()
                         + ", %struct.ArrayListDouble** " + ptr + "\n";
+
             } else if (elem instanceof LLVMBool) {
                 storeCode = "  store %struct.ArrayListBool* " + value.getName()
                         + ", %struct.ArrayListBool** " + ptr + "\n";
+
             } else if (elem instanceof LLVMString) {
                 storeCode = "  store %ArrayListString* " + value.getName()
                         + ", %ArrayListString** " + ptr + "\n";
+
             } else {
-                // ===== GENERIC / STRUCT LIST =====
+                // GENERIC / STRUCT LIST
                 storeCode = "  store %ArrayList* " + value.getName()
                         + ", %ArrayList** " + ptr + "\n";
             }
@@ -56,7 +61,6 @@ public class StoreEmitter {
                     + ", " + typeObj + "* " + ptr + "\n";
         }
 
-        String fullCode = value.getCode() + storeCode;
-        return new LLVMValue(typeObj, value.getName(), fullCode);
+        return new LLVMValue(typeObj, value.getName(), storeCode);
     }
 }

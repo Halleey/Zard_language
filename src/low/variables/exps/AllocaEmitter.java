@@ -1,14 +1,11 @@
 package low.variables.exps;
 
-
 import ast.variables.VariableDeclarationNode;
-
 import context.statics.symbols.ListType;
 import context.statics.symbols.PrimitiveTypes;
 import context.statics.symbols.StructType;
 import context.statics.symbols.Type;
 import low.TempManager;
-import low.functions.TypeMapper;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
 import low.module.builders.LLVMTYPES;
@@ -20,8 +17,6 @@ import low.module.builders.structs.LLVMStruct;
 import low.variables.VariableEmitter;
 
 import java.util.Map;
-import java.util.Map;
-
 
 public class AllocaEmitter {
 
@@ -48,13 +43,16 @@ public class AllocaEmitter {
             throw new RuntimeException("VariableDeclarationNode sem tipo resolvido: " + node.getName());
 
         String varName = node.getName();
+        // PTR da variável no LLVM
         String ptr = temps.newNamedVar(varName);
         varEmitter.registerVarPtr(varName, ptr);
 
         StringBuilder llvm = new StringBuilder();
         LLVMTYPES llvmType;
 
-        // === Primitivos ===
+        System.out.println("[AllocaEmitter] Allocando var: " + varName + ", tipo = " + type + ", ptr = " + ptr);
+
+        //  Primitivos
         if (type instanceof PrimitiveTypes prim) {
             switch (prim.name()) {
                 case "string" -> {
@@ -66,7 +64,7 @@ public class AllocaEmitter {
                     llvm.append("  ").append(ptr).append(" = alloca i8\n");
                 }
                 default -> {
-                    llvmType = LLVMTypeMapper.from(prim); // usa seu mapeamento existente
+                    llvmType = LLVMTypeMapper.from(prim);
                     llvm.append("  ").append(ptr).append(" = alloca ").append(llvmType).append("\n");
                 }
             }
@@ -74,7 +72,7 @@ public class AllocaEmitter {
             return new LLVMValue(llvmType, ptr, llvm.toString());
         }
 
-        // === Listas ===
+        //  Listas
         if (type instanceof ListType listType) {
             Type elem = listType.elementType();
             if (elem instanceof PrimitiveTypes) {
@@ -83,17 +81,20 @@ public class AllocaEmitter {
                     case "double" -> llvmType = new LLVMArrayList(new LLVMDouble());
                     case "bool" -> llvmType = new LLVMArrayList(new LLVMBool());
                     case "string" -> llvmType = new LLVMArrayList(new LLVMString());
-                    default -> llvmType = new LLVMArrayList(null); // caso genérico
+                    default -> llvmType = new LLVMArrayList(null);
                 }
             } else {
-                llvmType = new LLVMArrayList(null); // Structs ou generics
+                llvmType = new LLVMArrayList(null);
             }
-            llvm.append("  ").append(ptr).append(" = alloca ").append(llvmType).append("\n");
+
+            // **Somente aloca o ponteiro**
+            llvm.append("  ").append(ptr).append(" = alloca ").append(llvmType).append("*\n");
+
             varTypes.put(varName, new TypeInfos(type, llvmType));
             return new LLVMValue(llvmType, ptr, llvm.toString());
         }
 
-        // === Structs ===
+        //  Structs
         if (type instanceof StructType structType) {
             llvmType = new LLVMStruct(structType.name());
             llvm.append("  ").append(ptr).append(" = alloca ").append(llvmType).append("\n");

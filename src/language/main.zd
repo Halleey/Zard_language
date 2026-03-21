@@ -5,9 +5,11 @@ List<double> x;
 List<string> c;
 numbers.add(4);
 numbers.remove(0);
+x.add(33.45);
 x.add(3.2);
+x.clear();
 c.add("teste");
-
+c.clear();
 
 print(numbers);
 print(x);

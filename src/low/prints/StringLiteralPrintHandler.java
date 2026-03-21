@@ -31,14 +31,19 @@ public class StringLiteralPrintHandler implements PrintHandler {
         LiteralNode lit = (LiteralNode) node;
         String value = (String) lit.value.value();
 
-        String strName = stringManager.getOrCreateString(value);
-        String tmp = temps.newTemp();
+        String globalName = stringManager.getStringRef(value);
+        int len = stringManager.getLength(value);
 
+        String gep = "getelementptr ([" + len + " x i8], [" + len + " x i8]* "
+                + globalName + ", i32 0, i32 0)";
+
+        String tmp = temps.newTemp();
         StringBuilder llvm = new StringBuilder();
 
         llvm.append("  ").append(tmp)
                 .append(" = call %String* @createString(i8* ")
-                .append(strName).append(")\n");
+                .append(gep)
+                .append(")\n");
 
         String fn = newline ? "@printString" : "@printString_noNL";
 

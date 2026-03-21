@@ -1,9 +1,6 @@
 package low.module.builders.mappers;
 
-import context.statics.symbols.ListType;
-import context.statics.symbols.PrimitiveTypes;
-import context.statics.symbols.StructType;
-import context.statics.symbols.Type;
+import context.statics.symbols.*;
 import low.module.builders.LLVMPointer;
 import low.module.builders.LLVMTYPES;
 import low.module.builders.lists.LLVMArrayList;
@@ -32,6 +29,9 @@ public class LLVMTypeMapper {
         if (type == PrimitiveTypes.STRING)
             return new LLVMString();
 
+        if (type == PrimitiveTypes.VOID)
+            return new LLVMVoid();
+
         if (type instanceof StructType st)
             return new LLVMPointer(new LLVMStruct(st.name()));
 
@@ -39,6 +39,8 @@ public class LLVMTypeMapper {
             LLVMTYPES element = from(lt.elementType());
             return new LLVMPointer(new LLVMArrayList(element));
         }
+
+
 
         throw new RuntimeException("Tipo não suportado: " + type);
     }

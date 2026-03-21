@@ -1,10 +1,6 @@
 main {
-
-function int sum(int a, int b) {
-    return a + b;
+function void hello() {
+print("olaa");
 }
-
-print(sum(3,2));
-
-
+call hello();
 }

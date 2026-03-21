@@ -20,7 +20,9 @@ import ast.prints.PrintNode;
 import ast.variables.*;
 import context.statics.symbols.Type;
 import low.TempManager;
+import low.exceptions.ReturnEmitter;
 import low.functions.FunctionCallEmitter;
+import low.functions.FunctionEmitter;
 import low.imports.ImportEmitter;
 import low.main.GlobalStringManager;
 
@@ -409,17 +411,18 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public LLVMValue visit(FunctionNode node) {
-        return null;
+        functions.put(node.getName(), node);
+        return new FunctionEmitter(this).emit(node);
     }
 
     @Override
     public LLVMValue visit(FunctionCallNode node) {
-        return null;
+        return callEmiter.emit(node, this);
     }
 
     @Override
     public LLVMValue visit(ReturnNode node) {
-        return null;
+        return new ReturnEmitter(this, temps).emit(node);
     }
 
     @Override
@@ -449,7 +452,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public LLVMValue visit(StructMethodCallNode node) {
-        return null;
+        return methodCallEmitter.emit(node, this);
     }
 
     @Override

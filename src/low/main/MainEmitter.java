@@ -55,11 +55,19 @@ public class MainEmitter {
         this.structDefinitions = structDefinitions;
     }
     public LLVMValue emit(MainAST node, LLVisitorMain visitor) {
+
+
         visitor.registrarStructs(node);
         globalStrings.getOrCreateString("");
 
         StringBuilder llvm = new StringBuilder();
         ImportEmitter importEmitter = new ImportEmitter(visitor, this.tiposDeListasUsados);
+
+
+        for (ASTNode stmt : node.body) {
+            coletarStringsRecursivo(stmt);
+        }
+
 
         for (ASTNode stmt : node.body) {
             if (stmt instanceof VariableDeclarationNode varDecl) {
@@ -72,6 +80,7 @@ public class MainEmitter {
 
         for (ASTNode stmt : node.body) {
             if (stmt instanceof StructNode structNode) {
+
                 LLVMValue structVal = structNode.accept(visitor);
                 if (structVal != null) {
                     structDefinitions.add(structVal);
@@ -79,14 +88,11 @@ public class MainEmitter {
             }
         }
 
-        for (ASTNode stmt : node.body) {
-            if (!(stmt instanceof ImportNode)) {
-                coletarStringsRecursivo(stmt);
-            }
-        }
 
         for (ASTNode stmt : node.body) {
             if (stmt instanceof ImportNode importNode) {
+
+
                 llvm.append(";; ==== Import module: ")
                         .append(importNode.path())
                         .append(" as ")
@@ -94,17 +100,23 @@ public class MainEmitter {
                         .append(" ====\n");
 
                 LLVMValue importVal = importEmitter.emit(importNode);
+
                 if (importVal != null && importVal.getCode() != null && !importVal.getCode().isBlank()) {
                     llvm.append(importVal.getCode()).append("\n");
                 }
             }
         }
 
-        llvm.append(emitHeader()).append("\n");
-        llvm.append(globalStrings.getGlobalStrings()).append("\n");
 
+        llvm.append(emitHeader()).append("\n");
+
+        String globals = globalStrings.getGlobalStrings();
+
+
+        llvm.append(globals).append("\n");
 
         if (!structDefinitions.isEmpty()) {
+
             llvm.append(";; ==== Struct Definitions ====\n");
             for (LLVMValue structDef : structDefinitions) {
                 if (structDef != null && structDef.getCode() != null) {
@@ -114,25 +126,33 @@ public class MainEmitter {
             llvm.append("\n");
         }
 
+
         FunctionEmitter fnEmitter = new FunctionEmitter(visitor);
+
         for (ASTNode stmt : node.body) {
             if (stmt instanceof FunctionNode fn) {
+
+
                 LLVMValue fnVal = fnEmitter.emit(fn);
+
                 if (fnVal != null && fnVal.getCode() != null && !fnVal.getCode().isBlank()) {
                     llvm.append(fnVal.getCode()).append("\n");
                 }
             }
         }
 
+
         for (ASTNode stmt : node.body) {
             if (stmt instanceof ImplNode implNode) {
+
+
                 LLVMValue implVal = implNode.accept(visitor);
+
                 if (implVal != null && implVal.getCode() != null && !implVal.getCode().isBlank()) {
                     visitor.addImplDefinition(implVal);
                 }
             }
         }
-
 
         for (LLVMValue implDef : visitor.getImplDefinitions()) {
             if (implDef != null && implDef.getCode() != null && !implDef.getCode().isBlank()) {
@@ -150,15 +170,16 @@ public class MainEmitter {
                     || stmt instanceof StructNode
                     || stmt instanceof ImplNode) continue;
 
+
             llvm.append("  ; ").append(stmt.getClass().getSimpleName()).append("\n");
 
             LLVMValue val = stmt.accept(visitor);
+
             if (val != null && val.getCode() != null && !val.getCode().isBlank()) {
                 llvm.append(val.getCode());
             }
 
             if (stmt instanceof VariableDeclarationNode varDecl) {
-                System.out.println("por acaso entrou aqui ?");
                 Type resolved = varDecl.getResolvedType();
                 if (resolved instanceof ListType listType) {
                     listasAlocadas.add(listType);
@@ -173,8 +194,8 @@ public class MainEmitter {
 
         llvm.append("  ret i32 0\n}\n");
 
-        LLVMTYPES mainType = new LLVMInt();
-        return new LLVMValue(mainType, "%main", llvm.toString());
+
+        return new LLVMValue(new LLVMInt(), "%main", llvm.toString());
     }
 
 
@@ -217,6 +238,22 @@ public class MainEmitter {
 
         // Recursão para nós compostos
         if (node instanceof FunctionNode func) {
+
+            // ===== registrar tipo de retorno (se for lista)
+            Type retType = func.getReturnType();
+            if (retType instanceof ListType listType) {
+                registrarTipoDeLista(listType);
+            }
+
+            // ===== registrar tipos dos parâmetros (se forem listas)
+            for (ParamInfo p : func.getParameters()) {
+                Type paramType = p.typeObj(); // ⚠️ use typeObj(), não type()
+                if (paramType instanceof ListType listType) {
+                    registrarTipoDeLista(listType);
+                }
+            }
+
+            // ===== coletar strings do corpo
             func.getBody().forEach(this::coletarStringsRecursivo);
             return;
         }
@@ -245,6 +282,10 @@ public class MainEmitter {
         if (node instanceof BinaryOpNode bin) {
             coletarStringsRecursivo(bin.left);
             coletarStringsRecursivo(bin.right);
+            return;
+        }
+        if(node instanceof PrintNode printNode) {
+            coletarStringsRecursivo(printNode.expr);
             return;
         }
 

@@ -8,9 +8,10 @@ import low.module.LLVisitorMain;
 import low.module.builders.LLVMPointer;
 import low.module.builders.LLVMTYPES;
 import low.module.builders.LLVMValue;
+import low.module.builders.primitives.LLVMChar;
 import low.module.builders.primitives.LLVMString;
-
 public class ReturnEmitter {
+
     private final LLVisitorMain visitor;
     private final TempManager temps;
 
@@ -18,64 +19,67 @@ public class ReturnEmitter {
         this.visitor = visitor;
         this.temps = temps;
     }
-        public String emit(ReturnNode node) {
 
-            StringBuilder llvm = new StringBuilder();
+    public LLVMValue emit(ReturnNode node) {
 
-            if (node.expr == null) {
-                llvm.append("  ret void\n");
-                return llvm.toString();
-            }
+        StringBuilder llvm = new StringBuilder();
 
-            LLVMValue val = node.expr.accept(visitor);
+        // void
+        if (node.expr == null) {
+            llvm.append("  ret void\n");
+            return new LLVMValue(null, "", llvm.toString());
+        }
 
-            llvm.append(val.getCode());
+        LLVMValue val = node.expr.accept(visitor);
+        llvm.append(val.getCode());
 
-            LLVMTYPES type = val.getType();
-            String temp = val.getName();
+        LLVMTYPES type = val.getType();
+        String temp = val.getName();
 
-            if (type instanceof LLVMString) {
-                llvm.append("  ret %String* ").append(temp).append("\n");
-                return llvm.toString();
-            }
+        // ===== CASO STRING JÁ PRONTA (%String*)
+        if (type instanceof LLVMString) {
+            llvm.append("  ret %String* ").append(temp).append("\n");
+            return new LLVMValue(type, temp, llvm.toString());
+        }
 
-            // ===== STRING literal (i8*) → wrap em %String, mas isso aqui preciso mudar
-            if (type instanceof LLVMPointer) {
+        //  CASO i8* → wrap em %String
+        if (type instanceof LLVMPointer ptr && ptr.pointee() instanceof LLVMChar) {
 
-                String sAlloca = temps.newTemp();
-                llvm.append("  ").append(sAlloca).append(" = alloca %String\n");
+            String sAlloca = temps.newTemp();
+            llvm.append("  ").append(sAlloca).append(" = alloca %String\n");
 
-                String fld0 = temps.newTemp();
-                llvm.append("  ").append(fld0)
-                        .append(" = getelementptr inbounds %String, %String* ")
-                        .append(sAlloca).append(", i32 0, i32 0\n");
+            String fld0 = temps.newTemp();
+            llvm.append("  ").append(fld0)
+                    .append(" = getelementptr inbounds %String, %String* ")
+                    .append(sAlloca).append(", i32 0, i32 0\n");
 
-                llvm.append("  store i8* ")
-                        .append(temp)
-                        .append(", i8** ")
-                        .append(fld0)
-                        .append("\n");
-
-                String fld1 = temps.newTemp();
-                llvm.append("  ").append(fld1)
-                        .append(" = getelementptr inbounds %String, %String* ")
-                        .append(sAlloca).append(", i32 0, i32 1\n");
-
-                llvm.append("  store i64 0, i64* ")
-                        .append(fld1)
-                        .append("\n");
-
-                llvm.append("  ret %String* ").append(sAlloca).append("\n");
-                return llvm.toString();
-            }
-
-            llvm.append("  ret ")
-                    .append(type)   // toString() do LLVMTYPES
-                    .append(" ")
+            llvm.append("  store i8* ")
                     .append(temp)
+                    .append(", i8** ")
+                    .append(fld0)
                     .append("\n");
 
-            return llvm.toString();
-        }
-    }
+            String fld1 = temps.newTemp();
+            llvm.append("  ").append(fld1)
+                    .append(" = getelementptr inbounds %String, %String* ")
+                    .append(sAlloca).append(", i32 0, i32 1\n");
 
+            llvm.append("  store i64 0, i64* ")
+                    .append(fld1)
+                    .append("\n");
+
+            llvm.append("  ret %String* ").append(sAlloca).append("\n");
+
+            return new LLVMValue(new LLVMString(), sAlloca, llvm.toString());
+        }
+
+        // ===== CASO GERAL
+        llvm.append("  ret ")
+                .append(type)
+                .append(" ")
+                .append(temp)
+                .append("\n");
+
+        return new LLVMValue(type, temp, llvm.toString());
+    }
+}

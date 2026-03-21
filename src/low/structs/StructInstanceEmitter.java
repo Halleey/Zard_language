@@ -48,7 +48,7 @@ public class StructInstanceEmitter {
 
         // ===== RESOLVER DEFINIÇÃO =====
         StructNode def = visitor.getStructNode(structName);
-        System.out.println("debug for struct instance " + def);
+        System.out.println("debug for struct instance " + def.getName());
         if (def == null) {
             throw new RuntimeException("Struct não encontrada: " + structName);
         }

@@ -1,18 +1,10 @@
 main {
 
+function int sum(int a, int b) {
+    return a + b;
+}
 
-int age = 25;
-double pi = 3.1415;
-float ratio = 0.75;
-string name = "Zard";
-boolean active = true;
-char letter = 'Z';
+print(sum(3,2));
 
-println(age);
-println(pi);
-println(ratio);
-println(name);
-println(active);
-println(letter);
 
 }

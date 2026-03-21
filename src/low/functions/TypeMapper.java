@@ -27,7 +27,7 @@
 
                 if (type instanceof ListType list) {
                     LLVMTYPES elem = from(list.elementType());
-                    return new LLVMPointer(new LLVMArrayList(elem));
+                    return new LLVMArrayList(elem);
                 }
 
                 if (type instanceof StructType st) {

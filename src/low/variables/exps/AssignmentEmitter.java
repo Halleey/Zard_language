@@ -141,10 +141,10 @@
 
             //STRUCT COPY
             if (type instanceof StructType) {
-                StructCopyEmitter structCopyEmitter =
-                        new StructCopyEmitter(varTypes, temps, globalStrings, visitor);
+                StructCopyEmitter structCopyEmitter = new StructCopyEmitter(varTypes, temps, globalStrings, visitor);
 
-                llvm.append(structCopyEmitter.emit(assignNode, exprVal.getName(), varPtr, info));
+                LLVMValue copyVal = structCopyEmitter.emit(assignNode, exprVal.getName(), varPtr, info);
+                llvm.append(copyVal.getCode());
                 return new LLVMValue(llvmType, varPtr, llvm.toString());
             }
 

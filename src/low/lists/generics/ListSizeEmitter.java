@@ -29,41 +29,35 @@ public class ListSizeEmitter {
 
     public LLVMValue emit(ListSizeNode node, LLVisitorMain visitor) {
 
-        Type elemType = node.getType();
-
-        if (elemType instanceof PrimitiveTypes prim) {
-            if (prim == PrimitiveTypes.INT) return intEmitter.emit(node, visitor);
-            if (prim == PrimitiveTypes.DOUBLE) return doubleEmitter.emit(node, visitor);
-            if (prim == PrimitiveTypes.BOOL) return boolEmitter.emit(node, visitor);
-        }
-
         StringBuilder llvm = new StringBuilder();
 
-        // ===== LIST =====
+        // LIST
         LLVMValue listVal = node.getNome().accept(visitor);
         llvm.append(listVal.getCode());
 
-        String listPtr = listVal.getName();
+        String tmp = temps.newTemp();
 
-        // ===== CAST (se necessário) =====
-        String listCast;
+        //  DISPATCH POR TIPO REAL DA LISTA
+        if (listVal.getType() instanceof LLVMArrayList arr) {
 
-        if (listVal.getType() instanceof LLVMArrayList) {
-            listCast = listPtr;
+            if (arr.elementType() instanceof LLVMInt) {
+                llvm.append("  ").append(tmp)
+                        .append(" = call i32 @arraylist_size_int(%struct.ArrayListInt* ")
+                        .append(listVal.getName())
+                        .append(")\n");
+
+            } else {
+                // fallback genérico
+                llvm.append("  ").append(tmp)
+                        .append(" = call i32 @length(%ArrayList* ")
+                        .append(listVal.getName())
+                        .append(")\n");
+            }
+
         } else {
-            listCast = temps.newTemp();
-            llvm.append("  ").append(listCast)
-                    .append(" = bitcast i8* ")
-                    .append(listPtr)
-                    .append(" to %ArrayList*\n");
+            throw new RuntimeException("ListSize em tipo inválido: " + listVal.getType());
         }
 
-        String sizeTmp = temps.newTemp();
-        llvm.append("  ").append(sizeTmp)
-                .append(" = call i32 @length(%ArrayList* ")
-                .append(listCast)
-                .append(")\n");
-
-        return new LLVMValue(new LLVMInt(), sizeTmp, llvm.toString());
+        return new LLVMValue(new LLVMInt(), tmp, llvm.toString());
     }
 }

@@ -95,13 +95,13 @@ public class ExpressionInitEmitter {
                         .append(")\n");
 
                 LLVMValue stored = new LLVMValue(new LLVMString(), tmpClone, "");
-                sb.append(store.emit(varName, stored));
+                sb.append(store.emit(varName, stored).getCode());
 
                 return new LLVMValue(targetType, tmpClone, sb.toString());
             }
 
             //  STORE NORMAL
-            sb.append(store.emit(varName, finalVal));
+            sb.append(store.emit(varName, finalVal).getCode());
 
             return new LLVMValue(targetType, finalVal.getName(), sb.toString());
         }

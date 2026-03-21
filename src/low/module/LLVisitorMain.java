@@ -394,17 +394,17 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public LLVMValue visit(ListSizeNode node) {
-        return null;
+        return listVisitor.visit(node);
     }
 
     @Override
     public LLVMValue visit(ListGetNode node) {
-        return null;
+        return listVisitor.visit(node);
     }
 
     @Override
     public LLVMValue visit(ListAddAllNode node) {
-        return null;
+        return listVisitor.visit(node);
     }
 
     @Override
@@ -464,7 +464,6 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public LLVMValue visitFreeNode(FreeNode freeNode) {
-
         return freeEmitter.emit(freeNode);
     }
 

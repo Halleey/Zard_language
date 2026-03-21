@@ -1,18 +1,18 @@
 main {
 
-List<int> numbers;
-List<double> x;
-List<string> c;
-numbers.add(4);
-numbers.remove(0);
-x.add(33.45);
-x.add(3.2);
-x.clear();
-c.add("teste");
-c.clear();
 
-print(numbers);
-print(x);
-print(c);
+int age = 25;
+double pi = 3.1415;
+float ratio = 0.75;
+string name = "Zard";
+boolean active = true;
+char letter = 'Z';
+
+println(age);
+println(pi);
+println(ratio);
+println(name);
+println(active);
+println(letter);
 
 }

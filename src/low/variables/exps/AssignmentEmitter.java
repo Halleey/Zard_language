@@ -106,7 +106,7 @@
                     throw new RuntimeException("Tipo literal não suportado: " + type);
                 }
 
-                llvm.append(storeEmitter.emit(varName, value));
+                llvm.append(storeEmitter.emit(varName, value).getCode());
 
                 return new LLVMValue(llvmType, varPtr, llvm.toString());
             }
@@ -118,7 +118,7 @@
                 LLVMValue val = inputEmitter.emit(inputNode, llvmType);
 
                 llvm.append(val.getCode());
-                llvm.append(storeEmitter.emit(varName, val));
+                llvm.append(storeEmitter.emit(varName, val).getCode());
 
                 return new LLVMValue(llvmType, varPtr, llvm.toString());
             }
@@ -130,7 +130,7 @@
                 LLVMValue listVal = listEmitter.emit(listNode, visitor);
 
                 llvm.append(listVal.getCode());
-                llvm.append(storeEmitter.emit(varName, listVal));
+                llvm.append(storeEmitter.emit(varName, listVal).getCode());
 
                 return new LLVMValue(llvmType, varPtr, llvm.toString());
             }
@@ -149,7 +149,7 @@
             }
 
             //  STORE PADRÃO
-            llvm.append(storeEmitter.emit(varName, exprVal));
+            llvm.append(storeEmitter.emit(varName, exprVal).getCode());
 
             return new LLVMValue(llvmType, varPtr, llvm.toString());
         }

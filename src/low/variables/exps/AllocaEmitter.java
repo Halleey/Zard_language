@@ -51,7 +51,7 @@ public class AllocaEmitter {
         StringBuilder llvm = new StringBuilder();
         LLVMTYPES llvmType;
 
-        System.out.println("[AllocaEmitter] Allocando var: " + varName + ", tipo = " + type + ", ptr = " + ptr);
+        //System.out.println("[AllocaEmitter] Allocando var: " + varName + ", tipo = " + type + ", ptr = " + ptr);
 
         //  Primitivos
         if (type instanceof PrimitiveTypes prim) {

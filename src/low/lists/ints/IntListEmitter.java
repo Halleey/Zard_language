@@ -23,11 +23,11 @@ public class IntListEmitter {
         List<ASTNode> elements = node.getList().getElements();
         int n = elements.size();
 
-        System.out.println("[IntListEmitter] Emitindo lista com " + n + " elementos");
-        System.out.println("last temp : "+temps.getLastTemp() + "  last counter "+ temps.getTempCount()+  " para debug");
+        //System.out.println("[IntListEmitter] Emitindo lista com " + n + " elementos");
+        //System.out.println("last temp : "+temps.getLastTemp() + "  last counter "+ temps.getTempCount()+  " para debug");
         // Cria a lista
         String listPtr = temps.newTemp();
-        System.out.println("ponteiro criado " + listPtr);
+        //System.out.println("ponteiro criado " + listPtr);
         LLVMArrayList listType = new LLVMArrayList(new LLVMInt());
         llvm.append("  ").append(listPtr)
                 .append(" = call %struct.ArrayListInt* @arraylist_create_int(i64 ")

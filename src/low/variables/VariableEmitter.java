@@ -89,12 +89,12 @@ public class VariableEmitter {
     }
 
     public LLVMValue emitDeclaration(VariableDeclarationNode node) {
-        System.out.println("[VariableEmitter] EmitDeclaration -> " + node.getName());
+        //System.out.println("[VariableEmitter] EmitDeclaration -> " + node.getName());
         LLVMValue alloca = allocaEmitter.emit(node);
-        System.out.println("[VariableEmitter] Alloca: " + alloca.getName());
+      //  System.out.println("[VariableEmitter] Alloca: " + alloca.getName());
 
         LLVMValue initVal = emitInit(node);
-        System.out.println("[VariableEmitter] Init LLVMValue: " + initVal.getName());
+      //  System.out.println("[VariableEmitter] Init LLVMValue: " + initVal.getName());
 
         String code = alloca.getCode() + initVal.getCode();
         return new LLVMValue(alloca.getType(), alloca.getName(), code);
@@ -103,11 +103,11 @@ public class VariableEmitter {
     private LLVMValue emitInit(VariableDeclarationNode node) {
         TypeInfos info = varTypes.get(node.getName());
         Type type = info.getType();
-        System.out.println("[VariableEmitter] emitInit for var: " + node.getName() + ", type: " + type);
+     //   System.out.println("[VariableEmitter] emitInit for var: " + node.getName() + ", type: " + type);
 
         if (type instanceof StructType) {
             if (node.getInitializer() == null) {
-                System.out.println("[VariableEmitter] Struct no initializer -> calling StructInitEmitter");
+            //    System.out.println("[VariableEmitter] Struct no initializer -> calling StructInitEmitter");
                 return structInitEmitter.emit(node, info);
             }
             LLVMValue val = node.getInitializer().accept(visitor);
@@ -129,14 +129,14 @@ public class VariableEmitter {
         return handleNormalExpressionInit(node, info);
     }
     private LLVMValue handleNormalExpressionInit(VariableDeclarationNode node, TypeInfos info) {
-        System.out.println("[VariableEmitter] NormalExpressionInit -> " + node.getName());
+      //  System.out.println("[VariableEmitter] NormalExpressionInit -> " + node.getName());
         return expressionInitEmitter.emit(node, info);
     }
 
     private LLVMValue handleDefaultInit(VariableDeclarationNode node, TypeInfos info) {
         String varPtr = getVarPtr(node.getName());
         Type type = info.getType();
-        System.out.println("[VariableEmitter] handleDefaultInit -> " + node.getName() + " type: " + type);
+      //  System.out.println("[VariableEmitter] handleDefaultInit -> " + node.getName() + " type: " + type);
 
         String code = "";
 
@@ -203,7 +203,7 @@ public class VariableEmitter {
         TypeInfos info = varTypes.get(name);
         String ptr = getVarPtr(name);
         String tmp = temps.newTemp();
-        System.out.println("[VariableEmitter] emitLoad -> " + name + ", tmp: " + tmp);
+      //  System.out.println("[VariableEmitter] emitLoad -> " + name + ", tmp: " + tmp);
         LLVMTYPES llvmType = info.getLLVMType();
         LLVMTYPES ptrType = new LLVMPointer(llvmType);
         String code = "  " + tmp + " = load "

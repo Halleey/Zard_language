@@ -68,4 +68,13 @@ public class ListRemoveNode extends ASTNode {
     public ASTNode getListNode() {
         return listNode;
     }
+    @Override
+    public Type getType() {
+        Type listType = listNode.getType();
+        if (listType instanceof ListType lt) {
+            return lt.elementType();  // Retorna o tipo do elemento removido
+        }
+        return null;
+    }
+
 }

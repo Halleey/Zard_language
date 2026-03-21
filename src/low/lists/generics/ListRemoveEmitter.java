@@ -13,6 +13,8 @@ import low.module.builders.LLVMValue;
 import low.module.builders.lists.LLVMArrayList;
 import low.module.builders.primitives.LLVMInt;
 import low.module.builders.primitives.LLVMVoid;
+
+
 public class ListRemoveEmitter {
 
     private final TempManager temps;
@@ -29,9 +31,9 @@ public class ListRemoveEmitter {
 
     public LLVMValue emit(ListRemoveNode node, LLVisitorMain visitor) {
 
-        // ===== DISPATCH PRIMEIRO (igual ListEmitter) =====
         Type elemType = node.getType();
 
+        System.out.println("basic debug for type list " + elemType);
         if (elemType instanceof PrimitiveTypes prim) {
             if (prim == PrimitiveTypes.INT) return intEmitter.emit(node, visitor);
             if (prim == PrimitiveTypes.DOUBLE) return doubleEmitter.emit(node, visitor);

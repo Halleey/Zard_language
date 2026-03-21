@@ -17,6 +17,8 @@ import low.module.builders.lists.LLVMArrayList;
 import low.module.builders.primitives.*;
 
 import static context.statics.symbols.PrimitiveTypes.*;
+
+
 public class ListAddEmitter {
 
     private final TempManager temps;
@@ -44,6 +46,7 @@ public class ListAddEmitter {
 
         // Use elementType do node diretamente
         Type elemType = node.getElementType();
+        System.out.println("basic debug for add " + elemType);
         // fallback seguro: tentar inferir do LLVMValue da lista
         if (elemType == null) {
             if (listVal.getType() instanceof LLVMArrayList arr) {

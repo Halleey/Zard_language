@@ -19,8 +19,6 @@ public class VarDeclarationParser {
         String typeKeyword = parser.current().getValue();
         parser.advance();
 
-        System.out.println("[VarDecl] Tipo detectado: " + typeKeyword);
-
         ASTNode initializer = null;
         Type varType = null;
 

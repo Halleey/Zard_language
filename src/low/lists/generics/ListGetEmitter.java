@@ -9,6 +9,7 @@ import low.lists.bool.ListBoolGetEmitter;
 import low.lists.doubles.ListGetDoubleEmitter;
 import low.lists.ints.ListGetIntEmitter;
 import low.module.LLVisitorMain;
+import low.module.builders.LLVMPointer;
 import low.module.builders.LLVMTYPES;
 import low.module.builders.LLVMValue;
 import low.module.builders.lists.LLVMArrayList;
@@ -133,6 +134,23 @@ public class ListGetEmitter {
                     .append("*\n");
 
             return new LLVMValue(struct, castTemp, llvm.toString());
+        }
+
+
+        if (elementType instanceof LLVMPointer ptr &&
+                ptr.pointee() instanceof LLVMStruct struct) {
+
+            String castTemp = temps.newTemp();
+
+            llvm.append("  ")
+                    .append(castTemp)
+                    .append(" = bitcast i8* ")
+                    .append(rawTemp)
+                    .append(" to %")
+                    .append(struct.getName())
+                    .append("*\n");
+
+            return new LLVMValue(ptr, castTemp, llvm.toString());
         }
 
         throw new RuntimeException("Unsupported list element type: " + elementType);

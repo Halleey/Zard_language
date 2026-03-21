@@ -311,6 +311,25 @@ public class MainEmitter {
             return;
         }
 
+        if (node instanceof ImplNode implNode) {
+            for (FunctionNode fn : implNode.getMethods()) {
+                coletarStringsRecursivo(fn);
+            }
+            return;
+        }
+
+        if (node instanceof StructMethodCallNode callNode) {
+            // coleta strings dos argumentos
+            for (ASTNode arg : callNode.getArgs()) {
+                coletarStringsRecursivo(arg);
+            }
+
+            // coleta também o receiver (caso seja algo mais complexo)
+            coletarStringsRecursivo(callNode.getStructInstance());
+
+            return;
+        }
+
         if (node instanceof VariableDeclarationNode varDecl && varDecl.getInitializer() != null) {
             coletarStringsRecursivo(varDecl.getInitializer());
         }

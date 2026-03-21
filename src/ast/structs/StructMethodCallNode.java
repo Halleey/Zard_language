@@ -166,8 +166,6 @@ public class StructMethodCallNode extends ASTNode {
 
             Type expected = params.get(i + paramOffset).type();
             Type actual = args.get(i).getType();
-            System.out.println("currently token for debug " + expected );
-            System.out.println("currently token for debug " + actual );
             checkTypeCompatibility(expected, actual);
         }
 

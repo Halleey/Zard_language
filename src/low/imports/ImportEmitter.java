@@ -1,21 +1,24 @@
 package low.imports;
 
 import ast.ASTNode;
+import ast.functions.FunctionCallNode;
 import ast.functions.FunctionNode;
 import ast.functions.ParamInfo;
 import ast.ifstatements.IfNode;
 import ast.imports.ImportNode;
 import ast.loops.WhileNode;
+import ast.prints.PrintNode;
 import ast.structs.ImplNode;
 import ast.structs.StructNode;
+import ast.variables.LiteralNode;
 import ast.variables.VariableDeclarationNode;
 import ast.lists.ListNode;
-
 import ast.lists.ListAddNode;
 import ast.lists.ListAddAllNode;
 
 import context.statics.symbols.*;
 import low.functions.FunctionEmitter;
+import low.main.GlobalStringManager;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
 import low.module.builders.LLVMTYPES;
@@ -28,13 +31,11 @@ import tokens.Lexer;
 import tokens.Token;
 import translate.front.Parser;
 
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
-
 
 public class ImportEmitter {
 
@@ -45,8 +46,10 @@ public class ImportEmitter {
         this.visitor = visitor;
         this.tiposDeListasUsados = tiposDeListasUsados;
     }
+
     public LLVMValue emit(ImportNode node) {
         try {
+            //Ler arquivo e gerar AST
             String code = Files.readString(Path.of(node.path()));
             Lexer lexer = new Lexer(code);
             List<Token> tokens = lexer.tokenize();
@@ -55,10 +58,15 @@ public class ImportEmitter {
 
             StringBuilder llvm = new StringBuilder();
 
-            // coletar tipos de listas
+            // Coletar **todas as strings do módulo** ANTES de emitir qualquer código
+            for (ASTNode n : imported) {
+                coletarStringsRecursivo(n, visitor.getGlobalStrings());
+            }
+
+            //Coletar tipos de listas
             for (ASTNode n : imported) coletarListas(n);
 
-            // structs
+            // Registrar structs
             for (ASTNode n : imported) {
                 if (n instanceof StructNode struct) {
                     visitor.registerStructNode(struct.getName(), struct);
@@ -68,26 +76,26 @@ public class ImportEmitter {
                 }
             }
 
-            // impls
+            // Registrar impls
             for (ASTNode n : imported) {
                 if (n instanceof ImplNode impl) {
-                    LLVMValue codeImpl = impl.accept(visitor);  // já LLVMValue
+                    LLVMValue codeImpl = impl.accept(visitor);
                     visitor.addImplDefinition(codeImpl);
                     llvm.append(codeImpl.getCode()).append("\n");
                 }
             }
 
-            // funções
+            //Registrar e emitir funções
             FunctionEmitter fnEmitter = new FunctionEmitter(visitor);
             for (ASTNode n : imported) {
                 if (n instanceof FunctionNode fn) {
                     String name = fn.getName();
                     visitor.registerImportedFunction(name, fn);
 
+                    //mapear tipo de retorno para LLVM
                     Type returnType = fn.getReturnType();
                     LLVMTYPES llvmRetType;
 
-                    // mapear retorno de lista
                     if (returnType instanceof ListType listType) {
                         Type elem = listType.elementType();
                         if (elem == PrimitiveTypes.INT) llvmRetType = new LLVMArrayList(new LLVMInt());
@@ -110,11 +118,57 @@ public class ImportEmitter {
                 }
             }
 
-            // retornar LLVMValue tipado void (imports não produzem valor)
             return new LLVMValue(new LLVMVoid(), "%import_" + node.alias(), llvm.toString());
 
         } catch (IOException e) {
             throw new RuntimeException("Failed to import module: " + node.path(), e);
+        }
+    }
+
+    private void coletarStringsRecursivo(ASTNode node, GlobalStringManager globalStrings) {
+        if (node == null) return;
+
+        if (node instanceof LiteralNode lit && lit.value.type().equals(PrimitiveTypes.STRING)) {
+            String strVal = (String) lit.value.value();
+            globalStrings.getOrCreateString(strVal);
+            return;
+        }
+
+        if (node instanceof PrintNode printNode) {
+            coletarStringsRecursivo(printNode.expr, globalStrings);
+            return;
+        }
+
+        if (node instanceof FunctionCallNode callNode) {
+            if (callNode.getArgs() != null) {
+                callNode.getArgs().forEach(arg -> coletarStringsRecursivo(arg, globalStrings));
+            }
+            return;
+        }
+
+        if (node instanceof FunctionNode func) {
+            for (ASTNode stmt : func.getBody()) coletarStringsRecursivo(stmt, globalStrings);
+            return;
+        }
+
+        if (node instanceof IfNode ifNode) {
+            coletarStringsRecursivo(ifNode.condition, globalStrings);
+            ifNode.thenBranch.forEach(stmt -> coletarStringsRecursivo(stmt, globalStrings));
+            if (ifNode.elseBranch != null)
+                ifNode.elseBranch.forEach(stmt -> coletarStringsRecursivo(stmt, globalStrings));
+            return;
+        }
+
+        if (node instanceof WhileNode whileNode) {
+            coletarStringsRecursivo(whileNode.condition, globalStrings);
+            whileNode.body.forEach(stmt -> coletarStringsRecursivo(stmt, globalStrings));
+            return;
+        }
+
+        // recursão genérica para outros filhos
+        List<ASTNode> children = node.getChildren();
+        if (children != null) {
+            for (ASTNode child : children) coletarStringsRecursivo(child, globalStrings);
         }
     }
 

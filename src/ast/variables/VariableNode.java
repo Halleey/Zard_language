@@ -7,6 +7,8 @@ import ast.expressions.TypedValue;
 import context.statics.symbols.Symbol;
 import context.statics.symbols.Type;
 import low.module.LLVMEmitVisitor;
+import low.module.builders.LLVMValue;
+
 public class VariableNode extends ASTNode {
     public final String name;
     private Symbol symbol; // ← símbolo resolvido
@@ -47,7 +49,7 @@ public class VariableNode extends ASTNode {
     }
 
     @Override
-    public String accept(LLVMEmitVisitor visitor) {
+    public LLVMValue accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
 

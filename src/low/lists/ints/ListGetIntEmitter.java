@@ -4,65 +4,59 @@ package low.lists.ints;
 import ast.lists.ListGetNode;
 import low.TempManager;
 import low.module.LLVMEmitVisitor;
-
+import low.module.LLVisitorMain;
+import low.module.builders.LLVMValue;
+import low.module.builders.primitives.LLVMInt;
 
 public class ListGetIntEmitter {
+
     private final TempManager temps;
 
     public ListGetIntEmitter(TempManager temps) {
         this.temps = temps;
     }
 
-    public String emit(ListGetNode node, LLVMEmitVisitor visitor) {
+    public LLVMValue emit(ListGetNode node, LLVisitorMain visitor) {
+
         StringBuilder llvm = new StringBuilder();
 
-        String listCode = node.getListName().accept(visitor);
-        String listTemp = extractTemp(listCode);
-        appendCodePrefix(llvm, listCode);
+        // ===== LIST =====
+        LLVMValue listVal = node.getListName().accept(visitor);
+        llvm.append(listVal.getCode());
 
-        String idxCode = node.getIndexNode().accept(visitor);
-        String idxTemp = extractTemp(idxCode);
-        appendCodePrefix(llvm, idxCode);
+        // ===== INDEX =====
+        LLVMValue idxVal = node.getIndexNode().accept(visitor);
+        llvm.append(idxVal.getCode());
 
         String idx64 = temps.newTemp();
         llvm.append("  ").append(idx64)
-                .append(" = zext i32 ").append(idxTemp)
+                .append(" = zext i32 ")
+                .append(idxVal.getName())
                 .append(" to i64\n");
 
+        // ===== OUT PTR =====
         String outPtr = temps.newTemp();
         llvm.append("  ").append(outPtr)
                 .append(" = alloca i32\n");
 
+        // ===== CALL =====
         String success = temps.newTemp();
         llvm.append("  ").append(success)
                 .append(" = call i32 @arraylist_get_int(%struct.ArrayListInt* ")
-                .append(listTemp).append(", i64 ").append(idx64)
-                .append(", i32* ").append(outPtr).append(")\n");
+                .append(listVal.getName())
+                .append(", i64 ").append(idx64)
+                .append(", i32* ").append(outPtr)
+                .append(")\n");
 
+        // ===== LOAD =====
         String value = temps.newTemp();
         llvm.append("  ").append(value)
                 .append(" = load i32, i32* ").append(outPtr).append("\n");
 
-        llvm.append(";;VAL:").append(value).append("\n");
-        llvm.append(";;TYPE:i32\n");
-
-        return llvm.toString();
+        return new LLVMValue(
+                new LLVMInt(),
+                value,
+                llvm.toString()
+        );
     }
-
-    private void appendCodePrefix(StringBuilder llvm, String code) {
-        int marker = code.lastIndexOf(";;VAL:");
-        String prefix = (marker == -1) ? code : code.substring(0, marker);
-        if (!prefix.isEmpty()) {
-            if (!prefix.endsWith("\n")) prefix += "\n";
-            llvm.append(prefix);
-        }
-    }
-
-    private String extractTemp(String code) {
-        int v = code.lastIndexOf(";;VAL:");
-        if (v == -1) return "";
-        int t = code.indexOf(";;TYPE:", v);
-        return (t == -1) ? "" : code.substring(v + 6, t).trim();
-    }
-
 }

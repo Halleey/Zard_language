@@ -5,6 +5,7 @@ import context.statics.StaticContext;
 import ast.expressions.TypedValue;
 import context.statics.symbols.Type;
 import low.module.LLVMEmitVisitor;
+import low.module.builders.LLVMValue;
 
 import java.util.Collections;
 import java.util.List;
@@ -47,7 +48,7 @@ public abstract class ASTNode {
         return staticContext;
     }
 
-    public abstract String accept(LLVMEmitVisitor visitor);
+    public abstract LLVMValue accept(LLVMEmitVisitor visitor);
     public abstract TypedValue evaluate(RuntimeContext ctx);
     public abstract void print(String prefix);
 

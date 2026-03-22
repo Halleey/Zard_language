@@ -6,6 +6,9 @@ import context.statics.symbols.PrimitiveTypes;
 import context.statics.symbols.Type;
 import low.TempManager;
 import low.main.GlobalStringManager;
+import low.module.builders.LLVMTYPES;
+import low.module.builders.LLVMValue;
+import low.module.builders.primitives.*;
 
 public class LiteralEmitter {
     private final TempManager temps;
@@ -16,66 +19,58 @@ public class LiteralEmitter {
         this.globalStrings = globalStrings;
     }
 
-    public String emit(LiteralNode node) {
+    public LLVMValue emit(LiteralNode node) {
         TypedValue value = node.value;
         Type type = value.type();
         String temp = temps.newTemp();
         StringBuilder llvm = new StringBuilder();
+        LLVMTYPES llvmType;
 
         if (type.equals(PrimitiveTypes.INT)) {
-            llvm.append("  ").append(temp)
-                    .append(" = add i32 0, ").append(value.value()).append("\n")
-                    .append(";;VAL:").append(temp).append(";;TYPE:i32\n");
+            llvm.append("  ").append(temp).append(" = add i32 0, ").append(value.value()).append("\n");
+            llvmType = new LLVMInt();
 
         } else if (type.equals(PrimitiveTypes.DOUBLE)) {
-            llvm.append("  ").append(temp)
-                    .append(" = fadd double 0.0, ").append(value.value()).append("\n")
-                    .append(";;VAL:").append(temp).append(";;TYPE:double\n");
+            llvm.append("  ").append(temp).append(" = fadd double 0.0, ").append(value.value()).append("\n");
+            llvmType = new LLVMDouble();
 
         } else if (type.equals(PrimitiveTypes.FLOAT)) {
             String val = value.value().toString();
             if (!val.endsWith("f") && !val.endsWith("F")) val += "f";
-            llvm.append("  ").append(temp)
-                    .append(" = fadd float 0.0, ").append(val).append("\n")
-                    .append(";;VAL:").append(temp).append(";;TYPE:float\n");
+            llvm.append("  ").append(temp).append(" = fadd float 0.0, ").append(val).append("\n");
+            llvmType = new LLVMFloat();
 
         } else if (type.equals(PrimitiveTypes.BOOL)) {
             boolean b = (Boolean) value.value();
-            llvm.append("  ").append(temp)
-                    .append(" = add i1 0, ").append(b ? 1 : 0).append("\n")
-                    .append(";;VAL:").append(temp).append(";;TYPE:i1\n");
+            llvm.append("  ").append(temp).append(" = add i1 0, ").append(b ? 1 : 0).append("\n");
+            llvmType = new LLVMBool();
 
         } else if (type.equals(PrimitiveTypes.CHAR)) {
-            Object raw = value.value();
             char c;
-            if (raw instanceof Character) {
-                c = (Character) raw;
-            } else if (raw instanceof String s && s.length() == 1) {
-                c = s.charAt(0);
-            } else {
-                throw new RuntimeException("Invalid char literal: " + raw);
-            }
+            Object raw = value.value();
+            if (raw instanceof Character) c = (Character) raw;
+            else if (raw instanceof String s && s.length() == 1) c = s.charAt(0);
+            else throw new RuntimeException("Invalid char literal: " + raw);
             int ascii = c;
-            llvm.append("  ").append(temp)
-                    .append(" = add i8 0, ").append(ascii).append("\n")
-                    .append(";;VAL:").append(temp).append(";;TYPE:i8\n");
+            llvm.append("  ").append(temp).append(" = add i8 0, ").append(ascii).append("\n");
+            llvmType = new LLVMChar();
 
         } else if (type.equals(PrimitiveTypes.STRING)) {
-            // Sempre criar %String* heap
             String literal = (String) value.value();
             String strName = globalStrings.getOrCreateString(literal);
-            String tmp = temps.newTemp();
-            llvm.append("  ").append(tmp)
-                    .append(" = call %String* @createString(i8* ").append(strName).append(")\n")
-                    .append(";;VAL:").append(tmp).append(";;TYPE:%String*\n");
+            temp = temps.newTemp();
+            llvm.append("  ").append(temp)
+                    .append(" = call %String* @createString(i8* ").append(strName).append(")\n");
+            llvmType = new LLVMString();
 
         } else if (type.equals(PrimitiveTypes.VOID)) {
-            llvm.append(";;VAL:void;;TYPE:void\n");
+            llvmType = new LLVMVoid();
+            temp = "void";
 
         } else {
             throw new RuntimeException("Literal type not supported: " + type);
         }
 
-        return llvm.toString();
+        return new LLVMValue(llvmType, temp, llvm.toString());
     }
 }

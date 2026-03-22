@@ -1,7 +1,6 @@
 package ast.lists;
 
 import ast.ASTNode;
-import ast.variables.TypeResolver;
 import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
@@ -9,6 +8,7 @@ import context.statics.list.ListValue;
 import context.statics.symbols.ListType;
 import context.statics.symbols.Type;
 import low.module.LLVMEmitVisitor;
+import low.module.builders.LLVMValue;
 
 public class ListClearNode extends ASTNode {
 
@@ -20,7 +20,7 @@ public class ListClearNode extends ASTNode {
     }
 
     @Override
-    public String accept(LLVMEmitVisitor visitor) {
+    public LLVMValue accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
 

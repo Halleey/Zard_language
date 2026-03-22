@@ -3,9 +3,9 @@ package ast.home;
 import ast.ASTNode;
 import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
-import context.statics.ScopeKind;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
+import low.module.builders.LLVMValue;
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ public class MainAST extends ASTNode {
     }
 
     @Override
-    public String accept(LLVMEmitVisitor visitor) {
+    public LLVMValue accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
 

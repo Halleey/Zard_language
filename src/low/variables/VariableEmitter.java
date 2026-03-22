@@ -1,25 +1,34 @@
 package low.variables;
+
 import ast.inputs.InputNode;
 import ast.lists.ListNode;
-import ast.structs.StructInstanceNode;
-import context.statics.symbols.ListType;
-import context.statics.symbols.PrimitiveTypes;
-import context.statics.symbols.StructType;
-import context.statics.symbols.Type;
+import ast.variables.VariableDeclarationNode;
+import context.statics.symbols.*;
+import low.TempManager;
 import low.inputs.InputEmitter;
-import low.lists.generics.ListEmitter;
 import low.lists.bool.ListBoolEmitter;
 import low.lists.doubles.ListDoubleEmitter;
+import low.lists.generics.ListEmitter;
 import low.lists.ints.IntListEmitter;
+import low.lists.string.ListStringEmitter;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
-import low.TempManager;
-import ast.variables.VariableDeclarationNode;
+
+import low.module.builders.LLVMPointer;
+import low.module.builders.LLVMTYPES;
+import low.module.builders.LLVMValue;
 import low.variables.exps.AllocaEmitter;
 import low.variables.structs.StructInitEmitter;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
+import context.statics.symbols.*;
+
+
+import java.util.*;
+
+import context.statics.symbols.*;
+
 import java.util.*;
 
 
@@ -28,83 +37,82 @@ public class VariableEmitter {
     private final Map<String, TypeInfos> varTypes;
     private final TempManager temps;
     private final LLVisitorMain visitor;
+
     private final StringEmitter stringEmitter;
     private final AllocaEmitter allocaEmitter;
     private final StoreEmitter storeEmitter;
     private final StructInitEmitter structInitEmitter;
     private final ExpressionInitEmitter expressionInitEmitter;
-    private final TempExtractor tempExtractor = new TempExtractor();
 
-    // ======= pilha de escopos =======
     private final Deque<Map<String, String>> scopes = new ArrayDeque<>();
-    private int scopeId = 0; // ID para gerar nomes únicos
+    private int scopeId = 0;
 
     public VariableEmitter(Map<String, TypeInfos> varTypes, TempManager temps, LLVisitorMain visitor) {
         this.varTypes = varTypes;
         this.temps = temps;
         this.visitor = visitor;
+
         this.stringEmitter = new StringEmitter(temps, visitor.getGlobalStrings(), this);
-        this.allocaEmitter = new AllocaEmitter(varTypes, temps, visitor, this); // passou this
+        this.allocaEmitter = new AllocaEmitter(varTypes, temps, visitor, this);
         this.storeEmitter = new StoreEmitter(stringEmitter, this);
         this.structInitEmitter = new StructInitEmitter(temps, visitor, this);
-        this.expressionInitEmitter = new ExpressionInitEmitter(temps, visitor, storeEmitter, tempExtractor);
+        this.expressionInitEmitter = new ExpressionInitEmitter(temps, visitor, storeEmitter);
 
-        // escopo global
         scopes.push(new HashMap<>());
     }
 
     public void enterScope() {
         scopeId++;
         scopes.push(new HashMap<>());
+        System.out.println("[VariableEmitter] Entered scope #" + scopeId);
     }
 
     public void exitScope() {
         scopes.pop();
+        System.out.println("[VariableEmitter] Exited scope, back to #" + scopeId);
     }
 
     public int getScopeId() {
         return scopeId;
     }
 
-    private Map<String, String> currentScope() {
-        return scopes.peek();
-    }
-
     public void registerVarPtr(String name, String llvmPtr) {
-        currentScope().put(name, llvmPtr); // escopo atual
+        scopes.peek().put(name, llvmPtr);
+        System.out.println("[VariableEmitter] Registered ptr: " + name + " -> " + llvmPtr);
     }
 
-    // ao buscar:
     public String getVarPtr(String name) {
-        for (Map<String,String> scope : scopes) {
+        for (Map<String, String> scope : scopes) {
             if (scope.containsKey(name)) return scope.get(name);
         }
         throw new RuntimeException("Ptr não encontrado: " + name);
     }
 
+    public LLVMValue emitDeclaration(VariableDeclarationNode node) {
+        //System.out.println("[VariableEmitter] EmitDeclaration -> " + node.getName());
+        LLVMValue alloca = allocaEmitter.emit(node);
+      //  System.out.println("[VariableEmitter] Alloca: " + alloca.getName());
 
-    public String emitAlloca(VariableDeclarationNode node) {
-        return allocaEmitter.emit(node);
+        LLVMValue initVal = emitInit(node);
+      //  System.out.println("[VariableEmitter] Init LLVMValue: " + initVal.getName());
+
+        String code = alloca.getCode() + initVal.getCode();
+        return new LLVMValue(alloca.getType(), alloca.getName(), code);
     }
 
-    public String emitInit(VariableDeclarationNode node) {
-
+    private LLVMValue emitInit(VariableDeclarationNode node) {
         TypeInfos info = varTypes.get(node.getName());
         Type type = info.getType();
-        String varPtr = getVarPtr(node.getName());
+     //   System.out.println("[VariableEmitter] emitInit for var: " + node.getName() + ", type: " + type);
 
         if (type instanceof StructType) {
-
             if (node.getInitializer() == null) {
+            //    System.out.println("[VariableEmitter] Struct no initializer -> calling StructInitEmitter");
                 return structInitEmitter.emit(node, info);
             }
-
-            String code = node.getInitializer().accept(visitor);
-            String tmp = extractTemp(code);
-
-            return code
-                    + "  store " + info.getLLVMType() + " " + tmp
-                    + ", " + info.getLLVMType() + "* " + varPtr + "\n";
+            LLVMValue val = node.getInitializer().accept(visitor);
+            LLVMValue stored = storeEmitter.emit(node.getName(), val);
+            return new LLVMValue(val.getType(), getVarPtr(node.getName()), val.getCode() + stored.getCode());
         }
 
         if (node.getInitializer() == null)
@@ -113,167 +121,94 @@ public class VariableEmitter {
         if (node.getInitializer() instanceof InputNode inputNode)
             return handleInputInit(node, inputNode, info);
 
-        if (type instanceof ListType && node.getInitializer() instanceof ListNode listNode)
-            return handleListLiteralInit(node, listNode, info);
+        if (type instanceof ListType && node.getInitializer() instanceof ListNode listNode) {
+            LLVMValue val = handleListLiteralInit(node, listNode, info);
+            return new LLVMValue(val.getType(), getVarPtr(node.getName()), val.getCode());
+        }
 
         return handleNormalExpressionInit(node, info);
     }
-
-    private String handleNormalExpressionInit(VariableDeclarationNode node, TypeInfos info) {
+    private LLVMValue handleNormalExpressionInit(VariableDeclarationNode node, TypeInfos info) {
+      //  System.out.println("[VariableEmitter] NormalExpressionInit -> " + node.getName());
         return expressionInitEmitter.emit(node, info);
     }
-    private String handleDefaultInit(VariableDeclarationNode node, TypeInfos info) {
 
+    private LLVMValue handleDefaultInit(VariableDeclarationNode node, TypeInfos info) {
         String varPtr = getVarPtr(node.getName());
         Type type = info.getType();
+      //  System.out.println("[VariableEmitter] handleDefaultInit -> " + node.getName() + " type: " + type);
 
-        if (type instanceof ListType listType) {
+        String code = "";
 
-            Type element = listType.elementType();
 
-            if (element == PrimitiveTypes.INT)
-                return callArrayListCreateIntAndStore(varPtr);
+        if (type == PrimitiveTypes.INT) code = "  store i32 0, i32* " + varPtr + "\n";
+        if (type == PrimitiveTypes.DOUBLE) code = "  store double 0.0, double* " + varPtr + "\n";
+        if (type == PrimitiveTypes.FLOAT) code = "  store float 0.0, float* " + varPtr + "\n";
+        if (type == PrimitiveTypes.BOOL) code = "  store i1 0, i1* " + varPtr + "\n";
+        if (type == PrimitiveTypes.CHAR) code = "  store i8 0, i8* " + varPtr + "\n";
+        if (type == PrimitiveTypes.STRING) return stringEmitter.createEmptyString(node.getName());
 
-            if (element == PrimitiveTypes.BOOL)
-                return callArrayListCreateBoolAndStore(varPtr);
-
-            if (element == PrimitiveTypes.DOUBLE)
-                return callArrayListCreateDoubleAndStore(varPtr);
-
-            if(element == PrimitiveTypes.STRING)
-                return callArrayListCreateStringAndStore(varPtr);
-            return callArrayListCreateAndStore(varPtr);
-        }
-
-        if (type == PrimitiveTypes.INT)
-            return "  store i32 0, i32* " + varPtr + "\n";
-
-        if (type == PrimitiveTypes.DOUBLE)
-            return "  store double 0.0, double* " + varPtr + "\n";
-
-        if (type == PrimitiveTypes.FLOAT)
-            return "  store float 0.0, float* " + varPtr + "\n";
-
-        if (type == PrimitiveTypes.BOOL)
-            return "  store i1 0, i1* " + varPtr + "\n";
-
-        if (type == PrimitiveTypes.CHAR)
-            return "  store i8 0, i8* " + varPtr + "\n";
-
-        if (type == PrimitiveTypes.STRING)
-            return stringEmitter.createEmptyString(node.getName());
-
-        return "";
+        return new LLVMValue(info.getLLVMType(), varPtr, code);
     }
 
-    private String handleInputInit(VariableDeclarationNode node, InputNode inputNode, TypeInfos info) {
+    public StoreEmitter getStoreEmitter() {
+        return storeEmitter;
+    }
+
+    private LLVMValue handleInputInit(VariableDeclarationNode node,
+                                      InputNode inputNode,
+                                      TypeInfos info) {
+        System.out.println("[VariableEmitter] Input init -> " + node.getName());
         InputEmitter inputEmitter = new InputEmitter(temps, visitor.getGlobalStrings());
-        String code = inputEmitter.emit(inputNode, info.getLLVMType());
-        String temp = extractTemp(code);
-        return code + emitStore(node.getName(), info.getLLVMType(), temp);
+        LLVMValue val = inputEmitter.emit(inputNode, info.getLLVMType());
+        LLVMValue stored = storeEmitter.emit(node.getName(), val);
+
+        return new LLVMValue(val.getType(), val.getName(), val.getCode() + stored.getCode());
     }
 
-    private String handleListLiteralInit(VariableDeclarationNode node,
-                                         ListNode listNode,
-                                         TypeInfos info) {
+    private LLVMValue handleListLiteralInit(VariableDeclarationNode node, ListNode listNode, TypeInfos info) {
 
-        Type type = info.getType();
-        String varPtr = getVarPtr(node.getName());
+        System.out.println("[VariableEmitter] List literal init -> " + node.getName());
 
-        if (!(type instanceof ListType listType))
-            throw new RuntimeException("Esperado ListType");
-
-        Type element = listType.elementType();
+        Type element = ((ListType) info.getType()).elementType();
+        LLVMValue val;
 
         if (element == PrimitiveTypes.INT) {
-            IntListEmitter e = new IntListEmitter(temps);
-            String code = e.emit(listNode, visitor);
-            return code + "  store %struct.ArrayListInt* " + extractTemp(code)
-                    + ", %struct.ArrayListInt** " + varPtr + "\n";
+            System.out.println("[VariableEmitter] Using IntListEmitter");
+            val = new IntListEmitter(temps).emit(listNode, visitor);
+
+        } else if (element == PrimitiveTypes.BOOL) {
+            System.out.println("[VariableEmitter] Using ListBoolEmitter");
+            val = new ListBoolEmitter(temps).emit(listNode, visitor);
+
+        } else if (element == PrimitiveTypes.DOUBLE) {
+            System.out.println("[VariableEmitter] Using ListDoubleEmitter");
+            val = new ListDoubleEmitter(temps).emit(listNode, visitor);
+        }
+        else if (element == PrimitiveTypes.STRING) {
+            val = new ListStringEmitter(temps).emit(listNode,visitor);
+        } else {
+            System.out.println("[VariableEmitter] Using generic ListEmitter");
+            val = new ListEmitter(temps).emit(listNode, visitor);
         }
 
-        if (element == PrimitiveTypes.BOOL) {
-            ListBoolEmitter e = new ListBoolEmitter(temps);
-            String code = e.emit(listNode, visitor);
-            return code + "  store %struct.ArrayListBool* " + extractTemp(code)
-                    + ", %struct.ArrayListBool** " + varPtr + "\n";
-        }
-        System.out.println("testando aqui " + element);
-        if (element == PrimitiveTypes.DOUBLE) {
-            ListDoubleEmitter e = new ListDoubleEmitter(temps);
-            String code = e.emit(listNode, visitor);
-            return code + "  store %struct.ArrayListDouble* " + extractTemp(code)
-                    + ", %struct.ArrayListDouble** " + varPtr + "\n";
-        }
+        LLVMValue stored = storeEmitter.emit(node.getName(), val);
 
-        ListEmitter e = new ListEmitter(temps);
-        String code = e.emit(listNode, visitor);
-        String tmp = extractTemp(code);
-
-        String llvmType = info.getLLVMType();
-
-        return code
-                + "  store " + llvmType + " " + tmp
-                + ", " + llvmType + "* " + varPtr + "\n";
-    }
-
-    // ================= UTILIDADES =================
-    private String callArrayListCreateAndStore(String varPtr) {
-        String tmp = temps.newTemp();
-        String casted = temps.newTemp();
-        return "  " + tmp + " = call i8* @arraylist_create(i64 4)\n" +
-                "  " + casted + " = bitcast i8* " + tmp + " to %ArrayList*\n" +
-                ";;VAL:" + casted + ";;TYPE:%ArrayList*\n" +
-                "  store %ArrayList* " + casted + ", %ArrayList** " + varPtr + "\n";
+        return new LLVMValue(val.getType(), val.getName(), val.getCode() + stored.getCode()
+        );
     }
 
 
-    private String callArrayListCreateStringAndStore(String varPtr) {
-
-        String tmp = temps.newTemp();
-
-        return "  " + tmp + " = call %ArrayListString* @arraylist_string_create(i64 4)\n" +
-                ";;VAL:" + tmp + ";;TYPE:%ArrayListString*\n" +
-                "  store %ArrayListString* " + tmp + ", %ArrayListString** " + varPtr + "\n";
-    }
-
-    private String callArrayListCreateIntAndStore(String varPtr) {
-        String tmp = temps.newTemp();
-        return "  " + tmp + " = call %struct.ArrayListInt* @arraylist_create_int(i64 4)\n" +
-                ";;VAL:" + tmp + ";;TYPE:%struct.ArrayListInt*\n" +
-                "  store %struct.ArrayListInt* " + tmp + ", %struct.ArrayListInt** " + varPtr + "\n";
-    }
-
-    private String callArrayListCreateDoubleAndStore(String varPtr) {
-        String tmp = temps.newTemp();
-        return "  " + tmp + " = call %struct.ArrayListDouble* @arraylist_create_double(i64 4)\n" +
-                ";;VAL:" + tmp + ";;TYPE:%struct.ArrayListDouble*\n" +
-                "  store %struct.ArrayListDouble* " + tmp + ", %struct.ArrayListDouble** " + varPtr + "\n";
-    }
-
-    private String callArrayListCreateBoolAndStore(String varPtr) {
-        String tmp = temps.newTemp();
-        return "  " + tmp + " = call %struct.ArrayListBool* @arraylist_create_bool(i64 4)\n" +
-                ";;VAL:" + tmp + ";;TYPE:%struct.ArrayListBool*\n" +
-                "  store %struct.ArrayListBool* " + tmp + ", %struct.ArrayListBool** " + varPtr + "\n";
-    }
-
-    public String emitStore(String name, String type, String value) {
-        return storeEmitter.emit(name, type, value);
-    }
-
-    public String emitLoad(String name) {
+    public LLVMValue emitLoad(String name) {
         TypeInfos info = varTypes.get(name);
-        String llvmType = info.getLLVMType();
         String ptr = getVarPtr(name);
         String tmp = temps.newTemp();
-        return "  " + tmp + " = load " + llvmType + ", " + llvmType + "* " + ptr +
-                "\n;;VAL:" + tmp + ";;TYPE:" + llvmType + "\n";
-    }
-
-    private String extractTemp(String code) {
-        int lastValIdx = code.lastIndexOf(";;VAL:");
-        int typeIdx = code.indexOf(";;TYPE:", lastValIdx);
-        return code.substring(lastValIdx + 6, typeIdx).trim();
+      //  System.out.println("[VariableEmitter] emitLoad -> " + name + ", tmp: " + tmp);
+        LLVMTYPES llvmType = info.getLLVMType();
+        LLVMTYPES ptrType = new LLVMPointer(llvmType);
+        String code = "  " + tmp + " = load "
+                + llvmType + ", "
+                + ptrType + " " + ptr + "\n";
+        return new LLVMValue(info.getLLVMType(), tmp, code);
     }
 }

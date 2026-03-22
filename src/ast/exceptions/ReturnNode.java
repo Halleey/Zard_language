@@ -5,6 +5,7 @@ import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import ast.expressions.TypedValue;
 import low.module.LLVMEmitVisitor;
+import low.module.builders.LLVMValue;
 
 
 public class ReturnNode extends ASTNode {
@@ -15,7 +16,7 @@ public class ReturnNode extends ASTNode {
     }
 
     @Override
-    public String accept(LLVMEmitVisitor visitor) {
+    public LLVMValue accept(LLVMEmitVisitor visitor) {
 
         return visitor.visit(this);
     }

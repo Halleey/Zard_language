@@ -1,12 +1,20 @@
 package low.lists.generics;
 
 import ast.lists.ListClearNode;
+import context.statics.symbols.PrimitiveTypes;
+import context.statics.symbols.Type;
 import low.TempManager;
 import low.lists.bool.ListBoolClearEmitter;
 import low.lists.doubles.ListDoubleClearEmitter;
 import low.lists.ints.ListIntClearEmitter;
 import low.module.LLVMEmitVisitor;
+import low.module.LLVisitorMain;
+import low.module.builders.LLVMValue;
+import low.module.builders.lists.LLVMArrayList;
+import low.module.builders.primitives.LLVMVoid;
+
 public class ListClearEmitter {
+
     private final TempManager temps;
     private final ListIntClearEmitter listIntClearEmitter;
     private final ListDoubleClearEmitter doubleClearEmitter;
@@ -19,49 +27,33 @@ public class ListClearEmitter {
         this.boolClearEmitter = new ListBoolClearEmitter(temps);
     }
 
-    public String emit(ListClearNode node, LLVMEmitVisitor visitor) {
+    public LLVMValue emit(ListClearNode node, LLVisitorMain visitor) {
+
+        LLVMValue listVal = node.getListNode().accept(visitor);
         StringBuilder llvm = new StringBuilder();
+        llvm.append(listVal.getCode());
 
-        String listCode = node.getListNode().accept(visitor);
-        llvm.append(listCode);
+        Type elemType = node.getType();
 
-        String listTmp = extractTemp(listCode);
-        String valType = extractType(listCode);
-
-
-        if (valType.contains("ArrayListInt")) {
-            return listIntClearEmitter.emit(node, visitor);
-        }
-        if (valType.contains("ArrayListDouble")) {
-            return doubleClearEmitter.emit(node, visitor);
-        }
-        if (valType.contains("ArrayListBool")) {
-            return boolClearEmitter.emit(node, visitor);
+        if (elemType instanceof PrimitiveTypes prim) {
+            if (prim == PrimitiveTypes.INT) return listIntClearEmitter.emit(node, visitor);
+            if (prim == PrimitiveTypes.DOUBLE) return doubleClearEmitter.emit(node, visitor);
+            if (prim == PrimitiveTypes.BOOL) return boolClearEmitter.emit(node, visitor);
         }
 
-        String arrTmp = listTmp;
-        if (!valType.equals("%ArrayList*")) {
-            arrTmp = temps.newTemp();
-            llvm.append("  ").append(arrTmp)
-                    .append(" = bitcast ").append(valType).append(" ").append(listTmp)
+        // Generic ArrayList clear
+        LLVMValue castedList = listVal;
+        if (!(listVal.getType() instanceof LLVMArrayList)) {
+            String castName = temps.newTemp();
+            llvm.append("  ").append(castName)
+                    .append(" = bitcast ").append(listVal.getType().toString())
+                    .append(" ").append(listVal.getName())
                     .append(" to %ArrayList*\n");
+            castedList = new LLVMValue(new LLVMArrayList(null), castName, "");
         }
 
-        llvm.append("  call void @clearList(%ArrayList* ").append(arrTmp).append(")\n");
-        llvm.append(";;VAL:").append(arrTmp).append(";;TYPE:%ArrayList*\n");
+        llvm.append("  call void @clearList(%ArrayList* ").append(castedList.getName()).append(")\n");
 
-        return llvm.toString();
-    }
-
-    private String extractTemp(String code) {
-        int lastValIdx = code.lastIndexOf(";;VAL:");
-        int typeIdx = code.indexOf(";;TYPE:", lastValIdx);
-        return code.substring(lastValIdx + 6, typeIdx).trim();
-    }
-
-    private String extractType(String code) {
-        int lastTypeIdx = code.lastIndexOf(";;TYPE:");
-        int endIdx = code.indexOf("\n", lastTypeIdx);
-        return code.substring(lastTypeIdx + 7, endIdx == -1 ? code.length() : endIdx).trim();
+        return new LLVMValue(new LLVMVoid(), castedList.getName(), llvm.toString());
     }
 }

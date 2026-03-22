@@ -6,8 +6,12 @@ import ast.variables.VariableNode;
 import low.TempManager;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
+import low.module.builders.LLVMValue;
+import low.module.builders.primitives.LLVMString;
+import low.module.builders.primitives.LLVMVoid;
 
 public class StringVariablePrintHandler implements PrintHandler {
+
     private final TempManager temps;
 
     public StringVariablePrintHandler(TempManager temps) {
@@ -18,20 +22,29 @@ public class StringVariablePrintHandler implements PrintHandler {
     public boolean canHandle(ASTNode node, LLVisitorMain visitor) {
         if (node instanceof VariableNode varNode) {
             TypeInfos info = visitor.getVarType(varNode.getName());
-            if (info == null) return false;
-            String llvmType = info.getLLVMType();
-            return "%String".equals(llvmType) || "%String*".equals(llvmType);
+            return info != null && info.getLLVMType() instanceof LLVMString;
         }
         return false;
     }
 
     @Override
-    public String emit(ASTNode node, LLVisitorMain visitor, boolean newline) {
+    public LLVMValue emit(ASTNode node, LLVisitorMain visitor, boolean newline) {
+
         String varName = ((VariableNode) node).getName();
-        String tmpLoad = temps.newTemp();
+
+        LLVMValue loaded = visitor.varEmitter.emitLoad(varName);
+
         String fn = newline ? "@printString" : "@printString_noNL";
 
-        return "  " + tmpLoad + " = load %String*, %String** %" + varName + "\n" +
-                "  call void " + fn + "(%String* " + tmpLoad + ")\n";
+        StringBuilder llvm = new StringBuilder();
+        llvm.append(loaded.getCode());
+
+        llvm.append("  call void ")
+                .append(fn)
+                .append("(%String* ")
+                .append(loaded.getName())
+                .append(")\n");
+
+        return new LLVMValue(new LLVMVoid(), "void", llvm.toString());
     }
 }

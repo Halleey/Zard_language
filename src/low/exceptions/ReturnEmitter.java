@@ -5,7 +5,13 @@ import ast.variables.LiteralNode;
 import ast.variables.VariableNode;
 import low.TempManager;
 import low.module.LLVisitorMain;
+import low.module.builders.LLVMPointer;
+import low.module.builders.LLVMTYPES;
+import low.module.builders.LLVMValue;
+import low.module.builders.primitives.LLVMChar;
+import low.module.builders.primitives.LLVMString;
 public class ReturnEmitter {
+
     private final LLVisitorMain visitor;
     private final TempManager temps;
 
@@ -14,107 +20,66 @@ public class ReturnEmitter {
         this.temps = temps;
     }
 
-    public String emit(ReturnNode node) {
-        StringBuilder sb = new StringBuilder();
+    public LLVMValue emit(ReturnNode node) {
 
+        StringBuilder llvm = new StringBuilder();
+
+        // void
         if (node.expr == null) {
-            sb.append("  ret void\n");
-            return sb.toString();
+            llvm.append("  ret void\n");
+            return new LLVMValue(null, "", llvm.toString());
         }
 
-        String exprCode = node.expr.accept(visitor);
-        sb.append(exprCode);
+        LLVMValue val = node.expr.accept(visitor);
+        llvm.append(val.getCode());
 
-        String temp = extractTemp(exprCode);
-        String type = extractType(exprCode);
+        LLVMTYPES type = val.getType();
+        String temp = val.getName();
 
-        if (node.expr instanceof VariableNode
-                && ("i32*".equals(type) || "double*".equals(type) || "i1*".equals(type))) {
-
-            String baseType = type.substring(0, type.length() - 1); // i32, double, i1
-            String loadTmp = temps.newTemp();
-
-            sb.append("  ").append(loadTmp)
-                    .append(" = load ").append(baseType)
-                    .append(", ").append(type).append(" ").append(temp).append("\n")
-                    .append(";;VAL:").append(loadTmp)
-                    .append(";;TYPE:").append(baseType).append("\n");
-
-            temp = loadTmp;
-            type = baseType;
+        // ===== CASO STRING JÁ PRONTA (%String*)
+        if (type instanceof LLVMString) {
+            llvm.append("  ret %String* ").append(temp).append("\n");
+            return new LLVMValue(type, temp, llvm.toString());
         }
 
-        // função já retorna %String* (apenas repassa)
-        if ("%String*".equals(type)) {
-            sb.append("  ret %String* ").append(temp).append("\n");
-            return sb.toString();
-        }
-
-        // literal string → construir %String na hora
-        if (node.expr instanceof LiteralNode lit && "string".equals(lit.value.type())) {
-            int len = ((String) lit.value.value()).length();
+        //  CASO i8* → wrap em %String
+        if (type instanceof LLVMPointer ptr && ptr.pointee() instanceof LLVMChar) {
 
             String sAlloca = temps.newTemp();
-            sb.append("  ").append(sAlloca).append(" = alloca %String\n");
+            llvm.append("  ").append(sAlloca).append(" = alloca %String\n");
 
             String fld0 = temps.newTemp();
-            sb.append("  ").append(fld0)
+            llvm.append("  ").append(fld0)
                     .append(" = getelementptr inbounds %String, %String* ")
                     .append(sAlloca).append(", i32 0, i32 0\n");
-            sb.append("  store i8* ").append(temp).append(", i8** ").append(fld0).append("\n");
+
+            llvm.append("  store i8* ")
+                    .append(temp)
+                    .append(", i8** ")
+                    .append(fld0)
+                    .append("\n");
 
             String fld1 = temps.newTemp();
-            sb.append("  ").append(fld1)
+            llvm.append("  ").append(fld1)
                     .append(" = getelementptr inbounds %String, %String* ")
                     .append(sAlloca).append(", i32 0, i32 1\n");
-            sb.append("  store i64 ").append(len).append(", i64* ").append(fld1).append("\n");
 
-            sb.append("  ret %String* ").append(sAlloca).append("\n");
-            return sb.toString();
+            llvm.append("  store i64 0, i64* ")
+                    .append(fld1)
+                    .append("\n");
+
+            llvm.append("  ret %String* ").append(sAlloca).append("\n");
+
+            return new LLVMValue(new LLVMString(), sAlloca, llvm.toString());
         }
 
-        // i8* genérico → embrulha em %String (length desconhecido)
-        if ("i8*".equals(type)) {
-            String sAlloca = temps.newTemp();
-            sb.append("  ").append(sAlloca).append(" = alloca %String\n");
+        // ===== CASO GERAL
+        llvm.append("  ret ")
+                .append(type)
+                .append(" ")
+                .append(temp)
+                .append("\n");
 
-            String fld0 = temps.newTemp();
-            sb.append("  ").append(fld0)
-                    .append(" = getelementptr inbounds %String, %String* ")
-                    .append(sAlloca).append(", i32 0, i32 0\n");
-            sb.append("  store i8* ").append(temp).append(", i8** ").append(fld0).append("\n");
-
-            String fld1 = temps.newTemp();
-            sb.append("  ").append(fld1)
-                    .append(" = getelementptr inbounds %String, %String* ")
-                    .append(sAlloca).append(", i32 0, i32 1\n");
-            sb.append("  store i64 0, i64* ").append(fld1).append("\n"); // length unknown here
-
-            sb.append("  ret %String* ").append(sAlloca).append("\n");
-            return sb.toString();
-        }
-
-        // caso geral
-        sb.append("  ret ").append(type).append(" ").append(temp).append("\n");
-        return sb.toString();
-    }
-
-    private String extractTemp(String code) {
-        int idx = code.lastIndexOf(";;VAL:");
-        if (idx == -1) {
-            String[] lines = code.strip().split("\n");
-            String last = lines[lines.length - 1];
-            String[] parts = last.trim().split("\\s+");
-            return parts[parts.length - 1];
-        }
-        int endIdx = code.indexOf(";;TYPE:", idx);
-        return code.substring(idx + 6, endIdx).trim();
-    }
-
-    private String extractType(String code) {
-        int idx = code.indexOf(";;TYPE:");
-        if (idx == -1) return "";
-        int endIdx = code.indexOf("\n", idx);
-        return code.substring(idx + 7, endIdx == -1 ? code.length() : endIdx).trim();
+        return new LLVMValue(type, temp, llvm.toString());
     }
 }

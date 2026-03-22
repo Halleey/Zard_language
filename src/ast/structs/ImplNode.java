@@ -7,6 +7,7 @@ import ast.functions.FunctionNode;
 import context.runtime.RuntimeContext;
 import context.statics.structs.StaticStructDefinition;
 import low.module.LLVMEmitVisitor;
+import low.module.builders.LLVMValue;
 
 import java.util.List;
 import java.util.Map;
@@ -29,7 +30,7 @@ public class ImplNode extends ASTNode {
     }
 
     @Override
-    public String accept(LLVMEmitVisitor visitor) {
+    public LLVMValue accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
 

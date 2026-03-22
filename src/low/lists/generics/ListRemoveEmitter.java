@@ -1,119 +1,91 @@
 package low.lists.generics;
 
 import ast.lists.ListRemoveNode;
+import context.statics.symbols.PrimitiveTypes;
+import context.statics.symbols.Type;
 import low.TempManager;
 import low.lists.bool.ListBoolRemoveEmitter;
 import low.lists.doubles.ListDoubleRemoveEmitter;
 import low.lists.ints.ListRemoveIntEmitter;
 import low.module.LLVMEmitVisitor;
+import low.module.LLVisitorMain;
+import low.module.builders.LLVMValue;
+import low.module.builders.lists.LLVMArrayList;
+import low.module.builders.primitives.LLVMInt;
+import low.module.builders.primitives.LLVMVoid;
+
 
 public class ListRemoveEmitter {
 
     private final TempManager temps;
     private final ListRemoveIntEmitter intEmitter;
-    private final ListDoubleRemoveEmitter doubleRemoveEmitter;
-    private final ListBoolRemoveEmitter boolRemoveEmitter;
+    private final ListDoubleRemoveEmitter doubleEmitter;
+    private final ListBoolRemoveEmitter boolEmitter;
 
     public ListRemoveEmitter(TempManager temps) {
         this.temps = temps;
         this.intEmitter = new ListRemoveIntEmitter(temps);
-        this.doubleRemoveEmitter = new ListDoubleRemoveEmitter(temps);
-        this.boolRemoveEmitter = new ListBoolRemoveEmitter(temps);
+        this.doubleEmitter = new ListDoubleRemoveEmitter(temps);
+        this.boolEmitter = new ListBoolRemoveEmitter(temps);
     }
 
-    public String emit(ListRemoveNode node, LLVMEmitVisitor visitor) {
+    public LLVMValue emit(ListRemoveNode node, LLVisitorMain visitor) {
+
+        Type elemType = node.getType();
+
+        System.out.println("basic debug for type list " + elemType);
+        if (elemType instanceof PrimitiveTypes prim) {
+            if (prim == PrimitiveTypes.INT) return intEmitter.emit(node, visitor);
+            if (prim == PrimitiveTypes.DOUBLE) return doubleEmitter.emit(node, visitor);
+            if (prim == PrimitiveTypes.BOOL) return boolEmitter.emit(node, visitor);
+        }
 
         StringBuilder llvm = new StringBuilder();
 
-        String listCode = node.getListNode().accept(visitor);
-        String type = extractLastType(listCode);
-        String listVal = extractLastVal(listCode);
+        // ===== LIST =====
+        LLVMValue listVal = node.getListNode().accept(visitor);
+        llvm.append(listVal.getCode());
 
+        // ===== INDEX =====
+        LLVMValue idxVal = node.getIndexNode().accept(visitor);
+        llvm.append(idxVal.getCode());
 
-        if (type.contains("ArrayListInt")) {
-            return intEmitter.emit(node, visitor);
+        if (!(idxVal.getType() instanceof LLVMInt)) {
+            throw new RuntimeException(
+                    "ListRemove: index must be int, got: " + idxVal.getType()
+            );
         }
 
-        if (type.contains("ArrayListDouble")) {
-            return doubleRemoveEmitter.emit(node, visitor);
-        }
+        String idx64 = temps.newTemp();
+        llvm.append("  ").append(idx64)
+                .append(" = zext i32 ")
+                .append(idxVal.getName())
+                .append(" to i64\n");
 
-        if (type.contains("ArrayListBool")) {
-            return boolRemoveEmitter.emit(node, visitor);
-        }
-
-        System.out.println("debugando " + type);
-        if (type.contains("ArrayListString")) {
-            System.out.println("entrou aqui no remove ");
-            String posCode = node.getIndexNode().accept(visitor);
-            llvm.append(listCode);
-            llvm.append(posCode);
-
-            String posVal = extractLastVal(posCode);
-
-            String posCast = temps.newTemp();
-            llvm.append("  ").append(posCast)
-                    .append(" = zext i32 ").append(posVal).append(" to i64\n");
-
-            llvm.append("  call void @arraylist_string_remove(%ArrayListString* ")
-                    .append(listVal)
-                    .append(", i64 ")
-                    .append(posCast)
-                    .append(")\n");
-
-            return llvm.toString();
-        }
-
-
-        String posCode = node.getIndexNode().accept(visitor);
-        llvm.append(listCode);
-        llvm.append(posCode);
-
-        String posVal = extractLastVal(posCode);
-
-        String posCast = temps.newTemp();
-        llvm.append("  ").append(posCast)
-                .append(" = zext i32 ").append(posVal).append(" to i64\n");
-
-        if (type.contains("ArrayList")) {
+        // ===== GENERIC REMOVE =====
+        if (listVal.getType() instanceof LLVMArrayList) {
 
             llvm.append("  call void @removeItem(%ArrayList* ")
-                    .append(listVal)
+                    .append(listVal.getName())
                     .append(", i64 ")
-                    .append(posCast)
+                    .append(idx64)
                     .append(")\n");
 
         } else {
 
-            String listCast = temps.newTemp();
+            String cast = temps.newTemp();
 
-            llvm.append("  ").append(listCast)
+            llvm.append("  ").append(cast)
                     .append(" = bitcast i8* ")
-                    .append(listVal)
+                    .append(listVal.getName())
                     .append(" to %ArrayList*\n");
 
             llvm.append("  call void @removeItem(%ArrayList* ")
-                    .append(listCast)
+                    .append(cast)
                     .append(", i64 ")
-                    .append(posCast)
+                    .append(idx64)
                     .append(")\n");
         }
-
-        return llvm.toString();
-    }
-
-    private String extractLastVal(String code) {
-        int v = code.lastIndexOf(";;VAL:");
-        if (v == -1) return "";
-        int t = code.indexOf(";;TYPE:", v);
-        return (t == -1) ? "" : code.substring(v + 6, t).trim();
-    }
-
-    private String extractLastType(String code) {
-        int t = code.lastIndexOf(";;TYPE:");
-        if (t == -1) return "";
-        int end = code.indexOf("\n", t);
-        if (end == -1) end = code.length();
-        return code.substring(t + 7, end).trim();
+        return new LLVMValue(new LLVMVoid(), "", llvm.toString());
     }
 }

@@ -7,10 +7,15 @@ import ast.variables.VariableNode;
 import low.TempManager;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
+import low.module.builders.LLVMPointer;
+import low.module.builders.LLVMTYPES;
+import low.module.builders.LLVMValue;
+import low.module.builders.structs.LLVMStruct;
 import low.utils.LLVMNameUtils;
 
 
 public class StructPrintHandler implements PrintHandler {
+
     private final TempManager temps;
 
     public StructPrintHandler(TempManager temps) {
@@ -19,116 +24,58 @@ public class StructPrintHandler implements PrintHandler {
 
     @Override
     public boolean canHandle(ASTNode node, LLVisitorMain visitor) {
-        String llvmType = null;
 
         if (node instanceof VariableNode var) {
             TypeInfos info = visitor.getVarType(var.getName());
-            if (info != null) llvmType = info.getLLVMType();
-        } else if (node instanceof StructInstanceNode inst) {
-            llvmType = "%" + inst.getName() + "*";
+            return info != null && info.getLLVMType() instanceof LLVMPointer;
         }
-
-        return llvmType != null
-                && llvmType.startsWith("%")
-                && llvmType.endsWith("*")
-                && !llvmType.equals("%String*");
+        return false;
     }
 
     @Override
-    public String emit(ASTNode node, LLVisitorMain visitorMain, boolean newline) {
+    public LLVMValue emit(ASTNode node, LLVisitorMain visitor, boolean newline) {
+
+        LLVMValue val = node.accept(visitor);
+
         StringBuilder llvm = new StringBuilder();
+        llvm.append(val.getCode());
 
-        String code = node.accept(visitorMain);
-        if (code != null && !code.isBlank()) llvm.append(code);
+        LLVMTYPES type = val.getType();
+        String temp = val.getName();
 
-        String temp = extractTemp(code);
-        String type = extractType(code).trim();
+        //  NORMALIZAÇÃO DE PONTEIROS
 
-        // Corrige ponteiro duplo
-        if (type.endsWith("**")) {
-            String base = type.substring(0, type.length() - 1);
-            String t = temps.newTemp();
-            llvm.append("  ").append(t)
-                    .append(" = load ").append(base)
-                    .append(", ").append(base).append("* ").append(temp).append("\n");
-            llvm.append(";;VAL:").append(t).append(";;TYPE:").append(base).append("\n");
-            temp = t;
-            type = base;
+        // caso: %Struct** → vira %Struct*
+        if (type instanceof LLVMPointer ptr && ptr.pointee() instanceof LLVMPointer inner) {
+
+            String loaded = temps.newTemp();
+
+            llvm.append("  ").append(loaded)
+                    .append(" = load ")
+                    .append(inner).append(", ")
+                    .append(type).append(" ")
+                    .append(temp).append("\n");
+
+            temp = loaded;
+            type = inner;
         }
 
-        String key = normalizeKeyFromLLVMPtr(type);
-        StructNode def = resolveStructNode(key, visitorMain);
-        if (def == null) {
-            throw new RuntimeException("Struct não encontrada para impressão: " + key + " (type=" + type + ")");
+        if (!(type instanceof LLVMPointer ptr)) {
+            throw new RuntimeException("Esperado ponteiro para struct, encontrado: " + type);
         }
 
-        String llvmStructName = LLVMNameUtils.llvmSafe(def.getLLVMName()).replace("<", "_").replace(">", "");
-        String targetPtrType = "%" + llvmStructName + "*";
-
-        if (!type.equals(targetPtrType)) {
-            String castTemp = temps.newTemp();
-            llvm.append("  ").append(castTemp)
-                    .append(" = bitcast ").append(type).append(" ").append(temp)
-                    .append(" to ").append(targetPtrType).append("\n");
-            llvm.append(";;VAL:").append(castTemp).append(";;TYPE:").append(targetPtrType).append("\n");
-            temp = castTemp;
-            type = targetPtrType;
+        if (!(ptr.pointee() instanceof LLVMStruct structType)) {
+            throw new RuntimeException("Esperado struct para print, encontrado: " + type);
         }
+
+        String structName = structType.getName();
 
         llvm.append("  call void @print_")
-                .append(llvmStructName)
-                .append("(").append(type).append(" ").append(temp).append(")\n");
+                .append(structName)
+                .append("(%").append(structName).append("* ")
+                .append(temp)
+                .append(")\n");
 
-        llvm.append(";;VAL:").append(temp).append(";;TYPE:").append(type).append("\n");
-
-        return llvm.toString();
-    }
-
-    private StructNode resolveStructNode(String key, LLVisitorMain visitor) {
-        StructNode n = visitor.getStructNode(key);
-        if (n != null) return n;
-
-        String base = stripGenericBase(key);
-        String safe = LLVMNameUtils.llvmSafe(key);
-        String safeBase = LLVMNameUtils.llvmSafe(base);
-
-        n = visitor.getStructNode(base + "<int>");
-        if (n != null) return n;
-
-        n = visitor.getStructNode(base + "_" + safeBase);
-        if (n != null) return n;
-
-        n = visitor.getStructNode(safe);
-        if (n != null) return n;
-
-        n = visitor.getStructNode("%" + safe);
-        return n;
-    }
-
-    private String stripGenericBase(String key) {
-        int idx = key.indexOf('<');
-        return (idx > 0) ? key.substring(0, idx).trim() : key;
-    }
-
-    private String normalizeKeyFromLLVMPtr(String llvmPtrType) {
-        String t = llvmPtrType.trim();
-        if (t.startsWith("%")) t = t.substring(1);
-        while (t.endsWith("*")) t = t.substring(0, t.length() - 1);
-        return t;
-    }
-
-    private String extractTemp(String code) {
-        if (code == null) return "%unk";
-        int v = code.lastIndexOf(";;VAL:");
-        int t = code.indexOf(";;TYPE:", v);
-        if (v == -1 || t == -1) return "%unk";
-        return code.substring(v + 6, t).trim();
-    }
-
-    private String extractType(String code) {
-        if (code == null) return "%unk";
-        int t = code.lastIndexOf(";;TYPE:");
-        if (t == -1) return "%unk";
-        return code.substring(t + 7).trim();
+        return new LLVMValue(type, temp, llvm.toString());
     }
 }

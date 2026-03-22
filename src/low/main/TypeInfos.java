@@ -3,13 +3,15 @@ package low.main;
 import context.statics.symbols.ListType;
 import context.statics.symbols.StructType;
 import context.statics.symbols.Type;
+import low.module.builders.LLVMTYPES;
+
 
 public class TypeInfos {
 
-    private final Type type;          // tipo semântico real
-    private final String llvmType;    // tipo físico LLVM
+    private final Type type;              // tipo semântico
+    private final LLVMTYPES llvmType;     // tipo LLVM real (fortemente tipado)
 
-    public TypeInfos(Type type, String llvmType) {
+    public TypeInfos(Type type, LLVMTYPES llvmType) {
         this.type = type;
         this.llvmType = llvmType;
     }
@@ -18,7 +20,7 @@ public class TypeInfos {
         return type;
     }
 
-    public String getLLVMType() {
+    public LLVMTYPES getLLVMType() {
         return llvmType;
     }
 

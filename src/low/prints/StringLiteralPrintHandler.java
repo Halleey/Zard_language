@@ -2,38 +2,57 @@ package low.prints;
 
 import ast.ASTNode;
 import ast.variables.LiteralNode;
+import context.statics.symbols.PrimitiveTypes;
 import low.TempManager;
 import low.main.GlobalStringManager;
 import low.module.LLVisitorMain;
-
+import low.module.builders.LLVMValue;
+import low.module.builders.primitives.LLVMString;
 
 public class StringLiteralPrintHandler implements PrintHandler {
-    private final GlobalStringManager stringManager;
-    private final TempManager tempManager;
 
-    public StringLiteralPrintHandler(GlobalStringManager stringManager, TempManager tempManager) {
+    private final GlobalStringManager stringManager;
+    private final TempManager temps;
+
+    public StringLiteralPrintHandler(GlobalStringManager stringManager, TempManager temps) {
         this.stringManager = stringManager;
-        this.tempManager = tempManager;
+        this.temps = temps;
     }
 
     @Override
     public boolean canHandle(ASTNode node, LLVisitorMain visitor) {
-        return node instanceof LiteralNode lit && "string".equals(lit.value.type());
+        return node instanceof LiteralNode lit
+                && lit.value.type().equals(PrimitiveTypes.STRING);
     }
 
     @Override
-    public String emit(ASTNode node, LLVisitorMain visitor, boolean newline) {
+    public LLVMValue emit(ASTNode node, LLVisitorMain visitor, boolean newline) {
+
         LiteralNode lit = (LiteralNode) node;
         String value = (String) lit.value.value();
-        String strName = stringManager.getOrCreateString(value);
-        int len = value.length() + 1;
-        String tmp = tempManager.newTemp();
 
-        String label = newline ? ".strStr" : ".strStr_noNL";
+        String globalName = stringManager.getStringRef(value);
+        int len = stringManager.getLength(value);
 
-        return "  " + tmp + " = getelementptr inbounds [" + len + " x i8], [" + len + " x i8]* "
-                + strName + ", i32 0, i32 0\n" +
-                "  call i32 (i8*, ...) @printf(i8* getelementptr ([4 x i8], [4 x i8]* @"
-                + label + ", i32 0, i32 0), i8* " + tmp + ")\n";
+        String gep = "getelementptr ([" + len + " x i8], [" + len + " x i8]* "
+                + globalName + ", i32 0, i32 0)";
+
+        String tmp = temps.newTemp();
+        StringBuilder llvm = new StringBuilder();
+
+        llvm.append("  ").append(tmp)
+                .append(" = call %String* @createString(i8* ")
+                .append(gep)
+                .append(")\n");
+
+        String fn = newline ? "@printString" : "@printString_noNL";
+
+        llvm.append("  call void ")
+                .append(fn)
+                .append("(%String* ")
+                .append(tmp)
+                .append(")\n");
+
+        return new LLVMValue(new LLVMString(), tmp, llvm.toString());
     }
 }

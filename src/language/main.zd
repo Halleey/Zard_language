@@ -1,69 +1,37 @@
+import "src/language/stdlib/Math.zd" as math;
+
 main {
-Struct Item {
- int id;
- string name;
- List<int> quantidade;
+    double a = 10;
+    double b = 3;
+    int n = 5;
+
+
+    println(math.sum(a, b));
+    println(math.sub(a, b));
+    println(math.mul(a, b));
+    println(math.div(a, b));
+
+
+    println(math.pow(a, 3));
+
+
+    println(math.factorial(n));
+
+    println(math.sqrt(a));
+
+
+    println(math.sin(a));
+    println(math.cos(a));
+
+
+    println("Tentando dividir por zero:");
+    println(math.div(a, 0));
+
+    println("Tentando fatorial de número negativo:");
+    println(math.factorial(-3));
+
+    println("Tentando raiz quadrada de número negativo:");
+    println(math.sqrt(-9));
+
+    println("Fim dos testes.");
 }
- Struct Set{
-  List<Item> data;
- }
-
- impl Set {
- function void addItem(int id, string name, int quantidade) {
-   Item it;
-   it.id = id;
-   it.name = name;
-   it.quantidade.add(quantidade);
-   s.data.add(it);
-
-  }
-
-  function void removeFirst() {
-   if (s.data.size() > 0) {
-   s.data.remove(0);
-   }
-  }
-  function void removeItemById(int id) {
-  int i = 0; while (i < s.data.size()) {
-  Item cur = s.data.get(i);
-   if (cur.id == id) {
-   s.data.remove(i);
-
-   }
-   i++;
-  }
-
- }
-  function void prints() {
-    int i = 0;
-
-
-    while (i < s.data.size()) {
-      Item cur = s.data.get(i);
-
-      println("Item {");
-      print("id: ");
-      println(cur.id);
-      print("name: ");
-      println(cur.name);
-      print("Quantidade : ");
-      println(cur.quantidade);
-      println("}");
-
-      i++;
-    }
-
-  }
-
-}
-
-# ==== Item ====
-  Set items;
-  Item teste;
-  items.addItem(1, "Sword",3);
-  items.addItem(2, "Shield",2);
-  items.addItem(3, "Potion",6);
-  items.removeItemById(2);
-
-  items.prints();
- }

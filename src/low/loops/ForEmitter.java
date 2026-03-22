@@ -4,6 +4,9 @@ import ast.ASTNode;
 import ast.loops.ForNode;
 import low.TempManager;
 import low.module.LLVisitorMain;
+import low.module.builders.LLVMTYPES;
+import low.module.builders.LLVMValue;
+import low.module.builders.primitives.LLVMVoid;
 
 public class ForEmitter {
 
@@ -15,7 +18,7 @@ public class ForEmitter {
         this.visitor = visitor;
     }
 
-    public String emit(ForNode node) {
+    public LLVMValue emit(ForNode node) {
         StringBuilder llvm = new StringBuilder();
 
         String initLabel = temps.newLabel("for_init");
@@ -26,51 +29,55 @@ public class ForEmitter {
 
         llvm.append("  br label %").append(initLabel).append("\n");
 
+        // INIT
         llvm.append(initLabel).append(":\n");
         if (node.getInit() != null) {
-            llvm.append(node.getInit().accept(visitor));
+            LLVMValue init = node.getInit().accept(visitor);
+            llvm.append(init.getCode());
         }
         llvm.append("  br label %").append(condLabel).append("\n");
 
+        // CONDITION
         llvm.append(condLabel).append(":\n");
         if (node.getCondition() != null) {
-            String condCode = node.getCondition().accept(visitor);
-            String condVal = extractTemp(condCode);
-            llvm.append(condCode);
-            llvm.append("  br i1 ").append(condVal)
+            LLVMValue cond = node.getCondition().accept(visitor);
+
+            llvm.append(cond.getCode());
+
+            llvm.append("  br i1 ").append(cond.getName())
                     .append(", label %").append(bodyLabel)
                     .append(", label %").append(endLabel).append("\n");
         } else {
             llvm.append("  br label %").append(bodyLabel).append("\n");
         }
 
+        // BODY
         llvm.append(bodyLabel).append(":\n");
         visitor.getControlFlow().pushLoopEnd(endLabel);
 
         for (ASTNode stmt : node.getBody()) {
-            llvm.append(stmt.accept(visitor));
+            LLVMValue stmtVal = stmt.accept(visitor);
+            llvm.append(stmtVal.getCode());
         }
 
         visitor.getControlFlow().popLoopEnd();
         llvm.append("  br label %").append(incLabel).append("\n");
 
+        // INCREMENT
         llvm.append(incLabel).append(":\n");
         if (node.getIncrement() != null) {
-            llvm.append(node.getIncrement().accept(visitor));
+            LLVMValue inc = node.getIncrement().accept(visitor);
+            llvm.append(inc.getCode());
         }
         llvm.append("  br label %").append(condLabel).append("\n");
 
+        // END
         llvm.append(endLabel).append(":\n");
 
-        return llvm.toString();
-    }
-
-    private String extractTemp(String code) {
-        int lastValIdx = code.lastIndexOf(";;VAL:");
-        if (lastValIdx == -1)
-            throw new RuntimeException("Não encontrou ;;VAL: em:\n" + code);
-
-        int typeIdx = code.indexOf(";;TYPE:", lastValIdx);
-        return code.substring(lastValIdx + 6, typeIdx).trim();
+        return new LLVMValue(
+                new LLVMVoid(),
+                "",
+                llvm.toString()
+        );
     }
 }

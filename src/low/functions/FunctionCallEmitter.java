@@ -10,11 +10,16 @@ import context.statics.symbols.Type;
 import low.TempManager;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
+import low.module.builders.LLVMTYPES;
+import low.module.builders.LLVMValue;
+import low.module.builders.primitives.LLVMDouble;
+import low.module.builders.primitives.LLVMVoid;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 public class FunctionCallEmitter {
 
     private final TempManager temps;
@@ -57,15 +62,14 @@ public class FunctionCallEmitter {
         if (visitor.importedFunctions != null) visitor.importedFunctions.keySet().forEach(System.out::println);
     }
 
-    public String emit(FunctionCallNode node, LLVisitorMain visitor) {
-        StringBuilder sb = new StringBuilder();
+    public LLVMValue emit(FunctionCallNode node, LLVisitorMain visitor) {
+
+        StringBuilder llvm = new StringBuilder();
         List<String> llvmArgs = new ArrayList<>();
-        TypeMapper typeMapper = new TypeMapper();
 
         String originalName = node.getName();
         String llvmFuncName = resolveLLVMFuncName(originalName, visitor);
 
-        // resolve target function
         FunctionNode targetFn = visitor.functions.getOrDefault(originalName,
                 visitor.functions.getOrDefault(llvmFuncName,
                         visitor.importedFunctions.getOrDefault(originalName,
@@ -81,30 +85,28 @@ public class FunctionCallEmitter {
 
         for (int i = 0; i < node.getArgs().size(); i++) {
             ASTNode arg = node.getArgs().get(i);
-            ParamInfo param = (expectedParams != null && i < expectedParams.size()) ? expectedParams.get(i) : null;
+            ParamInfo param = (expectedParams != null && i < expectedParams.size())
+                    ? expectedParams.get(i)
+                    : null;
 
             if (param != null && param.isRef()) {
                 if (!(arg instanceof VariableNode var)) {
-                    throw new RuntimeException(
-                            "Parâmetro '&" + param.name() + "' exige uma variável"
-                    );
+                    throw new RuntimeException("Parâmetro '&" + param.name() + "' exige variável");
                 }
 
                 String varPtr = visitor.getVariableEmitter().getVarPtr(var.getName());
-                Type varType = visitor.getVarType(var.getName()).getType(); // AST Type
-                String llvmParamType = typeMapper.toLLVM(varType) + "*";
-                llvmArgs.add(llvmParamType + " " + varPtr);
+                LLVMTYPES varType = visitor.getVarType(var.getName()).getLLVMType();
+
+                llvmArgs.add(varType + "* " + varPtr);
                 continue;
             }
 
-            // Avalia argumento
-            String argLLVM = arg.accept(visitor);
-            sb.append(argLLVM);
+            LLVMValue argVal = arg.accept(visitor);
+            llvm.append(argVal.getCode());
 
-            String temp = extractTemp(argLLVM);
-            String argLLVMType = extractType(argLLVM); // LLVM type (i32, double, %Struct*, etc.)
+            String temp = argVal.getName();
+            LLVMTYPES argType = argVal.getType();
 
-            // conversão implícita usando Type
             if (param != null && param.type() != null) {
                 Type expectedType = param.type();
 
@@ -113,57 +115,44 @@ public class FunctionCallEmitter {
 
                     if (argPrim == PrimitiveTypes.INT && expPrim == PrimitiveTypes.DOUBLE) {
                         String convTemp = temps.newTemp();
-                        sb.append("  ").append(convTemp)
+
+                        llvm.append("  ").append(convTemp)
                                 .append(" = sitofp i32 ").append(temp)
-                                .append(" to double\n")
-                                .append(";;VAL:").append(convTemp)
-                                .append(";;TYPE:double\n");
+                                .append(" to double\n");
+
                         temp = convTemp;
-                        argLLVMType = "double";
+                        argType = new LLVMDouble();
                     }
                 }
             }
 
-            llvmArgs.add(argLLVMType + " " + temp);
+            llvmArgs.add(argType + " " + temp);
         }
 
         TypeInfos retInfo = visitor.getFunctionType(llvmFuncName);
+
         if (retInfo == null) {
             debugDumpFunctions(visitor);
             throw new RuntimeException("Função não registrada: " + originalName);
         }
 
-        String retLLVMType = retInfo.getLLVMType();
-        if ("void".equals(retLLVMType)) {
-            sb.append("  call void @").append(llvmFuncName)
-                    .append("(").append(String.join(", ", llvmArgs)).append(")\n")
-                    .append(";;VAL:void;;TYPE:void\n");
-        } else {
-            String retTemp = temps.newTemp();
-            sb.append("  ").append(retTemp)
-                    .append(" = call ").append(retLLVMType)
-                    .append(" @").append(llvmFuncName)
-                    .append("(").append(String.join(", ", llvmArgs)).append(")\n")
-                    .append(";;VAL:").append(retTemp)
-                    .append(";;TYPE:").append(retLLVMType).append("\n");
+        LLVMTYPES retType = retInfo.getLLVMType();
+
+        if (retType instanceof LLVMVoid) {
+            llvm.append("  call void @").append(llvmFuncName)
+                    .append("(").append(String.join(", ", llvmArgs)).append(")\n");
+
+            return new LLVMValue(new LLVMVoid(), "", llvm.toString());
         }
 
-        return sb.toString();
+        String retTemp = temps.newTemp();
+
+        llvm.append("  ").append(retTemp)
+                .append(" = call ").append(retType)
+                .append(" @").append(llvmFuncName)
+                .append("(").append(String.join(", ", llvmArgs)).append(")\n");
+
+        return new LLVMValue(retType, retTemp, llvm.toString());
     }
 
-    private String extractTemp(String ir) {
-
-        int idx = ir.lastIndexOf(";;VAL:");
-        if (idx < 0) return null;
-        int end = ir.indexOf(";;TYPE:", idx);
-        return ir.substring(idx + 6, end).trim();
-    }
-
-    private String extractType(String ir) {
-        int idx = ir.lastIndexOf(";;TYPE:");
-        if (idx < 0) return null;
-        int end = ir.indexOf("\n", idx);
-        if (end < 0) end = ir.length();
-        return ir.substring(idx + 7, end).trim();
-    }
 }

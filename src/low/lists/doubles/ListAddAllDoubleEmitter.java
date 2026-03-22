@@ -1,9 +1,11 @@
 package low.lists.doubles;
 
-import ast.ASTNode;
 import ast.lists.ListAddAllNode;
 import low.TempManager;
-import low.module.LLVMEmitVisitor;
+import low.module.LLVisitorMain;
+import low.module.builders.LLVMValue;
+import low.module.builders.lists.LLVMArrayList;
+import low.module.builders.primitives.LLVMInt;
 
 public class ListAddAllDoubleEmitter {
     private final TempManager temps;
@@ -11,34 +13,30 @@ public class ListAddAllDoubleEmitter {
     public ListAddAllDoubleEmitter(TempManager temps) {
         this.temps = temps;
     }
-
-    public String emit(ListAddAllNode node, LLVMEmitVisitor visitor) {
+    public LLVMValue emit(ListAddAllNode node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
 
-        ASTNode targetListNode = node.getTargetListNode();
-        String listCode = targetListNode.accept(visitor);
-        llvm.append(listCode);
-        String listTmp = extractTemp(listCode);
+        LLVMValue listVal = node.getTargetListNode().accept(visitor);
+        llvm.append(listVal.getCode());
+        String listTmp = listVal.getName();
 
         int n = node.getArgs().size();
-        if (n == 0) return llvm.toString();
+        if (n == 0) return listVal;
 
         String tmpArray = temps.newTemp();
         llvm.append("  ").append(tmpArray)
                 .append(" = alloca double, i64 ").append(n).append("\n");
 
         for (int i = 0; i < n; i++) {
-            ASTNode valueNode = node.getArgs().get(i);
-            String valCode = valueNode.accept(visitor);
-            llvm.append(valCode);
-            String valTmp = extractTemp(valCode);
+            LLVMValue val = node.getArgs().get(i).accept(visitor);
+            llvm.append(val.getCode());
 
             String gepTmp = temps.newTemp();
             llvm.append("  ").append(gepTmp)
                     .append(" = getelementptr inbounds double, double* ")
                     .append(tmpArray).append(", i64 ").append(i).append("\n");
 
-            llvm.append("  store double ").append(valTmp)
+            llvm.append("  store double ").append(val.getName())
                     .append(", double* ").append(gepTmp).append("\n");
         }
 
@@ -47,17 +45,11 @@ public class ListAddAllDoubleEmitter {
                 .append(", double* ").append(tmpArray)
                 .append(", i64 ").append(n).append(")\n");
 
-        llvm.append(";;VAL:").append(listTmp)
-                .append(";;TYPE:%struct.ArrayListInt*\n");
-
-        return llvm.toString();
+        return new LLVMValue(
+                new LLVMArrayList(new LLVMInt()),
+                listTmp,
+                llvm.toString()
+        );
     }
 
-    private String extractTemp(String code) {
-        int lastValIdx = code.lastIndexOf(";;VAL:");
-        int typeIdx = code.indexOf(";;TYPE:", lastValIdx);
-        if (lastValIdx == -1 || typeIdx == -1)
-            throw new RuntimeException("Failed to extract temp in ListDoubleAddAllEmitter:\n" + code);
-        return code.substring(lastValIdx + 6, typeIdx).trim();
-    }
 }

@@ -9,6 +9,7 @@ import context.statics.symbols.ListType;
 import context.statics.symbols.Type;
 import context.statics.symbols.UnknownType;
 import low.module.LLVMEmitVisitor;
+import low.module.builders.LLVMValue;
 
 import java.util.ArrayList;
 import java.util.List;// Nó AST que representa uma lista tipada
@@ -66,7 +67,7 @@ public final class ListNode extends ASTNode {
     }
 
     @Override
-    public String accept(LLVMEmitVisitor visitor) {
+    public LLVMValue accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
 

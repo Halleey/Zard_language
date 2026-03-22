@@ -4,6 +4,10 @@ import ast.expressions.CompoundAssignmentNode;
 import low.TempManager;
 import low.main.TypeInfos;
 import low.module.LLVMEmitVisitor;
+import low.module.builders.LLVMTYPES;
+import low.module.builders.LLVMValue;
+import low.module.builders.primitives.LLVMDouble;
+import low.module.builders.primitives.LLVMInt;
 import low.variables.VariableEmitter;
 
 import java.util.Map;
@@ -26,74 +30,73 @@ public class CompoundAssignmentEmitter {
         this.visitor = visitor;
     }
 
-    private String normalizeType(String llvmType) {
-        return switch (llvmType) {
-            case "int", "i32" -> "i32";
-            case "double" -> "double";
-            case "boolean", "bool", "i1" -> "i1";
-            default -> llvmType;
-        };
-    }
+    public LLVMValue emit(CompoundAssignmentNode node) {
 
-    private String extractVal(String ir) {
-        int v = ir.lastIndexOf(";;VAL:");
-        int t = ir.lastIndexOf(";;TYPE:");
-        if (v == -1 || t == -1)
-            throw new RuntimeException("VAL/TYPE não encontrados no IR");
-        return ir.substring(v + 6, t).trim();
-    }
-
-    private String extractType(String ir) {
-        int t = ir.lastIndexOf(";;TYPE:");
-        if (t == -1)
-            throw new RuntimeException("TYPE não encontrado no IR");
-        return ir.substring(t + 7).trim();
-    }
-
-    public String emit(CompoundAssignmentNode node) {
         StringBuilder llvm = new StringBuilder();
 
         String varName = node.getTarget().getName();
 
         TypeInfos info = varTypes.get(varName);
-        if (info == null)
+        if (info == null) {
             throw new RuntimeException("Tipo não encontrado para variável: " + varName);
+        }
 
-        String llvmType = normalizeType(info.getLLVMType());
+        LLVMTYPES llvmType = info.getLLVMType();
 
         String ptr = varEmitter.getVarPtr(varName);
-        if (ptr == null)
+        if (ptr == null) {
             throw new RuntimeException("Ponteiro não encontrado para variável: " + varName);
+        }
 
         String oldVal = temps.newTemp();
+
         llvm.append("  ").append(oldVal)
                 .append(" = load ").append(llvmType)
                 .append(", ").append(llvmType).append("* ").append(ptr).append("\n");
 
-        String rhsIR = node.getExpr().accept(visitor);
-        llvm.append(rhsIR);
+        LLVMValue rhsVal = node.getExpr().accept(visitor);
+        llvm.append(rhsVal.getCode());
 
-        String rhsVal = extractVal(rhsIR);
-        String rhsType = extractType(rhsIR);
-
-        if (!rhsType.equals(llvmType)) {
+        if (!rhsVal.getType().getClass().equals(llvmType.getClass())) {
             throw new RuntimeException(
                     "Tipos incompatíveis em " + node.getOperator()
-                            + ": esperado " + llvmType + ", encontrado " + rhsType
+                            + ": esperado " + llvmType + ", encontrado " + rhsVal.getType()
             );
         }
 
         String result = temps.newTemp();
-        boolean isInt = llvmType.equals("i32");
+
+        boolean isInt = llvmType instanceof LLVMInt;
+        boolean isDouble = llvmType instanceof LLVMDouble;
 
         switch (node.getOperator()) {
-            case "+=" -> llvm.append("  ").append(result).append(" = ")
-                    .append(isInt ? "add i32 " : "fadd double ")
-                    .append(oldVal).append(", ").append(rhsVal).append("\n");
+            case "+=" -> {
+                if (isInt) {
+                    llvm.append("  ").append(result)
+                            .append(" = add i32 ")
+                            .append(oldVal).append(", ").append(rhsVal.getName()).append("\n");
+                } else if (isDouble) {
+                    llvm.append("  ").append(result)
+                            .append(" = fadd double ")
+                            .append(oldVal).append(", ").append(rhsVal.getName()).append("\n");
+                } else {
+                    throw new RuntimeException("Tipo não suportado para +=: " + llvmType);
+                }
+            }
 
-            case "-=" -> llvm.append("  ").append(result).append(" = ")
-                    .append(isInt ? "sub i32 " : "fsub double ")
-                    .append(oldVal).append(", ").append(rhsVal).append("\n");
+            case "-=" -> {
+                if (isInt) {
+                    llvm.append("  ").append(result)
+                            .append(" = sub i32 ")
+                            .append(oldVal).append(", ").append(rhsVal.getName()).append("\n");
+                } else if (isDouble) {
+                    llvm.append("  ").append(result)
+                            .append(" = fsub double ")
+                            .append(oldVal).append(", ").append(rhsVal.getName()).append("\n");
+                } else {
+                    throw new RuntimeException("Tipo não suportado para -=: " + llvmType);
+                }
+            }
 
             default -> throw new RuntimeException(
                     "Operador composto não suportado: " + node.getOperator()
@@ -103,9 +106,6 @@ public class CompoundAssignmentEmitter {
         llvm.append("  store ").append(llvmType).append(" ").append(result)
                 .append(", ").append(llvmType).append("* ").append(ptr).append("\n");
 
-        llvm.append(";;VAL:").append(result)
-                .append(";;TYPE:").append(llvmType).append("\n");
-
-        return llvm.toString();
+        return new LLVMValue(llvmType, result, llvm.toString());
     }
 }

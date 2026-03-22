@@ -4,7 +4,6 @@ import ast.ASTNode;
 import ast.exceptions.ReturnNode;
 import ast.functions.FunctionNode;
 import ast.functions.ParamInfo;
-import ast.variables.LiteralNode;
 import context.statics.symbols.PrimitiveTypes;
 import context.statics.symbols.Type;
 import low.main.TypeInfos;
@@ -13,28 +12,28 @@ import low.module.LLVisitorMain;
 import java.util.ArrayList;
 import java.util.List;
 
-
-import ast.*;
-
+import low.module.builders.LLVMTYPES;
+import low.module.builders.LLVMValue;
+import low.module.builders.mappers.LLVMTypeMapper;
+import low.module.builders.primitives.LLVMVoid;
+import low.module.builders.LLVMPointer;
+import low.module.builders.lists.LLVMArrayList;
 
 public class FunctionEmitter {
+
     private final LLVisitorMain visitor;
-    private final TypeMapper typeMapper = new TypeMapper();
     private final ReturnTypeInferer returnInferer;
 
     public FunctionEmitter(LLVisitorMain visitor) {
         this.visitor = visitor;
-        this.returnInferer = new ReturnTypeInferer(visitor, typeMapper);
+        this.returnInferer = new ReturnTypeInferer(visitor);
     }
 
-    public String emit(FunctionNode fn) {
+    public LLVMValue emit(FunctionNode fn) {
 
         StringBuilder sb = new StringBuilder();
 
-        // nome da função LLVM
         String baseName = fn.getName();
-
-// obtemos o tipo do struct que implementa a função, se existir
         Type implStructType = fn.getImplStructType();
         String implOwner = implStructType != null ? implStructType.name() : null;
 
@@ -44,78 +43,94 @@ public class FunctionEmitter {
 
         visitor.functions.put(irName, fn);
 
-        visitor.registerFunctionType(irName, new TypeInfos(PrimitiveTypes.ANY, "void"));
+        // registra tipo inicial ANY / void
+        visitor.registerFunctionType(irName, new TypeInfos(PrimitiveTypes.ANY, new LLVMVoid()));
 
         Type declaredType = fn.getReturnType();
         TypeInfos retInfo;
 
-        if (declaredType instanceof PrimitiveTypes p && "void".equals(p.name()) && containsReturn(fn)) {
+        // deduz tipo se é void mas contém return
+        if (declaredType instanceof PrimitiveTypes p &&
+                "void".equals(p.name()) &&
+                containsReturn(fn)) {
+
             visitor.getCallEmitter().markBeingDeduced(baseName);
             retInfo = returnInferer.deduceReturnType(fn);
             visitor.getCallEmitter().unmarkBeingDeduced(baseName);
+
         } else {
-            String llvmType = typeMapper.toLLVM(declaredType);
+            LLVMTYPES llvmType = LLVMTypeMapper.from(declaredType);
             retInfo = new TypeInfos(declaredType, llvmType);
         }
 
-// registra o tipo de retorno definitivo
         visitor.registerFunctionType(irName, retInfo);
-        String llvmRetType = retInfo.getLLVMType();
+        LLVMTYPES llvmRetType = retInfo.getLLVMType();
 
-// Preparar parâmetros
         List<String> paramSignatures = new ArrayList<>();
+
         for (ParamInfo p : fn.getParameters()) {
-            Type paramType = p.typeObj();           // agora é Type real
-            String llvmType = typeMapper.toLLVM(paramType); // LLVM type
+            Type paramType = p.typeObj();
+            LLVMTYPES valueType = LLVMTypeMapper.from(paramType);
 
-            visitor.putVarType(p.name(), new TypeInfos(paramType, llvmType));
+            visitor.putVarType(p.name(), new TypeInfos(paramType, valueType));
 
-            // parâmetro por referência
-            String llvmInSignature = p.isRef() ? llvmType + "*" : llvmType;
-            paramSignatures.add(llvmInSignature + " %" + p.name());
+            String llvmStr;
+            if (valueType instanceof LLVMArrayList) {
+                llvmStr = valueType.toString(); // já contém o *
+            } else if (valueType instanceof LLVMPointer) {
+                llvmStr = valueType.toString(); // structs normais
+            } else {
+                llvmStr = p.isRef() ? valueType + "*" : valueType.toString();
+            }
+            paramSignatures.add(llvmStr + " %" + p.name());
         }
 
-// iniciar corpo da função LLVM
         sb.append("; === Função: ").append(irName).append(" ===\n");
-        sb.append("define ").append(llvmRetType).append(" @").append(irName)
+        sb.append("define ").append(llvmRetType)
+                .append(" @").append(irName)
                 .append("(").append(String.join(", ", paramSignatures)).append(") {\nentry:\n");
 
-        // Alocação de parâmetros
+        // parâmetros: criar alocação somente se necessário
         for (ParamInfo p : fn.getParameters()) {
             String paramName = p.name();
             TypeInfos info = visitor.getVarType(paramName);
-            String valueLLVM = info.getLLVMType();
-            String paramPtrName = "%" + paramName + "_addr";
+            LLVMTYPES valueType = info.getLLVMType();
 
-            if (p.isRef()) {
-                // variável já é referência → ponteiro direto
+            // Se for referência ou já for ponteiro/lista → registra sem alocação extra
+            if (p.isRef() || valueType instanceof LLVMPointer || valueType instanceof LLVMArrayList) {
                 visitor.getVariableEmitter().registerVarPtr(paramName, "%" + paramName);
-            } else {
-                // aloca espaço para variável e armazena o valor inicial
-                sb.append("  ").append(paramPtrName)
-                        .append(" = alloca ").append(valueLLVM).append("\n");
-                sb.append("  store ").append(valueLLVM)
-                        .append(" %").append(paramName)
-                        .append(", ").append(valueLLVM).append("* ").append(paramPtrName).append("\n");
+                continue;
+            }
 
-                visitor.getVariableEmitter().registerVarPtr(paramName, paramPtrName);
+            // Caso primitivo normal → cria alocação local
+            String ptr = "%" + paramName + "_addr";
+            sb.append("  ").append(ptr)
+                    .append(" = alloca ").append(valueType).append("\n");
+
+            sb.append("  store ").append(valueType)
+                    .append(" %").append(paramName)
+                    .append(", ").append(valueType)
+                    .append("* ").append(ptr).append("\n");
+
+            visitor.getVariableEmitter().registerVarPtr(paramName, ptr);
+        }
+
+        // corpo da função
+        for (ASTNode stmt : fn.getBody()) {
+            LLVMValue val = stmt.accept(visitor);
+            if (val != null && val.getCode() != null && !val.getCode().isBlank()) {
+                sb.append(val.getCode());
             }
         }
 
-        // Emitir corpo da função
-        for (ASTNode stmt : fn.getBody()) {
-            sb.append(stmt.accept(visitor));
-        }
-
-        // Retorno implícito para void
-        if (llvmRetType.equals("void") && !containsReturn(fn)) {
+        if (llvmRetType instanceof LLVMVoid && !containsReturn(fn)) {
             sb.append("  ret void\n");
         }
 
         sb.append("}\n\n");
-        return sb.toString();
-    }
 
+        return new LLVMValue(llvmRetType, "%" + irName, sb.toString());
+    }
 
     private boolean containsReturn(FunctionNode fn) {
         for (ASTNode node : fn.getBody()) {
@@ -123,19 +138,4 @@ public class FunctionEmitter {
         }
         return false;
     }
-
-    private String normalizeSourceType(String t) {
-        if (t == null) return "void";
-        t = t.trim();
-        if (t.startsWith("Struct<") && t.endsWith(">")) {
-            return t.substring(7, t.length() - 1).trim();
-        }
-        return t;
-    }
-
-//    private boolean containsReturn(FunctionNode fn) {
-//        boolean has = fn.getBody().stream().anyMatch(n -> n instanceof ReturnNode);
-//        System.out.println("[FEmit] containsReturn(" + fn.getName() + ") = " + has);
-//        return has;
-//    }
 }

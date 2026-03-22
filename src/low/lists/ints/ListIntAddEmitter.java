@@ -1,37 +1,37 @@
 package low.lists.ints;
 
 import ast.lists.ListAddNode;
+import context.statics.symbols.PrimitiveTypes;
 import low.TempManager;
-import low.module.LLVMEmitVisitor;
+import low.module.LLVisitorMain;
+import low.module.builders.LLVMValue;
+import low.module.builders.lists.LLVMArrayList;
+import low.module.builders.primitives.LLVMInt;
+
+
 public class ListIntAddEmitter {
+
     private final TempManager temps;
 
     public ListIntAddEmitter(TempManager temps) {
         this.temps = temps;
     }
 
-    public String emit(ListAddNode node, LLVMEmitVisitor visitor) {
+    public LLVMValue emit(ListAddNode node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
 
-        String listCode = node.getListNode().accept(visitor);
-        llvm.append(listCode);
-        String listTmp = extractTemp(listCode);
+        LLVMValue listVal = node.getListNode().accept(visitor);
+        llvm.append(listVal.getCode());
 
-        String valCode = node.getValuesNode().accept(visitor);
-        llvm.append(valCode);
-        String valTmp = extractTemp(valCode);
+        LLVMValue val = node.getValuesNode().accept(visitor);
+        llvm.append(val.getCode());
 
-        llvm.append("  call void @arraylist_add_int(%struct.ArrayListInt* ").append(listTmp)
-                .append(", i32 ").append(valTmp).append(")\n");
+        llvm.append("  call void @arraylist_add_int(%struct.ArrayListInt* ")
+                .append(listVal.getName())
+                .append(", i32 ")
+                .append(val.getName())
+                .append(")\n");
 
-        llvm.append(";;VAL:").append(listTmp).append(";;TYPE:%struct.ArrayListInt*\n");
-        return llvm.toString();
-    }
-
-    private String extractTemp(String code) {
-        int idx = code.lastIndexOf(";;VAL:");
-        if (idx == -1) throw new RuntimeException("Não encontrou ;;VAL:");
-        int end = code.indexOf(";;TYPE:", idx);
-        return code.substring(idx + 6, end);
+        return new LLVMValue(new LLVMArrayList(new LLVMInt()), listVal.getName(), llvm.toString());
     }
 }

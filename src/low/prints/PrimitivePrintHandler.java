@@ -7,6 +7,9 @@ import low.module.LLVisitorMain;
 
 import ast.variables.VariableNode;
 import low.TempManager;
+import low.module.builders.LLVMTYPES;
+import low.module.builders.LLVMValue;
+import low.module.builders.primitives.*;
 public class PrimitivePrintHandler implements PrintHandler {
 
     private final TempManager temps;
@@ -17,95 +20,81 @@ public class PrimitivePrintHandler implements PrintHandler {
 
     @Override
     public boolean canHandle(ASTNode node, LLVisitorMain visitor) {
+
         if (!(node instanceof VariableNode var)) return false;
 
         TypeInfos info = visitor.getVarType(var.getName());
         if (info == null) return false;
 
-        return switch (info.getLLVMType()) {
-            case "i32","i8", "double", "float", "i1" -> true;
-            default -> false;
-        };
+        LLVMTYPES type = info.getLLVMType();
+
+        return type instanceof LLVMInt
+                || type instanceof LLVMDouble
+                || type instanceof LLVMFloat
+                || type instanceof LLVMBool
+                || type instanceof LLVMChar;
     }
 
     @Override
-    public String emit(ASTNode node, LLVisitorMain visitor, boolean newline) {
+    public LLVMValue emit(ASTNode node, LLVisitorMain visitor, boolean newline) {
 
         VariableNode var = (VariableNode) node;
-        TypeInfos info = visitor.getVarType(var.getName());
-        String llvmType = info.getLLVMType();
 
-        String ptr = visitor.varEmitter.getVarPtr(var.getName());
-        if (ptr == null)
-            throw new RuntimeException("Ponteiro LLVM não encontrado para " + var.getName());
+        LLVMValue val = visitor.varEmitter.emitLoad(var.getName());
 
-        String valTmp = temps.newTemp();
         StringBuilder sb = new StringBuilder();
+        sb.append(val.getCode());
 
-        sb.append("  ")
-                .append(valTmp)
-                .append(" = load ")
-                .append(llvmType)
-                .append(", ")
-                .append(llvmType)
-                .append("* ")
-                .append(ptr)
-                .append("\n")
-                .append(";;VAL:")
-                .append(valTmp)
-                .append(";;TYPE:")
-                .append(llvmType)
-                .append("\n");
+        LLVMTYPES type = val.getType();
+        String tmp = val.getName();
 
-        switch (llvmType) {
-
-            case "i32" ->
-                    appendPrintf(sb, valTmp, newline, ".strInt", "i32");
-
-            case "double" ->
-                    appendPrintf(sb, valTmp, newline, ".strDouble", "double");
-
-            case "float" -> {
-                String ext = temps.newTemp();
-                sb.append("  ")
-                        .append(ext)
-                        .append(" = fpext float ")
-                        .append(valTmp)
-                        .append(" to double\n")
-                        .append(";;VAL:")
-                        .append(ext)
-                        .append(";;TYPE:double\n");
-
-                appendPrintf(sb, ext, newline, ".strFloat", "double");
-            }
-
-            case "i8" -> {
-                String ext = temps.newTemp();
-                sb.append("  ")
-                        .append(ext)
-                        .append(" = zext i8 ")
-                        .append(valTmp)
-                        .append(" to i32\n")
-                        .append(";;VAL:")
-                        .append(ext)
-                        .append(";;TYPE:i32\n");
-
-                appendPrintf(sb, ext, newline, ".strChar", "i32");
-            }
-
-
-            case "i1" ->
-                    emitBoolPrint(sb, valTmp, newline);
-
-            default ->
-                    throw new RuntimeException("Tipo primitivo não suportado: " + llvmType);
+        if (type instanceof LLVMInt) {
+            appendPrintf(sb, tmp, newline, ".strInt", "i32");
         }
 
-        return sb.toString();
+        else if (type instanceof LLVMDouble) {
+            appendPrintf(sb, tmp, newline, ".strDouble", "double");
+        }
+
+        else if (type instanceof LLVMFloat) {
+
+            String ext = temps.newTemp();
+
+            sb.append("  ").append(ext)
+                    .append(" = fpext float ")
+                    .append(tmp)
+                    .append(" to double\n");
+
+            appendPrintf(sb, ext, newline, ".strFloat", "double");
+        }
+
+        else if (type instanceof LLVMChar) {
+
+            String ext = temps.newTemp();
+
+            sb.append("  ").append(ext)
+                    .append(" = zext i8 ")
+                    .append(tmp)
+                    .append(" to i32\n");
+
+            appendPrintf(sb, ext, newline, ".strChar", "i32");
+        }
+
+        else if (type instanceof LLVMBool) {
+            emitBoolPrint(sb, tmp, newline);
+        }
+
+        else {
+            throw new RuntimeException("Tipo primitivo não suportado: " + type);
+        }
+
+        return new LLVMValue(new LLVMVoid(), "void", sb.toString());
     }
 
-    private void appendPrintf(StringBuilder sb, String tmp,
-                              boolean newline, String strLabel,
+    private void appendPrintf(StringBuilder sb,
+                              String tmp,
+                              boolean newline,
+                              String strLabel,
                               String type) {
 
         String label = newline ? strLabel : strLabel + "_noNL";
@@ -135,27 +124,21 @@ public class PrimitivePrintHandler implements PrintHandler {
 
         sb.append("  br i1 ")
                 .append(tmp)
-                .append(", label %")
-                .append(trueLabel)
-                .append(", label %")
-                .append(falseLabel)
+                .append(", label %").append(trueLabel)
+                .append(", label %").append(falseLabel)
                 .append("\n");
 
         sb.append(trueLabel).append(":\n")
                 .append("  call i32 (i8*, ...) @printf(i8* getelementptr ([6 x i8], [6 x i8]* ")
                 .append(trueStr)
                 .append(", i32 0, i32 0))\n")
-                .append("  br label %")
-                .append(endLabel)
-                .append("\n");
+                .append("  br label %").append(endLabel).append("\n");
 
         sb.append(falseLabel).append(":\n")
                 .append("  call i32 (i8*, ...) @printf(i8* getelementptr ([7 x i8], [7 x i8]* ")
                 .append(falseStr)
                 .append(", i32 0, i32 0))\n")
-                .append("  br label %")
-                .append(endLabel)
-                .append("\n");
+                .append("  br label %").append(endLabel).append("\n");
 
         sb.append(endLabel).append(":\n");
     }

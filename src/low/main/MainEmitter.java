@@ -1,7 +1,6 @@
 package low.main;
 
 import ast.ASTNode;
-import ast.exceptions.ReturnNode;
 import ast.functions.FunctionCallNode;
 import ast.functions.FunctionNode;
 import ast.functions.ParamInfo;
@@ -16,7 +15,6 @@ import ast.loops.ForNode;
 import ast.loops.WhileNode;
 import ast.prints.PrintNode;
 import ast.structs.*;
-import ast.variables.AssignmentNode;
 import ast.expressions.BinaryOpNode;
 import context.statics.symbols.ListType;
 import context.statics.symbols.PrimitiveTypes;
@@ -28,6 +26,8 @@ import low.imports.ImportEmitter;
 import low.module.LLVisitorMain;
 import ast.variables.LiteralNode;
 import ast.variables.VariableDeclarationNode;
+import low.module.builders.LLVMValue;
+import low.module.builders.primitives.LLVMInt;
 
 
 import java.util.HashSet;
@@ -35,107 +35,167 @@ import java.util.List;
 import java.util.Set;
 
 public class MainEmitter {
+
     private final GlobalStringManager globalStrings;
     private final TempManager tempManager;
-    private final Set<String> listasAlocadas = new HashSet<>();
+    private final Set<ListType> listasAlocadas = new HashSet<>();
     private final Set<Type> tiposDeListasUsados;
-    private final List<String> structDefinitions;
+    private final List<LLVMValue> structDefinitions;
     private boolean usesInput = false;
 
-    public MainEmitter(GlobalStringManager globalStrings, TempManager tempManager,
-                       Set<Type> tiposDeListasUsados, List<String> structDefinitions) {
+    public MainEmitter(GlobalStringManager globalStrings, TempManager tempManager, Set<Type> tiposDeListasUsados,
+                       List<LLVMValue> structDefinitions) {
+
         this.globalStrings = globalStrings;
         this.tempManager = tempManager;
         this.tiposDeListasUsados = tiposDeListasUsados;
         this.structDefinitions = structDefinitions;
     }
+    public LLVMValue emit(MainAST node, LLVisitorMain visitor) {
 
-    public String emit(MainAST node, LLVisitorMain visitor) {
+
         visitor.registrarStructs(node);
         globalStrings.getOrCreateString("");
+
         StringBuilder llvm = new StringBuilder();
         ImportEmitter importEmitter = new ImportEmitter(visitor, this.tiposDeListasUsados);
 
+
         for (ASTNode stmt : node.body) {
-            if (!(stmt instanceof ImportNode)) {
-                coletarStringsRecursivo(stmt);
+            coletarStringsRecursivo(stmt);
+        }
+
+
+        for (ASTNode stmt : node.body) {
+            if (stmt instanceof VariableDeclarationNode varDecl) {
+                Type resolved = varDecl.getResolvedType();
+                if (resolved instanceof ListType listType) {
+                    registrarTipoDeLista(listType);
+                }
             }
         }
 
-        StringBuilder importsIR = new StringBuilder();
+        for (ASTNode stmt : node.body) {
+            if (stmt instanceof StructNode structNode) {
+
+                LLVMValue structVal = structNode.accept(visitor);
+                if (structVal != null) {
+                    structDefinitions.add(structVal);
+                }
+            }
+        }
+
+
         for (ASTNode stmt : node.body) {
             if (stmt instanceof ImportNode importNode) {
-                importsIR.append(";; ==== Import module: ")
+
+
+                llvm.append(";; ==== Import module: ")
                         .append(importNode.path())
                         .append(" as ")
                         .append(importNode.alias())
                         .append(" ====\n");
-                importsIR.append(importEmitter.emit(importNode)).append("\n");
+
+                LLVMValue importVal = importEmitter.emit(importNode);
+
+                if (importVal != null && importVal.getCode() != null && !importVal.getCode().isBlank()) {
+                    llvm.append(importVal.getCode()).append("\n");
+                }
             }
         }
 
+
         llvm.append(emitHeader()).append("\n");
-        llvm.append(globalStrings.getGlobalStrings()).append("\n");
+
+        String globals = globalStrings.getGlobalStrings();
+
+
+        llvm.append(globals).append("\n");
 
         if (!structDefinitions.isEmpty()) {
+
             llvm.append(";; ==== Struct Definitions ====\n");
-            for (String structDef : structDefinitions) {
-                llvm.append(structDef).append("\n");
+            for (LLVMValue structDef : structDefinitions) {
+                if (structDef != null && structDef.getCode() != null) {
+                    llvm.append(structDef.getCode()).append("\n");
+                }
             }
             llvm.append("\n");
         }
 
-        llvm.append(importsIR);
 
         FunctionEmitter fnEmitter = new FunctionEmitter(visitor);
-        for (ASTNode stmt : node.body) {
-            if (stmt instanceof FunctionNode fn) {
-                llvm.append(fnEmitter.emit(fn)).append("\n");
-            }
-        }
 
         for (ASTNode stmt : node.body) {
-            if (stmt instanceof ImplNode implNode) {
-                String implIR = implNode.accept(visitor);
-                if (implIR != null && !implIR.isBlank()) {
-                    visitor.addImplDefinition(implIR);
+            if (stmt instanceof FunctionNode fn) {
+
+
+                LLVMValue fnVal = fnEmitter.emit(fn);
+
+                if (fnVal != null && fnVal.getCode() != null && !fnVal.getCode().isBlank()) {
+                    llvm.append(fnVal.getCode()).append("\n");
                 }
             }
         }
 
-        String impls = visitor.emitImplDefinitions();
-        if (impls != null && !impls.isBlank()) {
-            llvm.append(";; ==== Impl Definitions ====\n");
-            llvm.append(impls).append("\n");
+
+        for (ASTNode stmt : node.body) {
+            if (stmt instanceof ImplNode implNode) {
+
+
+                LLVMValue implVal = implNode.accept(visitor);
+
+                if (implVal != null && implVal.getCode() != null && !implVal.getCode().isBlank()) {
+                    visitor.addImplDefinition(implVal);
+                }
+            }
         }
 
-        llvm.append("define i32 @main() {\n");
+        for (LLVMValue implDef : visitor.getImplDefinitions()) {
+            if (implDef != null && implDef.getCode() != null && !implDef.getCode().isBlank()) {
+                llvm.append(";; ==== Impl Definitions ====\n");
+                llvm.append(implDef.getCode()).append("\n");
+            }
+        }
+
+        llvm.append("define i32 @main() {\nentry:\n");
+
         for (ASTNode stmt : node.body) {
+
             if (stmt instanceof FunctionNode
                     || stmt instanceof ImportNode
                     || stmt instanceof StructNode
-                    || stmt instanceof ImplNode)
-                continue;
+                    || stmt instanceof ImplNode) continue;
+
 
             llvm.append("  ; ").append(stmt.getClass().getSimpleName()).append("\n");
-            String stmtIR = stmt.accept(visitor);
-            if (stmtIR != null && !stmtIR.isBlank()) {
-                llvm.append(stmtIR);
+
+            LLVMValue val = stmt.accept(visitor);
+
+            if (val != null && val.getCode() != null && !val.getCode().isBlank()) {
+                llvm.append(val.getCode());
             }
 
             if (stmt instanceof VariableDeclarationNode varDecl) {
                 Type resolved = varDecl.getResolvedType();
-
-                if (resolved instanceof ListType) {
-                    listasAlocadas.add(varDecl.getName());
+                if (resolved instanceof ListType listType) {
+                    listasAlocadas.add(listType);
+                    registrarTipoDeLista(listType);
                 }
             }
         }
-        llvm.append("  call i32 @getchar()\n");
+
+        if (usesInput) {
+            llvm.append("  call i32 @getchar()\n");
+        }
+
         llvm.append("  ret i32 0\n}\n");
 
-        return llvm.toString();
+
+        return new LLVMValue(new LLVMInt(), "%main", llvm.toString());
     }
+
+
     private void coletarStringsRecursivo(ASTNode node) {
         if (node == null) return;
 
@@ -152,154 +212,13 @@ public class MainEmitter {
             return;
         }
 
-        if (node instanceof ImplNode impl) {
-            for (FunctionNode m : impl.getMethods()) {
-
-                Type retType = m.getReturnType();
-                if (retType instanceof ListType listType) {
-                    registrarTipoDeLista(listType);
-                }
-
-                for (ParamInfo p : m.getParameters()) {
-                    Type paramType = p.type();
-                    if (paramType instanceof ListType listType) {
-                        registrarTipoDeLista(listType);
-                    }
-                }
-
-                for (ASTNode stmt : m.getBody()) {
-                    coletarStringsRecursivo(stmt);
-                }
+        if (node instanceof StructInstanceNode structInstance) {
+            for (ASTNode val : structInstance.getPositionalValues()) {
+                coletarStringsRecursivo(val);
             }
-            return;
-        }
-
-        if (node instanceof FunctionNode func) {
-
-            Type retType = func.getReturnType();
-            if (retType instanceof ListType listType) {
-                registrarTipoDeLista(listType);
+            if (structInstance.getNamedValues() != null) {
+                structInstance.getNamedValues().values().forEach(this::coletarStringsRecursivo);
             }
-
-            for (ParamInfo p : func.getParameters()) {
-                Type paramType = p.type();
-                if (paramType instanceof ListType listType) {
-                    registrarTipoDeLista(listType);
-                }
-            }
-
-            func.getBody().forEach(this::coletarStringsRecursivo);
-            return;
-        }
-
-        if (node instanceof PrintNode printNode) {
-            coletarStringsRecursivo(printNode.expr);
-            return;
-        }
-
-        if (node instanceof BinaryOpNode bin) {
-            coletarStringsRecursivo(bin.left);
-            coletarStringsRecursivo(bin.right);
-            return;
-        }
-
-        if (node instanceof StructMethodCallNode call) {
-            if (call.getStructInstance() != null) {
-                coletarStringsRecursivo(call.getStructInstance());
-            }
-            if (call.getArgs() != null) {
-                for (ASTNode arg : call.getArgs()) {
-                    coletarStringsRecursivo(arg);
-                }
-            }
-            return;
-        }
-
-        if (node instanceof VariableDeclarationNode varDecl) {
-            if (varDecl.getResolvedType() instanceof ListType listType) {
-
-                registrarTipoDeLista(listType);
-            }
-
-            if (varDecl.getInitializer() != null) {
-                coletarStringsRecursivo(varDecl.getInitializer());
-            }
-            return;
-        }
-
-        if (node instanceof IfNode ifNode) {
-            coletarStringsRecursivo(ifNode.condition);
-            ifNode.thenBranch.forEach(this::coletarStringsRecursivo);
-
-            if (ifNode.elseBranch != null) {
-                ifNode.elseBranch.forEach(this::coletarStringsRecursivo);
-            }
-            return;
-        }
-
-        if (node instanceof ForNode forNode) {
-
-            if (forNode.getInit() != null) {
-                coletarStringsRecursivo(forNode.getInit());
-            }
-
-            if (forNode.getCondition() != null) {
-                coletarStringsRecursivo(forNode.getCondition());
-            }
-
-            if (forNode.getIncrement() != null) {
-                coletarStringsRecursivo(forNode.getIncrement());
-            }
-
-            if (forNode.getBody() != null) {
-                forNode.getBody().forEach(this::coletarStringsRecursivo);
-            }
-
-            return;
-        }
-
-        if (node instanceof FunctionCallNode callNode) {
-            if (callNode.getArgs() != null) {
-                for (ASTNode arg : callNode.getArgs()) {
-                    coletarStringsRecursivo(arg);
-                }
-            }
-            return;
-        }
-
-        if (node instanceof WhileNode whileNode) {
-            coletarStringsRecursivo(whileNode.condition);
-            whileNode.body.forEach(this::coletarStringsRecursivo);
-            return;
-        }
-
-        if (node instanceof ListNode listNode) {
-
-            if (listNode.getType() instanceof ListType listType) {
-                registrarTipoDeLista(listType);
-            }
-
-            listNode.getList().getElements().forEach(this::coletarStringsRecursivo);
-            return;
-        }
-
-        if (node instanceof ListAddNode addNode) {
-            coletarStringsRecursivo(addNode.getValuesNode());
-            return;
-        }
-
-        if (node instanceof ListAddAllNode addAllNode) {
-            coletarStringsRecursivo(addAllNode.getArgs());
-            return;
-        }
-
-        if (node instanceof AssignmentNode assignNode) {
-            coletarStringsRecursivo(assignNode.valueNode);
-            return;
-        }
-
-        if (node instanceof ReturnNode returnNode) {
-            coletarStringsRecursivo(returnNode.expr);
             return;
         }
 
@@ -314,16 +233,102 @@ public class MainEmitter {
             return;
         }
 
-        if (node instanceof StructInstanceNode structInstance) {
-            for (ASTNode val : structInstance.getPositionalValues()) {
-                coletarStringsRecursivo(val);
+        // Recursão para nós compostos
+        if (node instanceof FunctionNode func) {
+
+            // ===== registrar tipo de retorno (se for lista)
+            Type retType = func.getReturnType();
+            if (retType instanceof ListType listType) {
+                registrarTipoDeLista(listType);
             }
 
-            if (structInstance.getNamedValues() != null) {
-                for (ASTNode val : structInstance.getNamedValues().values()) {
-                    coletarStringsRecursivo(val);
+            // ===== registrar tipos dos parâmetros (se forem listas)
+            for (ParamInfo p : func.getParameters()) {
+                Type paramType = p.typeObj(); // ⚠️ use typeObj(), não type()
+                if (paramType instanceof ListType listType) {
+                    registrarTipoDeLista(listType);
                 }
             }
+
+            // ===== coletar strings do corpo
+            func.getBody().forEach(this::coletarStringsRecursivo);
+            return;
+        }
+
+        if (node instanceof IfNode ifNode) {
+            coletarStringsRecursivo(ifNode.condition);
+            ifNode.thenBranch.forEach(this::coletarStringsRecursivo);
+            if (ifNode.elseBranch != null) ifNode.elseBranch.forEach(this::coletarStringsRecursivo);
+            return;
+        }
+
+        if (node instanceof ForNode forNode) {
+            if (forNode.getInit() != null) coletarStringsRecursivo(forNode.getInit());
+            if (forNode.getCondition() != null) coletarStringsRecursivo(forNode.getCondition());
+            if (forNode.getIncrement() != null) coletarStringsRecursivo(forNode.getIncrement());
+            if (forNode.getBody() != null) forNode.getBody().forEach(this::coletarStringsRecursivo);
+            return;
+        }
+
+        if (node instanceof WhileNode whileNode) {
+            coletarStringsRecursivo(whileNode.condition);
+            whileNode.body.forEach(this::coletarStringsRecursivo);
+            return;
+        }
+
+        if (node instanceof BinaryOpNode bin) {
+            coletarStringsRecursivo(bin.left);
+            coletarStringsRecursivo(bin.right);
+            return;
+        }
+        if(node instanceof PrintNode printNode) {
+            coletarStringsRecursivo(printNode.expr);
+            return;
+        }
+
+        if (node instanceof FunctionCallNode callNode) {
+            if (callNode.getArgs() != null) {
+                callNode.getArgs().forEach(this::coletarStringsRecursivo);
+            }
+            return;
+        }
+
+        if (node instanceof ListNode listNode) {
+            listNode.getList().getElements().forEach(this::coletarStringsRecursivo);
+            return;
+        }
+
+        if (node instanceof ListAddNode addNode) {
+            coletarStringsRecursivo(addNode.getValuesNode());
+            return;
+        }
+
+        if (node instanceof ListAddAllNode addAllNode) {
+            coletarStringsRecursivo(addAllNode.getArgs());
+            return;
+        }
+
+        if (node instanceof ImplNode implNode) {
+            for (FunctionNode fn : implNode.getMethods()) {
+                coletarStringsRecursivo(fn);
+            }
+            return;
+        }
+
+        if (node instanceof StructMethodCallNode callNode) {
+            // coleta strings dos argumentos
+            for (ASTNode arg : callNode.getArgs()) {
+                coletarStringsRecursivo(arg);
+            }
+
+            // coleta também o receiver (caso seja algo mais complexo)
+            coletarStringsRecursivo(callNode.getStructInstance());
+
+            return;
+        }
+
+        if (node instanceof VariableDeclarationNode varDecl && varDecl.getInitializer() != null) {
+            coletarStringsRecursivo(varDecl.getInitializer());
         }
     }
 
@@ -337,6 +342,7 @@ public class MainEmitter {
             tiposDeListasUsados.add(listType.elementType());
         }
     }
+
 
     private String emitHeader() {
         StringBuilder sb = new StringBuilder();

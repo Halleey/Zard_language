@@ -4,6 +4,7 @@ import ast.ASTNode;
 import ast.expressions.TypedValue;
 import context.runtime.RuntimeContext;
 import low.module.LLVMEmitVisitor;
+import low.module.builders.LLVMValue;
 import memory_manager.ownership.graphs.OwnershipNode;
 
 import java.util.Collections;
@@ -23,7 +24,7 @@ public class FreeNode extends ASTNode {
     }
 
     @Override
-    public String accept(LLVMEmitVisitor visitor) {
+    public LLVMValue accept(LLVMEmitVisitor visitor) {
         return visitor.visitFreeNode(this);
     }
 

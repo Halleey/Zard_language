@@ -6,7 +6,7 @@ import context.runtime.RuntimeContext;
 import context.statics.StaticContext;
 import context.statics.symbols.PrimitiveTypes;
 import low.module.LLVMEmitVisitor;
-
+import low.module.builders.LLVMValue;
 
 
 public class CompoundAssignmentNode extends ASTNode {
@@ -59,7 +59,7 @@ public class CompoundAssignmentNode extends ASTNode {
     }
 
     @Override
-    public String accept(LLVMEmitVisitor visitor) {
+    public LLVMValue accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
 

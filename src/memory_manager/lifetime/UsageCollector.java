@@ -1,6 +1,7 @@
 package memory_manager.lifetime;
 
 import ast.ASTNode;
+import ast.functions.FunctionCallNode;
 import ast.ifstatements.IfNode;
 import ast.lists.*;
 import ast.loops.WhileNode;
@@ -137,6 +138,14 @@ class UsageCollector {
         if (node instanceof ListSizeNode size) {
             if (size.getNome() instanceof VariableNode vn) {
                 registerUse(resolveSymbol(vn, useCtx), useCtx, anchor);
+            }
+            return;
+        }
+
+        if (node instanceof FunctionCallNode call) {
+            // percorre os argumentos da função
+            for (ASTNode arg : call.getArgs()) {
+                collectUses(arg, useCtx, anchor);
             }
             return;
         }

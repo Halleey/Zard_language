@@ -2,14 +2,21 @@ package low.structs;
 import ast.ASTNode;
 
 import ast.structs.StructMethodCallNode;
-import context.statics.symbols.ListType;
-import context.statics.symbols.PrimitiveTypes;
+
 import context.statics.symbols.StructType;
-import context.statics.symbols.Type;
 import low.TempManager;
 
+import low.functions.TypeMapper;
+import low.main.TypeInfos;
 import low.module.LLVisitorMain;
-public class StructMethodCallEmitter {
+import low.module.builders.LLVMPointer;
+import low.module.builders.LLVMTYPES;
+import low.module.builders.LLVMValue;
+import low.module.builders.lists.LLVMArrayList;
+import low.module.builders.primitives.*;
+import low.module.builders.structs.LLVMStruct;
+
+public final class StructMethodCallEmitter {
 
     private final TempManager temps;
 
@@ -17,216 +24,174 @@ public class StructMethodCallEmitter {
         this.temps = temps;
     }
 
-    public String emit(StructMethodCallNode node, LLVisitorMain visitor) {
+    public LLVMValue emit(StructMethodCallNode node, LLVisitorMain visitor) {
         StringBuilder llvm = new StringBuilder();
 
         String methodName = node.getMethodName();
 
-        ASTNode receiver = node.getStructInstance();
-        String recvIR = receiver.accept(visitor);
-        String recvVal = extractLastVal(recvIR);
-        String recvType = extractLastType(recvIR);
+        // ===== Receiver =====
+        LLVMValue receiverVal = node.getStructInstance().accept(visitor);
+        llvm.append(receiverVal.getCode());
 
-        llvm.append(recvIR);
+        LLVMTYPES recvType = receiverVal.getType();
+        String recvName = receiverVal.getName();
 
-        if (recvType.startsWith("%struct.ArrayList")) {
+        if (recvType instanceof LLVMArrayList arr) {
 
-            String elementType = "";
-
-            if (recvType.contains("ArrayListInt")) elementType = "int";
-            if (recvType.contains("ArrayListDouble")) elementType = "double";
-            if (recvType.contains("ArrayListBool")) elementType = "bool";
-            if (recvType.contains("ArrayListString")) elementType = "string";
+            LLVMTYPES elemType = arr.elementType();
+            ASTNode argNode;
+            LLVMValue argVal;
+            String tmp;
 
             switch (methodName) {
 
                 case "add" -> {
-                    ASTNode arg = node.getArgs().get(0);
-                    String argIR = arg.accept(visitor);
-                    llvm.append(argIR);
+                    argNode = node.getArgs().get(0);
+                    argVal = argNode.accept(visitor);
+                    llvm.append(argVal.getCode());
 
-                    String argVal = extractLastVal(argIR);
-                    String argType = extractLastType(argIR);
+                    String rtAdd;
 
-                    String rtAdd = switch (elementType) {
-                        case "int" -> "arraylist_add_int";
-                        case "double" -> "arraylist_add_double";
-                        case "bool" -> "arraylist_add_bool";
-                        case "string" -> "arraylist_add_ptr";
-                        default -> throw new RuntimeException("Tipo de lista não suportado: " + elementType);
-                    };
+                    if (elemType instanceof LLVMInt) rtAdd = "arraylist_add_int";
+                    else if (elemType instanceof LLVMDouble) rtAdd = "arraylist_add_double";
+                    else if (elemType instanceof LLVMBool) rtAdd = "arraylist_add_bool";
+                    else if (elemType instanceof LLVMString) rtAdd = "arraylist_add_ptr";
+                    else if (elemType instanceof LLVMStruct) rtAdd = "arraylist_add_ptr"; // 🔥 struct = ponteiro
+                    else throw new RuntimeException("Tipo de lista não suportado: " + elemType);
 
                     llvm.append("  call void @").append(rtAdd)
-                            .append("(").append(recvType).append(" ").append(recvVal)
-                            .append(", ").append(argType).append(" ").append(argVal)
+                            .append("(").append(recvType).append(" ").append(recvName)
+                            .append(", ").append(argVal.getType()).append(" ").append(argVal.getName())
                             .append(")\n");
 
-                    llvm.append(";;VAL:").append(recvVal)
-                            .append(";;TYPE:").append(recvType).append("\n");
-
-                    return llvm.toString();
+                    return new LLVMValue(recvType, recvName, llvm.toString());
                 }
 
                 case "size" -> {
-                    String rtSize = switch (elementType) {
-                        case "int" -> "arraylist_size_int";
-                        case "double" -> "arraylist_size_double";
-                        case "bool" -> "arraylist_size_bool";
-                        default -> throw new RuntimeException("Tipo não suportado: " + elementType);
-                    };
+                    String rtSize;
 
-                    String tmp = temps.newTemp();
+                    if (elemType instanceof LLVMInt) rtSize = "arraylist_size_int";
+                    else if (elemType instanceof LLVMDouble) rtSize = "arraylist_size_double";
+                    else if (elemType instanceof LLVMBool) rtSize = "arraylist_size_bool";
+                    else rtSize = "length"; // 🔥 fallback para ptr/struct
+
+                    tmp = temps.newTemp();
                     llvm.append("  ").append(tmp)
                             .append(" = call i32 @").append(rtSize)
-                            .append("(").append(recvType).append(" ").append(recvVal).append(")\n")
-                            .append(";;VAL:").append(tmp).append(";;TYPE:i32\n");
+                            .append("(").append(recvType).append(" ").append(recvName).append(")\n");
 
-                    return llvm.toString();
+                    return new LLVMValue(new LLVMInt(), tmp, llvm.toString());
                 }
 
                 case "get" -> {
-                    ASTNode arg = node.getArgs().get(0);
-                    String argIR = arg.accept(visitor);
-                    llvm.append(argIR);
+                    argNode = node.getArgs().get(0);
+                    argVal = argNode.accept(visitor);
+                    llvm.append(argVal.getCode());
 
-                    String argVal = extractLastVal(argIR);
+                    String tmpRes = temps.newTemp();
 
-                    String rtGet = switch (elementType) {
-                        case "int" -> "arraylist_get_int";
-                        case "double" -> "arraylist_get_double";
-                        case "bool" -> "arraylist_get_bool";
-                        default -> throw new RuntimeException("Tipo não suportado: " + elementType);
-                    };
+                    if (elemType instanceof LLVMInt) {
+                        llvm.append("  ").append(tmpRes)
+                                .append(" = call i32 @arraylist_get_int(")
+                                .append(recvType).append(" ").append(recvName)
+                                .append(", i64 ").append(argVal.getName())
+                                .append(", i32* null)\n");
 
-                    String tmp = temps.newTemp();
-                    llvm.append("  ").append(tmp)
-                            .append(" = call i32 @").append(rtGet)
-                            .append("(").append(recvType).append(" ").append(recvVal)
-                            .append(", i64 ").append(argVal).append(", i32* null)\n")
-                            .append(";;VAL:").append(tmp).append(";;TYPE:i32\n");
+                        return new LLVMValue(new LLVMInt(), tmpRes, llvm.toString());
+                    }
 
-                    return llvm.toString();
+                    if (elemType instanceof LLVMDouble) {
+                        llvm.append("  ").append(tmpRes)
+                                .append(" = call double @arraylist_get_double(")
+                                .append(recvType).append(" ").append(recvName)
+                                .append(", i64 ").append(argVal.getName())
+                                .append(", double* null)\n");
+
+                        return new LLVMValue(new LLVMDouble(), tmpRes, llvm.toString());
+                    }
+
+                    if (elemType instanceof LLVMBool) {
+                        llvm.append("  ").append(tmpRes)
+                                .append(" = call i32 @arraylist_get_bool(")
+                                .append(recvType).append(" ").append(recvName)
+                                .append(", i64 ").append(argVal.getName())
+                                .append(", i1* null)\n");
+
+                        return new LLVMValue(new LLVMInt(), tmpRes, llvm.toString());
+                    }
+
+                    // 🔥 STRUCT / STRING / PTR
+                    String rawPtr = temps.newTemp();
+
+                    llvm.append("  ").append(rawPtr)
+                            .append(" = call i8* @arraylist_get_ptr(")
+                            .append(recvType).append(" ").append(recvName)
+                            .append(", i64 ").append(argVal.getName()).append(")\n");
+
+                    llvm.append("  ").append(tmpRes)
+                            .append(" = bitcast i8* ").append(rawPtr)
+                            .append(" to ").append(elemType).append("\n");
+
+                    return new LLVMValue(elemType, tmpRes, llvm.toString());
                 }
 
                 case "remove" -> {
-                    ASTNode arg = node.getArgs().get(0);
-                    String argIR = arg.accept(visitor);
-                    llvm.append(argIR);
+                    argNode = node.getArgs().get(0);
+                    argVal = argNode.accept(visitor);
+                    llvm.append(argVal.getCode());
 
-                    String argVal = extractLastVal(argIR);
+                    String rtRemove;
 
-                    String rtRemove = switch (elementType) {
-                        case "int" -> "arraylist_remove_int";
-                        case "double" -> "arraylist_remove_double";
-                        case "bool" -> "arraylist_remove_bool";
-                        default -> throw new RuntimeException("Tipo não suportado: " + elementType);
-                    };
+                    if (elemType instanceof LLVMInt) rtRemove = "arraylist_remove_int";
+                    else if (elemType instanceof LLVMDouble) rtRemove = "arraylist_remove_double";
+                    else if (elemType instanceof LLVMBool) rtRemove = "arraylist_remove_bool";
+                    else rtRemove = "removeItem"; // 🔥 ptr/struct
 
                     llvm.append("  call void @").append(rtRemove)
-                            .append("(").append(recvType).append(" ").append(recvVal)
-                            .append(", i64 ").append(argVal).append(")\n")
-                            .append(";;VAL:").append(recvVal)
-                            .append(";;TYPE:").append(recvType).append("\n");
+                            .append("(").append(recvType).append(" ").append(recvName)
+                            .append(", i64 ").append(argVal.getName()).append(")\n");
 
-                    return llvm.toString();
+                    return new LLVMValue(recvType, recvName, llvm.toString());
                 }
+
+                default -> throw new RuntimeException("Método de ArrayList não suportado: " + methodName);
             }
         }
 
+        if (!(recvType instanceof LLVMPointer ptr) || !(ptr.pointee() instanceof LLVMStruct struct)) {
+            throw new RuntimeException("Chamada de método em tipo inválido: " + recvType);
+        }
 
-        String cleanType = recvType.replace("%", "").replace("*", "");
-        String llvmSafe = cleanType
-                .replace("Struct<", "")
-                .replace(">", "")
-                .replace("<", "_")
-                .replace(",", "_")
-                .replace(" ", "_");
+        String llvmFuncName = struct.getName() + "_" + methodName;
 
-        String llvmFuncName = llvmSafe + "_" + methodName;
 
         StringBuilder callArgs = new StringBuilder();
-        callArgs.append(recvType).append(" ").append(recvVal);
+        callArgs.append(recvType).append(" ").append(recvName);
 
-        for (ASTNode argNode : node.getArgs()) {
-            String argIR = argNode.accept(visitor);
-            llvm.append(argIR);
-
-            String argVal = extractLastVal(argIR);
-            String argType = extractLastType(argIR);
-
-            callArgs.append(", ").append(argType).append(" ").append(argVal);
+        for (ASTNode arg : node.getArgs()) {
+            LLVMValue argLLVM = arg.accept(visitor);
+            llvm.append(argLLVM.getCode());
+            callArgs.append(", ").append(argLLVM.getType()).append(" ").append(argLLVM.getName());
         }
 
-        Type retType = node.getReturnType();
-        String retLLVM = mapToLLVMType(retType);
+        LLVMTYPES retType = node.getReturnType() != null
+                ? TypeMapper.from(node.getReturnType())
+                : new LLVMVoid();
 
-        if ("void".equals(retLLVM)) {
+        if (retType instanceof LLVMVoid) {
+            llvm.append("  call void @").append(llvmFuncName)
+                    .append("(").append(callArgs).append(")\n");
 
-            llvm.append("  call void @")
-                    .append(llvmFuncName)
-                    .append("(").append(callArgs).append(")\n")
-                    .append(";;VAL:0;;TYPE:void\n");
-
-        } else {
-
-            String tmp = temps.newTemp();
-
-            llvm.append("  ")
-                    .append(tmp)
-                    .append(" = call ")
-                    .append(retLLVM)
-                    .append(" @")
-                    .append(llvmFuncName)
-                    .append("(")
-                    .append(callArgs)
-                    .append(")\n")
-                    .append(";;VAL:")
-                    .append(tmp)
-                    .append(";;TYPE:")
-                    .append(retLLVM)
-                    .append("\n");
+            return new LLVMValue(retType, "0", llvm.toString());
         }
 
-        return llvm.toString();
-    }
+        String retName = temps.newTemp();
 
-    private String mapToLLVMType(Type type) {
-        if (type == null) return "void";
+        llvm.append("  ").append(retName)
+                .append(" = call ").append(retType)
+                .append(" @").append(llvmFuncName)
+                .append("(").append(callArgs).append(")\n");
 
-        if (type instanceof PrimitiveTypes prim) {
-            return switch (prim.name()) {
-                case "int" -> "i32";
-                case "double" -> "double";
-                case "bool", "boolean" -> "i1";
-                case "string", "String" -> "%String*";
-                default -> "i8*";
-            };
-        }
-
-        if (type instanceof StructType structType) {
-            return "%" + structType.name() + "*";
-        }
-
-        if (type instanceof ListType listType) {
-            String elem = mapToLLVMType(listType.elementType());
-            return "%struct.ArrayList_" + elem + "*";
-        }
-
-        return "i8*";
-    }
-
-    private String extractLastVal(String code) {
-        int v = code.lastIndexOf(";;VAL:");
-        if (v == -1) return "";
-        int t = code.indexOf(";;TYPE:", v);
-        return (t == -1) ? "" : code.substring(v + 6, t).trim();
-    }
-
-    private String extractLastType(String code) {
-        int t = code.lastIndexOf(";;TYPE:");
-        if (t == -1) return "";
-        int end = code.indexOf("\n", t);
-        if (end == -1) end = code.length();
-        return code.substring(t + 7, end).trim();
+        return new LLVMValue(retType, retName, llvm.toString());
     }
 }

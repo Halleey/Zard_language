@@ -11,6 +11,7 @@ import context.statics.symbols.StructType;
 import context.statics.symbols.Type;
 import context.statics.symbols.UnknownType;
 import low.module.LLVMEmitVisitor;
+import low.module.builders.LLVMValue;
 
 import java.util.List;
 import java.util.Map;
@@ -44,7 +45,7 @@ public class StructFieldAccessNode extends ASTNode {
     }
 
     @Override
-    public String accept(LLVMEmitVisitor visitor) {
+    public LLVMValue accept(LLVMEmitVisitor visitor) {
         return visitor.visit(this);
     }
 

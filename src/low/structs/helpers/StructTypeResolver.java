@@ -47,7 +47,7 @@ public class StructTypeResolver {
                 };
             }
 
-            if (inner instanceof StructType structType) {
+            if (inner instanceof StructType) {
                 return "%ArrayList*";
             }
 
@@ -62,12 +62,9 @@ public class StructTypeResolver {
             return "%" + llvmName + "*";
         }
 
-
-
         if (type instanceof PrimitiveTypes prim) {
-            return typeMapper.toLLVM(prim);
+            return TypeMapper.from(prim).toString();
         }
-
 
         return "i8*";
     }

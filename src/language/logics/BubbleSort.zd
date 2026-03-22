@@ -1,5 +1,5 @@
 main {
-function void bubbleSort(List<int> arr) {
+function void bubbleSort(&List<int> arr) {
 
     # Guarda o tamanho inicial da lista
     int n = arr.size();

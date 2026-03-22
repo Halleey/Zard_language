@@ -1,7 +1,6 @@
 package low.main;
 
 import ast.ASTNode;
-import ast.exceptions.ReturnNode;
 import ast.functions.FunctionCallNode;
 import ast.functions.FunctionNode;
 import ast.functions.ParamInfo;
@@ -16,7 +15,6 @@ import ast.loops.ForNode;
 import ast.loops.WhileNode;
 import ast.prints.PrintNode;
 import ast.structs.*;
-import ast.variables.AssignmentNode;
 import ast.expressions.BinaryOpNode;
 import context.statics.symbols.ListType;
 import context.statics.symbols.PrimitiveTypes;
@@ -28,7 +26,6 @@ import low.imports.ImportEmitter;
 import low.module.LLVisitorMain;
 import ast.variables.LiteralNode;
 import ast.variables.VariableDeclarationNode;
-import low.module.builders.LLVMTYPES;
 import low.module.builders.LLVMValue;
 import low.module.builders.primitives.LLVMInt;
 

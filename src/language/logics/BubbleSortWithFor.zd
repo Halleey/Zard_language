@@ -1,7 +1,7 @@
 main {
 
 
-function void bubbleSort(List<int> arr) {
+function void bubbleSort(&List<int> arr) {
     # Tamanho inicial da lista
     int n = arr.size();
     # Laço externo do Bubble Sort

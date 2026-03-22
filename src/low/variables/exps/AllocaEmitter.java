@@ -89,7 +89,7 @@ public class AllocaEmitter {
             }
 
             // **Somente aloca o ponteiro**
-            llvm.append("  ").append(ptr).append(" = alloca ").append(llvmType).append("*\n");
+            llvm.append("  ").append(ptr).append(" = alloca ").append(llvmType).append("\n");
 
             varTypes.put(varName, new TypeInfos(type, llvmType));
             return new LLVMValue(llvmType, ptr, llvm.toString());

@@ -37,7 +37,7 @@ public class LLVMTypeMapper {
 
         if (type instanceof ListType lt) {
             LLVMTYPES element = from(lt.elementType());
-            return new LLVMPointer(new LLVMArrayList(element));
+            return new LLVMArrayList(element);
         }
 
 

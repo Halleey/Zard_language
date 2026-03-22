@@ -427,7 +427,7 @@ public class LLVisitorMain implements LLVMEmitVisitor {
 
     @Override
     public LLVMValue visit(ImportNode node) {
-        return null;
+        return importEmitter.emit(node);
     }
 
     @Override

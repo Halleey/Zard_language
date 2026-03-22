@@ -4,7 +4,6 @@ import ast.ASTNode;
 import ast.exceptions.ReturnNode;
 import ast.functions.FunctionNode;
 import ast.functions.ParamInfo;
-import ast.variables.LiteralNode;
 import context.statics.symbols.PrimitiveTypes;
 import context.statics.symbols.Type;
 import low.main.TypeInfos;
@@ -13,13 +12,12 @@ import low.module.LLVisitorMain;
 import java.util.ArrayList;
 import java.util.List;
 
-
-import ast.*;
 import low.module.builders.LLVMTYPES;
 import low.module.builders.LLVMValue;
 import low.module.builders.mappers.LLVMTypeMapper;
 import low.module.builders.primitives.LLVMVoid;
-
+import low.module.builders.LLVMPointer;
+import low.module.builders.lists.LLVMArrayList;
 
 public class FunctionEmitter {
 
@@ -45,13 +43,13 @@ public class FunctionEmitter {
 
         visitor.functions.put(irName, fn);
 
-        // inicialmente registra ANY / void
+        // registra tipo inicial ANY / void
         visitor.registerFunctionType(irName, new TypeInfos(PrimitiveTypes.ANY, new LLVMVoid()));
 
         Type declaredType = fn.getReturnType();
         TypeInfos retInfo;
 
-        // se é void mas contém return, deduz o tipo
+        // deduz tipo se é void mas contém return
         if (declaredType instanceof PrimitiveTypes p &&
                 "void".equals(p.name()) &&
                 containsReturn(fn)) {
@@ -66,18 +64,24 @@ public class FunctionEmitter {
         }
 
         visitor.registerFunctionType(irName, retInfo);
-
         LLVMTYPES llvmRetType = retInfo.getLLVMType();
 
         List<String> paramSignatures = new ArrayList<>();
 
         for (ParamInfo p : fn.getParameters()) {
             Type paramType = p.typeObj();
-            LLVMTYPES llvmType = LLVMTypeMapper.from(paramType);
+            LLVMTYPES valueType = LLVMTypeMapper.from(paramType);
 
-            visitor.putVarType(p.name(), new TypeInfos(paramType, llvmType));
+            visitor.putVarType(p.name(), new TypeInfos(paramType, valueType));
 
-            String llvmStr = p.isRef() ? llvmType + "*" : llvmType.toString();
+            String llvmStr;
+            if (valueType instanceof LLVMArrayList) {
+                llvmStr = valueType.toString(); // já contém o *
+            } else if (valueType instanceof LLVMPointer) {
+                llvmStr = valueType.toString(); // structs normais
+            } else {
+                llvmStr = p.isRef() ? valueType + "*" : valueType.toString();
+            }
             paramSignatures.add(llvmStr + " %" + p.name());
         }
 
@@ -86,27 +90,29 @@ public class FunctionEmitter {
                 .append(" @").append(irName)
                 .append("(").append(String.join(", ", paramSignatures)).append(") {\nentry:\n");
 
-        // parâmetros: criar alocação se não for referência
+        // parâmetros: criar alocação somente se necessário
         for (ParamInfo p : fn.getParameters()) {
             String paramName = p.name();
             TypeInfos info = visitor.getVarType(paramName);
             LLVMTYPES valueType = info.getLLVMType();
 
-            if (p.isRef()) {
+            // Se for referência ou já for ponteiro/lista → registra sem alocação extra
+            if (p.isRef() || valueType instanceof LLVMPointer || valueType instanceof LLVMArrayList) {
                 visitor.getVariableEmitter().registerVarPtr(paramName, "%" + paramName);
-            } else {
-                String ptr = "%" + paramName + "_addr";
-
-                sb.append("  ").append(ptr)
-                        .append(" = alloca ").append(valueType).append("\n");
-
-                sb.append("  store ").append(valueType)
-                        .append(" %").append(paramName)
-                        .append(", ").append(valueType)
-                        .append("* ").append(ptr).append("\n");
-
-                visitor.getVariableEmitter().registerVarPtr(paramName, ptr);
+                continue;
             }
+
+            // Caso primitivo normal → cria alocação local
+            String ptr = "%" + paramName + "_addr";
+            sb.append("  ").append(ptr)
+                    .append(" = alloca ").append(valueType).append("\n");
+
+            sb.append("  store ").append(valueType)
+                    .append(" %").append(paramName)
+                    .append(", ").append(valueType)
+                    .append("* ").append(ptr).append("\n");
+
+            visitor.getVariableEmitter().registerVarPtr(paramName, ptr);
         }
 
         // corpo da função

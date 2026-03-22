@@ -78,7 +78,6 @@ public class VariableEmitter {
 
     public void registerVarPtr(String name, String llvmPtr) {
         scopes.peek().put(name, llvmPtr);
-        System.out.println("[VariableEmitter] Registered ptr: " + name + " -> " + llvmPtr);
     }
 
     public String getVarPtr(String name) {

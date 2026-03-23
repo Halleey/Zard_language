@@ -16,6 +16,7 @@ import ast.loops.WhileNode;
 import ast.prints.PrintNode;
 import ast.structs.*;
 import ast.expressions.BinaryOpNode;
+import ast.variables.AssignmentNode;
 import context.statics.symbols.ListType;
 import context.statics.symbols.PrimitiveTypes;
 import context.statics.symbols.Type;
@@ -268,6 +269,11 @@ public class MainEmitter {
         }
         if(node instanceof PrintNode printNode) {
             coletarStringsRecursivo(printNode.expr);
+            return;
+        }
+
+        if(node instanceof AssignmentNode asg) {
+            coletarStringsRecursivo(asg.getValueNode());
             return;
         }
 

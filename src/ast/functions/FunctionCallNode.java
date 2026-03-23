@@ -117,6 +117,7 @@ public class FunctionCallNode extends ASTNode {
 
         if (current instanceof InputType) return;
 
+        if(expected.equals(current)) return;
 
         if (expected instanceof ListType le && current instanceof ListType lc) {
 

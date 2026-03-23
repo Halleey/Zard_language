@@ -1,6 +1,7 @@
 package ast.functions;
 
 import ast.ASTNode;
+import ast.expressions.ReferenceNode;
 import ast.variables.TypeResolver;
 import ast.variables.VariableNode;
 import context.statics.StaticContext;
@@ -119,23 +120,23 @@ public class FunctionNode extends ASTNode {
         }
 
         for (int i = 0; i < parameters.size(); i++) {
+
             ParamInfo param = parameters.get(i);
             ASTNode argNode = argNodes.get(i);
 
-            if (param.isRef()) {
-                if (!(argNode instanceof VariableNode var)) {
-                    throw new RuntimeException(
-                            "Parâmetro por referência '&" + param.name() + "' exige uma variável"
-                    );
-                }
-                var slot = parentCtx.getSlot(var.getName());
+            VariableNode varNode = getVariableNode(param, argNode);
+
+            if (varNode != null) {
+                //PASSAGEM POR REFERÊNCIA (slot)
+                var slot = parentCtx.getSlot(varNode.getName());
                 localCtx.bindSlot(param.name(), slot);
+
             } else {
+                //PASSAGEM POR VALOR (cópia)
                 TypedValue value = argNode.evaluate(parentCtx);
                 localCtx.declareVariable(param.name(), value);
             }
         }
-
         try {
             for (ASTNode node : body) {
                 node.evaluate(localCtx);
@@ -145,6 +146,31 @@ public class FunctionNode extends ASTNode {
         }
 
         return TypedValue.VOID;
+    }
+
+    private static VariableNode getVariableNode(ParamInfo param, ASTNode argNode) {
+        boolean paramIsRef = param.isRef();
+        boolean argIsRef = argNode instanceof ReferenceNode;
+
+        VariableNode varNode = null;
+
+        //CASO ReferenceNode explícito (&x)
+        if (argIsRef) {
+            varNode = (VariableNode) ((ReferenceNode) argNode).getTarget();
+        }
+
+        //CASO: parâmetro exige referência → auto-ref
+        else if (paramIsRef) {
+
+            if (!(argNode instanceof VariableNode v)) {
+                throw new RuntimeException(
+                        "Parâmetro '&" + param.name() + "' exige variável"
+                );
+            }
+
+            varNode = v;
+        }
+        return varNode;
     }
 
     @Override

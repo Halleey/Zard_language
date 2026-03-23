@@ -3,6 +3,7 @@ package translate.executors;
 import low.module.LLVMGenerator;
 import low.module.LLVisitorMain;
 import memory_manager.ownership.escapes.EscapeInfo;
+import translate.front.ASTInterpreter;
 import translate.front.FrontendPipeline;
 import translate.front.TypePipeline;
 import translate.llvm.LLVMToolchain;
@@ -18,22 +19,22 @@ public class ExecutorLinux {
         EscapeInfo escapeInfo = frontend.getEscapeInfo();
 //
         TypePipeline typePipeline = new TypePipeline(frontend.getParser());
-        LLVisitorMain tempVisitor = typePipeline.process(ast);
+//        LLVisitorMain tempVisitor = typePipeline.process(ast);
+//
+//        LLVisitorMain llvmVisitor = tempVisitor.fork();
+//
+//        llvmVisitor.setEscapeInfo(escapeInfo);
+//
+//
+//        LLVMGenerator llgen = new LLVMGenerator(llvmVisitor);
+//        String llvm = llgen.generate(ast);
+//
+//        LLVMToolchain toolchain = new LLVMToolchain();
+//        String exePath = toolchain.buildExecutable(llvm);
+//        toolchain.runExecutable(exePath);
 
-        LLVisitorMain llvmVisitor = tempVisitor.fork();
-
-        llvmVisitor.setEscapeInfo(escapeInfo);
-
-
-        LLVMGenerator llgen = new LLVMGenerator(llvmVisitor);
-        String llvm = llgen.generate(ast);
-
-        LLVMToolchain toolchain = new LLVMToolchain();
-        String exePath = toolchain.buildExecutable(llvm);
-        toolchain.runExecutable(exePath);
-
-//        ASTInterpreter interpreter = new ASTInterpreter();
-//        interpreter.run(ast);
+        ASTInterpreter interpreter = new ASTInterpreter();
+        interpreter.run(ast);
     }
 }
 

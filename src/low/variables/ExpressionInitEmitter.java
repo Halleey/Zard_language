@@ -3,6 +3,7 @@ package low.variables;
 
 import ast.structs.StructInstanceNode;
 import ast.variables.VariableDeclarationNode;
+import ast.variables.VariableNode;
 import low.TempManager;
 import low.main.TypeInfos;
 import low.module.LLVisitorMain;
@@ -73,31 +74,44 @@ public class ExpressionInitEmitter {
             }
 
             //  STRING (deep copy)
-            if (targetType instanceof LLVMString) {
+            if (targetType instanceof LLVMString
+                    && node.getInitializer() instanceof VariableNode) {
 
                 String tmpDataPtr = temps.newTemp();
                 String tmpData    = temps.newTemp();
                 String tmpClone   = temps.newTemp();
 
-                sb.append("  ").append(tmpDataPtr)
+                sb.append("  ")
+                        .append(tmpDataPtr)
                         .append(" = getelementptr %String, %String* ")
                         .append(val.getName())
                         .append(", i32 0, i32 0\n");
 
-                sb.append("  ").append(tmpData)
+
+                sb.append("  ")
+                        .append(tmpData)
                         .append(" = load i8*, i8** ")
                         .append(tmpDataPtr)
                         .append("\n");
 
-                sb.append("  ").append(tmpClone)
+
+                sb.append("  ")
+                        .append(tmpClone)
                         .append(" = call %String* @createString(i8* ")
                         .append(tmpData)
                         .append(")\n");
 
-                LLVMValue stored = new LLVMValue(new LLVMString(), tmpClone, "");
+
+                LLVMValue stored =
+                        new LLVMValue(new LLVMString(), tmpClone, "");
+
                 sb.append(store.emit(varName, stored).getCode());
 
-                return new LLVMValue(targetType, tmpClone, sb.toString());
+                return new LLVMValue(
+                        targetType,
+                        tmpClone,
+                        sb.toString()
+                );
             }
 
             //  STORE NORMAL

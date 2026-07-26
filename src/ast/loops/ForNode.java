@@ -9,6 +9,7 @@ import context.runtime.RuntimeContext;
 import low.module.LLVMEmitVisitor;
 import low.module.builders.LLVMValue;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ForNode extends ASTNode {
@@ -116,6 +117,28 @@ public class ForNode extends ASTNode {
         return new StaticContext(kind, parent);
     }
 
+
+    @Override
+    public List<ASTNode> getChildren() {
+
+        List<ASTNode> children = new ArrayList<>();
+
+        if (init != null) {
+            children.add(init);
+        }
+
+        if (condition != null) {
+            children.add(condition);
+        }
+
+        if (increment != null) {
+            children.add(increment);
+        }
+
+        children.addAll(body);
+
+        return children;
+    }
 
     @Override
     public void bindChildren(StaticContext stx) {

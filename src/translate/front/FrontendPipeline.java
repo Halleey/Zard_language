@@ -69,6 +69,9 @@ public class FrontendPipeline {
         EscapeAnalyzer escapeAnalyzer = new EscapeAnalyzer();
         this.escapeInfo = escapeAnalyzer.analyze(ast);
 
+        escapeInfo.dump();
+        escapeInfo.dumpSummary();
+
         Linearizer linearizer = new Linearizer();
         List<ASTNode> linear = linearizer.collectLinearStatements(ast);
 

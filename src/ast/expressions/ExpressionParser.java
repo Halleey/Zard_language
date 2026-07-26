@@ -94,6 +94,14 @@ public class ExpressionParser {
     private ASTNode parseFactor() {
         Token tok = parent.current();
 
+        if (tok.getType() == Token.TokenType.OPERATOR && tok.getValue().equals("&")) {
+            parent.advance(); // consome '&'
+
+            ASTNode target = parseFactor(); //IMPORTANTE  NÃO parseExpression()
+
+            return new ReferenceNode(target);
+        }
+
         if (tok.getType() == Token.TokenType.OPERATOR &&
                 (tok.getValue().equals("+") || tok.getValue().equals("-") || tok.getValue().equals("!"))) {
             String op = tok.getValue();

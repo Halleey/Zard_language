@@ -1,10 +1,13 @@
-main {
-List<string> teste;
-for(int x = 0; x < 10; x++) {
-string nome = "halley";
-println(nome);
-teste.add(nome);
-}
 
-println(teste);
+main {
+ function int teste(int x) {
+ x =10;
+ return x;
+ }
+
+ int y;
+ call teste(y); # aqui ele vai gerar somente copia
+ println(y);
+ call teste(&y); # deve ter acesso direto a Y
+ print(y);
 }
